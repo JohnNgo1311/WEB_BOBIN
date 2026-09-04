@@ -1,25 +1,47 @@
 <?php
 // File: app/dtos/Bobin/BobinGetListDTO.php
-
 class BobinGetListDTO
 {
-    // Thông tin cơ bản
-    public string $keyword;
-    public string $fromDate; // YYYY-MM-DD
-    public string $toDate;    // YYYY-MM-DD HH:mm:ss
-    public string $status;
+    public ?string $keyword;
+    public ?string $fromDate;
+    public ?string $toDate;
+    public ?string $status;
+    public ?string $bobinSize;
+    public ?string $bobinType;
+    public int $page;
+    public int $limit;
 
+    public function __construct(
+        ?string $keyword = '',
+        ?string $fromDate = '',
+        ?string $toDate = '',
+        ?string $status = 'all',
+        ?string $bobinSize = 'all',
+        ?string $bobinType = 'all',
+        int $page = 1,
+        int $limit = 50
+    ) {
+        $this->keyword = $keyword;
+        $this->fromDate = $fromDate;
+        $this->toDate = $toDate;
+        $this->status = $status;
+        $this->bobinSize = $bobinSize;
+        $this->bobinType = $bobinType;
+        $this->page = max(1, $page);
+        $this->limit = max(1, min(100, $limit));
+    }
 
-    // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self
     {
-        $dto = new self();
-        // Trim và gán giá trị mặc định nếu rỗng
-        $dto->keyword = trim($request['keyword'] ?? '');
-        $dto->fromDate = trim($request['from_date'] ?? '');
-        $dto->toDate = trim($request['to_date'] ?? '');
-        $dto->status = trim($request['status'] ?? '');
-
-        return $dto;
+        return new self(
+            keyword: $request['keyword'] ?? '',
+            fromDate: $request['from_date'] ?? '',
+            toDate: $request['to_date'] ?? '',
+            status: $request['status'] ?? 'all',
+            bobinSize: $request['bobin_size'] ?? 'all',
+            bobinType: $request['bobin_type'] ?? 'all',
+            page: isset($request['page']) ? (int)$request['page'] : 1,
+            limit: isset($request['limit']) ? (int)$request['limit'] : 50
+        );
     }
 }

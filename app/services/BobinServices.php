@@ -458,28 +458,48 @@ class BobinServices
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
-    public function getDetailBobins(BobinGetListDTO $dto): array
+    public function getBobinStatusStats(BobinGetListDTO $dto): array
     {
         try {
-            // 1. Chỉ lấy và xử lý Keyword và Status 
-            $keywordRaw = $dto->keyword ?? '';
-            $statusRaw  = $dto->status;
-            $keyword    = trim($keywordRaw);
-            $status     = trim($statusRaw);
-
-            // 2. Tạo mảng filters chỉ chứa keyword và status
             $filters = [
-                'keyword' => mb_substr($keyword, 0, 255),
-                'status'  => $status,
+                'bobin_size' => trim($dto->bobinSize ?? 'all'),
+                'bobin_type' => trim($dto->bobinType ?? 'all'),
             ];
-
-            return $this->bobinRepo->getBobinListDetail($filters);
+            return $this->bobinRepo->getBobinStatusStats($filters);
         } catch (Exception $e) {
-            // Log lỗi và ném ra ngoại lệ để Controller xử lý
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
 
+    public function getDetailBobins(BobinGetListDTO $dto): array
+    {
+        try {
+            $filters = [
+                'keyword'    => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'status'     => trim($dto->status ?? 'all'),
+                'bobin_size' => trim($dto->bobinSize ?? 'all'),
+                'bobin_type' => trim($dto->bobinType ?? 'all'),
+            ];
+            return $this->bobinRepo->getBobinListDetail($filters, $dto->page, $dto->limit);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobins(BobinGetListDTO $dto): int
+    {
+        try {
+            $filters = [
+                'keyword'    => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'status'     => trim($dto->status ?? 'all'),
+                'bobin_size' => trim($dto->bobinSize ?? 'all'),
+                'bobin_type' => trim($dto->bobinType ?? 'all'),
+            ];
+            return $this->bobinRepo->countBobinListDetail($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
 
     public function getDetailBobinsForQC(BobinGetListDTO $dto): array
     {

@@ -928,3 +928,293 @@ h1 {
   color: #fd7e14;
   font-weight: bold;
 }
+.analytics-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+    border: 1px solid #edf2f7;
+}
+
+.analytics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.badge-icon {
+    font-size: 22px;
+    background: #f8fafc;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.analytics-header h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.analytics-header .subtitle {
+    margin: 3px 0 0 0;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.total-counter {
+    background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+    border: 1.5px solid #cbd5e1;
+    padding: 8px 18px;
+    border-radius: 12px;
+    text-align: right;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.total-counter .label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.total-counter .value {
+    font-size: 24px;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+/* Layout chia 2 cột: biểu đồ và KPI card */
+.analytics-body {
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 24px;
+    align-items: center;
+}
+
+@media (max-width: 992px) {
+    .analytics-body {
+        grid-template-columns: 1fr;
+    }
+}
+/* Layout & Tiêu đề */
+.analytics-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+}
+
+.analytics-header h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.3px;
+}
+
+.analytics-header .subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+}
+
+/* Cột KPI bên phải */
+.analytics-body {
+    display: grid;
+    grid-template-columns: 1fr 310px;
+    gap: 28px;
+    align-items: center;
+}
+
+.kpi-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Thẻ KPI với nền màu riêng biệt, chữ to rõ */
+.kpi-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border-width: 1.5px;
+    border-style: solid;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+    transform: translateX(4px);
+}
+
+.kpi-card .kpi-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 12px;
+    display: inline-block;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+.kpi-card .kpi-name {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.kpi-card .kpi-val {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
+
+/* Bảng màu rực rỡ, độ tương phản cao */
+.kpi-card.rolled {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.kpi-card.rolled .kpi-dot { background: #059669; }
+.kpi-card.rolled .kpi-val { color: #047857; }
+
+.kpi-card.unchecked {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.kpi-card.unchecked .kpi-dot { background: #d97706; }
+.kpi-card.unchecked .kpi-val { color: #b45309; }
+
+.kpi-card.checked {
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+.kpi-card.checked .kpi-dot { background: #0284c7; }
+.kpi-card.checked .kpi-val { color: #0369a1; }
+
+.kpi-card.line {
+    background: #faf5ff;
+    border-color: #e9d5ff;
+}
+.kpi-card.line .kpi-dot { background: #7c3aed; }
+.kpi-card.line .kpi-val { color: #6d28d9; }
+
+.kpi-card.pending {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+.kpi-card.pending .kpi-dot { background: #dc2626; }
+.kpi-card.pending .kpi-val { color: #b91c1c; }
+/* BẢNG ĐIỀU KHIỂN BỘ LỌC (FILTER PANEL) */
+.filter-dashboard {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+}
+
+.filter-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1.5px dashed #f1f5f9;
+}
+
+.filter-dashboard-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.filter-dashboard-header h2 span {
+    color: #0284c7;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.filter-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.filter-row:last-child {
+    margin-bottom: 0;
+}
+
+/* Căn lề trái toàn bộ các nhãn chú thích */
+.filter-label {
+    width: 140px; /* Độ rộng cố định giúp thẳng hàng */
+    font-size: 14px;
+    font-weight: 700;
+    color: #475569;
+    flex-shrink: 0;
+    padding-top: 8px; /* Căn giữa so với nút */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1;
+}
+
+/* Định dạng chung cho mọi nút lọc (Kích thước, Loại) */
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.filter-pill.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0369a1;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+}
+
+/* Tinh chỉnh nút trạng thái cho đồng bộ với Filter Pill */
+.status-btn {
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}

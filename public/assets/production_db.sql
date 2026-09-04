@@ -3095,7 +3095,7 @@ CREATE TABLE `bobin_list_general` (
   `bobin_key_code` varchar(50) NOT NULL,
   `bobin_identification_code` varchar(50) NOT NULL,
   `bobin_size` enum('PL7-3','PL4-7 (TU04.TU06)','PL4-7 (TU08~)') NOT NULL,
-  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh') NOT NULL,
+  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)') NOT NULL,
   `bobin_current_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT 'Rolled',
   `updated_time` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

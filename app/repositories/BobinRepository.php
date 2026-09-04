@@ -66,37 +66,38 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    //? GET LIST Detail 
-    public function getBobinListDetail(array $filters = [])
+    //? 1. Đếm tổng số bản ghi thỏa mãn điều kiện lọc (dùng để tính tổng số trang)
+    public function countBobinListDetail(array $filters = []): int
     {
         $pdo = $this->db->pdo();
-
         try {
-            $sql = "SELECT * FROM bobin_list_detail" . " WHERE 1=1"; // Câu SQL khởi tạo với điều kiện luôn đúng để dễ dàng thêm các điều kiện khác sau này
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE 1=1";
             $params = [];
+            // Bổ sung vào bên trong getBobinListDetail & countBobinListDetail
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
 
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
-                bobin_identification_code LIKE :kw1 OR  
-                JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
-                JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
-                JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
-                JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
-                print_lot LIKE :kw6 OR
-                winding_machine LIKE :kw7 OR
-                bobin_type LIKE :kw8
-
-            )";
-
-                $params[':kw1'] = $searchStr;
-                $params[':kw2'] = $searchStr;
-                $params[':kw3'] = $searchStr;
-                $params[':kw4'] = $searchStr;
-                $params[':kw5'] = $searchStr;
-                $params[':kw6'] = $searchStr;
-                $params[':kw7'] = $searchStr;
-                $params[':kw8'] = $searchStr;
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
             }
 
             if (!empty($filters['status'])) {
@@ -108,11 +109,111 @@ class BobinRepository
                 }
             }
 
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+    //? Thống kê tổng số lượng theo từng trạng thái
+    //? Thống kê số lượng kèm điều kiện Size và Type
+    public function getBobinStatusStats(array $filters = []): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT bobin_current_status, COUNT(*) AS total 
+                    FROM bobin_list_detail WHERE 1=1";
+            $params = [];
 
-            $sql .= " ORDER BY bobin_identification_code ";
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+
+            $sql .= " GROUP BY bobin_current_status";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+            $rolled        = (int)($rows['Rolled'] ?? 0);
+            $busyUnchecked = (int)($rows['Busy_Unchecked'] ?? 0);
+            $busyChecked   = (int)($rows['Busy_Checked'] ?? 0);
+            $pendingCancel = (int)($rows['Pending_Cancellation'] ?? 0);
+
+            return [
+                'Rolled'               => $rolled,
+                'Busy_Unchecked'       => $busyUnchecked,
+                'Busy_Checked'         => $busyChecked,
+                'Line'                 => $busyUnchecked + $busyChecked,
+                'Pending_Cancellation' => $pendingCancel,
+            ];
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+    //? 2. Lấy dữ liệu danh sách có phân trang LIMIT và OFFSET
+    public function getBobinListDetail(array $filters = [], int $page = 1, int $limit = 50)
+    {
+        $pdo = $this->db->pdo();
+        try {
+
+            $sql = "SELECT * FROM bobin_list_detail WHERE 1=1";
+            $params = [];
+            // Bổ sung vào bên trong getBobinListDetail & countBobinListDetail
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            if (!empty($filters['status'])) {
+                if ($filters['status'] === 'Line') {
+                    $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
+                } elseif ($filters['status'] !== 'all') {
+                    $sql .= " AND bobin_current_status = :status";
+                    $params[':status'] = $filters['status'];
+                }
+            }
+
+            $offset = ($page - 1) * $limit;
+            $sql .= " ORDER BY bobin_identification_code LIMIT :limit OFFSET :offset";
+
+            $stmt = $pdo->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {

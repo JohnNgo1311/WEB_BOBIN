@@ -1,0 +1,62 @@
+[
+  {
+    "bobin_key_code": "BB2001_2026_01_29_15_30_45",
+    "bobin_identification_code": "BB2001",
+    "bobin_current_status": "Busy_Checked",
+    "updated_time": "29/01/2026 23:59:45"
+  },
+  {
+    "bobin_key_code": "BB2002_2026_01_28_08_45_10",
+    "bobin_identification_code": "BB2002",
+    "bobin_current_status": "Ready",
+    "updated_time": "28/01/2026 09:10:00"
+  },
+  {
+    "bobin_key_code": "BB2003_2026_01_27_16_20_00",
+    "bobin_identification_code": "BB2003",
+    "bobin_current_status": "Busy_Checked",
+    "updated_time": "27/01/2026 17:05:00"
+  },
+  {
+    "bobin_key_code": "BB2004_2026_01_26_23_10_50",
+    "bobin_identification_code": "BB2004",
+    "bobin_current_status": "Busy_Unchecked",
+    "updated_time": "26/01/2026 23:45:00"
+  },
+  {
+    "bobin_key_code": "BB2005_2026_01_25_07_55_30",
+    "bobin_identification_code": "BB2005",
+    "bobin_current_status": "Busy_Checked",
+    "updated_time": "25/01/2026 08:35:00"
+  },
+  {
+    "bobin_key_code": "BB2006_2026_01_24_15_15_15",
+    "bobin_identification_code": "BB2006",
+    "bobin_current_status": "Ready",
+    "updated_time": "24/01/2026 15:50:00"
+  },
+  {
+    "bobin_key_code": "BB2007_2026_01_23_22_05_05",
+    "bobin_identification_code": "BB2007",
+    "bobin_current_status": "Busy_Checked",
+    "updated_time": "23/01/2026 22:35:00"
+  },
+  {
+    "bobin_key_code": "BB2008_2026_01_22_06_40_00",
+    "bobin_identification_code": "BB2008",
+    "bobin_current_status": "Busy_Unchecked",
+    "updated_time": "22/01/2026 07:15:00"
+  },
+  {
+    "bobin_key_code": "BB2009_2026_01_21_14_00_00",
+    "bobin_identification_code": "BB2009",
+    "bobin_current_status": "Ready",
+    "updated_time": "21/01/2026 14:35:00"
+  },
+  {
+    "bobin_key_code": "BB2010_2026_01_21_21_50_50",
+    "bobin_identification_code": "BB2010",
+    "bobin_current_status": "Busy_Checked",
+    "updated_time": "21/01/2026 22:15:00"
+  }
+]

@@ -1,0 +1,27 @@
+{
+    "bobin_key_code": "BB2001-2026-27-1",
+    "bobin_identification_code": "BB2001",
+    "employee_code": "EMP00123",
+    "employee_name": "Nguyen Van A",
+    "production_order_code": "PO-2025-08-001",
+    "product_code": "PRD-5001",
+    "material_lot": "LOT-ML-20250811",
+    "print_lot": "LOT-PR-20250811",
+    "length_m": 1250.5,
+    "shift": "Shift 2",
+    "extrusion_date": "11/08/2025",
+    "finish_time": "11/08/2025 15:30:45",
+    "bobin_current_status": "Busy_Checked",
+    "visual_inspection": {
+        "inspector_name": "Tran Thi B",
+        "inspection_time": "11/08/2025 23:55:41",
+        "defects": {
+            "gel": false,
+            "foreign_object": true,
+            "color_issue": false,
+            "print_quality": false,
+            "note": "Small foreign particle near the roll edge."
+        }
+    },
+    "updated_time": "11/08/2025 16:30:45"
+}

@@ -1,0 +1,282 @@
+[
+  {
+    "bobin_key_code": "BB2001_2026_01_29_15_30_45",
+    "bobin_identification_code": "BB2001",
+    "employee_code": "EMP00123",
+    "employee_name": "Nguyen Van A",
+    "production_order_code": "PO-2025-08-001",
+    "product_code": "PRD-5001",
+    "material_lot": "LOT-ML-20250811",
+    "print_lot": "LOT-PR-20250811",
+    "length_m": 1250.5,
+    "shift": "Shift 2",
+    "extrusion_date": "29/01/2026",
+    "finish_time": "29/01/2026 15:30:45",
+    "bobin_current_status": "Busy_Checked",
+    "visual_inspection": {
+      "inspector_code": "025161213",
+      "inspector_name": "Tran Thi B",
+      "inspection_time": "29/01/2026 23:55:41",
+      "defects": {
+        "gel": false,
+        "foreign_object": true,
+        "color_issue": false,
+        "print_quality": false,
+        "note": "Small foreign particle near the roll edge."
+      }
+    },
+    "updated_time": "29/01/2026 23:59:45"
+  },
+  {
+    "bobin_key_code": "BB2002_2026_01_28_08_45_10",
+    "bobin_identification_code": "BB2002",
+    "employee_code": "EMP00124",
+    "employee_name": "Le Thi C",
+    "production_order_code": "PO-2025-08-002",
+    "product_code": "PRD-5002",
+    "material_lot": "LOT-ML-20250812",
+    "print_lot": "LOT-PR-20250812",
+    "length_m": 980.0,
+    "shift": "Shift 1",
+    "extrusion_date": "28/01/2026",
+    "finish_time": "28/01/2026 08:45:10",
+    "bobin_current_status": "Ready",
+    "visual_inspection": {
+      "inspector_code": "025161214",
+      "inspector_name": "Pham Van D",
+      "inspection_time": "28/01/2026 09:05:22",
+      "defects": {
+        "gel": false,
+        "foreign_object": false,
+        "color_issue": false,
+        "print_quality": false,
+        "note": "No defects detected."
+      }
+    },
+    "updated_time": "28/01/2026 09:10:00"
+  },
+  {
+    "bobin_key_code": "BB2003_2026_01_27_16_20_00",
+    "bobin_identification_code": "BB2003",
+    "employee_code": "EMP00125",
+    "employee_name": "Tran Van E",
+    "production_order_code": "PO-2025-08-003",
+    "product_code": "PRD-5003",
+    "material_lot": "LOT-ML-20250813",
+    "print_lot": "LOT-PR-20250813",
+    "length_m": 1500.75,
+    "shift": "Shift 2",
+    "extrusion_date": "27/01/2026",
+    "finish_time": "27/01/2026 16:20:00",
+    "bobin_current_status": "Busy_Checked",
+    "visual_inspection": {
+      "inspector_code": "025161215",
+      "inspector_name": "Nguyen Thi F",
+      "inspection_time": "27/01/2026 17:00:12",
+      "defects": {
+        "gel": true,
+        "foreign_object": false,
+        "color_issue": false,
+        "print_quality": false,
+        "note": "Minor gel streaks observed near center."
+      }
+    },
+    "updated_time": "27/01/2026 17:05:00"
+  },
+  {
+    "bobin_key_code": "BB2004_2026_01_26_23_10_50",
+    "bobin_identification_code": "BB2004",
+    "employee_code": "EMP00126",
+    "employee_name": "Hoang Van G",
+    "production_order_code": "PO-2025-08-004",
+    "product_code": "PRD-5004",
+    "material_lot": "LOT-ML-20250814",
+    "print_lot": "LOT-PR-20250814",
+    "length_m": 720.25,
+    "shift": "Shift 3",
+    "extrusion_date": "26/01/2026",
+    "finish_time": "26/01/2026 23:10:50",
+    "bobin_current_status": "Busy_Unchecked",
+    "visual_inspection": {
+      "inspector_code": "025161216",
+      "inspector_name": "Vo Thi H",
+      "inspection_time": "26/01/2026 23:40:05",
+      "defects": {
+        "gel": false,
+        "foreign_object": false,
+        "color_issue": true,
+        "print_quality": false,
+        "note": "Slight color variation on outer layer."
+      }
+    },
+    "updated_time": "26/01/2026 23:45:00"
+  },
+  {
+    "bobin_key_code": "BB2005_2026_01_25_07_55_30",
+    "bobin_identification_code": "BB2005",
+    "employee_code": "EMP00127",
+    "employee_name": "Mai Van I",
+    "production_order_code": "PO-2025-08-005",
+    "product_code": "PRD-5005",
+    "material_lot": "LOT-ML-20250815",
+    "print_lot": "LOT-PR-20250815",
+    "length_m": 1340.0,
+    "shift": "Shift 1",
+    "extrusion_date": "25/01/2026",
+    "finish_time": "25/01/2026 07:55:30",
+    "bobin_current_status": "Busy_Checked",
+    "visual_inspection": {
+      "inspector_code": "025161217",
+      "inspector_name": "Do Thi K",
+      "inspection_time": "25/01/2026 08:30:00",
+      "defects": {
+        "gel": true,
+        "foreign_object": true,
+        "color_issue": false,
+        "print_quality": true,
+        "note": "Multiple defects: large gel and print smearing; flagged for rework."
+      }
+    },
+    "updated_time": "25/01/2026 08:35:00"
+  },
+  {
+    "bobin_key_code": "BB2006_2026_01_24_15_15_15",
+    "bobin_identification_code": "BB2006",
+    "employee_code": "EMP00128",
+    "employee_name": "Nguyen Van L",
+    "production_order_code": "PO-2025-08-006",
+    "product_code": "PRD-5006",
+    "material_lot": "LOT-ML-20250816",
+    "print_lot": "LOT-PR-20250816",
+    "length_m": 560.5,
+    "shift": "Shift 2",
+    "extrusion_date": "24/01/2026",
+    "finish_time": "24/01/2026 15:15:15",
+    "bobin_current_status": "Ready",
+    "visual_inspection": {
+      "inspector_code": "025161218",
+      "inspector_name": "Bui Thi M",
+      "inspection_time": "24/01/2026 15:45:45",
+      "defects": {
+        "gel": false,
+        "foreign_object": false,
+        "color_issue": false,
+        "print_quality": true,
+        "note": "Print alignment slightly off on one side."
+      }
+    },
+    "updated_time": "24/01/2026 15:50:00"
+  },
+  {
+    "bobin_key_code": "BB2007_2026_01_23_22_05_05",
+    "bobin_identification_code": "BB2007",
+    "employee_code": "EMP00129",
+    "employee_name": "Pham Van N",
+    "production_order_code": "PO-2025-08-007",
+    "product_code": "PRD-5007",
+    "material_lot": "LOT-ML-20250817",
+    "print_lot": "LOT-PR-20250817",
+    "length_m": 1025.9,
+    "shift": "Shift 3",
+    "extrusion_date": "23/01/2026",
+    "finish_time": "23/01/2026 22:05:05",
+    "bobin_current_status": "Busy_Checked",
+    "visual_inspection": {
+      "inspector_code": "025161219",
+      "inspector_name": "Le Thi O",
+      "inspection_time": "23/01/2026 22:30:30",
+      "defects": {
+        "gel": false,
+        "foreign_object": true,
+        "color_issue": false,
+        "print_quality": false,
+        "note": "Small metallic particle found; removed and documented."
+      }
+    },
+    "updated_time": "23/01/2026 22:35:00"
+  },
+  {
+    "bobin_key_code": "BB2008_2026_01_22_06_40_00",
+    "bobin_identification_code": "BB2008",
+    "employee_code": "EMP00130",
+    "employee_name": "Vo Van P",
+    "production_order_code": "PO-2025-08-008",
+    "product_code": "PRD-5008",
+    "material_lot": "LOT-ML-20250818",
+    "print_lot": "LOT-PR-20250818",
+    "length_m": 810.2,
+    "shift": "Shift 1",
+    "extrusion_date": "22/01/2026",
+    "finish_time": "22/01/2026 06:40:00",
+    "bobin_current_status": "Busy_Unchecked",
+    "visual_inspection": {
+      "inspector_code": "025161220",
+      "inspector_name": "Dang Thi Q",
+      "inspection_time": "22/01/2026 07:10:10",
+      "defects": {
+        "gel": false,
+        "foreign_object": false,
+        "color_issue": false,
+        "print_quality": false,
+        "note": "Awaiting final QC confirmation."
+      }
+    },
+    "updated_time": "22/01/2026 07:15:00"
+  },
+  {
+    "bobin_key_code": "BB2009_2026_01_21_14_00_00",
+    "bobin_identification_code": "BB2009",
+    "employee_code": "EMP00131",
+    "employee_name": "Nguyen Thi R",
+    "production_order_code": "PO-2025-08-009",
+    "product_code": "PRD-5009",
+    "material_lot": "LOT-ML-20250819",
+    "print_lot": "LOT-PR-20250819",
+    "length_m": 1299.99,
+    "shift": "Shift 2",
+    "extrusion_date": "21/01/2026",
+    "finish_time": "21/01/2026 14:00:00",
+    "bobin_current_status": "Ready",
+    "visual_inspection": {
+      "inspector_code": "025161221",
+      "inspector_name": "Chu Van S",
+      "inspection_time": "21/01/2026 14:30:30",
+      "defects": {
+        "gel": false,
+        "foreign_object": false,
+        "color_issue": false,
+        "print_quality": false,
+        "note": "Good condition."
+      }
+    },
+    "updated_time": "21/01/2026 14:35:00"
+  },
+  {
+    "bobin_key_code": "BB2010_2026_01_21_21_50_50",
+    "bobin_identification_code": "BB2010",
+    "employee_code": "EMP00132",
+    "employee_name": "Le Thi T",
+    "production_order_code": "PO-2025-08-010",
+    "product_code": "PRD-5010",
+    "material_lot": "LOT-ML-20250820",
+    "print_lot": "LOT-PR-20250820",
+    "length_m": 445.0,
+    "shift": "Shift 3",
+    "extrusion_date": "21/01/2026",
+    "finish_time": "21/01/2026 21:50:50",
+    "bobin_current_status": "Busy_Checked",
+    "visual_inspection": {
+      "inspector_code": "025161222",
+      "inspector_name": "Hoang Thi U",
+      "inspection_time": "21/01/2026 22:10:10",
+      "defects": {
+        "gel": false,
+        "foreign_object": false,
+        "color_issue": true,
+        "print_quality": true,
+        "note": "Color mismatch and print streaks; reject batch."
+      }
+    },
+    "updated_time": "21/01/2026 22:15:00"
+  }
+]

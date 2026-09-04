@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "brand": "BASF",
+    "code": "A",
+    "grinding_time": 0
+  },
+   {
+    "id": 2,
+    "brand": "BASF",
+    "code": "B",
+    "grinding_time": 1
+  }
+  ,
+   {
+    "id": 3,
+    "brand": "BASF",
+    "code": "C",
+    "grinding_time": 2
+  },
+  {
+    "id": 4,
+    "brand": "DIC Covestro",
+    "code": "D",
+    "grinding_time": 0
+  },
+   {
+    "id": 5,
+    "brand": "DIC Covestro",
+    "code": "E",
+    "grinding_time": 1
+  }
+  ,
+   {
+    "id": 6,
+    "brand": "DIC Covestro",
+    "code": "F",
+    "grinding_time": 2
+  }
+  ,
+  {
+    "id": 7,
+    "brand": "Huntsman",
+    "code": "G",
+    "grinding_time": 0
+  },
+   {
+    "id": 8,
+    "brand": "Huntsman",
+    "code": "H",
+    "grinding_time": 1
+  }
+  ,
+   {
+    "id": 9,
+    "brand": "Huntsman",
+    "code": "i",
+    "grinding_time": 2
+  }
+  ,
+  {
+    "id": 10,
+    "brand": "Covestro",
+    "code": "G",
+    "grinding_time": 0
+  },
+   {
+    "id": 11,
+    "brand": "Covestro",
+    "code": "H",
+    "grinding_time": 1
+  }
+  ,
+   {
+    "id": 12,
+    "brand": "Covestro",
+    "code": "i",
+    "grinding_time": 2
+  } 
+]

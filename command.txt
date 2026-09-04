@@ -1,0 +1,119 @@
+┌─────────────────────────────────────────────────────────────┐
+│                    BOBIN WORKFLOW DIAGRAM                    │
+└─────────────────────────────────────────────────────────────┘
+
+JS Form (extrusionView.php)
+    ↓ submit.js sends AJAX POST
+BobinController
+    ↓ receives request
+BobinCreateDTO (raw input: string)
+    ↓ BobinService validates & converts
+Bobin Entity (DateTime, objects)
+    ↓ BobinRepository processes
+Database (MySQL storage)
+
+
+┌─────────────────────────────────────────────────────────────┐
+│                    DETAILED WORKFLOW                         │
+└─────────────────────────────────────────────────────────────┘
+
+1️⃣  JS FORM
+    └─ User submits from extrusionView.php
+    └─ submit.js sends AJAX POST → index.php?url=bobin/createBobin
+
+2️⃣  BOBIN CONTROLLER
+    └─ Receives HTTP request
+    └─ Calls BobinCreateDTO::fromRequest($_POST)
+    └─ Passes DTO to BobinService
+
+3️⃣  BOBIN SERVICE
+    └─ Validates input (e.g., bobin code required)
+    └─ Converts IDs → Objects (Employee, Product)
+    └─ Creates BobinEntity (standardized object)
+    └─ Calls BobinRepository→save($entity)
+
+4️⃣  BOBIN REPOSITORY
+    └─ Receives Entity
+    └─ Converts nested objects (VisualInspection, Employee) → JSON
+    └─ Executes INSERT INTO MySQL
+
+5️⃣  DATABASE
+    └─ Stores data
+
+6️⃣  RESPONSE FLOW
+    └─ Service returns Entity → Controller
+    └─ Controller returns JSON → JS
+    └─ Toast.show() displays success message
+
+C:\xampp\htdocs\WEB_BOBIN\
+│
+├── 📂 app/                          <-- CODE BACKEND CHÍNH
+│   ├── 📂 core/                     # Các file lõi hệ thống
+│   │   ├── 📄 App.php
+│   │   ├── 📄 Controller.php
+│   │   └── 📄 Database.php
+│   │
+│   ├── 📂 controllers/              # Nơi nhận request từ JS/Form
+│   │   └── 📄 BobinController.php   <-- (Đã sửa) Gọi Service, không gọi Model trực tiếp
+│   │
+│   ├── 📂 dtos/                     # (MỚI) Data Transfer Objects - Hứng dữ liệu thô
+│   │   └── 📄 BobinCreateDTO.php    <-- (Mới) Chứa dữ liệu từ Form gửi lên
+│   │
+│   ├── 📂 services/                 # (MỚI) Xử lý logic nghiệp vụ (Business Logic)
+│   │   └── 📄 BobinService.php      <-- (Mới) Validate, tính toán, gọi Repository
+│   │
+│   ├── 📂 entities/                 # (MỚI) Đại diện cho Object chuẩn trong hệ thống
+│   │   └── 📄 BobinEntity.php       <-- (Mới) Class Bobin chuẩn (có DateTime, Object con)
+│   │
+│   ├── 📂 repositories/             # (MỚI) Xử lý truy vấn Database (SQL)
+│   │   └── 📄 BobinRepository.php   <-- (Mới) Chứa câu lệnh INSERT, SELECT...
+│   │
+│   ├── 📂 models/                   # Các Model cũ (Value Objects)
+│   │   ├── 📄 EmployeeModel.php     # (Giữ nguyên) Dùng làm object con cho BobinEntity
+│   │   ├── 📄 ProductModel.php      # (Giữ nguyên)
+│   │   ├── 📄 MaterialLotModel.php  # (Giữ nguyên)
+│   │   └── 📄 VisualInspectionModel.php # (Giữ nguyên)
+│   │
+│   └── 📂 views/                    # Giao diện HTML/PHP
+│       └── 📄 extrusionView.php     # Form nhập liệu
+│
+├── 📂 public/                       <-- CODE FRONTEND & ENTRY POINT
+│   ├── 📄 index.php                 # Điểm khởi chạy ứng dụng
+│   └── 📂 assets/
+│       ├── 📂 css/
+│       │   └── 📄 extrusion.css
+│       └── 📂 js/
+│           ├── 📂 Extrusion/
+│           │   ├── 📄 submit.js     <-- Gửi AJAX đến BobinController
+│           │   └── 📄 suggestion.js
+│           └── 📄 utils.js
+│
+└── 📄 config.php                    # Cấu hình DB, ROOT_PATH...
+
+
+📝 Giải thích luồng dữ liệu đi qua các thư mục
+Để bạn dễ hình dung cách code chạy qua các thư mục này:
+
+Frontend (public/assets/js/Extrusion/submit.js):
+
+Người dùng bấm "Lưu". JS gom dữ liệu gửi POST về Server.
+
+Controller (app/controllers/BobinController.php):
+
+Nhận request.
+
+Gọi app/dtos/BobinCreateDTO.php để đóng gói $_POST thành một object gọn gàng.
+
+Service (app/services/BobinService.php):
+
+Controller chuyển DTO sang cho Service.
+
+Service kiểm tra logic (ví dụ: mã bobin có trùng không, nhân viên có tồn tại trong app/models/ không).
+
+Service tạo ra một app/entities/BobinEntity.php.
+
+Repository (app/repositories/BobinRepository.php):
+
+Service chuyển Entity sang cho Repository.
+
+Repository viết câu lệnh SQL (INSERT INTO...) để lưu vào Database.

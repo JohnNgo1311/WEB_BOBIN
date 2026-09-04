@@ -1,0 +1,65 @@
+CREATE DATABASE IF NOT EXISTS production_db
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE production_db;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+) ENGINE=InnoDB
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS bobin_list_general (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    bobin_key_code VARCHAR(50),
+    bobin_identification_code VARCHAR(100) NOT NULL,
+    bobin_current_status ENUM('Ready','Busy_Unchecked','Busy_Checked')
+        NOT NULL DEFAULT 'Ready',
+    updated_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS bobin_list_detail (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    bobin_key_code VARCHAR(50),
+    bobin_identification_code VARCHAR(100) NOT NULL,
+    employee_code VARCHAR(50),
+    employee_name VARCHAR(100),
+
+    production_order_code VARCHAR(50),
+    product_code VARCHAR(50),
+
+    material_lot VARCHAR(50),
+    print_lot VARCHAR(50),
+
+    length_m DECIMAL(10,3),
+    shift VARCHAR(20),
+
+    extrusion_date DATE,
+    finish_time VARCHAR(30),
+
+    bobin_current_status VARCHAR(50),
+
+    visual_inspection TEXT,
+
+    updated_time DATETIME
+) ENGINE=InnoDB
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE `List_Data` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `list_bobin_key_code` json DEFAULT NULL COMMENT 'Mảng chứa các mã Bobin Key',
+  `list_bobin_identification_code` json DEFAULT NULL COMMENT 'Mảng chứa các mã định danh',
+  `list_employee` json DEFAULT NULL COMMENT 'Mảng đối tượng nhân viên (code + name)',
+  `list_production_order_code` json DEFAULT NULL COMMENT 'Danh sách mã lệnh sản xuất',
+  `list_product_code` json DEFAULT NULL COMMENT 'Danh sách mã sản phẩm',
+  `list_material_lot` json DEFAULT NULL COMMENT 'Danh sách Lot vật liệu',
+  `list_print_lot` json DEFAULT NULL COMMENT 'Danh sách Lot in',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

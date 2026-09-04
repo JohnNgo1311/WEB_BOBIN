@@ -1,0 +1,45 @@
+-- 1. Tạo bảng winding_machine_list
+CREATE TABLE IF NOT EXISTS `winding_machine_list` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `machine_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Chèn dữ liệu
+INSERT INTO `winding_machine_list` (`id`, `machine_name`) VALUES
+(1, 'ST01'),
+(2, 'ST02'),
+(3, 'ST03'),
+(4, 'ST04'),  
+(5, 'ST05'),
+(6, 'ST06'),
+(7, 'ST07'),
+(8, 'ST08'),
+(9, 'ST09'),
+(10, 'ST10'),
+(11, 'ST11'),
+(12, 'ST12'),
+(13, 'ST13'),
+(14, 'ST14'),
+(15, 'ST15'),
+(16, 'ST16'),
+(17, 'ST17'),
+(18, 'ST18'),
+(19, 'ST19'),
+(20, 'ST20'),
+(21, 'ST21'),
+(22, 'ST22'),
+(23, 'ST23'),
+(24, 'ST24'),
+(25, 'ST25'),
+(26, 'ST26'),
+(27, 'ST27'),
+(28, 'ST28'),
+(29, 'ST29'),
+(30, 'ST30'),
+(31, 'ST31'),
+(32, 'ST32'),
+(33, 'ST33'),
+(34, 'ST34'),
+(35, 'ST35'),
+(36, 'ST36')

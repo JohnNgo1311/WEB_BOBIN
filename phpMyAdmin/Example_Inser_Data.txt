@@ -1,0 +1,138 @@
+INSERT INTO `bobin_list_general` (
+    `bobin_key_code`,
+    `bobin_identification_code`,
+    `bobin_current_status`,
+    `updated_time`
+) VALUES 
+(
+    'BB2001_2026_01_29_15_30_45', 'BB2001', 'Ready', '2026-01-29 23:59:45'
+),
+(
+    'BB2002_2026_01_28_08_45_10', 'BB2002', 'Ready', '2026-01-28 09:10:00'
+),
+(
+    'BB2003_2026_01_27_16_20_00', 'BB2003', 'Ready', '2026-01-27 17:05:00'
+),
+(
+    'BB2004_2026_01_26_23_10_50', 'BB2004', 'Ready', '2026-01-26 23:45:00'
+),
+(
+    'BB2005_2026_01_25_07_55_30', 'BB2005', 'Ready', '2026-01-25 08:35:00'
+),
+(
+    'BB2006_2026_01_24_15_15_15', 'BB2006', 'Ready', '2026-01-24 15:50:00'
+),
+(
+    'BB2007_2026_01_23_22_05_05', 'BB2007', 'Ready', '2026-01-23 22:35:00'
+),
+(
+    'BB2008_2026_01_22_06_40_00', 'BB2008', 'Ready', '2026-01-22 07:15:00'
+),
+(
+    'BB2009_2026_01_21_14_00_00', 'BB2009', 'Ready', '2026-01-21 14:35:00'
+),
+(
+    'BB2010_2026_01_21_21_50_50', 'BB2010', 'Ready', '2026-01-21 22:15:00'
+)
+
+
+INSERT INTO `bobin_list_detail` (
+    `bobin_key_code`, 
+    `bobin_identification_code`, 
+    `employee_code`, 
+    `employee_name`, 
+    `production_order_code`, 
+    `product_code`, 
+    `material_lot`, 
+    `print_lot`, 
+    `length_m`, 
+    `shift`, 
+    `extrusion_date`, 
+    `finish_time`, 
+    `bobin_current_status`, 
+    `visual_inspection`, 
+    `updated_time`
+) VALUES 
+(
+    'BB2001_2026_01_29_15_30_45', 'BB2001', 'EMP00123', 'Nguyen Van A', 'PO-2025-08-001', 'PRD-5001', 'LOT-ML-20250811', 'LOT-PR-20250811', 1250.5, 'Shift 2', '2026-01-29', '2026-01-29 15:30:45', 'Ready', 
+    '{"inspector_code": "025161213", "inspector_name": "Tran Thi B", "inspection_time": "29/01/2026 23:55:41", "defects": {"gel": false, "foreign_object": true, "color_issue": false, "print_quality": false, "note": "Small foreign particle near the roll edge."}}', '2026-01-29 23:59:45'
+),
+(
+    'BB2002_2026_01_28_08_45_10', 'BB2002', 'EMP00124', 'Le Thi C', 'PO-2025-08-002', 'PRD-5002', 'LOT-ML-20250812', 'LOT-PR-20250812', 980.0, 'Shift 1', '2026-01-28', '2026-01-28 08:45:10', 'Ready', 
+    '{"inspector_code": "025161214", "inspector_name": "Pham Van D", "inspection_time": "28/01/2026 09:05:22", "defects": {"gel": false, "foreign_object": false, "color_issue": false, "print_quality": false, "note": "No defects defected."}}', '2026-01-28 09:10:00'
+),
+(
+    'BB2003_2026_01_27_16_20_00', 'BB2003', 'EMP00125', 'Tran Van E', 'PO-2025-08-003', 'PRD-5003', 'LOT-ML-20250813', 'LOT-PR-20250813', 1500.75, 'Shift 2', '2026-01-27', '2026-01-27 16:20:00', 'Ready', 
+    '{"inspector_code": "025161215", "inspector_name": "Nguyen Thi F", "inspection_time": "27/01/2026 17:00:12", "defects": {"gel": true, "foreign_object": false, "color_issue": false, "print_quality": false, "note": "Minor gel streaks observed near center."}}', '2026-01-27 17:05:00'
+),
+(
+    'BB2004_2026_01_26_23_10_50', 'BB2004', 'EMP00126', 'Hoang Van G', 'PO-2025-08-004', 'PRD-5004', 'LOT-ML-20250814', 'LOT-PR-20250814', 720.25, 'Shift 3', '2026-01-26', '2026-01-26 23:10:50', 'Ready', 
+    '{"inspector_code": "025161216", "inspector_name": "Vo Thi H", "inspection_time": "26/01/2026 23:40:05", "defects": {"gel": false, "foreign_object": false, "color_issue": true, "print_quality": false, "note": "Slight color variation on outer layer."}}', '2026-01-26 23:45:00'
+),
+(
+    'BB2005_2026_01_25_07_55_30', 'BB2005', 'EMP00127', 'Mai Van I', 'PO-2025-08-005', 'PRD-5005', 'LOT-ML-20250815', 'LOT-PR-20250815', 1340.0, 'Shift 1', '2026-01-25', '2026-01-25 07:55:30', 'Ready', 
+    '{"inspector_code": "025161217", "inspector_name": "Do Thi K", "inspection_time": "25/01/2026 08:30:00", "defects": {"gel": true, "foreign_object": true, "color_issue": false, "print_quality": true, "note": "Multiple defects: large gel and print smearing; flagged for rework."}}', '2026-01-25 08:35:00'
+),
+(
+    'BB2006_2026_01_24_15_15_15', 'BB2006', 'EMP00128', 'Nguyen Van L', 'PO-2025-08-006', 'PRD-5006', 'LOT-ML-20250816', 'LOT-PR-20250816', 560.5, 'Shift 2', '2026-01-24', '2026-01-24 15:15:15', 'Ready', 
+    '{"inspector_code": "025161218", "inspector_name": "Bui Thi M", "inspection_time": "24/01/2026 15:45:45", "defects": {"gel": false, "foreign_object": false, "color_issue": false, "print_quality": true, "note": "Print alignment slightly off on one side."}}', '2026-01-24 15:50:00'
+),
+(
+    'BB2007_2026_01_23_22_05_05', 'BB2007', 'EMP00129', 'Pham Van N', 'PO-2025-08-007', 'PRD-5007', 'LOT-ML-20250817', 'LOT-PR-20250817', 1025.9, 'Shift 3', '2026-01-23', '2026-01-23 22:05:05', 'Ready', 
+    '{"inspector_code": "025161219", "inspector_name": "Le Thi O", "inspection_time": "23/01/2026 22:30:30", "defects": {"gel": false, "foreign_object": true, "color_issue": false, "print_quality": false, "note": "Small metallic particle found; removed and documented."}}', '2026-01-23 22:35:00'
+),
+(
+    'BB2008_2026_01_22_06_40_00', 'BB2008', 'EMP00130', 'Vo Van P', 'PO-2025-08-008', 'PRD-5008', 'LOT-ML-20250818', 'LOT-PR-20250818', 810.2, 'Shift 1', '2026-01-22', '2026-01-22 06:40:00', 'Ready', 
+    '{"inspector_code": "025161220", "inspector_name": "Dang Thi Q", "inspection_time": "22/01/2026 07:10:10", "defects": {"gel": false, "foreign_object": false, "color_issue": false, "print_quality": false, "note": "Awaiting final QC confirmation."}}', '2026-01-22 07:15:00'
+),
+(
+    'BB2009_2026_01_21_14_00_00', 'BB2009', 'EMP00131', 'Nguyen Thi R', 'PO-2025-08-009', 'PRD-5009', 'LOT-ML-20250819', 'LOT-PR-20250819', 1299.99, 'Shift 2', '2026-01-21', '2026-01-21 14:00:00', 'Ready', 
+    '{"inspector_code": "025161221", "inspector_name": "Chu Van S", "inspection_time": "21/01/2026 14:30:30", "defects": {"gel": false, "foreign_object": false, "color_issue": false, "print_quality": false, "note": "Good condition."}}', '2026-01-21 14:35:00'
+),
+(
+    'BB2010_2026_01_21_21_50_50', 'BB2010', 'EMP00132', 'Le Thi T', 'PO-2025-08-010', 'PRD-5010', 'LOT-ML-20250820', 'LOT-PR-20250820', 445.0, 'Shift 3', '2026-01-21', '2026-01-21 21:50:50', 'Ready', 
+    '{"inspector_code": "025161222", "inspector_name": "Hoang Thi U", "inspection_time": "21/01/2026 22:10:10", "defects": {"gel": false, "foreign_object": false, "color_issue": true, "print_quality": true, "note": "Color mismatch and print streaks; reject batch."}}', '2026-01-21 22:15:00'
+)
+
+INSERT INTO `list_data` (
+    `list_bobin_key_code`, 
+    `list_bobin_identification_code`, 
+    `list_employee`, 
+    `list_production_order_code`, 
+    `list_product_code`, 
+    `list_material_lot`, 
+    `list_print_lot`
+) VALUES (
+    -- list_bobin_key_code
+    '["BB2001_2026_01_29_15_30_45", "BB2002_2026_01_28_08_45_10", "BB2003_2026_01_27_16_20_00", "BB2004_2026_01_26_23_10_50", "BB2005_2026_01_25_07_55_30", "BB2006_2026_01_24_15_15_15", "BB2007_2026_01_23_22_05_05", "BB2008_2026_01_22_06_40_00", "BB2009_2026_01_21_14_00_00", "BB2010_2026_01_21_21_50_50"]',
+    
+    -- list_bobin_identification_code
+    '["BB2001", "BB2002", "BB2003", "BB2004", "BB2005", "BB2006", "BB2007", "BB2008", "BB2009", "BB2010"]',
+    
+    -- list_employee (Mảng đối tượng JSON)
+    '[
+        {"employee_code": "EMP00123", "employee_name": "Nguyen Van A"},
+        {"employee_code": "EMP00124", "employee_name": "Le Thi C"},
+        {"employee_code": "EMP00125", "employee_name": "Tran Van E"},
+        {"employee_code": "EMP00126", "employee_name": "Hoang Van G"},
+        {"employee_code": "EMP00127", "employee_name": "Mai Van I"},
+        {"employee_code": "EMP00128", "employee_name": "Nguyen Van L"},
+        {"employee_code": "EMP00129", "employee_name": "Pham Van N"},
+        {"employee_code": "EMP00130", "employee_name": "Vo Van P"},
+        {"employee_code": "EMP00131", "employee_name": "Nguyen Thi R"},
+        {"employee_code": "EMP00132", "employee_name": "Le Thi T"}
+    ]',
+    
+    -- list_production_order_code
+    '["PO-2025-08-001", "PO-2025-08-002", "PO-2025-08-003", "PO-2025-08-004", "PO-2025-08-005", "PO-2025-08-006", "PO-2025-08-007", "PO-2025-08-008", "PO-2025-08-009", "PO-2025-08-010"]',
+    
+    -- list_product_code
+    '["PRD-5001", "PRD-5002", "PRD-5003", "PRD-5004", "PRD-5005", "PRD-5006", "PRD-5007", "PRD-5008", "PRD-5009", "PRD-5010"]',
+    
+    -- list_material_lot
+    '["LOT-ML-20250811", "LOT-ML-20250812", "LOT-ML-20250813", "LOT-ML-20250814", "LOT-ML-20250815", "LOT-ML-20250816", "LOT-ML-20250817", "LOT-ML-20250818", "LOT-ML-20250819", "LOT-ML-20250820"]',
+    
+    -- list_print_lot
+    '["LOT-PR-20250811", "LOT-PR-20250812", "LOT-PR-20250813", "LOT-PR-20250814", "LOT-PR-20250815", "LOT-PR-20250816", "LOT-PR-20250817", "LOT-PR-20250818", "LOT-PR-20250819", "LOT-PR-20250820"]'
+);
+

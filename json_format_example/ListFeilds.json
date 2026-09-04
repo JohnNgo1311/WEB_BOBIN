@@ -1,0 +1,118 @@
+[
+  {
+    "list_bobin_key_code": [
+      "BB2001_2026_01_29_15_30_45",
+      "BB2002_2026_01_28_08_45_10",
+      "BB2003_2026_01_27_16_20_00",
+      "BB2004_2026_01_26_23_10_50",
+      "BB2005_2026_01_25_07_55_30",
+      "BB2006_2026_01_24_15_15_15",
+      "BB2007_2026_01_23_22_05_05",
+      "BB2008_2026_01_22_06_40_00",
+      "BB2009_2026_01_21_14_00_00",
+      "BB2010_2026_01_21_21_50_50"
+    ],
+    "list_bobin_identification_code": [
+      "BB2001",
+      "BB2002",
+      "BB2003",
+      "BB2004",
+      "BB2005",
+      "BB2006",
+      "BB2007",
+      "BB2008",
+      "BB2009",
+      "BB2010"
+    ],
+    "list_employee": [
+      {
+        "employee_code": "EMP00123",
+        "employee_name": "Nguyen Van A"
+      },
+      {
+        "employee_code": "EMP00124",
+        "employee_name": "Le Thi C"
+      },
+      {
+        "employee_code": "EMP00125",
+        "employee_name": "Tran Van E"
+      },
+      {
+        "employee_code": "EMP00126",
+        "employee_name": "Hoang Van G"
+      },
+      {
+        "employee_code": "EMP00127",
+        "employee_name": "Mai Van I"
+      },
+      {
+        "employee_code": "EMP00128",
+        "employee_name": "Nguyen Van L"
+      },
+      {
+        "employee_code": "EMP00129",
+        "employee_name": "Pham Van N"
+      },
+      {
+        "employee_code": "EMP00130",
+        "employee_name": "Vo Van P"
+      },
+      {
+        "employee_code": "EMP00131",
+        "employee_name": "Nguyen Thi R"
+      },
+      {
+        "employee_code": "EMP00132",
+        "employee_name": "Le Thi T"
+      }
+    ],
+    "list_production_order_code": [
+      "PO-2025-08-001",
+      "PO-2025-08-002",
+      "PO-2025-08-003",
+      "PO-2025-08-004",
+      "PO-2025-08-005",
+      "PO-2025-08-006",
+      "PO-2025-08-007",
+      "PO-2025-08-008",
+      "PO-2025-08-009",
+      "PO-2025-08-010"
+    ],
+    "list_product_code": [
+      "PRD-5001",
+      "PRD-5002",
+      "PRD-5003",
+      "PRD-5004",
+      "PRD-5005",
+      "PRD-5006",
+      "PRD-5007",
+      "PRD-5008",
+      "PRD-5009",
+      "PRD-5010"
+    ],
+    "list_material_lot": [
+      "LOT-ML-20250811",
+      "LOT-ML-20250812",
+      "LOT-ML-20250813",
+      "LOT-ML-20250814",
+      "LOT-ML-20250815",
+      "LOT-ML-20250816",
+      "LOT-ML-20250817",
+      "LOT-ML-20250818",
+      "LOT-ML-20250819",
+      "LOT-ML-20250820"
+    ],
+    "list_print_lot": [
+      "LOT-PR-20250811",
+      "LOT-PR-20250812",
+      "LOT-PR-20250813",
+      "LOT-PR-20250814",
+      "LOT-PR-20250815",
+      "LOT-PR-20250816",
+      "LOT-PR-20250817",
+      "LOT-PR-20250818",
+      "LOT-PR-20250819",
+      "LOT-PR-20250820"
+    ]
+  }
+]

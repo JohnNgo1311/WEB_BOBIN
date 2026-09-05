@@ -102,269 +102,13 @@ $typeOptions = [
 <head>
     <meta charset="UTF-8">
     <title>Danh sách Bobin</title>
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=1">
+    <!-- Đổi version lên v=3 để ép trình duyệt nhận CSS mới -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=3">
     <link rel="icon" href="data:,">
     <!-- Nạp thư viện biểu đồ và QR Code -->
     <script src="/WEB_BOBIN/public/assets/js/apexcharts.min.js"></script>
     <script src="/WEB_BOBIN/public/assets/js/chart-helper.js"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
-
-    <!-- Style dành riêng cho UI nâng cấp -->
-    <style>
-    /* Card tổng quan KPI */
-    .analytics-card {
-        background: #ffffff;
-        border-radius: 18px;
-        padding: 24px 30px;
-        margin-bottom: 24px;
-        box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08);
-        border: 1px solid #e2e8f0;
-    }
-
-    .analytics-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #f1f5f9;
-        padding-bottom: 18px;
-        margin-bottom: 20px;
-    }
-
-    .analytics-header h3 {
-        font-size: 22px;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0;
-    }
-
-    .total-counter {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        color: #ffffff;
-        padding: 10px 22px;
-        border-radius: 12px;
-        text-align: right;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
-    }
-
-    .total-counter .label {
-        display: block;
-        font-size: 11px;
-        text-transform: uppercase;
-        color: #94a3b8;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-    }
-
-    .total-counter .value {
-        font-size: 26px;
-        font-weight: 900;
-        color: #38bdf8;
-        line-height: 1.1;
-    }
-
-    .analytics-body {
-        display: grid;
-        grid-template-columns: 1fr 320px;
-        gap: 32px;
-        align-items: center;
-    }
-
-    .kpi-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .kpi-card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        border-radius: 12px;
-        border-width: 2px;
-        border-style: solid;
-        font-size: 15px;
-        font-weight: 700;
-        transition: transform 0.15s ease;
-    }
-
-    .kpi-card:hover {
-        transform: translateX(4px);
-    }
-
-    .kpi-card .kpi-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        margin-right: 12px;
-        display: inline-block;
-    }
-
-    .kpi-card .kpi-val {
-        font-size: 22px;
-        font-weight: 900;
-    }
-
-    .kpi-card.rolled {
-        background: #f0fdf4;
-        border-color: #22c55e;
-        box-shadow: 0 4px 14px rgba(34, 197, 94, 0.12);
-    }
-
-    .kpi-card.rolled .kpi-dot {
-        background: #16a34a;
-    }
-
-    .kpi-card.rolled .kpi-val {
-        color: #15803d;
-    }
-
-    .kpi-card.unchecked {
-        background: #fffbeb;
-        border-color: #f59e0b;
-        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.12);
-    }
-
-    .kpi-card.unchecked .kpi-dot {
-        background: #d97706;
-    }
-
-    .kpi-card.unchecked .kpi-val {
-        color: #b45309;
-    }
-
-    .kpi-card.checked {
-        background: #f0f9ff;
-        border-color: #0ea5e9;
-        box-shadow: 0 4px 14px rgba(14, 165, 233, 0.12);
-    }
-
-    .kpi-card.checked .kpi-dot {
-        background: #0284c7;
-    }
-
-    .kpi-card.checked .kpi-val {
-        color: #0369a1;
-    }
-
-    .kpi-card.line {
-        background: #faf5ff;
-        border-color: #a855f7;
-        box-shadow: 0 4px 14px rgba(168, 85, 247, 0.12);
-    }
-
-    .kpi-card.line .kpi-dot {
-        background: #9333ea;
-    }
-
-    .kpi-card.line .kpi-val {
-        color: #7e22ce;
-    }
-
-    .kpi-card.pending {
-        background: #fef2f2;
-        border-color: #ef4444;
-        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.12);
-    }
-
-    .kpi-card.pending .kpi-dot {
-        background: #dc2626;
-    }
-
-    .kpi-card.pending .kpi-val {
-        color: #b91c1c;
-    }
-
-    /* Bảng điều khiển bộ lọc (Filter Dashboard) */
-    .filter-dashboard {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-        border: 1px solid #e2e8f0;
-    }
-
-    .filter-dashboard-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 1.5px dashed #f1f5f9;
-    }
-
-    .filter-dashboard-header h2 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .filter-dashboard-header h2 span {
-        color: #0284c7;
-        font-size: 22px;
-        font-weight: 800;
-    }
-
-    .filter-row {
-        display: flex;
-        align-items: flex-start;
-        margin-bottom: 16px;
-    }
-
-    .filter-row:last-child {
-        margin-bottom: 0;
-    }
-
-    .filter-label {
-        width: 140px;
-        font-size: 14px;
-        font-weight: 700;
-        color: #475569;
-        flex-shrink: 0;
-        padding-top: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .filter-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        flex: 1;
-    }
-
-    .filter-pill,
-    .status-btn {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 16px;
-        font-size: 13.5px;
-        font-weight: 600;
-        color: #475569;
-        background: #f8fafc;
-        border: 1px solid #cbd5e1;
-        border-radius: 20px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-    }
-
-    .filter-pill:hover,
-    .status-btn:hover {
-        background: #e2e8f0;
-        color: #0f172a;
-    }
-
-    .filter-pill.active,
-    .status-btn.active {
-        background: #0284c7;
-        color: #ffffff;
-        border-color: #0369a1;
-        box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
-    }
-    </style>
 </head>
 
 <body>
@@ -407,55 +151,105 @@ $typeOptions = [
             <a href="<?= $exportUrl ?>" class="btn-excel">Xuất file Excel</a>
         </div>
 
-        <!-- KHUNG BIỂU ĐỒ VÀ THẺ THỐNG KÊ TỔNG QUAN -->
-        <div class="analytics-card">
-            <div class="analytics-header">
-                <div class="title-wrap">
-                    <span class="badge-icon">📊</span>
-                    <div>
-                        <h3>Thống kê trạng thái Bobin</h3>
+        <!-- KHUNG THỐNG KÊ GIAO DIỆN MỚI 2 CỘT -->
+        <div class="analytics-wrapper">
 
+            <!-- CỘT TRÁI: TIÊU ĐỀ + BIỂU ĐỒ -->
+            <div class="analytics-left">
+                <div class="analytics-title-box">
+                    <div class="badge-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="18" y="4" width="4" height="16" fill="#38bdf8" stroke="none"></rect>
+                            <rect x="10" y="9" width="4" height="11" fill="#818cf8" stroke="none"></rect>
+                            <rect x="2" y="14" width="4" height="6" fill="#34d399" stroke="none"></rect>
+                        </svg>
                     </div>
+                    <h3>Thống kê trạng thái Bobin</h3>
                 </div>
-                <div class="total-counter">
-                    <span class="label">Tổng số lượng Bobin</span>
-                    <span class="value"><?= number_format($totalBobins) ?></span>
+
+                <div class="chart-box">
+                    <div id="statusPieChart"></div>
                 </div>
             </div>
 
-            <div class="analytics-body">
-                <!-- Vùng biểu đồ ApexCharts ngang -->
-                <div class="chart-area">
-                    <div id="statusPieChart"></div>
+            <!-- CỘT PHẢI: THẺ TỔNG + DANH SÁCH KPI -->
+            <div class="analytics-right">
+
+                <!-- Thẻ Tổng Số Lượng -->
+                <div class="total-card">
+                    <div class="total-icon-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                        </svg>
+                    </div>
+                    <div class="total-info">
+                        <span class="label">Tổng số lượng Bobin</span>
+                        <span class="value"><?= number_format($totalBobins) ?></span>
+                    </div>
                 </div>
 
-                <!-- Bảng thẻ tóm tắt KPI -->
-                <div class="kpi-grid">
-                    <div class="kpi-card rolled">
-                        <span class="kpi-dot"></span>
-                        <span class="kpi-name">Đã cuộn</span>
-                        <strong class="kpi-val"><?= number_format($statusCounts['Rolled']) ?></strong>
-                    </div>
-                    <div class="kpi-card unchecked">
-                        <span class="kpi-dot"></span>
-                        <span class="kpi-name">Chưa QC</span>
-                        <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
-                    </div>
-                    <div class="kpi-card checked">
-                        <span class="kpi-dot"></span>
-                        <span class="kpi-name">Đã QC</span>
-                        <strong class="kpi-val"><?= number_format($statusCounts['Busy_Checked']) ?></strong>
-                    </div>
-                    <div class="kpi-card line">
-                        <span class="kpi-dot"></span>
-                        <span class="kpi-name">Tồn line</span>
-                        <strong class="kpi-val"><?= number_format($statusCounts['Line']) ?></strong>
-                    </div>
-                    <div class="kpi-card pending">
-                        <span class="kpi-dot"></span>
-                        <span class="kpi-name">Chờ hủy</span>
-                        <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation']) ?></strong>
-                    </div>
+                <!-- Danh sách các thẻ KPI có thể click lọc -->
+                <div class="kpi-list">
+                    <a href="<?= buildFilterUrl(['status' => 'Rolled', 'page' => 1]) ?>" class="kpi-card rolled">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">⏳</span>
+                            <span class="kpi-name">Đã cuộn</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Rolled']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
+
+                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked', 'page' => 1]) ?>"
+                        class="kpi-card unchecked">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">⌛</span>
+                            <span class="kpi-name">Chưa QC</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
+
+                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked', 'page' => 1]) ?>" class="kpi-card checked">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">✓</span>
+                            <span class="kpi-name">Đã QC</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Checked']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
+
+                    <a href="<?= buildFilterUrl(['status' => 'Line', 'page' => 1]) ?>" class="kpi-card line">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">⚙️</span>
+                            <span class="kpi-name">Tồn line</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Line']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
+
+                    <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation', 'page' => 1]) ?>"
+                        class="kpi-card pending">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">✕</span>
+                            <span class="kpi-name">Chờ hủy</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -466,6 +260,7 @@ $typeOptions = [
             const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
             const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
             const totalBobin = rawData.reduce((a, b) => a + b, 0) || 1;
+            const maxVal = Math.max(...rawData, 0);
 
             const statusChart = new BaseChart('#statusPieChart', {
                 chart: {
@@ -493,32 +288,37 @@ $typeOptions = [
                     name: 'Số lượng Bobin',
                     data: rawData
                 }],
-                colors: ['#10b981', '#f59e0b', '#0ea5e9', '#a855f7', '#ef4444'],
+                colors: ['#34d399', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
                 plotOptions: {
                     bar: {
-                        vertical: true,
-                        horizontal: false,
-                        barHeight: '60%', // Tăng độ dày của thanh ngang lên 75% để biểu đồ to ra
-                        barwidth: '60%',
+                        horizontal: true,
+                        borderRadius: 4,
+                        barHeight: '60%',
                         distributed: true,
                         dataLabels: {
-                            position: 'top' // Đặt nhãn dữ liệu ở trên cùng của thanh
-
+                            position: 'top'
                         }
                     }
                 },
                 dataLabels: {
                     enabled: true,
-
+                    textAnchor: 'start',
+                    offsetX: 10,
+                    offsetY: 0,
                     formatter: function(val) {
                         const percent = ((val / totalBobin) * 100).toFixed(1);
-                        // Đã loại bỏ chữ "cuộn"
                         return `${val.toLocaleString('vi-VN')} (${percent}%)`;
                     },
                     style: {
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        colors: ["#0f172a"]
+                        fontSize: '13px',
+                        fontWeight: 800,
+                        colors: ["#676767"]
+                    },
+                    background: {
+                        enabled: false
+                    },
+                    dropShadow: {
+                        enabled: false
                     }
                 },
                 grid: {
@@ -534,21 +334,22 @@ $typeOptions = [
                             show: false
                         }
                     },
-                    // Giảm khoảng đệm lề phải vì nhãn chữ đã ngắn lại
                     padding: {
                         top: 0,
-                        right: 80,
+                        right: 30,
                         bottom: 0,
-                        left: 10
+                        left: 25
                     }
                 },
                 xaxis: {
                     categories: labels,
+                    min: 0,
+                    max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
                     labels: {
                         style: {
                             colors: '#64748b',
-                            fontSize: '15px',
-                            fontWeight: 800
+                            fontSize: '12px',
+                            fontWeight: 600
                         },
                         formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
                     },
@@ -561,33 +362,52 @@ $typeOptions = [
                 },
                 yaxis: {
                     labels: {
+                        align: 'left',
+                        minWidth: 90,
+                        maxWidth: 130,
+                        offsetX: -15,
                         style: {
                             colors: '#1e293b',
-                            fontSize: '15px',
-                            fontWeight: 800
+                            fontSize: '14px',
+                            fontWeight: 700
                         }
                     }
                 },
                 tooltip: {
                     theme: 'dark',
                     style: {
-                        fontSize: '14px'
+                        fontSize: '15px'
                     },
-                    // Đã loại bỏ chữ "cuộn" khi hover
                     y: {
                         formatter: (val) => val.toLocaleString('vi-VN')
                     }
                 },
                 legend: {
-                    show: false
+                    show: true,
+                    position: 'bottom',
+                    horizontalAlign: 'center',
+                    fontSize: '13.5px',
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontWeight: 600,
+                    labels: {
+                        colors: '#475569'
+                    },
+                    markers: {
+                        radius: 12,
+                        width: 14,
+                        height: 14,
+                        offsetX: -4
+                    },
+                    itemMargin: {
+                        horizontal: 16,
+                        vertical: 8
+                    }
                 }
             });
-
             statusChart.render();
         })();
         </script>
 
-        <!-- BẢNG ĐIỀU KHIỂN BỘ LỌC (FILTER DASHBOARD) -->
         <div class="filter-dashboard">
             <div class="filter-dashboard-header">
                 <h2>Kết quả tìm kiếm: <span><?= number_format($totalRecords) ?></span> Bobin</h2>
@@ -647,8 +467,7 @@ $typeOptions = [
         <!-- DANH SÁCH BOBIN THỰC TẾ -->
         <div class="list-card">
             <?php if (empty($bobins)): ?>
-            <div class="empty-state" style="text-align:center; padding: 40px; color:#64748b;">Không tìm thấy Bobin nào
-                khớp với bộ lọc.</div>
+            <div class="empty-state">Không tìm thấy Bobin nào khớp với bộ lọc.</div>
             <?php else: ?>
             <div class="bobin-list">
                 <?php foreach ($bobins as $item): ?>
@@ -878,7 +697,6 @@ $typeOptions = [
                         <?php endif; ?>
                     </div>
                 </div>
-
                 <?php endforeach; ?>
             </div>
 

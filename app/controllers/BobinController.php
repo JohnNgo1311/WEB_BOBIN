@@ -105,24 +105,30 @@ class BobinController extends Controller
     //! GET
     public function listBobinHistoryView()
     {
-        //TODO 1. Chỉ chấp nhận GET
+        // 1. Chỉ chấp nhận GET
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
 
+            // Lấy danh sách Bobin đã filter theo Status
+            $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
             if (empty($bobins)) {
                 $bobins = [];
             }
+
+            // Lấy số liệu thống kê độc lập (Không bị ảnh hưởng bởi Status)
+            $statusCounts = $this->bobinService->getBobinHistoryStats($dto);
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
+
         $this->view('listBobinHistoryView', data: [
-            'bobins'  => $bobins,
-            'success' => true,
+            'bobins'       => $bobins,
+            'statusCounts' => $statusCounts, // <--- Bổ sung truyền data xuống view
+            'success'      => true,
         ]);
     }
     public function listBobinDetailView()

@@ -367,17 +367,13 @@ class BobinServices
     #region GET LIST & GET SPECIFIC
     public function getBobinsHistory(BobinGetListDTO $dto): array
     {
-        // Get & sanitize inputs
         $keywordRaw = $dto->keyword;
         $fromRaw    = $dto->fromDate;
         $toRaw      = $dto->toDate;
         $statusRaw  = $dto->status;
 
-        // Validate YYYY-MM-DD quickly using regex + checkdate (faster than DateTime)
         $isValidDate = function ($d) {
-            if (!is_string($d) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) {
-                return false;
-            }
+            if (!is_string($d) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return false;
             [$y, $m, $day] = explode('-', $d);
             return checkdate((int)$m, (int)$day, (int)$y);
         };
@@ -387,55 +383,82 @@ class BobinServices
         $keyword = trim($keywordRaw);
         $status  = trim($statusRaw);
 
-        if ($from !== '' && !$isValidDate($from)) {
-            $from = '';
-        }
-        if ($to !== '' && !$isValidDate($to)) {
-            $to = '';
-        }
+        if ($from !== '' && !$isValidDate($from)) $from = '';
+        if ($to !== '' && !$isValidDate($to)) $to = '';
 
-        // enforce reasonable lengths (use mb_substr for safety)
         $filters = [
-            'keyword'   => mb_substr($keyword, 0, 255),
-            'from_date' => $from,
-            'to_date'   => $to,
-            'status'    => mb_substr($status, 0, 50),
+            'keyword'    => mb_substr($keyword, 0, 255),
+            'from_date'  => $from,
+            'to_date'    => $to,
+            'status'     => mb_substr($status, 0, 50),
+            'bobin_size' => trim($dto->bobinSize ?? 'all'), // Đã thêm
+            'bobin_type' => trim($dto->bobinType ?? 'all'), // Đã thêm
         ];
 
         $listBobin = [];
         try {
             if ($filters['from_date'] !== '' && $filters['to_date'] !== '') {
-                // Ensure from <= to
                 if ($filters['from_date'] > $filters['to_date']) {
                     throw new Exception('Ngày bắt đầu không được sau ngày kết thúc');
                 } else {
-                    // Chuẩn bị dữ liệu Query có giờ phút giây
                     $filters['from_date'] = "{$filters['from_date']} 00:00:00";
                     $filters['to_date']   = "{$filters['to_date']} 23:59:59";
                     $listBobin = $this->bobinRepo->getBobinsHistory($filters);
                 }
             } else {
-                // Default: last 7 days
-
                 $fromDefault = date('Y-m-d', strtotime('-7 days'));
                 $toDefault = date('Y-m-d');
 
-                $filters['from_date'] = $fromDefault;
-                $filters['to_date'] = $toDefault;
-
-                // Chuẩn bị dữ liệu Query có giờ phút giây
-                $queryFilters = $filters;
-                $queryFilters['from_date'] = "{$fromDefault} 00:00:00";
-                $queryFilters['to_date']   = "{$toDefault} 23:59:59";
-
-                // KHUYÊN DÙNG: Nên dùng chung hàm getBobinsHistory thay vì getDetailBobinsLast7Days
-                // để đảm bảo logic 00:00:00 -> 23:59:59 được áp dụng nhất quán.
-                $listBobin =  $this->bobinRepo->getBobinsHistory($queryFilters);
+                $filters['from_date'] = "{$fromDefault} 00:00:00";
+                $filters['to_date']   = "{$toDefault} 23:59:59";
+                $listBobin =  $this->bobinRepo->getBobinsHistory($filters);
             }
         } catch (Exception $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
         return $listBobin;
+    }
+
+    public function getBobinHistoryStats(BobinGetListDTO $dto): array
+    {
+        try {
+            $fromRaw = $dto->fromDate ?? '';
+            $toRaw   = $dto->toDate ?? '';
+            $keyword = trim($dto->keyword ?? '');
+
+            $isValidDate = function ($d) {
+                if (!is_string($d) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return false;
+                [$y, $m, $day] = explode('-', $d);
+                return checkdate((int)$m, (int)$day, (int)$y);
+            };
+
+            $from = trim($fromRaw);
+            $to   = trim($toRaw);
+            if ($from !== '' && !$isValidDate($from)) $from = '';
+            if ($to !== '' && !$isValidDate($to)) $to = '';
+
+            $filters = [
+                'keyword'    => mb_substr($keyword, 0, 255),
+                'from_date'  => $from,
+                'to_date'    => $to,
+                'bobin_size' => trim($dto->bobinSize ?? 'all'), // Đã thêm
+                'bobin_type' => trim($dto->bobinType ?? 'all'), // Đã thêm
+            ];
+
+            if ($filters['from_date'] !== '' && $filters['to_date'] !== '') {
+                $filters['from_date'] = "{$filters['from_date']} 00:00:00";
+                $filters['to_date']   = "{$filters['to_date']} 23:59:59";
+            } else {
+                $fromDefault = date('Y-m-d', strtotime('-7 days'));
+                $toDefault = date('Y-m-d');
+                $filters['from_date'] = "{$fromDefault} 00:00:00";
+                $filters['to_date']   = "{$toDefault} 23:59:59";
+            }
+
+            return $this->bobinRepo->getBobinsHistoryStats($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
     }
     public function getListDetailBobinsForEditting(BobinGetListDTO $dto): array
     {

@@ -27,6 +27,16 @@ class BobinRepository
                 ':from_date' => $filters['from_date'],
                 ':to_date' => $filters['to_date']
             ];
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            // Bổ sung Query lọc Loại Bobin
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
@@ -50,9 +60,7 @@ class BobinRepository
                 $params[':kw8'] = $searchStr;
             }
             if (!empty($filters['status'])) {
-                if ($filters['status'] === 'Line') {
-                    $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
-                } elseif ($filters['status'] !== 'all') {
+                if ($filters['status'] !== 'all') {
                     $sql .= " AND bobin_current_status = :status";
                     $params[':status'] = $filters['status'];
                 }
@@ -61,6 +69,61 @@ class BobinRepository
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+    //? Thống kê tổng số lượng theo từng trạng thái cho trang Lịch Sử (Bỏ qua filter Status)
+    public function getBobinsHistoryStats(array $filters = []): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT bobin_current_status, COUNT(*) AS total 
+                    FROM bobin_history 
+                    WHERE updated_time BETWEEN :from_date AND :to_date";
+            $params = [
+                ':from_date' => $filters['from_date'],
+                ':to_date'   => $filters['to_date']
+            ];
+
+            // Vẫn giữ filter Keyword để số liệu chuẩn xác với thanh tìm kiếm
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $sql .= " GROUP BY bobin_current_status";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+            $rolled        = (int)($rows['Rolled'] ?? 0);
+            $busyUnchecked = (int)($rows['Busy_Unchecked'] ?? 0);
+            $busyChecked   = (int)($rows['Busy_Checked'] ?? 0);
+            $pendingCancel = (int)($rows['Pending_Cancellation'] ?? 0);
+            $cancelled     = (int)($rows['Cancelled'] ?? 0);
+
+            return [
+                'Rolled'               => $rolled,
+                'Busy_Unchecked'       => $busyUnchecked,
+                'Busy_Checked'         => $busyChecked,
+                'Pending_Cancellation' => $pendingCancel,
+                'Cancelled'            => $cancelled
+            ];
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
             throw new Exception("Database error: " . $e->getMessage());

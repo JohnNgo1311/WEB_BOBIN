@@ -80,7 +80,7 @@ class BobinController extends Controller
     {
         // Sử dụng header Location để chuyển hướng
         // Lưu ý: Nếu dự án của bạn nằm trong thư mục WEB_BOBIN, hãy thêm nó vào đường dẫn
-        header('Location: /WEB_BOBIN/public/index.php?url=bobin/listBobinView_Winding');
+        header('Location: /WEB_BOBIN/public/index.php?url=bobin/windingView');
         exit; // Bắt buộc phải có exit để dừng script ngay lập tức
     }
 
@@ -105,30 +105,28 @@ class BobinController extends Controller
     //! GET
     public function listBobinHistoryView()
     {
-        // 1. Chỉ chấp nhận GET
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
+        $errorMsg = null;
+        $bobins = [];
+        $statusCounts = [];
+
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-
-            // Lấy danh sách Bobin đã filter theo Status
             $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
-            if (empty($bobins)) {
-                $bobins = [];
-            }
-
-            // Lấy số liệu thống kê độc lập (Không bị ảnh hưởng bởi Status)
             $statusCounts = $this->bobinService->getBobinHistoryStats($dto);
         } catch (Throwable $e) {
-            throw new Exception($e->getMessage(), $e->getCode(), $e);
+            // Thay vì throw Exception làm sập trang, ta gán lỗi vào biến
+            $errorMsg = $e->getMessage();
         }
 
         $this->view('listBobinHistoryView', data: [
             'bobins'       => $bobins,
-            'statusCounts' => $statusCounts, // <--- Bổ sung truyền data xuống view
-            'success'      => true,
+            'statusCounts' => $statusCounts,
+            'error'        => $errorMsg, // <-- Truyền lỗi xuống View để bật Toast
+            'success'      => empty($errorMsg),
         ]);
     }
     public function listBobinDetailView()
@@ -202,28 +200,29 @@ class BobinController extends Controller
             'bobins'  => $bobins,
         ]);
     }
-    public function listBobinView_Winding()
+    public function windingView()
     {
-        //TODO 1. Chỉ chấp nhận GET
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
         try {
-
             $dto = BobinGetListDTO::fromRequest($_GET);
-
-            $bobins = $this->bobinService->getDetailBobinsForWinding($dto) ?? [];
-
-            if (empty($bobins)) {
-                $bobins = [];
-            } else {
-            }
+            $bobins = $this->bobinService->getDetailBobinsForWindingPaginated($dto) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForWinding($dto);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
+
         $this->view('windingView', data: [
-            'bobins'  => $bobins,
+            'bobins'     => $bobins,
+            'pagination' => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ]
         ]);
     }
 
@@ -766,7 +765,10 @@ class BobinController extends Controller
         }
 
         if (empty($dto->winding_machine)) {
-            throw new Exception('Vui lòng nhập tên máy cuộn');
+            throw new Exception('Vui lòng nhập mã máy cuộn');
+        }
+        if (strlen($dto->winding_machine) < 4) {
+            throw new Exception('Mã máy cuộn không tồn tại trong hệ thống');
         }
         if (empty($dto->winding_employee_code) || $dto->winding_employee_code === "Chưa cập nhật") {
             throw new Exception('Vui lòng nhập mã nhân viên cuộn');

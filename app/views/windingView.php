@@ -1,29 +1,26 @@
 <?php
 
 $bobins = $data['bobins'] ?? [];
+$pagination = $data['pagination'] ?? [
+    'currentPage'  => 1,
+    'totalPages'   => 1,
+    'totalRecords' => count($bobins),
+    'limit'        => 50
+];
 
 if (!function_exists('buildFilterUrl')) {
     function buildFilterUrl(array $overrideParams = []): string
     {
-        //TODO 1. Lấy query hiện tại
         $query = $_GET ?? [];
-
-        //TODO 2. [QUAN TRỌNG] Đảm bảo tham số 'url' luôn đúng định tuyến hiện tại
-        //TODO Nếu $_GET chưa có 'url', ta phải ép buộc thêm vào.
         if (!isset($query['url'])) {
-            $query['url'] = 'bobin/listBobinView_Winding';
+            $query['url'] = 'bobin/windingView';
         }
-
-        //TODO 3. Ghi đè các tham số mới (Dùng array_merge cho gọn và nhanh hơn foreach)
         $query = array_merge($query, $overrideParams);
-
-        //TODO 4. Xử lý trường hợp muốn xóa tham số (nếu truyền vào null)
         foreach ($query as $key => $value) {
             if (is_null($value) || $value === '') {
                 unset($query[$key]);
             }
         }
-        // 5. Build lại URL
         return '/WEB_BOBIN/public/index.php?' . http_build_query($query);
     }
 }
@@ -36,8 +33,6 @@ if (!function_exists('viBadge')) {
         return "<div class='vi-item $class'><span>$label</span><strong>$text</strong></div>";
     }
 }
-
-
 ?>
 
 <!DOCTYPE html>
@@ -45,32 +40,27 @@ if (!function_exists('viBadge')) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách Bobin</title>
+    <title>Danh sách Bobin - Nhóm Cuộn</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobin_Winding.css?v=<?= time() ?>">
+    <link rel="icon" href="data:,">
 </head>
-<link rel="icon" href="data:,">
-</head>
-
 
 <body>
     <div class="menu-bar">
         <div class="menu-left">
             <a href="#">Nhóm đùn</a>
             <a href="#">QC</a>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_Winding">Cuộn</a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView">Cuộn</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView">Danh sách Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView">Lịch sử Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView">Danh sách chờ hủy</a>
-
         </div>
         <div class="menu-right">
             <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
         </div>
     </div>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
-    </div>
-    </div>
 
     <h1>Nhóm cuộn - Xác nhận hoàn thành Bobin</h1>
 
@@ -78,44 +68,35 @@ if (!function_exists('viBadge')) {
 
         <!-- CONTROL BAR -->
         <div class="control-bar">
-
-            <!-- SEARCH BAR -->
             <form method="GET" action="/WEB_BOBIN/public/index.php" class="filter-form">
-                <input type="hidden" name="url" value="bobin/listBobinView_Winding">
+                <input type="hidden" name="url" value="bobin/windingView">
                 <div class="search-wrapper">
                     <svg class="search-icon" viewBox="0 0 24 24">
-                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5
-                    6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
+                        <path
+                            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
                     </svg>
                     <input type="text" name="keyword" placeholder="Nhập thông tin Bobin cần tra cứu..."
                         value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                 </div>
                 <button class="btn-filter">Lọc</button>
             </form>
-
         </div>
 
         <!-- LIST -->
         <div class="list-card">
             <div class="header-row"
                 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-                <h2 style="margin:0;">Số lượng Bobin: <?= count($bobins) ?></h2>
-                <?php $currentStatus = $_GET['status'] ?? 'all'; ?>
+                <h2 style="margin:0;">Tổng số lượng Bobin:
+                    <?= number_format($pagination['totalRecords'] ?? count($bobins)) ?> Bobin</h2>
             </div>
 
             <?php if (empty($bobins)): ?>
                 <div class="empty-state">Danh sách trống</div>
             <?php else: ?>
-
-
-                <!-- Extrusion -->
                 <div class="bobin-list">
-
                     <?php foreach ($bobins as $item): ?>
-
                         <?php
                         $rawStatus = $item['bobin_current_status'] ?? 'Unknown';
-                        // Vừa loại bỏ gạch dưới, vừa chuyển về chữ thường để so sánh dễ hơn
                         $status = strtolower($rawStatus);
                         $statusClass = match ($status) {
                             'rolled' => 'status_rolled',
@@ -127,7 +108,6 @@ if (!function_exists('viBadge')) {
                         $extrusion_employeeRaw = $item['extrusion_employee'] ?? '';
                         $winding_employeeRaw = $item['winding_employee'] ?? '';
                         $materialLotRaw = $item['material_lot'] ?? '';
-                        $productionOrderCode = 'Chưa cập nhật';
                         $productCode = 'Chưa cập nhật';
                         $extrusion_employeeName = 'Chưa cập nhật';
                         $extrusion_employeeCode = 'Chưa cập nhật';
@@ -137,13 +117,11 @@ if (!function_exists('viBadge')) {
                         $winding_employeeName = '';
                         $winding_note = $item['winding_note'] ?? '';
 
-
                         $vi = [];
                         $defects = [];
 
                         if (is_string($viRaw) && trim($viRaw) !== '') {
                             $decoded = json_decode($viRaw, true);
-
                             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                                 $vi = $decoded;
                                 $defects = $vi['defects'] ?? [];
@@ -152,15 +130,12 @@ if (!function_exists('viBadge')) {
 
                         if (is_string($productsRaw) && trim($productsRaw) !== '') {
                             $decoded = json_decode($productsRaw, true);
-
                             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                                $productionOrderCode = $decoded['production_order_code'] ?? '';
                                 $productCode = $decoded['product_code'] ?? '';
                             }
                         }
                         if (is_string($extrusion_employeeRaw) && trim($extrusion_employeeRaw) !== '') {
                             $decoded = json_decode($extrusion_employeeRaw, true);
-
                             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                                 $extrusion_employeeCode = $decoded['employee_code'] ?? '';
                                 $extrusion_employeeName = $decoded['employee_name'] ?? '';
@@ -168,7 +143,6 @@ if (!function_exists('viBadge')) {
                         }
                         if (is_string($winding_employeeRaw) && trim($winding_employeeRaw) !== '') {
                             $decoded = json_decode($winding_employeeRaw, true);
-
                             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                                 $winding_employeeCode = $decoded['employee_code'] ?? '';
                                 $winding_employeeName = $decoded['employee_name'] ?? '';
@@ -207,112 +181,87 @@ if (!function_exists('viBadge')) {
                                 </div>
                                 <div class="status-badge">
                                     <?php
-
                                     $displayStatus = match ($rawStatus) {
                                         'Rolled' => 'Đã cuộn',
                                         'Busy_Checked'  => 'Đã kiểm tra QC',
-                                        default => $rawStatus, // Giữ nguyên nếu không khớp
+                                        default => $rawStatus,
                                     };
                                     echo htmlspecialchars($displayStatus); ?>
                                 </div>
-
                             </div>
 
                             <!-- INFO GRID -->
                             <div class="info-grid">
-
-                                <!-- SAU NÀY SỬ DỤNG <div class="field-item">
-                            <label>Mã chỉ thị sản xuất</label>
-                            <div class="val-sub">
-                                <?= htmlspecialchars($productionOrderCode ?? '') ?></div>
-                        </div> -->
-
                                 <div class="field-item">
                                     <label>Mã sản phẩm</label>
                                     <div class="val-sub"><?= htmlspecialchars($productCode ?? '') ?></div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Mã nhân viên</label>
                                     <div class="val-sub"><?= htmlspecialchars($extrusion_employeeCode ?? 'Chưa cập nhật') ?>
                                     </div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Họ tên nhân viên</label>
                                     <div class="val-sub"><?= htmlspecialchars($extrusion_employeeName ?? 'Chưa cập nhật') ?>
                                     </div>
-
                                 </div>
-
                                 <div class="field-item">
                                     <label>Ca làm việc</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Kích thước Bobin</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['bobin_size'] ?? 'Chưa cập nhật') ?></div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Loại Bobin</label>
                                     <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
                                         <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
                                     </div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Lot vật liệu</label>
                                     <div class="val-sub"><?= htmlspecialchars($materialLot ?? '') ?></div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Lot in</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['print_lot']) ?></div>
                                 </div>
-
                                 <div class="field-item highlight-box">
                                     <label>Chiều dài (m)</label>
                                     <div class="val-highlight">
                                         <?= number_format($item['length_m'], 0, decimal_separator: ".", thousands_separator: ",") ?>
-
                                     </div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Ngày đùn</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['extrusion_date']) ?></div>
                                 </div>
-
                                 <div class="field-item">
                                     <label>Thời điểm hoàn thành cuộn</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['finish_time']) ?></div>
                                 </div>
-
                             </div>
 
                             <div class="divider"></div>
                             <!-- QC -->
                             <div class="qc-section">
                                 <div class="qc-title">🛡️ QC Check</div>
-
                                 <div class="qc-header">
                                     <div class="qc-info-row">
                                         <div class="qc-input">
                                             <label class="val-text">Mã nhân viên QC:</label>
                                             <input type="text" class="qc-input input-inspector-code"
                                                 value="<?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa cập nhật') ?>"
-                                                placeholder="Không có dữ liệu" readonly>
+                                                readonly>
                                         </div>
-
                                         <div class="qc-input">
                                             <label class="val-text">Họ tên nhân viên:</label>
                                             <input type="text" class="qc-input input-inspector-name"
                                                 value="<?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa cập nhật') ?>"
-                                                placeholder="Không có dữ liệu" readonly>
+                                                readonly>
                                         </div>
-
                                         <div class="qc-meta-item">
                                             <label class="val-text">Thời điểm kiểm tra:</label>
                                             <span class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? '-') ?></span>
@@ -332,40 +281,32 @@ if (!function_exists('viBadge')) {
                                     ?>
                                         <div class="vi-item-switch" data-key="<?= htmlspecialchars($key) ?>">
                                             <span><?= htmlspecialchars($label) ?></span>
-                                            <button type="button" class="toggle-switch <?= $goodDefect ? 'active' : '' ?>"
-                                                data-value="<?= $goodDefect ? 'true' : 'false' ?>" disabled>
+                                            <button type="button" class="toggle-switch <?= $goodDefect ? 'active' : '' ?>" disabled>
                                                 <span class="switch-label"><?= $goodDefect ? 'OK' : 'NG' ?></span>
                                             </button>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
-
                                 <div class="qc-note">
                                     <label>📝 Ghi chú:</label>
-                                    <textarea class="qc-note-field" placeholder="Không có ghi chú"
+                                    <textarea class="qc-note-field"
                                         readonly><?= htmlspecialchars($defects['note'] ?? 'Chưa cập nhật') ?></textarea>
                                 </div>
                             </div>
-                            <!-- End QC -->
 
                             <!-- Winding -->
                             <div class="divider"></div>
                             <div class="winding-section">
-
                                 <div class="winding-title">📍 Thông tin cuộn</div>
-
                                 <div class="winding-header">
                                     <div class="winding-info-row">
-
                                         <div class="winding-input">
                                             <label class="val-text">Máy cuộn:</label>
                                             <input type="text" class="winding-input winding-machine-name"
                                                 value="<?= ($rawStatus === 'Rolled') ? htmlspecialchars($winding_machine ?? '') : '' ?>"
                                                 placeholder="Nhập mã số máy cuộn">
                                             <div class="suggestion-box"></div>
-
                                         </div>
-
                                         <div class="winding-input">
                                             <label class="val-text">Mã nhân viên:</label>
                                             <input type="text" class="winding-input winding-employee-code"
@@ -373,25 +314,12 @@ if (!function_exists('viBadge')) {
                                                 placeholder="Nhập mã số nhân viên">
                                             <div class="suggestion-box"></div>
                                         </div>
-
                                         <div class="winding-input">
                                             <label class="val-text">Họ tên nhân viên:</label>
                                             <input type="text" class="winding-input winding-employee-name"
                                                 value="<?= ($rawStatus === 'Rolled') ? htmlspecialchars($winding_employeeName ?? '') : '' ?>"
                                                 placeholder="Nhập họ tên nhân viên" readonly>
                                         </div>
-
-
-                                        <!-- <div class="winding-input">
-                                            <label for="flow-test" class="val-text">Kết quả kiểm tra thông khí:</label>
-                                            <select id="flow-test" class="winding-flow-test-result status-ok" required
-                                                onchange="updateFlowTestColor(this)">
-                                                <option value="OK">OK</option>
-                                                <option value="NG">NG</option>
-                                            </select>
-                                        </div> -->
-
-
                                     </div>
                                     <div class="winding-note">
                                         <label>📝 Ghi chú:</label>
@@ -399,7 +327,7 @@ if (!function_exists('viBadge')) {
                                             value="<?= ($rawStatus === 'Rolled') ? htmlspecialchars($winding_note ?? '') : '' ?>"
                                             placeholder="Nhập ghi chú">
                                     </div>
-                                    <!-- End Winding -->
+
                                     <div class="card-footer-simple">
                                         <?php if (!empty($item['updated_time'])): ?>
                                             <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
@@ -407,7 +335,6 @@ if (!function_exists('viBadge')) {
                                         <?php endif; ?>
 
                                         <?php
-                                        // 1. Xử lý logic tạo chuỗi mainInfoText ngay trước khi in nút bấm
                                         $printLot = $item['print_lot'] ?? 'Chưa cập nhật';
                                         $formatted_time = !empty($item['finish_time']) ? date('dmY$His', strtotime($item['finish_time'])) : 'Chưa cập nhật';
 
@@ -442,11 +369,48 @@ if (!function_exists('viBadge')) {
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- THANH PHÂN TRANG -->
+                <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
+                    <div class="pagination-wrapper"
+                        style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:24px; padding:12px;">
+                        <?php if ($pagination['currentPage'] > 1): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] - 1]) ?>" class="page-btn"
+                                style="padding:6px 14px; border:1px solid #cbd5e1; border-radius:6px; text-decoration:none; color:#334155; background:#fff; font-size:14px;">
+                                ‹ Trước
+                            </a>
+                        <?php endif; ?>
+
+                        <?php
+                        $start = max(1, $pagination['currentPage'] - 2);
+                        $end = min($pagination['totalPages'], $pagination['currentPage'] + 2);
+                        for ($p = $start; $p <= $end; $p++):
+                            $isActive = ($p === (int)$pagination['currentPage']);
+                        ?>
+                            <a href="<?= buildFilterUrl(['page' => $p]) ?>" class="page-btn <?= $isActive ? 'active' : '' ?>"
+                                style="padding:6px 14px; border-radius:6px; text-decoration:none; font-size:14px; <?= $isActive ? 'background:#0284c7; color:#fff; border-color:#0369a1; font-weight:600;' : 'border:1px solid #cbd5e1; color:#334155; background:#fff;' ?>">
+                                <?= $p ?>
+                            </a>
+                        <?php endfor; ?>
+
+                        <?php if ($pagination['currentPage'] < $pagination['totalPages']): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] + 1]) ?>" class="page-btn"
+                                style="padding:6px 14px; border:1px solid #cbd5e1; border-radius:6px; text-decoration:none; color:#334155; background:#fff; font-size:14px;">
+                                Sau ›
+                            </a>
+                        <?php endif; ?>
+
+                        <span style="font-size:13px; color:#64748b; margin-left:10px;">
+                            Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
+                            <?= number_format($pagination['totalRecords']) ?> Bobin)
+                        </span>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>
+
     <script>
-        // Định nghĩa đường dẫn gốc từ PHP
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/submit.js?v=<?= time() ?>"></script>

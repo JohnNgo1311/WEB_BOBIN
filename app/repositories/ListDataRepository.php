@@ -27,6 +27,8 @@ class ListdataRepository
             'list_winding_machine' => "SELECT * FROM winding_machine_list",
         ];
 
+        $pdo = null;
+
         try {
             $pdo = $this->db->pdo();
             $pdo->beginTransaction();
@@ -36,7 +38,9 @@ class ListdataRepository
 
             return $this->mapToEntity($response);
         } catch (PDOException $e) {
-            $pdo->rollBack();
+            if ($pdo !== null && $pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw new Exception("Database query failed: " . $e->getMessage());
         }
     }

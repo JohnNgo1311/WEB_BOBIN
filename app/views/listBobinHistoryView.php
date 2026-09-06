@@ -1,6 +1,7 @@
 <?php
 $bobins = $data['bobins'] ?? [];
 
+// 1. TỔNG HỢP SỐ LIỆU TỪ DATABASE
 $defaultStatus = [
     'Rolled'               => 0,
     'Busy_Unchecked'       => 0,
@@ -10,15 +11,60 @@ $defaultStatus = [
 ];
 $statusCounts = array_merge($defaultStatus, $data['statusCounts'] ?? []);
 
-$totalBobins = $statusCounts['Rolled']
-    + $statusCounts['Busy_Unchecked']
-    + $statusCounts['Busy_Checked']
-    + $statusCounts['Pending_Cancellation']
-    + $statusCounts['Cancelled'];
-
 $currentStatus = $_GET['status'] ?? 'all';
 $currentSize   = $_GET['bobin_size'] ?? 'all';
 $currentType   = $_GET['bobin_type'] ?? 'all';
+
+// ========================================================
+// LOGIC MỚI: TÍNH TOÁN DUNG LƯỢNG VÀ BOBIN TRỐNG
+// ========================================================
+$capacityMap = $data['capacityMap'] ?? [
+    'PL4-7 (TU04.TU06)' => 420,
+    'PL4-7 (TU08~)'     => 480,
+    'PL7-3'             => 460
+];
+
+// Luôn lấy đúng định mức thực tế: Chọn 'all' ra 1360, chọn size cụ thể ra đúng dung lượng của size đó
+$totalRealBobins = ($currentSize === 'all')
+    ? array_sum($capacityMap)
+    : ($capacityMap[$currentSize] ?? 0);
+
+// Số lượng Bobin ĐÃ ĐÙN = Số lượng Bobin chưa QC
+$extrudedCount = $statusCounts['Busy_Unchecked'];
+
+// LỌC DUY NHẤT: Đếm số lượng Bobin ĐÃ CUỘN (Lọc trùng lặp theo bobin_key_code)
+$uniqueRolledKeys = [];
+foreach ($bobins as $b) {
+    if (($b['bobin_current_status'] ?? '') === 'Rolled') {
+        $keyCode = $b['bobin_key_code'] ?? '';
+        if (!empty($keyCode)) {
+            $uniqueRolledKeys[$keyCode] = true;
+        }
+    }
+}
+$uniqueRolledCount = count($uniqueRolledKeys);
+
+// Tính Bobin Trống: Tổng thực tế (1360) - (Đã Đùn - Đã Cuộn [Unique])
+$emptyBobins = $totalRealBobins - ($extrudedCount - $uniqueRolledCount);
+// Đảm bảo số lượng nằm trong giới hạn thực tế (Từ 0 đến Max Capacity)
+$emptyBobins = min($totalRealBobins, max(0, $emptyBobins));
+
+// Số lượng Chưa kiểm tra QC
+$untestedQC = max(0, $statusCounts['Busy_Unchecked'] - $statusCounts['Busy_Checked']);
+
+// Tổng số kết quả tìm kiếm (Do trang Lịch sử không phân trang DB, count($bobins) là tổng số thực)
+$totalRecords = count($bobins);
+// ========================================================
+
+// 2. CHUẨN BỊ DỮ LIỆU CHO BIỂU ĐỒ (CHART)
+$chartLabels = ['Trống', 'Đã đùn', 'Chưa kiểm tra QC', 'Đã kiểm tra QC', 'Đã hủy'];
+$chartSeries = [
+    $emptyBobins,
+    $extrudedCount,
+    $untestedQC,
+    $statusCounts['Busy_Checked'],
+    $statusCounts['Cancelled']
+];
 
 $sizeOptions = [
     'all'               => 'Mọi kích thước',
@@ -69,11 +115,26 @@ if (!function_exists('viBadge')) {
 <head>
     <meta charset="UTF-8">
     <title>Lịch sử Bobin</title>
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinHistory.css?v=3">
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinHistory.css?v=5">
     <link rel="icon" href="data:,">
     <script src="/WEB_BOBIN/public/assets/js/apexcharts.min.js"></script>
     <script src="/WEB_BOBIN/public/assets/js/chart-helper.js"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
+    <style>
+        .kpi-card.empty-bobin {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .kpi-card.empty-bobin .kpi-icon {
+            background: #cbd5e1;
+            color: #475569;
+        }
+
+        .kpi-card.empty-bobin .kpi-val {
+            color: #334155;
+        }
+    </style>
 </head>
 
 <body>
@@ -200,22 +261,34 @@ if (!function_exists('viBadge')) {
                         </svg>
                     </div>
                     <div class="total-info">
-                        <span class="label">Tổng số lần cập nhật trạng thái Bobin</span>
-                        <span class="value"><?= number_format($totalBobins) ?></span>
+                        <span class="label">Tổng số lượng Bobin</span>
+                        <span class="value"><?= number_format($totalRealBobins) ?></span>
                     </div>
                 </div>
 
                 <div class="kpi-list">
+                    <!-- Thẻ Bobin Trống (Chỉ hiển thị, không click) -->
+                    <div class="kpi-card empty-bobin" style="cursor: default;">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">📦</span>
+                            <span class="kpi-name">BOBIN TRỐNG</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($emptyBobins) ?></strong>
+                        </div>
+                    </div>
+
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
                         <div class="kpi-left">
                             <span class="kpi-icon">✅</span>
                             <span class="kpi-name">ĐÃ ĐÙN</span>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
+                            <strong class="kpi-val"><?= number_format($extrudedCount) ?></strong>
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
+
                     <a href="<?= buildFilterUrl(['status' => 'Rolled']) ?>" class="kpi-card rolled">
                         <div class="kpi-left">
                             <span class="kpi-icon">✅</span>
@@ -226,21 +299,21 @@ if (!function_exists('viBadge')) {
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
+
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
                         <div class="kpi-left">
                             <span class="kpi-icon">⏳</span>
                             <span class="kpi-name">CHƯA KIỂM TRA QC</span>
                         </div>
                         <div class="kpi-right">
-                            <strong
-                                class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked'] - $statusCounts['Busy_Checked']) ?></strong>
+                            <strong class="kpi-val"><?= number_format($untestedQC) ?></strong>
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
 
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Checked']) ?>" class="kpi-card checked">
                         <div class="kpi-left">
-                            <span class="kpi-icon">✓</span>
+                            <span class="kpi-icon">🛡️</span>
                             <span class="kpi-name">ĐÃ KIỂM TRA QC</span>
                         </div>
                         <div class="kpi-right">
@@ -248,29 +321,6 @@ if (!function_exists('viBadge')) {
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
-
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked']) ?>" class="kpi-card checked">
-                        <div class="kpi-left">
-                            <span class="kpi-icon">✓</span>
-                            <span class="kpi-name">BOBIN TRỐNG</span>
-                        </div>
-                        <div class="kpi-right">
-                            <strong
-                                class="kpi-val"><?= number_format(1360 - $statusCounts['Busy_Unchecked'] + $statusCounts['Rolled']) ?></strong>
-                            <span class="kpi-arrow">›</span>
-                        </div>
-                    </a>
-
-                    <!-- <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation']) ?>" class="kpi-card pending">
-                        <div class="kpi-left">
-                            <span class="kpi-icon">⌛</span>
-                            <span class="kpi-name">Chờ hủy</span>
-                        </div>
-                        <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation']) ?></strong>
-                            <span class="kpi-arrow">›</span>
-                        </div>
-                    </a> -->
 
                     <a href="<?= buildFilterUrl(['status' => 'Cancelled']) ?>" class="kpi-card cancelled">
                         <div class="kpi-left">
@@ -288,16 +338,10 @@ if (!function_exists('viBadge')) {
 
         <script>
             (function() {
-                const chartLabels = ['Đã cuộn', 'Chưa QC', 'Đã QC', 'Chờ hủy', 'Đã hủy'];
-                const rawData = [
-                    <?= (int)$statusCounts['Rolled'] ?>,
-                    <?= (int)$statusCounts['Busy_Unchecked'] ?>,
-                    <?= (int)$statusCounts['Busy_Checked'] ?>,
-                    <?= (int)$statusCounts['Pending_Cancellation'] ?>,
-                    <?= (int)$statusCounts['Cancelled'] ?>
-                ];
+                const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
+                const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
-                const totalBobin = rawData.reduce((a, b) => a + b, 0) || 1;
+                const totalRealBobins = <?= (int)$totalRealBobins ?>;
                 const maxVal = Math.max(...rawData, 0);
 
                 const statusChart = new BaseChart('#statusPieChart', {
@@ -327,7 +371,7 @@ if (!function_exists('viBadge')) {
                         name: 'Số lượng Bobin',
                         data: rawData
                     }],
-                    colors: ['#34d399', '#fb923c', '#38bdf8', '#fb7185', '#94a3b8'],
+                    colors: ['#94a3b8', '#34d399', '#fb923c', '#38bdf8', '#fb7185'],
                     plotOptions: {
                         bar: {
                             horizontal: true,
@@ -345,7 +389,8 @@ if (!function_exists('viBadge')) {
                         offsetX: 10,
                         offsetY: 0,
                         formatter: function(val) {
-                            const percent = ((val / totalBobin) * 100).toFixed(1);
+                            const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
+                                1) : 0;
                             return `${val.toLocaleString('vi-VN')} (${percent}%)`;
                         },
                         style: {
@@ -381,7 +426,7 @@ if (!function_exists('viBadge')) {
                         }
                     },
                     xaxis: {
-                        categories: chartLabels,
+                        categories: labels,
                         min: 0,
                         max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
                         labels: {
@@ -450,33 +495,29 @@ if (!function_exists('viBadge')) {
         <!-- BỘ LỌC CHI TIẾT (Trạng thái, Kích thước, Loại) -->
         <div class="filter-dashboard">
             <div class="filter-dashboard-header">
-                <h2>Kết quả tìm kiếm: <span><?= number_format(count($bobins)) ?></span> Bobin</h2>
+                <h2>Kết quả tìm kiếm: <span><?= number_format($totalRecords) ?></span> Lượt cập nhật</h2>
                 <a href="<?= buildFilterUrl(['status' => 'all', 'bobin_size' => 'all', 'bobin_type' => 'all', 'keyword' => null]) ?>"
                     style="padding: 8px 16px; font-size:13px; font-weight:600; color:#475569; text-decoration:none; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; transition:0.2s;">
                     🔄 Đặt lại bộ lọc
                 </a>
             </div>
 
-            <!-- 1. Hàng lọc Trạng thái -->
-            <!-- <div class="filter-row">
+            <div class="filter-row">
                 <div class="filter-label">📌 Trạng thái:</div>
                 <div class="filter-actions">
-                    <a href="<?= buildFilterUrl(['status' => 'all']) ?>"
+                    <a href="<?= buildFilterUrl(['status' => 'all', 'page' => 1]) ?>"
                         class="status-btn <?= $currentStatus === 'all' ? 'active' : '' ?>">📦 Tất cả trạng thái</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Rolled']) ?>"
+                    <a href="<?= buildFilterUrl(['status' => 'Rolled', 'page' => 1]) ?>"
                         class="status-btn <?= $currentStatus === 'Rolled' ? 'active' : '' ?>">✅ Đã cuộn</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>"
+                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked', 'page' => 1]) ?>"
                         class="status-btn <?= $currentStatus === 'Busy_Unchecked' ? 'active' : '' ?>">⏳ Chưa QC</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked']) ?>"
+                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked', 'page' => 1]) ?>"
                         class="status-btn <?= $currentStatus === 'Busy_Checked' ? 'active' : '' ?>">🛡️ Đã QC</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation']) ?>"
-                        class="status-btn <?= $currentStatus === 'Pending_Cancellation' ? 'active' : '' ?>">⌛ Chờ
-                        hủy</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Cancelled']) ?>"
-                        class="status-btn <?= $currentStatus === 'Cancelled' ? 'active' : '' ?>">🗑️ Đã hủy</a>
-                </div>
-            </div> -->
+                    <a href="<?= buildFilterUrl(['status' => 'Cancelled', 'page' => 1]) ?>"
+                        class="status-btn <?= $currentStatus === 'Cancelled' ? 'active' : '' ?>">❌ Đã hủy</a>
 
+                </div>
+            </div>
             <!-- 2. Hàng lọc Kích thước -->
             <div class="filter-row">
                 <div class="filter-label">📏 Kích thước:</div>
@@ -507,7 +548,7 @@ if (!function_exists('viBadge')) {
         <!-- DANH SÁCH BOBIN THỰC TẾ -->
         <div class="list-card">
             <?php if (empty($bobins)): ?>
-                <div class="empty-state">Không tìm thấy Bobin nào trong khoảng thời gian này.</div>
+                <div class="empty-state">Không tìm thấy dữ liệu nào trong khoảng thời gian này.</div>
             <?php else: ?>
                 <div class="bobin-list">
                     <?php foreach ($bobins as $item): ?>
@@ -790,6 +831,49 @@ if (!function_exists('viBadge')) {
             }
         });
     </script>
+    <!-- HIỂN THỊ TOAST BÁO LỖI NẾU CÓ -->
+    <?php if (!empty($data['error'])): ?>
+        <style>
+            .toast-message {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #2ecc71;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                font-weight: bold;
+                opacity: 0;
+                transform: translateY(-20px);
+                transition: all 0.5s ease;
+            }
+
+            .toast-message.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .toast-message.toast-error {
+                background-color: #e74c3c;
+            }
+        </style>
+
+        <div id="toastMessage" class="toast-message toast-error show">
+            ⚠️ <?= htmlspecialchars($data['error']) ?>
+        </div>
+
+        <script>
+            setTimeout(() => {
+                const toast = document.getElementById('toastMessage');
+                if (toast) {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 500); // Gỡ khỏi DOM sau khi mờ dần
+                }
+            }, 3000); // Tự động ẩn sau 3 giây
+        </script>
+    <?php endif; ?>
 </body>
 
 </html>

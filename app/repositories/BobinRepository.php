@@ -12,22 +12,19 @@ class BobinRepository
         $this->db = Database::getInstance();
     }
 
-    // Đọc cấu hình dung lượng Bobin từ DB
     public function getBobinCapacities(): array
     {
         $pdo = $this->db->pdo();
         try {
             $sql = "SELECT size_name, capacity FROM bobin_capacity";
             $stmt = $pdo->query($sql);
-            // Trả về mảng dạng Key-Value: ['PL7-3' => 460, ...]
             return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
-            return []; // Trả về mảng rỗng nếu lỗi
+            return [];
         }
     }
 
-    // Quản lý cập nhật lại dung lượng khi nhập thêm Bobin mới
     public function updateBobinCapacity(string $sizeName, int $newCapacity): bool
     {
         $pdo = $this->db->pdo();
@@ -46,7 +43,6 @@ class BobinRepository
     //! GET
     #region GET LIST
 
-    //? GET Bobin History with Filter (OPTIONAL)
     public function getBobinsHistory(array $filters = [])
     {
         $pdo = $this->db->pdo();
@@ -63,7 +59,6 @@ class BobinRepository
                 $params[':bsize'] = $filters['bobin_size'];
             }
 
-            // Bổ sung Query lọc Loại Bobin
             if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
                 $sql .= " AND bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
@@ -105,7 +100,6 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    //? Thống kê tổng số lượng theo từng trạng thái cho trang Lịch Sử (Bỏ qua filter Status)
     public function getBobinsHistoryStats(array $filters = []): array
     {
         $pdo = $this->db->pdo();
@@ -118,7 +112,6 @@ class BobinRepository
                 ':to_date'   => $filters['to_date']
             ];
 
-            // Vẫn giữ filter Keyword để số liệu chuẩn xác với thanh tìm kiếm
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
@@ -160,10 +153,7 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    // =========================================================================
-    // HÀM TẠO BẢNG ẢO: Cắt chính xác số lượng Bobin thực tế đang sử dụng
-    // Nếu tương lai xưởng nhập thêm, bạn chỉ cần sửa số 420, 480, 460 ở đây!
-    // =========================================================================
+
     private function getActiveBaseTable(): string
     {
         return "(
@@ -177,12 +167,10 @@ class BobinRepository
         )";
     }
 
-    //? 1. Đếm tổng số bản ghi thỏa mãn điều kiện lọc
     public function countBobinListDetail(array $filters = []): int
     {
         $pdo = $this->db->pdo();
         try {
-            // Thay thế bảng gốc bằng bảng ảo chứa Bobin thực tế
             $baseTable = $this->getActiveBaseTable();
             $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
@@ -232,12 +220,10 @@ class BobinRepository
         }
     }
 
-    //? 2. Thống kê tổng số lượng theo từng trạng thái
     public function getBobinStatusStats(array $filters = []): array
     {
         $pdo = $this->db->pdo();
         try {
-            // Thay thế bảng gốc bằng bảng ảo
             $baseTable = $this->getActiveBaseTable();
             $sql = "SELECT bobin_current_status, COUNT(*) AS total 
                     FROM $baseTable AS active_bobins WHERE 1=1";
@@ -277,12 +263,10 @@ class BobinRepository
         }
     }
 
-    //? 3. Lấy dữ liệu danh sách có phân trang
     public function getBobinListDetail(array $filters = [], int $page = 1, int $limit = 50)
     {
         $pdo = $this->db->pdo();
         try {
-            // Thay thế bảng gốc bằng bảng ảo
             $baseTable = $this->getActiveBaseTable();
             $sql = "SELECT * FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
@@ -340,7 +324,6 @@ class BobinRepository
         }
     }
 
-    //? GET LIST Detail 
     public function getListDetailBobinsForEditting(array $filters = [])
     {
         $pdo = $this->db->pdo();
@@ -384,23 +367,18 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    //? GET LIST Detail FOR QC (Only Busy_Unchecked & No Date Filter)
     public function getDetailBobinsForQC(array $filters = [])
     {
         $pdo = $this->db->pdo();
 
         try {
-            //TODO 1. Câu SQL khởi tạo: Chỉ lấy những bobin có trạng thái là 'Busy_Unchecked'
-            // Bỏ qua điều kiện ngày tháng như yêu cầu.
             $sql = "SELECT * FROM bobin_list_detail 
                 WHERE bobin_current_status = 'Busy_Unchecked'";
 
             $params = [];
 
-            //TODO 2. Xử lý Keyword (Giữ nguyên logic tìm kiếm nếu người dùng nhập)
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
-                // Nối thêm điều kiện AND (...)
                 $sql .= " AND (
                 bobin_identification_code LIKE :kw1 OR  
                 JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
@@ -419,9 +397,6 @@ class BobinRepository
                 $params[':kw6'] = $searchStr;
                 $params[':kw7'] = $searchStr;
             }
-            // Note: Removed the if (!empty($filters['status'])) part because it is required to only get Busy_Unchecked above.
-
-            //TODO 3. Sắp xếp
 
             $sql .= " ORDER BY updated_time DESC";
             $stmt = $pdo->prepare($sql);
@@ -430,7 +405,6 @@ class BobinRepository
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
-            // Tùy chọn: return [] hoặc throw Exception
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
@@ -439,17 +413,13 @@ class BobinRepository
         $pdo = $this->db->pdo();
 
         try {
-            //TODO 1. Câu SQL khởi tạo: Chỉ lấy những bobin có trạng thái là 'Pending_Cancellation'
-            // Bỏ qua điều kiện ngày tháng như yêu cầu.
             $sql = "SELECT * FROM bobin_list_detail 
                 WHERE bobin_current_status = 'Pending_Cancellation'";
 
             $params = [];
 
-            //TODO 2. Xử lý Keyword (Giữ nguyên logic tìm kiếm nếu người dùng nhập)
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
-                // Nối thêm điều kiện AND (...)
                 $sql .= " AND (
                 bobin_identification_code LIKE :kw1 OR  
                 JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
@@ -468,9 +438,6 @@ class BobinRepository
                 $params[':kw6'] = $searchStr;
                 $params[':kw7'] = $searchStr;
             }
-            // Note: Removed the if (!empty($filters['status'])) part because it is required to only get Busy_Unchecked above.
-
-            //TODO 3. Sắp xếp
 
             $sql .= " ORDER BY updated_time DESC";
             $stmt = $pdo->prepare($sql);
@@ -479,51 +446,36 @@ class BobinRepository
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
-            // Tùy chọn: return [] hoặc throw Exception
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
 
-    public function getDetailBobinsForWinding(array $filters = [])
+    public function getDetailBobinsForWinding(array $filters = [], int $page = 1, int $limit = 50)
     {
         $pdo = $this->db->pdo();
 
         try {
-            //TODO 1. Câu SQL khởi tạo: Chỉ lấy những bobin có trạng thái là 'Busy_Checked' và 'Rolled'
-
-            $sql = "SELECT * FROM bobin_list_detail 
-                WHERE bobin_current_status IN ('Busy_Checked', 'Rolled')";
+            $baseTable = $this->getActiveBaseTable();
+            $sql = "SELECT * FROM $baseTable AS active_bobins 
+                    WHERE bobin_current_status IN ('Busy_Checked', 'Rolled')";
             $params = [];
 
-            //TODO 2. Xử lý Keyword (Giữ nguyên logic tìm kiếm nếu người dùng nhập)
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
-
-                // Nối thêm điều kiện AND (...)
                 $sql .= " AND (
-                bobin_identification_code LIKE :kw1 OR  
-                JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
-                JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
-                JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
-                JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
-                print_lot LIKE :kw6 OR
-                bobin_type LIKE :kw7
-            )";
-
-                $params[':kw1'] = $searchStr;
-                $params[':kw2'] = $searchStr;
-                $params[':kw3'] = $searchStr;
-                $params[':kw4'] = $searchStr;
-                $params[':kw5'] = $searchStr;
-                $params[':kw6'] = $searchStr;
-                $params[':kw7'] = $searchStr;
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    bobin_type LIKE :kw7
+                )";
+                for ($i = 1; $i <= 7; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
             }
 
-            // Lưu ý: Đã xóa phần if (!empty($filters['status'])) vì yêu cầu bắt buộc chỉ lấy Busy_Checked ở trên rồi.
-
-            //TODO 3. Sắp xếp
-            // Ưu tiên 1: Busy_Checked (1) xếp trước Rolled (2)
-            // Ưu tiên 2: Trong cùng trạng thái thì thằng nào mới cập nhật sẽ lên trên (updated_time DESC)
             $sql .= " ORDER BY 
             CASE 
                 WHEN bobin_current_status = 'Busy_Checked' THEN 1 
@@ -531,13 +483,54 @@ class BobinRepository
                 ELSE 3 
             END ASC, 
             updated_time DESC";
+
+            $offset = ($page - 1) * $limit;
+            $sql .= " LIMIT :limit OFFSET :offset";
+
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
-            // Tùy chọn: return [] hoặc throw Exception
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function countDetailBobinsForWinding(array $filters = []): int
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $baseTable = $this->getActiveBaseTable();
+            $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins WHERE bobin_current_status IN ('Busy_Checked', 'Rolled')";
+            $params = [];
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    bobin_type LIKE :kw7
+                )";
+                for ($i = 1; $i <= 7; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
@@ -560,7 +553,6 @@ class BobinRepository
 
     #endregion
     #region GET SPECIFIC
-    //? Get Specific Bobin Detail by Identification Code
     public function getSpecificBobin(string $bobinIdentificationCode): ?array
     {
         $pdo = $this->db->pdo();

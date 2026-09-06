@@ -1,7 +1,7 @@
 <?php
-require_once ROOT_PATH . '/app/entities/EmployeeEntity.php';
+require_once ROOT_PATH . '/app/entities/WindingMachineEntity.php';
 
-class EmployeeRepository
+class WindingMachineRepository
 {
     private $db;
 
@@ -9,9 +9,9 @@ class EmployeeRepository
     {
         $this->db = Database::getInstance();
     }
-    public function getListEmployee(): array
+    public function getListWindingMachine(): array
     {
-        $sql = "SELECT * FROM employee_list";
+        $sql = "SELECT * FROM winding_machine_list";
         $pdo = null;
 
         try {
@@ -36,22 +36,20 @@ class EmployeeRepository
         }
     }
 
-    private function populateGlobalData(array $list_employee): void
+    private function populateGlobalData(array $list_winding_machine): void
     {
-        GlobalData::$listEmployeeEntity = $list_employee ?? [];
+        GlobalData::$listWindingMachineEntity = $list_winding_machine ?? [];
     }
 
 
-    public function findByCode(string $code): ?EmployeeEntity
+    public function findByCode(string $code): ?WindingMachineEntity
     {
-        $list = GlobalData::$listEmployeeEntity;
-        foreach ($list as $emp) {
-            if (!empty($emp['employee_code']) && $emp['employee_code'] === $code) {
-                return new EmployeeEntity(
-                    $emp['id'],
-                    $emp['employee_code'],
-                    $emp['employee_name'],
-                    new DateTime($emp['updated_time'])
+        $list = GlobalData::$listWindingMachineEntity;
+        foreach ($list as $machine) {
+            if (!empty($machine['machine_name']) && $machine['machine_name'] === $code) {
+                return new WindingMachineEntity(
+                    $machine['id'],
+                    $machine['machine_name']
                 );
             }
         }

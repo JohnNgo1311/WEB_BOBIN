@@ -4,6 +4,8 @@ require_once ROOT_PATH . '/app/repositories/ProductRepository.php';     // <--- 
 require_once ROOT_PATH . '/app/repositories/MaterialLotRepository.php'; // <--- Load Repo Mới
 require_once ROOT_PATH . '/app/repositories/EmployeeRepository.php';    // <--- Load Repo Mới
 require_once ROOT_PATH . '/app/repositories/ListDataRepository.php';    // <--- Load Repo Mới
+require_once ROOT_PATH . '/app/repositories/WindingMachineRepository.php'; // <--- Load Repo Mới
+require_once ROOT_PATH . '/app/repositories/ExtrusionMachineRepository.php'; // <--- Load Repo Mới
 
 
 class BobinServices
@@ -13,6 +15,8 @@ class BobinServices
     private ProductRepository $productRepo;
     private MaterialLotRepository $materialRepo;
     private EmployeeRepository $employeeRepo;
+    private WindingMachineRepository $windingMachineRepo;
+    private ExtrusionMachineRepository $extrusionMachineRepo;
 
     public function __construct()
     {
@@ -21,6 +25,8 @@ class BobinServices
         $this->productRepo = new ProductRepository();
         $this->materialRepo = new MaterialLotRepository();
         $this->employeeRepo = new EmployeeRepository();
+        $this->windingMachineRepo = new WindingMachineRepository();
+        $this->extrusionMachineRepo = new ExtrusionMachineRepository();
     }
 
 
@@ -32,6 +38,7 @@ class BobinServices
         if (empty($dto->bobin_identification_code)) {
             throw new Exception("Vui lòng nhập Mã định danh Bobin.");
         }
+
 
         $entity = $this->buildBaseEntity($dto, 'extCreate');
 
@@ -216,8 +223,12 @@ class BobinServices
         if (empty($dto->bobin_identification_code)) {
             throw new Exception("Mã định danh Bobin không tồn tại.");
         }
-
         $entity = new BobinEntity();
+        $this->employeeRepo->getListEmployee();
+        $foundQcEmp = $this->employeeRepo->findByCode($dto->inspector_code);
+        if ($foundQcEmp == null) {
+            throw new Exception('Mã nhân viên không tồn tại trong hệ thống');
+        }
         $entity->identificationCode = $dto->bobin_identification_code;
         $entity->bobinKeyCode = $dto->bobin_key_code;
         $entity->currentStatus = "Busy_Checked";
@@ -239,6 +250,7 @@ class BobinServices
         if (empty($dto->bobin_identification_code)) {
             throw new Exception("Mã định danh Bobin không tồn tại.");
         }
+        $this->employeeRepo->getListEmployee();
 
         $entity = new BobinEntity();
         $entity->identificationCode = $dto->bobin_identification_code;
@@ -287,7 +299,11 @@ class BobinServices
         if (empty($dto->bobin_identification_code)) {
             throw new Exception(message: "Mã định danh Bobin không tồn tại.");
         }
+        if (empty($dto->winding_machine)) {
+            throw new Exception(message: "Máy cuộn không tồn tại.");
+        }
         $this->employeeRepo->getListEmployee();
+        $this->windingMachineRepo->getListWindingMachine();
         $entity = new BobinEntity();
         $entity->identificationCode = $dto->bobin_identification_code;
         $entity->bobinKeyCode = $dto->bobin_key_code;
@@ -296,7 +312,12 @@ class BobinServices
 
         $entity->winding_machine = $dto->winding_machine;
 
-
+        $foundwindingmachine = $this->windingMachineRepo->findByCode($dto->winding_machine);
+        if ($foundwindingmachine !== null) {
+            $entity->winding_machine = $foundwindingmachine->WindingMachineEntity_code;
+        } else {
+            throw new Exception('Máy cuộn không tồn tại trong hệ thống');
+        }
 
         $foundwindingEmp = $this->employeeRepo->findByCode($dto->winding_employee_code);
         if ($foundwindingEmp !== null) {
@@ -391,8 +412,8 @@ class BobinServices
             'from_date'  => $from,
             'to_date'    => $to,
             'status'     => mb_substr($status, 0, 50),
-            'bobin_size' => trim($dto->bobinSize ?? 'all'), // Đã thêm
-            'bobin_type' => trim($dto->bobinType ?? 'all'), // Đã thêm
+            'bobin_size' => trim($dto->bobinSize ?? 'all'),
+            'bobin_type' => trim($dto->bobinType ?? 'all'),
         ];
 
         $listBobin = [];
@@ -441,8 +462,8 @@ class BobinServices
                 'keyword'    => mb_substr($keyword, 0, 255),
                 'from_date'  => $from,
                 'to_date'    => $to,
-                'bobin_size' => trim($dto->bobinSize ?? 'all'), // Đã thêm
-                'bobin_type' => trim($dto->bobinType ?? 'all'), // Đã thêm
+                'bobin_size' => trim($dto->bobinSize ?? 'all'),
+                'bobin_type' => trim($dto->bobinType ?? 'all'),
             ];
 
             if ($filters['from_date'] !== '' && $filters['to_date'] !== '') {
@@ -463,13 +484,11 @@ class BobinServices
     public function getListDetailBobinsForEditting(BobinGetListDTO $dto): array
     {
         try {
-            // 1. Chỉ lấy và xử lý Keyword và Status 
             $keywordRaw = $dto->keyword ?? '';
             $statusRaw  = $dto->status;
             $keyword    = trim($keywordRaw);
             $status     = trim($statusRaw);
 
-            // 2. Tạo mảng filters chỉ chứa keyword và status
             $filters = [
                 'keyword' => mb_substr($keyword, 0, 255),
                 'status'  => $status,
@@ -477,7 +496,6 @@ class BobinServices
 
             return $this->bobinRepo->getListDetailBobinsForEditting($filters);
         } catch (Exception $e) {
-            // Log lỗi và ném ra ngoại lệ để Controller xử lý
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
@@ -493,11 +511,8 @@ class BobinServices
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
-   #region QUẢN LÝ DUNG LƯỢNG BOBIN (CAPACITY)
+    #region QUẢN LÝ DUNG LƯỢNG BOBIN (CAPACITY)
 
-    /**
-     * Lấy danh sách số lượng phân bổ thực tế của các loại Bobin
-     */
     public function getBobinCapacities(): array
     {
         try {
@@ -507,12 +522,8 @@ class BobinServices
         }
     }
 
-    /**
-     * Cập nhật số lượng Bobin thực tế cho một nhóm kích thước
-     */
     public function updateBobinCapacity(string $sizeName, int $newCapacity): bool
     {
-        // Validate dữ liệu đầu vào cơ bản
         if (empty(trim($sizeName))) {
             throw new Exception("Tên kích thước Bobin không được để trống.");
         }
@@ -562,20 +573,15 @@ class BobinServices
     public function getDetailBobinsForQC(BobinGetListDTO $dto): array
     {
         try {
-            // 1. Chỉ lấy và xử lý Keyword (Vì Date và Status đã bị loại bỏ/cố định trong Repo)
             $keywordRaw = $dto->keyword ?? '';
             $keyword    = trim($keywordRaw);
 
-            // 2. Tạo mảng filters chỉ chứa keyword
             $filters = [
                 'keyword' => mb_substr($keyword, 0, 255),
             ];
 
-            // 3. Gọi hàm Repository mới (getDetailBobinsFORQC)
-            // Hàm này đã mặc định lấy status = 'Busy_Unchecked' và bỏ qua ngày tháng
             return $this->bobinRepo->getDetailBobinsForQC($filters);
         } catch (Exception $e) {
-            // Log lỗi và ném ra ngoại lệ để Controller xử lý
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
@@ -583,40 +589,38 @@ class BobinServices
     public function getDetailBobinsForPendingCancellation(BobinGetListDTO $dto): array
     {
         try {
-            // 1. Chỉ lấy và xử lý Keyword (Vì Date và Status đã bị loại bỏ/cố định trong Repo)
             $keywordRaw = $dto->keyword ?? '';
             $keyword    = trim($keywordRaw);
 
-            // 2. Tạo mảng filters chỉ chứa keyword
             $filters = [
                 'keyword' => mb_substr($keyword, 0, 255),
             ];
 
-            // 3. Gọi hàm Repository mới (getDetailBobinsFORPendingCancellation)
-            // Hàm này đã mặc định lấy status = 'Busy_Unchecked' và bỏ qua ngày tháng
             return $this->bobinRepo->getDetailBobinsForPendingCancellation($filters);
         } catch (Exception $e) {
-            // Log lỗi và ném ra ngoại lệ để Controller xử lý
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
-    public function getDetailBobinsForWinding(BobinGetListDTO $dto): array
+    public function getDetailBobinsForWindingPaginated(BobinGetListDTO $dto): array
     {
         try {
-            // 1. Chỉ lấy và xử lý Keyword
-            $keywordRaw = $dto->keyword ?? '';
-            $keyword    = trim($keywordRaw);
-
-            // 2. Tạo mảng filters chỉ chứa keyword
             $filters = [
-                'keyword' => mb_substr($keyword, 0, 255),
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
             ];
-
-            // 3. Gọi hàm Repository mới (getDetailBobinsFORWinding)
-            // Hàm này đã mặc định lấy status = 'Busy_Unchecked' và "Rolled" và bỏ qua ngày tháng
-            return $this->bobinRepo->getDetailBobinsForWinding($filters);
+            return $this->bobinRepo->getDetailBobinsForWinding($filters, $dto->page, $dto->limit);
         } catch (Exception $e) {
-            // Log lỗi và ném ra ngoại lệ để Controller xử lý
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobinsForWinding(BobinGetListDTO $dto): int
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->countDetailBobinsForWinding($filters);
+        } catch (Exception $e) {
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
@@ -630,10 +634,9 @@ class BobinServices
                 $entity = GlobalData::$bobinEntity;
                 return $entity;
             } else {
-                return null; // Hoặc có thể ném ra Exception nếu muốn
+                return null;
             }
         } catch (Exception $e) {
-            // Log lỗi và ném ra ngoại lệ để Controller xử lý
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }

@@ -493,7 +493,42 @@ class BobinServices
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
+   #region QUẢN LÝ DUNG LƯỢNG BOBIN (CAPACITY)
 
+    /**
+     * Lấy danh sách số lượng phân bổ thực tế của các loại Bobin
+     */
+    public function getBobinCapacities(): array
+    {
+        try {
+            return $this->bobinRepo->getBobinCapacities();
+        } catch (Exception $e) {
+            throw new Exception("Lỗi khi lấy dữ liệu cấu hình Bobin: " . $e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Cập nhật số lượng Bobin thực tế cho một nhóm kích thước
+     */
+    public function updateBobinCapacity(string $sizeName, int $newCapacity): bool
+    {
+        // Validate dữ liệu đầu vào cơ bản
+        if (empty(trim($sizeName))) {
+            throw new Exception("Tên kích thước Bobin không được để trống.");
+        }
+
+        if ($newCapacity < 0) {
+            throw new Exception("Số lượng Bobin không hợp lệ (không được nhỏ hơn 0).");
+        }
+
+        try {
+            return $this->bobinRepo->updateBobinCapacity($sizeName, $newCapacity);
+        } catch (Exception $e) {
+            throw new Exception("Lỗi khi cập nhật số lượng Bobin: " . $e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    #endregion
     public function getDetailBobins(BobinGetListDTO $dto): array
     {
         try {

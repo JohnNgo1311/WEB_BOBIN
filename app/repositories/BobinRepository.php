@@ -12,6 +12,37 @@ class BobinRepository
         $this->db = Database::getInstance();
     }
 
+    // Đọc cấu hình dung lượng Bobin từ DB
+    public function getBobinCapacities(): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT size_name, capacity FROM bobin_capacity";
+            $stmt = $pdo->query($sql);
+            // Trả về mảng dạng Key-Value: ['PL7-3' => 460, ...]
+            return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            return []; // Trả về mảng rỗng nếu lỗi
+        }
+    }
+
+    // Quản lý cập nhật lại dung lượng khi nhập thêm Bobin mới
+    public function updateBobinCapacity(string $sizeName, int $newCapacity): bool
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "UPDATE bobin_capacity SET capacity = :capacity WHERE size_name = :size_name";
+            $stmt = $pdo->prepare($sql);
+            return $stmt->execute([
+                ':capacity'  => $newCapacity,
+                ':size_name' => $sizeName
+            ]);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Lỗi cập nhật cấu hình: " . $e->getMessage());
+        }
+    }
     //! GET
     #region GET LIST
 
@@ -129,14 +160,33 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    //? 1. Đếm tổng số bản ghi thỏa mãn điều kiện lọc (dùng để tính tổng số trang)
+    // =========================================================================
+    // HÀM TẠO BẢNG ẢO: Cắt chính xác số lượng Bobin thực tế đang sử dụng
+    // Nếu tương lai xưởng nhập thêm, bạn chỉ cần sửa số 420, 480, 460 ở đây!
+    // =========================================================================
+    private function getActiveBaseTable(): string
+    {
+        return "(
+            SELECT * FROM (
+                SELECT *, ROW_NUMBER() OVER(PARTITION BY bobin_size ORDER BY bobin_identification_code ASC) as row_num 
+                FROM bobin_list_detail
+            ) AS numbered_bobins
+            WHERE (bobin_size = 'PL4-7 (TU04.TU06)' AND row_num <= 420)
+               OR (bobin_size = 'PL4-7 (TU08~)' AND row_num <= 480)
+               OR (bobin_size = 'PL7-3' AND row_num <= 460)
+        )";
+    }
+
+    //? 1. Đếm tổng số bản ghi thỏa mãn điều kiện lọc
     public function countBobinListDetail(array $filters = []): int
     {
         $pdo = $this->db->pdo();
         try {
-            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE 1=1";
+            // Thay thế bảng gốc bằng bảng ảo chứa Bobin thực tế
+            $baseTable = $this->getActiveBaseTable();
+            $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
-            // Bổ sung vào bên trong getBobinListDetail & countBobinListDetail
+
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
                 $sql .= " AND bobin_size = :bsize";
                 $params[':bsize'] = $filters['bobin_size'];
@@ -146,6 +196,7 @@ class BobinRepository
                 $sql .= " AND bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
             }
+
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
@@ -180,14 +231,16 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    //? Thống kê tổng số lượng theo từng trạng thái
-    //? Thống kê số lượng kèm điều kiện Size và Type
+
+    //? 2. Thống kê tổng số lượng theo từng trạng thái
     public function getBobinStatusStats(array $filters = []): array
     {
         $pdo = $this->db->pdo();
         try {
+            // Thay thế bảng gốc bằng bảng ảo
+            $baseTable = $this->getActiveBaseTable();
             $sql = "SELECT bobin_current_status, COUNT(*) AS total 
-                    FROM bobin_list_detail WHERE 1=1";
+                    FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
 
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
@@ -223,15 +276,17 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
-    //? 2. Lấy dữ liệu danh sách có phân trang LIMIT và OFFSET
+
+    //? 3. Lấy dữ liệu danh sách có phân trang
     public function getBobinListDetail(array $filters = [], int $page = 1, int $limit = 50)
     {
         $pdo = $this->db->pdo();
         try {
-
-            $sql = "SELECT * FROM bobin_list_detail WHERE 1=1";
+            // Thay thế bảng gốc bằng bảng ảo
+            $baseTable = $this->getActiveBaseTable();
+            $sql = "SELECT * FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
-            // Bổ sung vào bên trong getBobinListDetail & countBobinListDetail
+
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
                 $sql .= " AND bobin_size = :bsize";
                 $params[':bsize'] = $filters['bobin_size'];

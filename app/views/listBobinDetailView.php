@@ -1,33 +1,60 @@
 <?php
 $bobins = $data['bobins'] ?? [];
-$pagination = $data['pagination'] ?? [
-    'currentPage'  => 1,
-    'totalPages'   => 1,
-    'totalRecords' => count($bobins),
-    'limit'        => 50
-];
+$pagination = $data['pagination'] ?? [];
 
-// 1. Khởi tạo mảng mặc định an toàn tuyệt đối tránh lỗi Undefined Array Key
+// 1. TỔNG HỢP SỐ LIỆU TỪ DATABASE
 $defaultStatus = [
     'Rolled'               => 0,
     'Busy_Unchecked'       => 0,
     'Busy_Checked'         => 0,
-    'Line'                 => 0,
     'Pending_Cancellation' => 0,
+    'Cancelled'            => 0
 ];
 $statusCounts = array_merge($defaultStatus, $data['statusCounts'] ?? []);
+
+// Lấy bộ lọc hiện tại
+$currentStatus = $_GET['status'] ?? 'all';
+$currentSize   = $_GET['bobin_size'] ?? 'all';
+$currentType   = $_GET['bobin_type'] ?? 'all';
+
+// ========================================================
+// TÍNH TOÁN DUNG LƯỢNG THỰC TẾ SỬ DỤNG
+// ========================================================
+// Nhận mảng phân bổ từ Controller (Nếu mảng rỗng thì setup mặc định)
+$capacityMap = $data['capacityMap'] ?? [
+    'PL4-7 (TU04.TU06)' => 420,
+    'PL4-7 (TU08~)'     => 480,
+    'PL7-3'             => 460
+];
+
+// Luôn lấy đúng định mức thực tế: Chọn 'all' ra 1360, chọn size cụ thể ra đúng dung lượng của size đó
+if ($currentSize === 'all') {
+    $totalRealBobins = array_sum($capacityMap);
+} else {
+    $totalRealBobins = $capacityMap[$currentSize] ?? 0;
+}
+
+// Tính Tồn Line
+$statusCounts['Line'] = $statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'];
+
+// Tính Bobin Trống: Dung lượng thực tế - Chưa QC - Đã QC
+$emptyBobins = $totalRealBobins - $statusCounts['Line'];
+$emptyBobins = max(0, $emptyBobins);
+
+// Tính Đã Cuộn thực tế (Tránh lấy số liệu ảo dự phòng 3000 từ DB)
+$realRolled = $totalRealBobins - ($statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'] + $statusCounts['Pending_Cancellation']);
+$statusCounts['Rolled'] = max(0, $realRolled);
+
+// Phân trang và số lượng hiển thị cho danh sách
 $currentPage  = (int)($pagination['currentPage'] ?? 1);
 $totalPages   = (int)($pagination['totalPages'] ?? 1);
 $totalRecords = (int)($pagination['totalRecords'] ?? count($bobins));
-$totalBobins  = ($statusCounts['Rolled'] ?? 0)
-    + ($statusCounts['Busy_Unchecked'] ?? 0)
-    + ($statusCounts['Busy_Checked'] ?? 0)
-    + ($statusCounts['Pending_Cancellation'] ?? 0);
+// ========================================================
 
-// 2. Chuẩn bị dữ liệu cho Chart
-$chartLabels = ['Đã cuộn', 'Chưa QC', 'Đã QC', 'Tồn line', 'Chờ hủy'];
+// 2. CHUẨN BỊ DỮ LIỆU CHO BIỂU ĐỒ (CHART)
+$chartLabels = ['Trống', 'Chưa QC', 'Đã QC', 'Tồn line', 'Chờ hủy'];
 $chartSeries = [
-    $statusCounts['Rolled'],
+    $emptyBobins,
     $statusCounts['Busy_Unchecked'],
     $statusCounts['Busy_Checked'],
     $statusCounts['Line'],
@@ -38,13 +65,10 @@ if (!function_exists('buildFilterUrl')) {
     function buildFilterUrl(array $overrideParams = []): string
     {
         $query = $_GET ?? [];
-
         if (!isset($query['url'])) {
             $query['url'] = 'bobin/listBobinDetailView';
         }
-
         $query = array_merge($query, $overrideParams);
-
         foreach ($query as $key => $value) {
             if (is_null($value) || $value === '') {
                 unset($query[$key]);
@@ -69,15 +93,10 @@ if (!function_exists('decodeJsonObject')) {
         if (!is_string($value) || trim($value) === '') {
             return [];
         }
-
         $decoded = json_decode($value, true);
         return json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : [];
     }
 }
-
-$currentStatus = $_GET['status'] ?? 'all';
-$currentSize   = $_GET['bobin_size'] ?? 'all';
-$currentType   = $_GET['bobin_type'] ?? 'all';
 
 $sizeOptions = [
     'all'               => 'Mọi kích thước',
@@ -102,13 +121,28 @@ $typeOptions = [
 <head>
     <meta charset="UTF-8">
     <title>Danh sách Bobin</title>
-    <!-- Đổi version lên v=3 để ép trình duyệt nhận CSS mới -->
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=3">
+    <!-- Đổi version lên v=4 để ép trình duyệt nhận CSS mới -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=4">
     <link rel="icon" href="data:,">
-    <!-- Nạp thư viện biểu đồ và QR Code -->
     <script src="/WEB_BOBIN/public/assets/js/apexcharts.min.js"></script>
     <script src="/WEB_BOBIN/public/assets/js/chart-helper.js"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
+
+    <style>
+        .kpi-card.empty-bobin {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .kpi-card.empty-bobin .kpi-icon {
+            background: #cbd5e1;
+            color: #475569;
+        }
+
+        .kpi-card.empty-bobin .kpi-val {
+            color: #334155;
+        }
+    </style>
 </head>
 
 <body>
@@ -116,13 +150,10 @@ $typeOptions = [
     <h1>Danh sách Bobin hiện tại</h1>
 
     <div class="container">
-        <!-- CONTROL BAR -->
         <div id="qr-reader"></div>
 
         <!-- CONTROL BAR GIAO DIỆN MỚI -->
         <div class="control-bar-modern">
-
-            <!-- Nút Back bên trái -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/index" class="btn-back-modern">
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -136,7 +167,6 @@ $typeOptions = [
                     <input type="hidden" name="url" value="bobin/listBobinDetailView">
 
                     <div class="control-row top-row">
-                        <!-- Ô tìm kiếm -->
                         <div class="search-box-modern">
                             <svg class="icon-search" viewBox="0 0 24 24" width="18" height="18" stroke="#94a3b8"
                                 stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -148,7 +178,6 @@ $typeOptions = [
                                 value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                         </div>
 
-                        <!-- Nút Quét QR -->
                         <button type="button" id="btnScanQR" class="btn-modern btn-scan">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -160,7 +189,6 @@ $typeOptions = [
                             Quét QR
                         </button>
 
-                        <!-- Nút Lọc (Gộp lên cùng hàng) -->
                         <button type="submit" class="btn-modern btn-filter" id="btnFilter">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -169,10 +197,9 @@ $typeOptions = [
                             Lọc
                         </button>
 
-                        <!-- Nút Xuất Excel -->
                         <?php
                         $exportParams = $_GET;
-                        unset($exportParams['page']); // Không phân trang khi xuất excel
+                        unset($exportParams['page']);
                         $exportParams['url'] = 'bobin/exportDetailExcel';
                         $exportUrl = '/WEB_BOBIN/public/index.php?' . http_build_query($exportParams);
                         ?>
@@ -193,7 +220,6 @@ $typeOptions = [
             </div>
         </div>
 
-        <!-- KHUNG THỐNG KÊ GIAO DIỆN MỚI 2 CỘT -->
         <div class="analytics-wrapper">
 
             <!-- CỘT TRÁI: TIÊU ĐỀ + BIỂU ĐỒ -->
@@ -218,7 +244,6 @@ $typeOptions = [
             <!-- CỘT PHẢI: THẺ TỔNG + DANH SÁCH KPI -->
             <div class="analytics-right">
 
-                <!-- Thẻ Tổng Số Lượng -->
                 <div class="total-card">
                     <div class="total-icon-wrap">
                         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -230,15 +255,26 @@ $typeOptions = [
                     </div>
                     <div class="total-info">
                         <span class="label">Tổng số lượng Bobin</span>
-                        <span class="value"><?= number_format($totalBobins) ?></span>
+                        <!-- Hiển thị lượng phân bổ thực tế thay vì tổng của bộ lọc -->
+                        <span class="value"><?= number_format($totalRealBobins) ?></span>
                     </div>
                 </div>
 
-                <!-- Danh sách các thẻ KPI có thể click lọc -->
                 <div class="kpi-list">
+                    <!-- Thẻ Bobin Trống (Chỉ hiển thị, không click) -->
+                    <div class="kpi-card empty-bobin" style="cursor: default;">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">📦</span>
+                            <span class="kpi-name">Bobin Trống</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($emptyBobins) ?></strong>
+                        </div>
+                    </div>
+
                     <a href="<?= buildFilterUrl(['status' => 'Rolled', 'page' => 1]) ?>" class="kpi-card rolled">
                         <div class="kpi-left">
-                            <span class="kpi-icon">⏳</span>
+                            <span class="kpi-icon">✅</span>
                             <span class="kpi-name">Đã cuộn</span>
                         </div>
                         <div class="kpi-right">
@@ -250,7 +286,7 @@ $typeOptions = [
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked', 'page' => 1]) ?>"
                         class="kpi-card unchecked">
                         <div class="kpi-left">
-                            <span class="kpi-icon">⌛</span>
+                            <span class="kpi-icon">⏳</span>
                             <span class="kpi-name">Chưa QC</span>
                         </div>
                         <div class="kpi-right">
@@ -261,7 +297,7 @@ $typeOptions = [
 
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Checked', 'page' => 1]) ?>" class="kpi-card checked">
                         <div class="kpi-left">
-                            <span class="kpi-icon">✓</span>
+                            <span class="kpi-icon">🛡️</span>
                             <span class="kpi-name">Đã QC</span>
                         </div>
                         <div class="kpi-right">
@@ -272,7 +308,7 @@ $typeOptions = [
 
                     <a href="<?= buildFilterUrl(['status' => 'Line', 'page' => 1]) ?>" class="kpi-card line">
                         <div class="kpi-left">
-                            <span class="kpi-icon">⚙️</span>
+                            <span class="kpi-icon">📍</span>
                             <span class="kpi-name">Tồn line</span>
                         </div>
                         <div class="kpi-right">
@@ -284,7 +320,7 @@ $typeOptions = [
                     <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation', 'page' => 1]) ?>"
                         class="kpi-card pending">
                         <div class="kpi-left">
-                            <span class="kpi-icon">✕</span>
+                            <span class="kpi-icon">⌛</span>
                             <span class="kpi-name">Chờ hủy</span>
                         </div>
                         <div class="kpi-right">
@@ -296,12 +332,13 @@ $typeOptions = [
             </div>
         </div>
 
-        <!-- VẼ CHART TỨC THÌ VỚI ANIMATION MƯỢT -->
         <script>
             (function() {
                 const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
                 const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-                const totalBobin = rawData.reduce((a, b) => a + b, 0) || 1;
+
+                // Cập nhật mốc tính toán phần trăm cho biểu đồ là $totalRealBobins
+                const totalRealBobins = <?= (int)$totalRealBobins ?>;
                 const maxVal = Math.max(...rawData, 0);
 
                 const statusChart = new BaseChart('#statusPieChart', {
@@ -330,7 +367,7 @@ $typeOptions = [
                         name: 'Số lượng Bobin',
                         data: rawData
                     }],
-                    colors: ['#34d399', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
+                    colors: ['#94a3b8', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
                     plotOptions: {
                         bar: {
                             horizontal: true,
@@ -348,7 +385,8 @@ $typeOptions = [
                         offsetX: 10,
                         offsetY: 0,
                         formatter: function(val) {
-                            const percent = ((val / totalBobin) * 100).toFixed(1);
+                            const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
+                                1) : 0;
                             return `${val.toLocaleString('vi-VN')} (${percent}%)`;
                         },
                         style: {
@@ -378,7 +416,7 @@ $typeOptions = [
                         },
                         padding: {
                             top: 0,
-                            right: 30,
+                            right: 40,
                             bottom: 0,
                             left: 25
                         }
@@ -452,6 +490,7 @@ $typeOptions = [
 
         <div class="filter-dashboard">
             <div class="filter-dashboard-header">
+                <!-- Hiển thị đúng số lượng Record kết quả tìm được -->
                 <h2>Kết quả tìm kiếm: <span><?= number_format($totalRecords) ?></span> Bobin</h2>
                 <a href="<?= buildFilterUrl(['status' => 'all', 'bobin_size' => 'all', 'bobin_type' => 'all', 'page' => 1, 'keyword' => null]) ?>"
                     style="padding: 8px 16px; font-size:13px; font-weight:600; color:#475569; text-decoration:none; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; transition:0.2s;">
@@ -459,7 +498,6 @@ $typeOptions = [
                 </a>
             </div>
 
-            <!-- 1. Hàng lọc Trạng thái -->
             <div class="filter-row">
                 <div class="filter-label">📌 Trạng thái:</div>
                 <div class="filter-actions">
@@ -479,7 +517,6 @@ $typeOptions = [
                 </div>
             </div>
 
-            <!-- 2. Hàng lọc Kích thước -->
             <div class="filter-row">
                 <div class="filter-label">📏 Kích thước:</div>
                 <div class="filter-actions">
@@ -492,7 +529,6 @@ $typeOptions = [
                 </div>
             </div>
 
-            <!-- 3. Hàng lọc Loại Bobin -->
             <div class="filter-row">
                 <div class="filter-label">🏷️ Loại Bobin:</div>
                 <div class="filter-actions">
@@ -670,7 +706,6 @@ $typeOptions = [
 
                             <div class="divider"></div>
 
-                            <!-- QC -->
                             <div class="qc-section">
                                 <div class="qc-title">🛡️ QC Check</div>
                                 <div class="qc-header">
@@ -703,7 +738,6 @@ $typeOptions = [
 
                             <div class="divider"></div>
 
-                            <!-- Winding -->
                             <div class="winding-section">
                                 <div class="winding-title">📍 Thông tin cuộn</div>
                                 <div class="winding-header">
@@ -743,7 +777,7 @@ $typeOptions = [
                 </div>
 
                 <!-- THANH PHÂN TRANG -->
-                <?php if ($pagination['totalPages'] > 1): ?>
+                <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
                     <div class="pagination-wrapper"
                         style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:24px; padding:12px;">
                         <?php if ($pagination['currentPage'] > 1): ?>
@@ -774,7 +808,7 @@ $typeOptions = [
 
                         <span style="font-size:13px; color:#64748b; margin-left:10px;">
                             Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
-                            <?= number_format($pagination['totalRecords']) ?> Bobin)
+                            <?= number_format($totalRecords) ?> Bobin)
                         </span>
                     </div>
                 <?php endif; ?>
@@ -783,11 +817,9 @@ $typeOptions = [
         </div>
     </div>
 
-    <!-- Scripts dùng chung -->
     <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=1"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=1"></script>
 
-    <!-- Giữ vị trí cuộn khi chuyển trạng thái / phân trang -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const filterLinks = document.querySelectorAll(".filter-dashboard a, .pagination-wrapper a");

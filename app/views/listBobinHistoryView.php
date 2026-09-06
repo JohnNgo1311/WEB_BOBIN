@@ -206,24 +206,34 @@ if (!function_exists('viBadge')) {
                 </div>
 
                 <div class="kpi-list">
+                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">✅</span>
+                            <span class="kpi-name">ĐÃ ĐÙN</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
                     <a href="<?= buildFilterUrl(['status' => 'Rolled']) ?>" class="kpi-card rolled">
                         <div class="kpi-left">
                             <span class="kpi-icon">✅</span>
-                            <span class="kpi-name">Đã cuộn</span>
+                            <span class="kpi-name">ĐÃ CUỘN</span>
                         </div>
                         <div class="kpi-right">
                             <strong class="kpi-val"><?= number_format($statusCounts['Rolled']) ?></strong>
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
-
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
                         <div class="kpi-left">
                             <span class="kpi-icon">⏳</span>
-                            <span class="kpi-name">Chưa QC</span>
+                            <span class="kpi-name">CHƯA KIỂM TRA QC</span>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
+                            <strong
+                                class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked'] - $statusCounts['Busy_Checked']) ?></strong>
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
@@ -231,7 +241,7 @@ if (!function_exists('viBadge')) {
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Checked']) ?>" class="kpi-card checked">
                         <div class="kpi-left">
                             <span class="kpi-icon">✓</span>
-                            <span class="kpi-name">Đã QC</span>
+                            <span class="kpi-name">ĐÃ KIỂM TRA QC</span>
                         </div>
                         <div class="kpi-right">
                             <strong class="kpi-val"><?= number_format($statusCounts['Busy_Checked']) ?></strong>
@@ -239,7 +249,19 @@ if (!function_exists('viBadge')) {
                         </div>
                     </a>
 
-                    <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation']) ?>" class="kpi-card pending">
+                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked']) ?>" class="kpi-card checked">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">✓</span>
+                            <span class="kpi-name">BOBIN TRỐNG</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong
+                                class="kpi-val"><?= number_format(1360 - $statusCounts['Busy_Unchecked'] + $statusCounts['Rolled']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
+
+                    <!-- <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation']) ?>" class="kpi-card pending">
                         <div class="kpi-left">
                             <span class="kpi-icon">⌛</span>
                             <span class="kpi-name">Chờ hủy</span>
@@ -248,12 +270,12 @@ if (!function_exists('viBadge')) {
                             <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation']) ?></strong>
                             <span class="kpi-arrow">›</span>
                         </div>
-                    </a>
+                    </a> -->
 
                     <a href="<?= buildFilterUrl(['status' => 'Cancelled']) ?>" class="kpi-card cancelled">
                         <div class="kpi-left">
                             <span class="kpi-icon">🗑️</span>
-                            <span class="kpi-name">Đã hủy</span>
+                            <span class="kpi-name">ĐÃ HỦY</span>
                         </div>
                         <div class="kpi-right">
                             <strong class="kpi-val"><?= number_format($statusCounts['Cancelled']) ?></strong>
@@ -436,7 +458,7 @@ if (!function_exists('viBadge')) {
             </div>
 
             <!-- 1. Hàng lọc Trạng thái -->
-            <div class="filter-row">
+            <!-- <div class="filter-row">
                 <div class="filter-label">📌 Trạng thái:</div>
                 <div class="filter-actions">
                     <a href="<?= buildFilterUrl(['status' => 'all']) ?>"
@@ -453,7 +475,7 @@ if (!function_exists('viBadge')) {
                     <a href="<?= buildFilterUrl(['status' => 'Cancelled']) ?>"
                         class="status-btn <?= $currentStatus === 'Cancelled' ? 'active' : '' ?>">🗑️ Đã hủy</a>
                 </div>
-            </div>
+            </div> -->
 
             <!-- 2. Hàng lọc Kích thước -->
             <div class="filter-row">

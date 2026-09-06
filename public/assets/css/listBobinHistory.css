@@ -576,7 +576,7 @@ h1 {
 .kpi-card.unchecked .kpi-icon { background: #fde68a; color: #d97706; }
 .kpi-card.unchecked .kpi-val { color: #b45309; }
 
-.kpi-card.checked { background: #f0f9ff; border-color: #e0f2fe; }
+.kpi-card.checked { background: #e5f4fe; border-color: #e0f2fe; }
 .kpi-card.checked .kpi-icon { background: #bae6fd; color: #0284c7; }
 .kpi-card.checked .kpi-val { color: #0369a1; }
 
@@ -589,9 +589,9 @@ h1 {
 .kpi-card.pending .kpi-val { color: #b91c1c; }
 
 /* Trạng thái Đã hủy (Cancelled) màu Xám Thép */
-.kpi-card.cancelled { background: #f8fafc; border-color: #e2e8f0; }
-.kpi-card.cancelled .kpi-icon { background: #cbd5e1; color: #475569; }
-.kpi-card.cancelled .kpi-val { color: #334155; }
+.kpi-card.cancelled { background: #fff2f2; border-color: #e2e8f0; }
+.kpi-card.cancelled .kpi-icon { background:#b91c1c; color: #b91c1c; }
+.kpi-card.cancelled .kpi-val { color: #b91c1c; }
 
 /* Responsive trên màn hình nhỏ, chuyển về 1 cột dọc */
 @media (max-width: 992px) {

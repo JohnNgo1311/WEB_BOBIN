@@ -154,16 +154,39 @@ class BobinRepository
         }
     }
 
+    // =========================================================================
+    // HÀM TẠO BẢNG ẢO (DYNAMIC): Tự động lấy cấu hình từ Database
+    // =========================================================================
     private function getActiveBaseTable(): string
     {
+        // 1. Đọc linh hoạt dung lượng từ CSDL
+        $capacities = $this->getBobinCapacities();
+
+        // 2. Nếu CSDL bị trống hoặc lỗi kết nối, tự động trả về mức dự phòng
+        if (empty($capacities)) {
+            $capacities = [
+                'PL4-7 (TU04.TU06)' => 420,
+                'PL4-7 (TU08~)'     => 480,
+                'PL7-3'             => 460
+            ];
+        }
+
+        // 3. Tự động sinh vòng lặp điều kiện WHERE dựa trên số lượng thực tế
+        $whereClauses = [];
+        foreach ($capacities as $sizeName => $capacity) {
+            $safeSize = addslashes($sizeName);
+            $safeCap  = (int)$capacity;
+            $whereClauses[] = "(bobin_size = '{$safeSize}' AND row_num <= {$safeCap})";
+        }
+
+        $whereSql = implode(' OR ', $whereClauses);
+
         return "(
             SELECT * FROM (
                 SELECT *, ROW_NUMBER() OVER(PARTITION BY bobin_size ORDER BY bobin_identification_code ASC) as row_num 
                 FROM bobin_list_detail
             ) AS numbered_bobins
-            WHERE (bobin_size = 'PL4-7 (TU04.TU06)' AND row_num <= 420)
-               OR (bobin_size = 'PL4-7 (TU08~)' AND row_num <= 480)
-               OR (bobin_size = 'PL7-3' AND row_num <= 460)
+            WHERE {$whereSql}
         )";
     }
 

@@ -53,7 +53,7 @@ class BobinController extends Controller
                 $this->winding();
                 break;
             case 'manager':
-                $this->manager();
+                $this->manageCapacityView();
                 break;
             case 'admin':
                 $this->admin();
@@ -86,7 +86,7 @@ class BobinController extends Controller
 
     private function manager()
     {
-        require_once "../app/views/managerView.php";
+        require_once "../app/views/manageCapacityView.php";
     }
     private function admin()
     {
@@ -112,21 +112,56 @@ class BobinController extends Controller
         $errorMsg = null;
         $bobins = [];
         $statusCounts = [];
+        $capacityMap = []; // Thêm biến lưu trữ dung lượng
 
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
             $statusCounts = $this->bobinService->getBobinHistoryStats($dto);
+
+            // Lấy dung lượng động từ cơ sở dữ liệu
+            $capacityMap = $this->bobinService->getBobinCapacities();
         } catch (Throwable $e) {
-            // Thay vì throw Exception làm sập trang, ta gán lỗi vào biến
             $errorMsg = $e->getMessage();
         }
 
         $this->view('listBobinHistoryView', data: [
             'bobins'       => $bobins,
             'statusCounts' => $statusCounts,
-            'error'        => $errorMsg, // <-- Truyền lỗi xuống View để bật Toast
+            'capacityMap'  => $capacityMap, // <-- Truyền xuống View
+            'error'        => $errorMsg,
             'success'      => empty($errorMsg),
+        ]);
+    }
+
+    public function listBobinView_Winding()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        $capacityMap = [];
+        try {
+            $dto = BobinGetListDTO::fromRequest($_GET);
+            $bobins = $this->bobinService->getDetailBobinsForWindingPaginated($dto) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForWinding($dto);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
+
+            // Lấy dung lượng động từ cơ sở dữ liệu
+            $capacityMap = $this->bobinService->getBobinCapacities();
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
+
+        $this->view('listBobinView_Winding', data: [
+            'bobins'     => $bobins,
+            'capacityMap' => $capacityMap, // <-- Truyền xuống View
+            'pagination' => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ]
         ]);
     }
     public function listBobinDetailView()
@@ -141,8 +176,10 @@ class BobinController extends Controller
             $totalRecords = $this->bobinService->countDetailBobins($dto);
             $totalPages = (int)ceil($totalRecords / $dto->limit);
 
-            // Thống kê theo bộ lọc Size và Type đã chọn
             $statusCounts = $this->bobinService->getBobinStatusStats($dto);
+
+            // Lấy dung lượng động từ cơ sở dữ liệu
+            $capacityMap = $this->bobinService->getBobinCapacities();
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -150,6 +187,7 @@ class BobinController extends Controller
         $this->view('listBobinDetailView', data: [
             'bobins'       => $bobins,
             'statusCounts' => $statusCounts,
+            'capacityMap'  => $capacityMap, // <-- Truyền xuống View
             'pagination'   => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
@@ -808,5 +846,53 @@ class BobinController extends Controller
         if (empty($dto->winding_note) || $dto->winding_note === "Không có ghi chú") {
             throw new Exception('Vui lòng nhập lý do hủy Bobin trong phần ghi chú');
         }
+    }
+    // Hiển thị trang quản lý dung lượng Bobin cho Quản lý/Admin
+    public function manageCapacityView()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        try {
+            // Lấy danh sách cấu hình dung lượng hiện tại từ DB
+            $capacities = $this->bobinService->getBobinCapacities();
+        } catch (Throwable $e) {
+            $capacities = [];
+        }
+
+        $this->view('manageCapacityView', data: [
+            'capacities' => $capacities
+        ]);
+    }
+
+    // API nhận request cập nhật dung lượng từ giao diện
+    public function updateCapacityAction(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+            $sizeName = trim($input['size_name'] ?? '');
+            $capacity = (int)($input['capacity'] ?? 0);
+
+            // Gọi Service cập nhật vào database
+            $this->bobinService->updateBobinCapacity($sizeName, $capacity);
+
+            $this->json([
+                'success' => true,
+                'message' => "Cập nhật số lượng cho kích thước [{$sizeName}] thành công!"
+            ]);
+        } catch (Throwable $e) {
+            $this->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+        exit;
     }
 }

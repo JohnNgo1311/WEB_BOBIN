@@ -20,12 +20,14 @@ $currentType   = $_GET['bobin_type'] ?? 'all';
 // ========================================================
 // TÍNH TOÁN DUNG LƯỢNG THỰC TẾ SỬ DỤNG
 // ========================================================
-// Nhận mảng phân bổ từ Controller (Nếu mảng rỗng thì setup mặc định)
-$capacityMap = $data['capacityMap'] ?? [
+// Sử dụng !empty thay vì ?? để đảm bảo mảng dự phòng luôn kích hoạt nếu DB lỗi/rỗng
+$capacityMap = (!empty($data['capacityMap'])) ? $data['capacityMap'] : [
     'PL4-7 (TU04.TU06)' => 420,
     'PL4-7 (TU08~)'     => 480,
     'PL7-3'             => 460
 ];
+
+// ... (Giữ nguyên các đoạn code bên dưới)
 
 // Luôn lấy đúng định mức thực tế: Chọn 'all' ra 1360, chọn size cụ thể ra đúng dung lượng của size đó
 if ($currentSize === 'all') {
@@ -101,8 +103,8 @@ if (!function_exists('decodeJsonObject')) {
 $sizeOptions = [
     'all'               => 'Mọi kích thước',
     'PL7-3'             => 'PL7-3',
-    'PL4-7 (TU08~)'     => 'PL4-7 (TU08~)',
-    'PL4-7 (TU04.TU06)' => 'PL4-7 (TU04.TU06)'
+    'PL4-7 (TU04.TU06)' => 'PL4-7 (TU04.TU06)',
+    'PL4-7 (TU08~)'     => 'PL4-7 (TU08~)'
 ];
 
 $typeOptions = [

@@ -18,16 +18,19 @@ $currentType   = $_GET['bobin_type'] ?? 'all';
 // ========================================================
 // LOGIC MỚI: TÍNH TOÁN DUNG LƯỢNG VÀ BOBIN TRỐNG
 // ========================================================
-$capacityMap = $data['capacityMap'] ?? [
+// Dùng !empty để đảm bảo nhận mảng cấu hình từ DB (Controller truyền sang)
+$capacityMap = (!empty($data['capacityMap'])) ? $data['capacityMap'] : [
     'PL4-7 (TU04.TU06)' => 420,
     'PL4-7 (TU08~)'     => 480,
     'PL7-3'             => 460
 ];
 
-// Luôn lấy đúng định mức thực tế: Chọn 'all' ra 1360, chọn size cụ thể ra đúng dung lượng của size đó
-$totalRealBobins = ($currentSize === 'all')
-    ? array_sum($capacityMap)
-    : ($capacityMap[$currentSize] ?? 0);
+// Luôn lấy đúng định mức thực tế: Chọn 'all' ra tổng CSDL, chọn size cụ thể ra đúng dung lượng của size đó
+if ($currentSize === 'all') {
+    $totalRealBobins = array_sum($capacityMap);
+} else {
+    $totalRealBobins = $capacityMap[$currentSize] ?? 0;
+}
 
 // Số lượng Bobin ĐÃ ĐÙN = Số lượng Bobin chưa QC
 $extrudedCount = $statusCounts['Busy_Unchecked'];
@@ -44,7 +47,7 @@ foreach ($bobins as $b) {
 }
 $uniqueRolledCount = count($uniqueRolledKeys);
 
-// Tính Bobin Trống: Tổng thực tế (1360) - (Đã Đùn - Đã Cuộn [Unique])
+// Tính Bobin Trống: Tổng thực tế - (Đã Đùn - Đã Cuộn [Unique])
 $emptyBobins = $totalRealBobins - ($extrudedCount - $uniqueRolledCount);
 // Đảm bảo số lượng nằm trong giới hạn thực tế (Từ 0 đến Max Capacity)
 $emptyBobins = min($totalRealBobins, max(0, $emptyBobins));
@@ -261,7 +264,7 @@ if (!function_exists('viBadge')) {
                         </svg>
                     </div>
                     <div class="total-info">
-                        <span class="label">Tổng số lượng Bobin</span>
+                        <span class="label">Tổng số lượng Bobin thực tế</span>
                         <span class="value"><?= number_format($totalRealBobins) ?></span>
                     </div>
                 </div>
@@ -502,22 +505,6 @@ if (!function_exists('viBadge')) {
                 </a>
             </div>
 
-            <div class="filter-row">
-                <div class="filter-label">📌 Trạng thái:</div>
-                <div class="filter-actions">
-                    <a href="<?= buildFilterUrl(['status' => 'all', 'page' => 1]) ?>"
-                        class="status-btn <?= $currentStatus === 'all' ? 'active' : '' ?>">📦 Tất cả trạng thái</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Rolled', 'page' => 1]) ?>"
-                        class="status-btn <?= $currentStatus === 'Rolled' ? 'active' : '' ?>">✅ Đã cuộn</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked', 'page' => 1]) ?>"
-                        class="status-btn <?= $currentStatus === 'Busy_Unchecked' ? 'active' : '' ?>">⏳ Chưa QC</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked', 'page' => 1]) ?>"
-                        class="status-btn <?= $currentStatus === 'Busy_Checked' ? 'active' : '' ?>">🛡️ Đã QC</a>
-                    <a href="<?= buildFilterUrl(['status' => 'Cancelled', 'page' => 1]) ?>"
-                        class="status-btn <?= $currentStatus === 'Cancelled' ? 'active' : '' ?>">❌ Đã hủy</a>
-
-                </div>
-            </div>
             <!-- 2. Hàng lọc Kích thước -->
             <div class="filter-row">
                 <div class="filter-label">📏 Kích thước:</div>
@@ -808,29 +795,6 @@ if (!function_exists('viBadge')) {
         </div>
     </div>
 
-    <script src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
-    <script src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
-
-    <!-- Giữ vị trí cuộn khi chuyển trạng thái bộ lọc -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const filterLinks = document.querySelectorAll(".kpi-list a, .filter-dashboard a");
-            filterLinks.forEach(link => {
-                link.addEventListener("click", function() {
-                    sessionStorage.setItem("bobin_history_scroll_pos", window.scrollY);
-                });
-            });
-
-            const scrollPos = sessionStorage.getItem("bobin_history_scroll_pos");
-            if (scrollPos !== null) {
-                window.scrollTo({
-                    top: parseInt(scrollPos, 10),
-                    behavior: "instant"
-                });
-                sessionStorage.removeItem("bobin_history_scroll_pos");
-            }
-        });
-    </script>
     <!-- HIỂN THỊ TOAST BÁO LỖI NẾU CÓ -->
     <?php if (!empty($data['error'])): ?>
         <style>
@@ -869,11 +833,35 @@ if (!function_exists('viBadge')) {
                 const toast = document.getElementById('toastMessage');
                 if (toast) {
                     toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 500); // Gỡ khỏi DOM sau khi mờ dần
+                    setTimeout(() => toast.remove(), 500);
                 }
-            }, 3000); // Tự động ẩn sau 3 giây
+            }, 3000);
         </script>
     <?php endif; ?>
+
+    <script src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
+
+    <!-- Giữ vị trí cuộn khi chuyển trạng thái bộ lọc -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const filterLinks = document.querySelectorAll(".kpi-list a, .filter-dashboard a");
+            filterLinks.forEach(link => {
+                link.addEventListener("click", function() {
+                    sessionStorage.setItem("bobin_history_scroll_pos", window.scrollY);
+                });
+            });
+
+            const scrollPos = sessionStorage.getItem("bobin_history_scroll_pos");
+            if (scrollPos !== null) {
+                window.scrollTo({
+                    top: parseInt(scrollPos, 10),
+                    behavior: "instant"
+                });
+                sessionStorage.removeItem("bobin_history_scroll_pos");
+            }
+        });
+    </script>
 </body>
 
 </html>

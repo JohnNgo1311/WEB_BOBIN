@@ -219,6 +219,13 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
     submitBtn.disabled = true;
   }
 
+  // --- LOG DỮ LIỆU ĐẦU VÀO TẠI ĐÂY ---
+  console.log("=== DỮ LIỆU SUBMIT FORM ===");
+  console.log("API URL:", apiUrl);
+  console.log("Method:", method);
+  console.table(Object.fromEntries(formData.entries()));
+  // ------------------------------------
+
   try {
     const response = await fetch(apiUrl, { method, body: formData });
     const res = await response.json();
@@ -232,6 +239,11 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
       );
       if (idCodeInput) idCodeInput.value = "";
 
+      const idSizeInput = form.querySelector(
+        'input[name="bobin_size"]',
+      );
+      if (idSizeInput) idSizeInput.value = "";
+
       const productCodeInput = form.querySelector('input[name="product_code"]');
       if (productCodeInput) productCodeInput.value = "";
 
@@ -240,7 +252,6 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
       );
       if (orderCodeInput) orderCodeInput.value = "";
 
-      // Đã sửa 'lenght_m' thành 'length_m'
       const lengthInput = form.querySelector('input[name="length_m"]');
       if (lengthInput) lengthInput.value = "";
 

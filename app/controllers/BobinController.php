@@ -469,6 +469,30 @@ class BobinController extends Controller
         }
         exit;
     }
+    public function updateQCAndChangeType(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+            // Gọi Service xử lý
+            $entity = $this->bobinService->updateQCAndChangeTypeBobin($input);
+
+            $this->json([
+                'success' => true,
+                'message' => "Kiểm tra QC và đổi loại thành công cho Bobin {$entity->identificationCode}!"
+            ]);
+        } catch (Throwable $e) {
+            $this->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+        exit;
+    }
     #endregion
     #region WINDING
     public function updateWindingBobin(): void
@@ -776,6 +800,9 @@ class BobinController extends Controller
         if (empty($dto->bobin_identification_code)) {
             throw new Exception('Mã định danh Bobin không được để trống');
         }
+        // if (empty($dto->bobin_size)) {
+        //     throw new Exception('Kích thước Bobin không được để trống');
+        // }
     }
     private function validBobin(BobinGetSpecificDTO $dto): void
     {

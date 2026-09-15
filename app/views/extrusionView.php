@@ -14,10 +14,10 @@
     <div class="menu-bar">
         <div class="menu-left">
             <a href="/WEB_BOBIN/public/index.php?url=bobin/index">Nhóm đùn</a>
-            <a href="#">QC</a>
-            <a href="#">Cuộn</a>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView">Điều chỉnh thông tin
-                Bobin</a>
+            <!-- <a href="#">QC</a>
+            <a href="#">Cuộn</a> -->
+            <!-- <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView">Điều chỉnh thông tin
+                Bobin</a> -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView">Danh sách Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView">Lịch sử Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView">Danh sách chờ hủy</a>
@@ -125,12 +125,32 @@
         </select>
 
         <label>Ngày đùn:</label>
-
         <input type="date" name="extrusion_date"
             value="<?php echo (new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh')))->format('Y-m-d'); ?>">
 
-        <label>Thời gian hoàn thành cuộn:</label>
-        <input type="text" name="finish_time" id="finish_time" readonly>
+        <!-- BẮT ĐẦU PHẦN CẬP NHẬT THỜI GIAN HOÀN THÀNH -->
+
+        <!-- THẺ DIV 1 (CHIẾM CỘT TRÁI CỦA GRID): Chứa Tiêu đề & Checkbox -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="margin-bottom: 0;">Thời gian hoàn thành cuộn:</label>
+            <label
+                style="font-size: 0.9rem; color: #0284c7; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; margin-bottom: 0;">
+                <input type="checkbox" id="manual_time_toggle"> Chọn thời gian khác
+            </label>
+        </div>
+
+        <!-- THẺ DIV 2 (CHIẾM CỘT PHẢI CỦA GRID): Chứa 2 ô Input -->
+        <div style="position: relative;">
+            <!-- Ô hiển thị Realtime -->
+            <input type="text" name="finish_time" id="finish_time" readonly
+                style="background-color: #f1f5f9; margin-bottom: 0;">
+
+            <!-- Ô hiển thị Lịch chọn thủ công (Mặc định ẩn) -->
+            <input type="datetime-local" id="manual_datetime_picker" step="1"
+                style="display: none; width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; font-family: inherit; box-sizing: border-box;">
+        </div>
+
+        <!-- KẾT THÚC PHẦN CẬP NHẬT -->
 
         <div class="btn-group">
             <button type="reset" class="btn btn-secondary">Làm mới</button>

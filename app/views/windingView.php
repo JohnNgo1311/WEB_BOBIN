@@ -49,8 +49,8 @@ if (!function_exists('viBadge')) {
 <body>
     <div class="menu-bar">
         <div class="menu-left">
-            <a href="#">Nhóm đùn</a>
-            <a href="#">QC</a>
+            <!-- <a href="#">Nhóm đùn</a>
+            <a href="#">QC</a> -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView">Cuộn</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView">Danh sách Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView">Lịch sử Bobin</a>

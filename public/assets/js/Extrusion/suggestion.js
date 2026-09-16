@@ -481,7 +481,7 @@ if (productCodeInput) {
       matches.forEach((product) => {
         const div = document.createElement("div");
         div.className = "suggestion-item";
-        div.textContent = `${product.production_order_code} - ${product.product_code}`;
+        div.textContent = `${product.product_code}`;
 
         div.onclick = () => {
           if (productionOrderCode) {

@@ -16,8 +16,8 @@
             <a href="/WEB_BOBIN/public/index.php?url=bobin/index">Nhóm đùn</a>
             <a href="#">QC</a>
             <a href="#">Cuộn</a>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView">Điều chỉnh thông tin
-                Bobin</a>
+            <!-- <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView">Điều chỉnh thông tin
+                Bobin</a> -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView">Danh sách Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView">Lịch sử Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView">Danh sách chờ hủy</a>

@@ -16,8 +16,14 @@ let listData = {
   list_year: [],
 };
 
+// Biến cờ hiệu kiểm soát đồng hồ realtime
+let isManualTime = false;
+
 //TODO 2. HÀM CLOCK
 setInterval(() => {
+  // Bỏ qua việc ghi đè realtime nếu người dùng đang chọn chỉnh sửa bằng Lịch
+  if (isManualTime) return;
+
   const d = new Date();
   const t = d.toLocaleTimeString("vi-VN", { hour12: false });
   const day = d.getDate().toString().padStart(2, "0");
@@ -29,10 +35,61 @@ setInterval(() => {
   if (el) el.value = dateStr + " " + t;
 }, 1000);
 
-//TODO 3. LOAD DATA
+//TODO 3. LOAD DATA & TẠO SỰ KIỆN LỊCH
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 Bắt đầu gọi API...");
-  //API_BASE_URL = 'http://localhost/WEB_BOBIN/';
+
+  // --- LOGIC XỬ LÝ BỘ CHỌN LỊCH / GIỜ THÔNG MINH ---
+  const timeToggle = document.getElementById("manual_time_toggle");
+  const finishTimeInput = document.getElementById("finish_time");
+  const manualPicker = document.getElementById("manual_datetime_picker");
+
+  if (timeToggle && finishTimeInput && manualPicker) {
+    timeToggle.addEventListener("change", function () {
+      isManualTime = this.checked;
+      if (isManualTime) {
+        // Lấy dữ liệu Text hiện tại chuyển đổi gán vào Calendar để đồng bộ lúc mở lên
+        const parts = finishTimeInput.value.split(" ");
+        if (parts.length === 2) {
+          const dParts = parts[0].split("/"); // Tách DD, MM, YYYY
+          if (dParts.length === 3) {
+            // Chuẩn của datetime-local là YYYY-MM-DDTHH:mm:ss
+            manualPicker.value = `${dParts[2]}-${dParts[1]}-${dParts[0]}T${parts[1]}`;
+          }
+        }
+
+        // Ẩn text readonly, hiện bộ chọn Lịch
+        finishTimeInput.style.display = "none";
+        manualPicker.style.display = "block";
+      } else {
+        // Bỏ check -> Chuyển lại trạng thái realtime
+        finishTimeInput.style.display = "block";
+        manualPicker.style.display = "none";
+      }
+    });
+
+    // Lắng nghe sự kiện ngay khi người dùng chọn ngày/giờ trên Calendar
+    manualPicker.addEventListener("input", function () {
+      if (!this.value) return;
+
+      const dateObj = new Date(this.value);
+      const day = dateObj.getDate().toString().padStart(2, "0");
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, "0");
+      const year = dateObj.getFullYear();
+      const hours = dateObj.getHours().toString().padStart(2, "0");
+      const minutes = dateObj.getMinutes().toString().padStart(2, "0");
+      const seconds = dateObj.getSeconds().toString().padStart(2, "0");
+
+      // Ngầm định dạng lại theo chuẩn hệ thống để gửi xuống Database
+      const formattedTime = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+      finishTimeInput.value = formattedTime;
+
+      // Kích hoạt sự kiện để hàm tạo Lot in cập nhật ăn theo ngay lập tức
+      finishTimeInput.dispatchEvent(new Event("change"));
+    });
+  }
+  // ------------------------------------------------
+
   fetch(API_BASE_URL + "listdata/getListData")
     .then((res) => res.json())
     .then((response) => {
@@ -40,12 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("📥 Dữ liệu nhận về:", response);
         listData = response;
         setupAutoPrintLot();
-        reversePrintLot(); //? Nếu đã có sẵn mã Lot in thì tự động điền ngược thông tin
+        reversePrintLot(); // Nếu đã có sẵn mã Lot in thì tự động điền ngược thông tin
         console.log(`👂 Bắt đầu theo dõi nhập dữ liệu`);
       } else {
-        console.error(
-          "❌ Lỗi từ API: Truy xuất dữ liệu ListData không thành công.",
-        );
+        console.error("❌ Lỗi từ API: Truy xuất dữ liệu ListData không thành công.");
       }
     })
     .catch(console.error);
@@ -118,57 +173,75 @@ function fillDatalist(key, dataArray) {
 
 //TODO 5. LOGIC GỢI Ý
 // =============================BOBIN ===========================
-const bobinInput = document.getElementById("bobin_identification_code");
-const bobinBox = document.getElementById("bobin_suggestions");
+const bobinCodeInput = document.getElementById("bobin_identification_code");
+const bobinSize = document.getElementById("bobin_size");
+const bobinCodeBox = document.getElementById("bobin_suggestions");
 
-if (bobinInput) {
-  bobinInput.addEventListener("input", function () {
+if (bobinCodeInput) {
+  bobinCodeInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    bobinBox.innerHTML = "";
+    bobinCodeBox.innerHTML = "";
 
-    if (!listData.list_bobin || listData.list_bobin.length === 0) {
-      return;
+    // Reset size mỗi khi nội dung thay đổi (chưa nhập xong)
+    if (bobinSize) {
+      bobinSize.value = "";
     }
+
+    if (!listData.list_bobin || listData.list_bobin.length === 0) return;
 
     if (!val) {
-      bobinBox.style.display = "none";
+      bobinCodeBox.style.display = "none";
       return;
     }
 
-    const matches = listData.list_bobin.filter((item) => {
-      const code = item.bobin_identification_code || "";
-      const status = item.bobin_current_status || "";
+    // [QUAN TRỌNG]: Điều kiện status hợp lệ cho nhóm Đùn là "Rolled" hoặc "Cancelled"
+    const isValidStatus = (status) => {
+      return status === "Rolled" || status === "Cancelled";
+    };
 
-      return code.toLowerCase().includes(val) && status === "Ready";
-    });
+    // 1. KIỂM TRA KHỚP CHÍNH XÁC (Tự động điền khi quét QR hoặc gõ xong)
+    const exactMatch = listData.list_bobin.find(
+      (bobin) =>
+        bobin.bobin_identification_code &&
+        bobin.bobin_identification_code.toLowerCase() === val &&
+        isValidStatus(bobin.bobin_current_status)
+    );
+
+    if (exactMatch) {
+      // Nếu khớp chính xác 100% và trạng thái hợp lệ, điền luôn size và ẩn khung gợi ý
+      if (bobinSize) bobinSize.value = exactMatch.bobin_size;
+      bobinCodeBox.style.display = "none";
+      return;
+    }
+
+    // 2. KIỂM TRA KHỚP TƯƠNG ĐỐI (Hiển thị gợi ý khi đang gõ từng chữ)
+    const matches = listData.list_bobin.filter(
+      (bobin) => {
+        const code = bobin.bobin_identification_code || "";
+        const status = bobin.bobin_current_status || "";
+        return code.toLowerCase().includes(val) && isValidStatus(status);
+      }
+    );
 
     if (matches.length > 0) {
-      bobinBox.style.display = "block";
-
-      matches.forEach((item) => {
-        const code = item.bobin_identification_code;
-
+      bobinCodeBox.style.display = "block";
+      matches.forEach((bobin) => {
         const div = document.createElement("div");
         div.className = "suggestion-item";
-        div.textContent = code;
-
+        div.textContent = `${bobin.bobin_identification_code} - ${bobin.bobin_size}`;
         div.onclick = () => {
-          bobinInput.value = code;
-          bobinBox.style.display = "none";
-
-          if (typeof checkBobinStatus === "function") {
-            checkBobinStatus(code);
-          }
+          // Khi click vào gợi ý
+          bobinCodeInput.value = bobin.bobin_identification_code;
+          if (bobinSize) bobinSize.value = bobin.bobin_size;
+          bobinCodeBox.style.display = "none";
         };
-
-        bobinBox.appendChild(div);
+        bobinCodeBox.appendChild(div);
       });
     } else {
-      bobinBox.style.display = "none";
+      bobinCodeBox.style.display = "none";
     }
   });
 }
-
 const material_lotInput = document.getElementById("material_lot");
 const material_lotBox = document.getElementById("material_lot_suggestions");
 
@@ -386,68 +459,6 @@ if (empInput) {
   });
 }
 
-const bobinCodeInput = document.getElementById("bobin_identification_code");
-const bobinSize = document.getElementById("bobin_size");
-const bobinCodeBox = document.getElementById("bobin_suggestions");
-
-if (bobinCodeInput) {
-  bobinCodeInput.addEventListener("input", function () {
-    const val = this.value.toLowerCase().trim();
-    bobinCodeBox.innerHTML = "";
-
-    // Reset size mỗi khi nội dung thay đổi (chưa nhập xong)
-    if (bobinSize) {
-      bobinSize.value = "";
-    }
-
-    if (!listData.list_bobin || listData.list_bobin.length === 0) return;
-
-    if (!val) {
-      bobinCodeBox.style.display = "none";
-      return;
-    }
-
-    // 1. KIỂM TRA KHỚP CHÍNH XÁC (Tự động điền khi quét QR hoặc gõ xong)
-    const exactMatch = listData.list_bobin.find(
-      (bobin) =>
-        bobin.bobin_identification_code &&
-        bobin.bobin_identification_code.toLowerCase() === val,
-    );
-
-    if (exactMatch) {
-      // Nếu khớp chính xác 100%, điền luôn size và ẩn khung gợi ý
-      if (bobinSize) bobinSize.value = exactMatch.bobin_size;
-      bobinCodeBox.style.display = "none";
-      return; // Dừng lại ở đây, không cần hiển thị danh sách nữa
-    }
-
-    // 2. KIỂM TRA KHỚP TƯƠNG ĐỐI (Hiển thị gợi ý khi đang gõ từng chữ)
-    const matches = listData.list_bobin.filter(
-      (bobin) =>
-        bobin.bobin_identification_code &&
-        bobin.bobin_identification_code.toLowerCase().includes(val),
-    );
-
-    if (matches.length > 0) {
-      bobinCodeBox.style.display = "block";
-      matches.forEach((bobin) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = `${bobin.bobin_identification_code} - ${bobin.bobin_size}`;
-        div.onclick = () => {
-          // Khi click vào gợi ý
-          bobinCodeInput.value = bobin.bobin_identification_code;
-          if (bobinSize) bobinSize.value = bobin.bobin_size;
-          bobinCodeBox.style.display = "none";
-        };
-        bobinCodeBox.appendChild(div);
-      });
-    } else {
-      bobinCodeBox.style.display = "none";
-    }
-  });
-}
-
 const productCodeInput = document.getElementById("product_code");
 const productionOrderCode = document.getElementById("production_order_code");
 const productBox = document.getElementById("product_suggestions");
@@ -481,7 +492,7 @@ if (productCodeInput) {
       matches.forEach((product) => {
         const div = document.createElement("div");
         div.className = "suggestion-item";
-        div.textContent = `${product.production_order_code} - ${product.product_code}`;
+        div.textContent = `${product.product_code}`;
 
         div.onclick = () => {
           if (productionOrderCode) {

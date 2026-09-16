@@ -68,8 +68,9 @@ const ConfirmDialog = {
       .addEventListener("click", () => overlay.remove());
 
     box.querySelector(".confirm-btn").addEventListener("click", () => {
+      const dialogBox = box;
       overlay.remove();
-      if (typeof onConfirm === "function") onConfirm();
+      if (typeof onConfirm === "function") onConfirm(dialogBox);
     });
   },
 };
@@ -277,5 +278,134 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
         btnElement.disabled = false;
       }
     },
+  );
+  /* =========================================
+    HÀM XỬ LÝ: Chuyển đổi loại Bobin sang ĐIỀU CHỈNH
+========================================= */
+
+}
+/* =========================================
+    HÀM XỬ LÝ: Kiểm tra QC kết hợp đổi loại Bobin sang ĐIỀU CHỈNH
+========================================= */
+function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
+  const container = btnElement.closest(".bobin-item");
+
+  if (!bobinCode || !bobinKeyCode) {
+    Toast.show("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
+    return;
+  }
+
+  const inputCodeEl = container?.querySelector(".input-inspector-code");
+  const inputNameEl = container?.querySelector(".input-inspector-name");
+
+  const inspectorCode = inputCodeEl?.value?.trim() || "";
+  const inspectorName = inputNameEl?.value?.trim() || "";
+
+  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
+    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi thực hiện!", "error");
+    if (inputCodeEl) {
+      inputCodeEl.style.border = "2px solid red";
+      setTimeout(() => inputCodeEl.style.border = "1px solid #cbd5e1", 2000);
+    }
+    return;
+  }
+
+  const note = container?.querySelector(".note-field")?.value?.trim() || "";
+
+  // Thu thập trạng thái các lỗi QC tương tự handleConfirm
+  const defects = {};
+  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
+    const key = switchItem.getAttribute("data-key");
+    const goodDefect =
+      switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") ===
+      "true";
+    defects[key] = goodDefect;
+  });
+
+  let dialogHTML = `
+      <style>
+          .type-toggle-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+          .type-toggle-item { position: relative; }
+          .type-toggle-input { display: none; }
+          .type-toggle-label { 
+              display: flex; align-items: center; justify-content: space-between;
+              padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 8px;
+              background: #f8fafc; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;
+          }
+          .type-toggle-input:checked + .type-toggle-label {
+              border-color: #f59e0b; background: #fffbeb; color: #b45309; box-shadow: 0 4px 6px rgba(245, 158, 11, 0.1);
+          }
+          .type-toggle-input:checked + .type-toggle-label::after {
+              content: '✔'; font-size: 16px; font-weight: 800; color: #b45309;
+          }
+      </style>
+      
+      <div style="background-color: #fffbeb; color: #b45309; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+          Đang xác nhận QC và chuyển đổi loại Bobin <strong>${bobinCode}</strong>.<br> Vui lòng chọn loại điều chỉnh tương ứng:
+      </div>
+      
+      <div class="type-toggle-group">
+          <div class="type-toggle-item">
+              <input type="radio" id="type_cp" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Do CP)" checked>
+              <label for="type_cp" class="type-toggle-label">Điều chỉnh (Do CP)</label>
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_gel" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Gel)">
+              <label for="type_gel" class="type-toggle-label">Điều chỉnh (Ngoại quan: Gel)</label>
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_divat" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Dị vật)">
+              <label for="type_divat" class="type-toggle-label">Điều chỉnh (Ngoại quan: Dị vật)</label>
+          </div>
+      </div>
+  `;
+
+  ConfirmDialog.show(
+    "Xác nhận QC & Đổi loại Bobin",
+    dialogHTML,
+    async (dialogBox) => {
+      const selectedType = dialogBox.querySelector('input[name="new_bobin_type"]:checked')?.value || "Điều chỉnh (Do CP)";
+
+      const bodyData = {
+        bobin_identification_code: bobinCode,
+        bobin_key_code: bobinKeyCode,
+        new_bobin_type: selectedType,
+        inspector_code: inspectorCode,
+        inspector_name: inspectorName,
+        defect_note: note,
+        defect_gel: defects["gel"] || false,
+        defect_foreign_object: defects["foreign_object"] || false,
+        defect_color_issue: defects["color_issue"] || false,
+        defect_print_quality: defects["print_quality"] || false,
+      };
+
+      const requestUrl = "/WEB_BOBIN/public/index.php?url=bobin/updateQCAndChangeType";
+      const originalBtnText = btnElement.innerHTML;
+
+      btnElement.innerHTML = "⏳ Đang xử lý...";
+      btnElement.disabled = true;
+
+      try {
+        const response = await fetch(requestUrl, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(bodyData),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          Toast.show(data.message, "success"); // Tự động reload trang khi success
+        } else {
+          Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
+          btnElement.innerHTML = originalBtnText;
+          btnElement.disabled = false;
+        }
+      } catch (error) {
+        Toast.show("Đã xảy ra lỗi kết nối!", "error");
+        btnElement.innerHTML = originalBtnText;
+        btnElement.disabled = false;
+      }
+    }
   );
 }

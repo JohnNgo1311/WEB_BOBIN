@@ -1080,7 +1080,93 @@ class BobinRepository
             throw new Exception("Lỗi Database: " . $e->getMessage());
         }
     }
+    public function updateBobinTypeInfor(BobinEntity $entity, string $newType): bool
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
 
+            // 1. Cập nhật bảng Chi tiết (bobin_list_detail): Cập nhật trạng thái Busy_Checked, Visual Inspection và đổi Type mới
+            $sqlDetail = "UPDATE bobin_list_detail SET
+                    bobin_type = :type,
+                    bobin_current_status = :status,
+                    visual_inspection = :visual,
+                    updated_time = NOW()
+                WHERE bobin_key_code = :key
+                    AND bobin_identification_code = :ident";
+
+            $stmt = $pdo->prepare($sqlDetail);
+            $stmt->execute([
+                ':type'     => $newType,
+                ':status'   => $entity->currentStatus,
+                ':visual'   => $this->json_utf8($entity->visualInspection),
+                ':key'      => $entity->bobinKeyCode,
+                ':ident'    => $entity->identificationCode
+            ]);
+
+            // 2. Cập nhật bảng Tổng hợp (bobin_list_general)
+            $sqlGeneral = "UPDATE bobin_list_general SET
+                            bobin_type = :type,
+                            bobin_current_status = :status,
+                            updated_time = NOW()
+                       WHERE bobin_key_code = :key
+                            AND bobin_identification_code = :ident";
+
+            $stmtGen = $pdo->prepare($sqlGeneral);
+            $stmtGen->execute([
+                ':type'     => $newType,
+                ':status'   => $entity->currentStatus,
+                ':key'      => $entity->bobinKeyCode,
+                ':ident'    => $entity->identificationCode
+            ]);
+
+            // 3. Chèn một dòng lịch sử mới ghi nhận kết quả kiểm tra QC kèm loại Type mới
+            $sqlHistory = "INSERT INTO bobin_history (
+                                bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
+                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                shift, extrusion_date, finish_time, visual_inspection, 
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                            )
+                            SELECT 
+                                bobin_key_code, bobin_identification_code, bobin_size, :type, 
+                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                shift, extrusion_date, finish_time, visual_inspection, 
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, NOW()
+                            FROM bobin_list_detail
+                            WHERE bobin_key_code = :key 
+                                AND bobin_identification_code = :ident";
+
+            $stmtHistory = $pdo->prepare($sqlHistory);
+            $stmtHistory->execute([
+                ':type' => $newType,
+                ':key'  => $entity->bobinKeyCode,
+                ':ident' => $entity->identificationCode
+            ]);
+
+            // 4. [YÊU CẦU QUAN TRỌNG]: Tìm trong lịch sử các bản ghi có cùng bobin_key_code và cập nhật lại bobin_type thành loại mới
+            $sqlHistoryUpdateType = "UPDATE bobin_history 
+                                     SET bobin_type = :type 
+                                     WHERE bobin_key_code = :key";
+            $stmtHistoryType = $pdo->prepare($sqlHistoryUpdateType);
+            $stmtHistoryType->execute([
+                ':type' => $newType,
+                ':key'  => $entity->bobinKeyCode
+            ]);
+
+            if ($stmt->rowCount() === 0 && $stmtGen->rowCount() === 0) {
+                throw new Exception("Không tìm thấy dữ liệu khớp hoặc dữ liệu chưa được thay đổi.");
+            }
+
+            $pdo->commit();
+            return true;
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Lỗi Database: " . $e->getMessage());
+        }
+    }
     public function qcCancelBobin(BobinEntity $entity): bool
     {
         $pdo = $this->db->pdo();

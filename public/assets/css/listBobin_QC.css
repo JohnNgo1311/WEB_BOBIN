@@ -883,3 +883,26 @@ body {
   background-color: #fff; /* Thêm nền trắng cho sạch sẽ */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Thêm chút viền đổ bóng cho đẹp */
 }
+/* ================= NÚT ĐỔI LOẠI BOBIN ================= */
+.btn-change-type {
+  background: #f59e0b; /* Màu cam hổ phách */
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-change-type:hover {
+  background: #d97706; /* Màu cam đậm hơn khi di chuột */
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-change-type:active {
+  transform: translateY(0);
+}

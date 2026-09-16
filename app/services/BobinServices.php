@@ -35,11 +35,45 @@ class BobinServices
     {
         $this->listRepository->getListData(isFull: true);
 
-        if (empty($dto->bobin_identification_code)) {
+        $targetCode = strtoupper(trim($dto->bobin_identification_code ?? ''));
+        if ($targetCode === '') {
             throw new Exception("Vui lòng nhập Mã định danh Bobin.");
         }
 
+        // Quét trực tiếp để tìm Bobin và lấy trạng thái của nó
+        $isExists = false;
+        $currentStatus = '';
+        foreach (GlobalData::$listBobinEntity as $bobin) {
+            if (($bobin['bobin_identification_code'] ?? null) === $targetCode) {
+                $isExists = true;
+                $currentStatus = $bobin['bobin_current_status'] ?? '';
+                break; // Dừng vòng lặp ngay khi tìm thấy
+            }
+        }
 
+        // 1. Nếu không có trong DB thì báo lỗi không tồn tại
+        if (!$isExists) {
+            throw new Exception("Mã định danh Bobin [{$targetCode}] không tồn tại trong hệ thống.");
+        }
+
+        // 2. [QUAN TRỌNG] CHẶN NHẬP TRÙNG LẶP DỰA TRÊN STATUS
+        // Chỉ cho phép nhập liệu khi Bobin đang Trống (Rolled) hoặc Đã hủy thao tác (Cancelled)
+
+        if (
+            $currentStatus === 'Busy_Unchecked'
+        ) {
+            throw new Exception("Bobin {$targetCode} đã được đùn. Đang đợi QC check. Không thể nhập mới!");
+        }
+        if (
+            $currentStatus === 'Busy_Checked'
+        ) {
+            throw new Exception("Bobin {$targetCode} đã được QC check. Đang đợi cuộn. Không thể nhập mới!");
+        }
+        if (
+            $currentStatus === 'Pending_Cancellation'
+        ) {
+            throw new Exception("Bobin {$targetCode} đang trong quá trình hủy. Không thể nhập mới!");
+        }
         $entity = $this->buildBaseEntity($dto, 'extCreate');
 
         // Visual Inspection (chỉ có ở create)
@@ -61,6 +95,7 @@ class BobinServices
         $entity->winding_machine = "Chưa cập nhật";
         $entity->winding_note = "Chưa cập nhật";
 
+        // Hàm resolveStatus bên dưới sẽ tự động biến Rolled -> Busy_Unchecked
         $this->resolveStatus($entity, $dto->bobin_identification_code);
 
         $this->bobinRepo->createNewBobin($entity);
@@ -139,11 +174,11 @@ class BobinServices
 
         return new DateTime();
     }
-    private function resolveProduct($productionOrderCode, $productCode)
+    private function resolveProduct(string $productionOrderCode, string $productCode)
     {
         $foundProduct = $this->productRepo->findByCodes($productionOrderCode, $productCode);
 
-        if ($foundProduct === null) {
+        if ($foundProduct === null || empty($foundProduct)) {
             throw new Exception('Mã sản phẩm không tồn tại trong hệ thống');
         }
 
@@ -151,42 +186,43 @@ class BobinServices
     }
 
 
-    private function resolveKeyCode($boinIdentificationCode)
+
+    private function resolveKeyCode(string $boinIdentificationCode)
     {
         $bobinKeyCode = $this->bobinRepo->findBobinKeyCode($boinIdentificationCode);
 
-        if ($bobinKeyCode === null) {
+        if ($bobinKeyCode === null || empty($bobinKeyCode)) {
             throw new Exception('Mã key Bobin không tồn tại trong hệ thống');
         }
 
         return $bobinKeyCode;
     }
 
-    private function resolveSize($boinIdentificationCode)
+    private function resolveSize(string $boinIdentificationCode)
     {
         $bobinSize = $this->bobinRepo->findBobinSize($boinIdentificationCode);
 
-        if ($bobinSize === null) {
+        if ($bobinSize === null || empty($bobinSize) || $bobinSize == "") {
             throw new Exception('Kích thước Bobin không tồn tại trong hệ thống');
         }
 
         return $bobinSize;
     }
-    private function resolveMaterial($lot)
+    private function resolveMaterial(string $lot)
     {
         $foundMaterial = $this->materialRepo->findByLot($lot);
 
-        if ($foundMaterial === null) {
+        if ($foundMaterial === null || empty($foundMaterial) || $foundMaterial == "") {
             throw new Exception('Lot vật liệu không tồn tại trong hệ thống');
         }
 
         return $foundMaterial;
     }
-    private function resolveEmployee($employeeCode)
+    private function resolveEmployee(string $employeeCode)
     {
         $found = $this->employeeRepo->findByCode($employeeCode);
 
-        if ($found === null) {
+        if ($found === null || empty($found) || $found == "") {
             throw new Exception('Mã nhân viên không tồn tại trong hệ thống');
         }
 
@@ -291,6 +327,48 @@ class BobinServices
                 note: $note
             )
         );
+    }
+
+    public function updateQCAndChangeTypeBobin(array $data): BobinEntity
+    {
+        $identCode = $data['bobin_identification_code'] ?? '';
+        $keyCode = $data['bobin_key_code'] ?? '';
+        $newType = $data['new_bobin_type'] ?? '';
+        $inspectorCode = trim($data['inspector_code'] ?? '');
+        $inspectorName = trim($data['inspector_name'] ?? '');
+
+        if (empty($identCode)) {
+            throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        if (empty($newType)) {
+            throw new Exception("Vui lòng chọn loại Bobin điều chỉnh.");
+        }
+
+        $this->employeeRepo->getListEmployee();
+        $foundQcEmp = $this->employeeRepo->findByCode($inspectorCode);
+        if ($foundQcEmp == null) {
+            throw new Exception('Mã nhân viên QC không tồn tại trong hệ thống');
+        }
+
+        $entity = new BobinEntity();
+        $entity->identificationCode = $identCode;
+        $entity->bobinKeyCode = $keyCode;
+        $entity->currentStatus = "Busy_Checked"; // Giữ chuẩn logic hoàn thành QC
+
+        // Tạo thông tin kiểm tra ngoại quan kết hợp ghi chú đổi loại
+        $entity->visualInspection = $this->createVisualInspection(
+            $inspectorCode,
+            $inspectorName !== '' ? $inspectorName : $foundQcEmp->employee_name,
+            $data['defect_gel'] ?? false,
+            $data['defect_foreign_object'] ?? false,
+            $data['defect_color_issue'] ?? false,
+            $data['defect_print_quality'] ?? false,
+            ($data['defect_note'] ?? '') !== '' ? $data['defect_note'] : "Chuyển loại thành: {$newType}"
+        );
+
+        // Gọi Repository cập nhật
+        $this->bobinRepo->updateBobinTypeInfor($entity, $newType);
+        return $entity;
     }
     #endregion
     #region WINDING

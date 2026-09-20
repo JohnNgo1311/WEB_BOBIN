@@ -25,4 +25,12 @@ class ListDataServices
             throw $e;
         }
     }
+    // public function countPendingBobins(): int
+    // {
+    //     try {
+    //         return $this->listDataRepo->countPendingCancellation();
+    //     } catch (Exception $e) {
+    //         return 0;
+    //     }
+    // }
 }

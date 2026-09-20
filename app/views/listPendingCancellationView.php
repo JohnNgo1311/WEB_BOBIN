@@ -309,24 +309,10 @@ if (!function_exists('viBadge')) {
                                     </div>
                                 </div>
                                 <div class="qc-badges">
-                                    <?php
-                                    $badges = [
-                                        'Gel' => 'gel',
-                                        'Dị vật' => 'foreign_object',
-                                        'Màu' => 'color_issue',
-                                        'Mực In' => 'print_quality'
-                                    ];
-                                    foreach ($badges as $label => $key):
-                                        $goodDefect = $defects[$key] ?? false;
-                                    ?>
-                                        <div class="vi-item-switch" data-key="<?= htmlspecialchars($key) ?>">
-                                            <span><?= htmlspecialchars($label) ?></span>
-                                            <button type="button" class="toggle-switch <?= $goodDefect ? 'active' : '' ?>"
-                                                data-value="<?= $goodDefect ? 'true' : 'false' ?>" disabled>
-                                                <span class="switch-label"><?= $goodDefect ? 'NG' : 'OK' ?></span>
-                                            </button>
-                                        </div>
-                                    <?php endforeach; ?>
+                                    <?= viBadge('Gel', $defects['gel'] ?? false) ?>
+                                    <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
+                                    <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
+                                    <?= viBadge('In', $defects['print_quality'] ?? false) ?>
                                 </div>
 
                                 <div class="qc-note">

@@ -26,17 +26,19 @@ SET time_zone = "+00:00";
 --
 -- Cấu trúc bảng cho bảng `bobin_history`
 --
-CREATE TABLE `bobin_capacity` (
-  `size_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `capacity` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`size_name`)
+CREATE TABLE bobin_capacity (
+`size_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+`capacity` int(11) NOT NULL DEFAULT 0,
+PRIMARY KEY (`size_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Thêm sẵn 3 mốc dung lượng hiện tại của xưởng vào bảng
-INSERT INTO `bobin_capacity` (`size_name`, `capacity`) VALUES
+INSERT INTO bobin_capacity (size_name, capacity) VALUES
 ('PL4-7 (TU04.TU06)', 420),
 ('PL4-7 (TU08~)', 480),
 ('PL7-3', 460);
+
+--
 
 
 CREATE TABLE `bobin_history` (
@@ -44,7 +46,7 @@ CREATE TABLE `bobin_history` (
   `bobin_key_code` varchar(50) NOT NULL,
   `bobin_identification_code` varchar(50) NOT NULL,
   `bobin_size` enum('PL7-3','PL4-7 (TU04.TU06)','PL4-7 (TU08~)') NOT NULL,
-  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)') NOT NULL,
+  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)','Điều chỉnh (Ngoại quan: Trầy)','Điều chỉnh (Ngoại quan: Biến dạng)','Điều chỉnh (Ngoại quan: Xước)','Điều chỉnh (Ngoại quan: Chữ in)','Điều chỉnh (Ngoại quan: Vón cục)','Điều chỉnh (Ngoại quan: Màu)') NOT NULL,
   `extrusion_employee` text DEFAULT NULL,
   `products` text DEFAULT NULL,
   `material_lot` text DEFAULT NULL,
@@ -73,7 +75,7 @@ CREATE TABLE `bobin_list_detail` (
   `bobin_key_code` varchar(50) NOT NULL,
   `bobin_identification_code` varchar(50) NOT NULL,
   `bobin_size` enum('PL7-3','PL4-7 (TU04.TU06)','PL4-7 (TU08~)') NOT NULL,
-  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)') NOT NULL,
+  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)','Điều chỉnh (Ngoại quan: Trầy)','Điều chỉnh (Ngoại quan: Biến dạng)','Điều chỉnh (Ngoại quan: Xước)','Điều chỉnh (Ngoại quan: Chữ in)','Điều chỉnh (Ngoại quan: Vón cục)','Điều chỉnh (Ngoại quan: Màu)') NOT NULL,
   `extrusion_employee` text DEFAULT NULL,
   `products` text DEFAULT NULL,
   `material_lot` text DEFAULT NULL,
@@ -3105,7 +3107,7 @@ CREATE TABLE `bobin_list_general` (
   `bobin_key_code` varchar(50) NOT NULL,
   `bobin_identification_code` varchar(50) NOT NULL,
   `bobin_size` enum('PL7-3','PL4-7 (TU04.TU06)','PL4-7 (TU08~)') NOT NULL,
-  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)') NOT NULL,
+  `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)','Điều chỉnh (Ngoại quan: Trầy)','Điều chỉnh (Ngoại quan: Biến dạng)','Điều chỉnh (Ngoại quan: Xước)','Điều chỉnh (Ngoại quan: Chữ in)','Điều chỉnh (Ngoại quan: Vón cục)','Điều chỉnh (Ngoại quan: Màu)') NOT NULL,
   `bobin_current_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT 'Rolled',
   `updated_time` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -6309,7 +6311,7 @@ INSERT INTO `employee_list` (`id`, `employee_code`, `employee_name`, `updated_ti
 (123, '02648178', 'Đinh thị Thanh Xuân', '2026-03-11 15:00:00'),
 (124, '02649210', 'Nguyễn Trung Hậu', '2026-03-11 15:00:00'),
 (125, '02649229', 'Võ Thị Hương', '2026-03-11 15:00:00'),
-(126, '02649238', 'Huỳnh Thị Kim Hậu', '2026-03-11 15:00:00')
+(126, '02649238', 'Huỳnh Thị Kim Hậu', '2026-03-11 15:00:00');
 
 -- --------------------------------------------------------
 
@@ -11037,3 +11039,5 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+

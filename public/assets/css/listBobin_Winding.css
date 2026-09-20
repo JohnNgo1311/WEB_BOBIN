@@ -926,6 +926,35 @@ body {
   font-weight: bold;
 }
 
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Trầy)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Biến dạng)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Xước)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Chữ in)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Vón cục)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Màu)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
 /* Style dành riêng cho các thẻ input hiển thị dữ liệu dạng text (readonly) */
 .field-item input.val-sub {
   /* Các thuộc tính theo yêu cầu của bạn */
@@ -940,4 +969,23 @@ body {
   outline: none; /* Xóa đường viền màu xanh/đen báo hiệu khi click chuột vào */
   width: 100%; /* Đảm bảo chữ không bị che khuất nếu hiển thị dài */
   font-family: inherit; /* Đồng bộ font chữ với toàn bộ hệ thống */
+}
+/* ================= BADGE CHỜ HỦY TRÊN MENU ================= */
+.menu-pending-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-pending-count {
+  background-color: #ef4444; /* Đỏ tươi nổi bật */
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 12px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

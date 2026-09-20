@@ -1420,7 +1420,18 @@ class BobinRepository
             throw new Exception("Lỗi Database: " . $e->getMessage());
         }
     }
-
+    public function countPendingCancellation(): int
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Pending_Cancellation'";
+            $stmt = $pdo->query($sql);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            return 0;
+        }
+    }
     #region JSON
     private function json_utf8($data): string
     {

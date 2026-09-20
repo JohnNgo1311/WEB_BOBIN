@@ -113,7 +113,13 @@ $typeOptions = [
     'Bù'                               => 'Bù',
     'Điều chỉnh (Do CP)'               => 'Điều chỉnh (Do CP)',
     'Điều chỉnh (Ngoại quan: Gel)'     => 'Điều chỉnh (Ngoại quan: Gel)',
-    'Điều chỉnh (Ngoại quan: Dị vật)' => 'Điều chỉnh (Ngoại quan: Dị vật)'
+    'Điều chỉnh (Ngoại quan: Dị vật)' => 'Điều chỉnh (Ngoại quan: Dị vật)',
+    'Điều chỉnh (Ngoại quan: Trầy)' => 'Điều chỉnh (Ngoại quan: Trầy)',
+    'Điều chỉnh (Ngoại quan: Biến dạng)' => 'Điều chỉnh (Ngoại quan: Biến dạng)',
+    'Điều chỉnh (Ngoại quan: Xước)' => 'Điều chỉnh (Ngoại quan: Xước)',
+    'Điều chỉnh (Ngoại quan: Chữ in)' => 'Điều chỉnh (Ngoại quan: Chữ in)',
+    'Điều chỉnh (Ngoại quan: Vón cục)' => 'Điều chỉnh (Ngoại quan: Vón cục)',
+    'Điều chỉnh (Ngoại quan: Màu)' => 'Điều chỉnh (Ngoại quan: Màu)'
 ];
 ?>
 

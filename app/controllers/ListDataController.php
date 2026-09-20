@@ -22,12 +22,11 @@ class ListDataController extends Controller
         }
 
         try {
-
             $data = $this->listDataService->getListData(false);
-
             $this->populateGlobalData($data);
 
             if ($this->validateDataLoaded()) {
+
                 $data->success = true;
                 $this->json($data);
             } else {
@@ -43,6 +42,7 @@ class ListDataController extends Controller
 
     private function populateGlobalData(object $data): void
     {
+        GlobalData::$pendingBobinCount = $data->pending_count ?? 0;
         GlobalData::$listBobinEntity = $data->list_bobin ?? [];
         GlobalData::$listEmployeeEntity = $data->list_employee ?? [];
         GlobalData::$listMaterialLotEntity = $data->list_material_lot ?? [];

@@ -1,9 +1,10 @@
 <?php
 // File: app/core/GlobalData.php
-require_once __DIR__ . '/../models/ListDataModel.php'; 
-require_once __DIR__ . '/../entities/BobinEntity.php'; 
+require_once __DIR__ . '/../models/ListDataModel.php';
+require_once __DIR__ . '/../entities/BobinEntity.php';
 
-class GlobalData {
+class GlobalData
+{
     public static array $listData = [];
     public static string $userRole = '';
     public static string $userName = '';
@@ -13,6 +14,7 @@ class GlobalData {
     public static int $material_lot_id = 0;
     public static int $material_lot = 0;
     public static int $product_id = 0;
+    public static int $pendingBobinCount = 0;
     public static array $listBobinModel = [];
     public static array $listEmployeeModel = [];
     public static array $listMaterialLotModel = [];

@@ -128,7 +128,7 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
             <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;"><strong>Lỗi Gel:</strong> ${defectText(bodyData.defect_gel)}</li>
             <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;"><strong>Lỗi Dị vật:</strong> ${defectText(bodyData.defect_foreign_object)}</li>
             <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;"><strong>Lỗi Màu:</strong> ${defectText(bodyData.defect_color_issue)}</li>
-            <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;"><strong>Lỗi Mực In:</strong> ${defectText(bodyData.defect_print_quality)}</li>
+            <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;"><strong>Lỗi Chữ in:</strong> ${defectText(bodyData.defect_print_quality)}</li>
             <li style="margin-bottom: 8px; padding-bottom: 4px;"><strong>Ghi chú:</strong> <span style="color: #0056b3;">${note || "Không có"}</span></li>
         </ul>
     `;
@@ -186,24 +186,49 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
 ========================================= */
 function handleCancel(btnElement, bobinCode, bobinKeyCode) {
   const container = btnElement.closest(".bobin-item");
+
   if (!bobinCode || !bobinKeyCode) {
-    alert("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!");
+    Toast.show("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
     return;
   }
 
-  const inspectorCode = container
-    .querySelector(".input-inspector-code")
-    .value.trim();
-  const inspectorName = container
-    .querySelector(".input-inspector-name")
-    .value.trim();
-  const note = container.querySelector(".note-field").value.trim();
+  // 1. KIỂM TRA MÃ SỐ NHÂN VIÊN QC
+  const inputCodeEl = container?.querySelector(".input-inspector-code");
+  const inputNameEl = container?.querySelector(".input-inspector-name");
 
+  const inspectorCode = inputCodeEl?.value?.trim() || "";
+  const inspectorName = inputNameEl?.value?.trim() || "";
+
+  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
+    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi thực hiện!", "error");
+    if (inputCodeEl) {
+      inputCodeEl.style.border = "2px solid red";
+      inputCodeEl.focus();
+      setTimeout(() => (inputCodeEl.style.border = "1px solid #cbd5e1"), 2000);
+    }
+    return;
+  }
+
+  // 2. BẮT BUỘC NHẬP GHI CHÚ LÝ DO HỦY TRƯỚC KHI BẬT HỘP THOẠI
+  const noteInputEl = container?.querySelector(".note-field");
+  const note = noteInputEl?.value?.trim() || "";
+
+  if (!note) {
+    Toast.show("⚠️ Vui lòng nhập lý do trong phần ghi chú trước khi hủy Bobin!", "error");
+    if (noteInputEl) {
+      noteInputEl.style.border = "2px solid red";
+      noteInputEl.focus();
+      setTimeout(() => (noteInputEl.style.border = "1px solid #cbd5e1"), 2500);
+    }
+    return;
+  }
+
+  // 3. THU THẬP TRẠNG THÁI CÁC LỖI NGOẠI QUAN
   const defects = {};
-  container.querySelectorAll(".vi-item-switch").forEach((switchItem) => {
+  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
     const key = switchItem.getAttribute("data-key");
     const goodDefect =
-      switchItem.querySelector(".toggle-switch").getAttribute("data-value") ===
+      switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") ===
       "true";
     defects[key] = goodDefect;
   });
@@ -232,11 +257,12 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
                 <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectText(bodyData.defect_gel)}</li>
                 <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectText(bodyData.defect_foreign_object)}</li>
                 <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Màu:</strong> ${defectText(bodyData.defect_color_issue)}</li>
-                <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Mực In:</strong> ${defectText(bodyData.defect_print_quality)}</li>
-                <li style="padding-bottom: 6px;"><strong>Ghi chú:</strong> <span style="color: #1f2937; display: block; margin-top: 4px; font-style: italic;">${note || "Không có"}</span></li>
+                <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectText(bodyData.defect_print_quality)}</li>
+                <li style="padding-top: 6px; border-top: 1px dashed #cbd5e1; margin-top: 6px;"><strong>Lý do hủy:</strong> <span style="color: #dc2626; font-weight: 600; display: block; margin-top: 4px;">${note}</span></li>
           </ul>
      `;
 
+  // 4. HIỂN THỊ DIALOG XÁC NHẬN KHI ĐÃ ĐỦ DỮ LIỆU
   ConfirmDialog.show(
     "⚠️ Xác nhận Hủy QC",
     `
@@ -263,26 +289,19 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
         });
         const data = await response.json();
         if (data.success) {
-          console.log("Response từ API:", data);
           Toast.show(data.message, "success");
         } else {
-          console.error("Lỗi từ API:", data);
           Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
           btnElement.innerHTML = originalBtnText;
           btnElement.disabled = false;
         }
       } catch (error) {
-        console.error("Error:", error);
         Toast.show("Đã xảy ra lỗi kết nối!", "error");
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }
     },
   );
-  /* =========================================
-    HÀM XỬ LÝ: Chuyển đổi loại Bobin sang ĐIỀU CHỈNH
-========================================= */
-
 }
 /* =========================================
     HÀM XỬ LÝ: Kiểm tra QC kết hợp đổi loại Bobin sang ĐIỀU CHỈNH
@@ -295,6 +314,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
     return;
   }
 
+  // 1. KIỂM TRA MÃ SỐ NHÂN VIÊN QC
   const inputCodeEl = container?.querySelector(".input-inspector-code");
   const inputNameEl = container?.querySelector(".input-inspector-name");
 
@@ -305,14 +325,27 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
     Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi thực hiện!", "error");
     if (inputCodeEl) {
       inputCodeEl.style.border = "2px solid red";
-      setTimeout(() => inputCodeEl.style.border = "1px solid #cbd5e1", 2000);
+      inputCodeEl.focus();
+      setTimeout(() => (inputCodeEl.style.border = "1px solid #cbd5e1"), 2000);
     }
     return;
   }
 
-  const note = container?.querySelector(".note-field")?.value?.trim() || "";
+  // 2. [MỚI] BẮT BUỘC NHẬP GHI CHÚ QC TRƯỚC KHI ĐỔI LOẠI
+  const noteInputEl = container?.querySelector(".note-field");
+  const note = noteInputEl?.value?.trim() || "";
 
-  // Thu thập trạng thái các lỗi QC tương tự handleConfirm
+  if (!note) {
+    Toast.show("⚠️ Vui lòng nhập lý do trong phần ghi chú trước khi đưa Bobin về ĐIỀU CHỈNH", "error");
+    if (noteInputEl) {
+      noteInputEl.style.border = "2px solid red";
+      noteInputEl.focus();
+      setTimeout(() => (noteInputEl.style.border = "1px solid #cbd5e1"), 2500);
+    }
+    return;
+  }
+
+  // 3. THU THẬP TRẠNG THÁI CÁC LỖI NGOẠI QUAN
   const defects = {};
   container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
     const key = switchItem.getAttribute("data-key");
@@ -341,7 +374,11 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
       </style>
       
       <div style="background-color: #fffbeb; color: #b45309; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
-          Đang xác nhận QC và chuyển đổi loại Bobin <strong>${bobinCode}</strong>.<br> Vui lòng chọn loại điều chỉnh tương ứng:
+          Đang xác nhận QC và chuyển đổi Bobin <strong>${bobinCode}</strong>.<br>
+          <div style="margin-top: 6px; padding: 6px 10px; background: rgba(245, 158, 11, 0.1); border-radius: 4px; font-size: 13px;">
+              <strong>📝 Ghi chú:</strong> <span style="color: #0f172a;">${note}</span>
+          </div>
+          <div style="margin-top: 8px;">Vui lòng chọn loại điều chỉnh tương ứng:</div>
       </div>
       
       <div class="type-toggle-group">
@@ -357,11 +394,35 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
               <input type="radio" id="type_divat" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Dị vật)">
               <label for="type_divat" class="type-toggle-label">Điều chỉnh (Ngoại quan: Dị vật)</label>
           </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_tray" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Trầy)">
+              <label for="type_tray" class="type-toggle-label">Điều chỉnh (Ngoại quan: Trầy)</label>
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_biendang" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Biến dạng)">
+              <label for="type_biendang" class="type-toggle-label">Điều chỉnh (Ngoại quan: Biến dạng)</label>
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_xuoc" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Xước)">
+              <label for="type_xuoc" class="type-toggle-label">Điều chỉnh (Ngoại quan: Xước)</label>
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_chuin" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Chữ in)">
+              <label for="type_chuin" class="type-toggle-label">Điều chỉnh (Ngoại quan: Chữ in)</label> 
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_voncuc" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Vón cục)">
+              <label for="type_voncuc" class="type-toggle-label">Điều chỉnh (Ngoại quan: Vón cục)</label>
+          </div>
+          <div class="type-toggle-item">
+              <input type="radio" id="type_mau" name="new_bobin_type" class="type-toggle-input" value="Điều chỉnh (Ngoại quan: Màu)">
+              <label for="type_mau" class="type-toggle-label">Điều chỉnh (Ngoại quan: Màu)</label>
+          </div>
       </div>
   `;
 
   ConfirmDialog.show(
-    "Xác nhận QC & Đổi loại Bobin",
+    "Xác nhận QC & Đưa Bobin về ĐIỀU CHỈNH",
     dialogHTML,
     async (dialogBox) => {
       const selectedType = dialogBox.querySelector('input[name="new_bobin_type"]:checked')?.value || "Điều chỉnh (Do CP)";
@@ -395,7 +456,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
         const data = await response.json();
 
         if (data.success) {
-          Toast.show(data.message, "success"); // Tự động reload trang khi success
+          Toast.show(data.message, "success");
         } else {
           Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
           btnElement.innerHTML = originalBtnText;

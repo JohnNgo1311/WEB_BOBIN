@@ -1,7 +1,7 @@
 <?php
 
 $bobins = $data['bobins'] ?? [];
-
+$pendingCount = (int)($data['pendingCount'] ?? 0);
 if (!function_exists('buildFilterUrl')) {
     function buildFilterUrl(array $overrideParams = []): string
     {
@@ -63,7 +63,12 @@ if (!function_exists('viBadge')) {
             <!-- <a href="#">Nhóm Cuộn</a> -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView">Danh sách Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView">Lịch sử Bobin</a>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView">Danh sách chờ hủy</a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView" class="menu-pending-link">
+                Danh sách chờ hủy
+                <?php if ($pendingCount > 0): ?>
+                <span class="badge-pending-count"><?= $pendingCount ?></span>
+                <?php endif; ?>
+            </a>
         </div>
         <div class="menu-right">
             <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
@@ -313,7 +318,7 @@ if (!function_exists('viBadge')) {
                                         'Gel' => 'gel',
                                         'Dị vật' => 'foreign_object',
                                         'Màu' => 'color_issue',
-                                        'Mực In' => 'print_quality'
+                                        'Chữ in' => 'print_quality'
                                     ];
                                     foreach ($badges as $label => $key):
                                         $goodDefect = $defects[$key] ?? false;

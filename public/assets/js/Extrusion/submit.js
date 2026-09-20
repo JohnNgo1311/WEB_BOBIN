@@ -109,8 +109,15 @@ function buildReviewHTML(form, formData) {
     if (!value) continue;
 
     const labelText = getLabelText(form, key);
-    html += `<li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;">
-                <strong>${labelText}:</strong> <span style="color: #0056b3;">${value}</span>
+
+    // Kiểm tra Mã định danh Bobin và Mã sản phẩm để áp dụng style Đỏ - To - In đậm
+    const isHighlight = key === "bobin_identification_code" || key === "product_code";
+    const valueStyle = isHighlight
+      ? "color: #dc2626; font-size: 16px; font-weight: 800;"
+      : "color: #0056b3; font-weight: 500;";
+
+    html += `<li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <strong>${labelText}:</strong> <span style="${valueStyle}">${value}</span>
           </li>`;
   }
 
@@ -128,7 +135,7 @@ function buildReviewHTML(form, formData) {
             .switch-row {
                 display: flex;
                 align-items: center;
-                justify-content: space-between; /* Đẩy nhãn sang trái, nút sang phải */
+                justify-content: space-between;
                 padding: 10px 14px;
                 border: 1px solid #d1d5db;
                 border-radius: 6px;
@@ -142,7 +149,7 @@ function buildReviewHTML(form, formData) {
             }
             .status-switch {
                 padding: 6px 0;
-                border-radius: 20px; /* Bo tròn giống dạng viên thuốc */
+                border-radius: 20px;
                 font-weight: bold;
                 font-size: 13px;
                 color: #ffffff;
@@ -152,7 +159,6 @@ function buildReviewHTML(form, formData) {
                 text-align: center;
                 transition: background-color 0.2s ease, transform 0.1s;
             }
-            /* Hiệu ứng nhấn nút cho cảm giác thật hơn */
             .status-switch:active {
                 transform: scale(0.95);
             }
@@ -186,28 +192,62 @@ function buildReviewHTML(form, formData) {
                 </div>
 
                 <div class="switch-row">
-                    <span class="switch-label">Mực in</span>
-                    <button type="button" class="status-switch check-btn" check-item="Mực in" style="background-color: #dc3545;" 
+                    <span class="switch-label">Chữ in</span>
+                    <button type="button" class="status-switch check-btn" check-item="Chữ in" style="background-color: #dc3545;" 
                         onclick="this.innerText = this.innerText === 'NG' ? 'OK' : 'NG'; this.style.backgroundColor = this.innerText === 'OK' ? '#28a745' : '#dc3545';">NG</button>
                 </div>
-
             </div>
         </div>`
   );
 }
 
 function getLabelText(form, fieldName) {
+  // 1. Bảng ánh xạ nhãn hiển thị tiếng Việt chuẩn xác 100%
+  const labelMap = {
+    bobin_identification_code: "Mã định danh Bobin",
+    bobin_size: "Kích thước Bobin",
+    bobin_type: "Loại Bobin",
+    extrusion_employee_code: "Mã số nhân viên",
+    extrusion_employee_name: "Họ tên nhân viên",
+    product_code: "Mã sản phẩm",
+    production_order_code: "Mã chỉ thị sản xuất (Tạm thời)",
+    machine: "Số máy",
+    material: "Vật liệu",
+    grinding_time: "Số lần nghiền",
+    print_lot: "Lot in",
+    material_lot: "Lot vật liệu",
+    length_m: "Chiều dài (m)",
+    shift: "Ca sản xuất",
+    extrusion_date: "Ngày đùn",
+    finish_time: "Thời gian hoàn thành cuộn",
+  };
+
+  // Nếu có trong danh mục thì ưu tiên lấy ngay lập tức
+  if (labelMap[fieldName]) {
+    return labelMap[fieldName];
+  }
+
+  // 2. Dự phòng: Quét ngược DOM nếu có trường mới phát sinh trong tương lai
   const inputEl = form.querySelector(`[name="${fieldName}"]`);
   if (!inputEl) return fieldName;
 
-  const label =
-    inputEl.previousElementSibling?.tagName === "LABEL"
-      ? inputEl.previousElementSibling
-      : inputEl.parentElement?.previousElementSibling?.tagName === "LABEL"
-        ? inputEl.parentElement.previousElementSibling
-        : null;
+  let el = inputEl;
+  while (el && el !== form) {
+    let prev = el.previousElementSibling;
+    while (prev) {
+      if (prev.tagName === "LABEL") {
+        return prev.innerText.replace(/:/g, "").trim();
+      }
+      const childLabel = prev.querySelector?.("label");
+      if (childLabel) {
+        return childLabel.innerText.replace(/:/g, "").trim();
+      }
+      prev = prev.previousElementSibling;
+    }
+    el = el.parentElement;
+  }
 
-  return label ? label.innerText.replace(/:/g, "").trim() : fieldName;
+  return fieldName;
 }
 
 async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
@@ -239,21 +279,26 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
       );
       if (idCodeInput) idCodeInput.value = "";
 
+      const idTypeInput = form.querySelector(
+        'input[name="bobin_type"]',
+      );
+      if (idTypeInput) idTypeInput.value = "";
+
       const idSizeInput = form.querySelector(
         'input[name="bobin_size"]',
       );
       if (idSizeInput) idSizeInput.value = "";
 
-      const productCodeInput = form.querySelector('input[name="product_code"]');
-      if (productCodeInput) productCodeInput.value = "";
+      // const productCodeInput = form.querySelector('input[name="product_code"]');
+      // if (productCodeInput) productCodeInput.value = "";
 
-      const orderCodeInput = form.querySelector(
-        'input[name="production_order_code"]',
-      );
-      if (orderCodeInput) orderCodeInput.value = "";
+      // const orderCodeInput = form.querySelector(
+      //   'input[name="production_order_code"]',
+      // );
+      // if (orderCodeInput) orderCodeInput.value = "";
 
-      const lengthInput = form.querySelector('input[name="length_m"]');
-      if (lengthInput) lengthInput.value = "";
+      // const lengthInput = form.querySelector('input[name="length_m"]');
+      // if (lengthInput) lengthInput.value = "";
 
       onSuccessCallback?.(res, form);
     } else {

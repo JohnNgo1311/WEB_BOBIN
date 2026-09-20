@@ -331,17 +331,22 @@ class BobinServices
 
     public function updateQCAndChangeTypeBobin(array $data): BobinEntity
     {
-        $identCode = $data['bobin_identification_code'] ?? '';
-        $keyCode = $data['bobin_key_code'] ?? '';
-        $newType = $data['new_bobin_type'] ?? '';
+        $identCode     = $data['bobin_identification_code'] ?? '';
+        $keyCode       = $data['bobin_key_code'] ?? '';
+        $newType       = $data['new_bobin_type'] ?? '';
         $inspectorCode = trim($data['inspector_code'] ?? '');
         $inspectorName = trim($data['inspector_name'] ?? '');
+        $defectNote    = trim($data['defect_note'] ?? '');
 
         if (empty($identCode)) {
             throw new Exception("Mã định danh Bobin không tồn tại.");
         }
         if (empty($newType)) {
             throw new Exception("Vui lòng chọn loại Bobin điều chỉnh.");
+        }
+        // Bắt buộc nhập ghi chú ở tầng backend
+        if (empty($defectNote)) {
+            throw new Exception("Vui lòng nhập ghi chú giải trình lý do trước khi điều chỉnh.");
         }
 
         $this->employeeRepo->getListEmployee();
@@ -352,10 +357,9 @@ class BobinServices
 
         $entity = new BobinEntity();
         $entity->identificationCode = $identCode;
-        $entity->bobinKeyCode = $keyCode;
-        $entity->currentStatus = "Busy_Checked"; // Giữ chuẩn logic hoàn thành QC
+        $entity->bobinKeyCode        = $keyCode;
+        $entity->currentStatus       = "Busy_Checked";
 
-        // Tạo thông tin kiểm tra ngoại quan kết hợp ghi chú đổi loại
         $entity->visualInspection = $this->createVisualInspection(
             $inspectorCode,
             $inspectorName !== '' ? $inspectorName : $foundQcEmp->employee_name,
@@ -363,10 +367,9 @@ class BobinServices
             $data['defect_foreign_object'] ?? false,
             $data['defect_color_issue'] ?? false,
             $data['defect_print_quality'] ?? false,
-            ($data['defect_note'] ?? '') !== '' ? $data['defect_note'] : "Chuyển loại thành: {$newType}"
+            $defectNote
         );
 
-        // Gọi Repository cập nhật
         $this->bobinRepo->updateBobinTypeInfor($entity, $newType);
         return $entity;
     }
@@ -718,7 +721,14 @@ class BobinServices
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
-
+    public function countPendingBobins(): int
+    {
+        try {
+            return $this->bobinRepo->countPendingCancellation();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
     #endregion
     #region MAPPING
 

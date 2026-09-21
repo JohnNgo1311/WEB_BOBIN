@@ -546,91 +546,7 @@ body {
   font-size: 0.9rem;
 }
 
-/* --- QC Badges / Switches --- */
-.qc-badges {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-  margin-bottom: 8px;
-}
 
-/* QC Item Style: Split-Pill */
-.vi-item {
-  display: inline-flex;
-  align-items: stretch;
-  /* Kéo giãn chiều cao bằng nhau */
-  background: #fff;
-  border-radius: 6px;
-  overflow: hidden;
-  /* Để bo góc hoạt động với con */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  border: 1px solid transparent;
-  /* Placeholder cho border màu */
-  font-size: 0.9rem;
-  padding: 0;
-  /* Xóa padding cha để con tràn viền */
-}
-
-/* Container cho mỗi cặp Label + Button */
-.vi-item-switch {
-  display: inline-flex;
-  align-items: center;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.2s;
-}
-
-.vi-item-switch:hover {
-  border-color: #cbd5e1;
-}
-
-/* Label bên trái (Tên lỗi) */
-.vi-item-switch > span {
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-gray);
-  background: #f8fafc;
-  border-right: 1px solid var(--border);
-}
-
-/* Nút bấm Toggle (Bên phải) */
-.toggle-switch {
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 8px 16px;
-  min-width: 60px;
-  font-size: 0.85rem;
-  font-weight: 800;
-  transition: all 0.3s ease;
-  background: var(--ok-bg);
-  color: var(--ok-text);
-}
-
-/* Trạng thái OK (Mặc định) */
-.toggle-switch .switch-label {
-  display: block;
-}
-
-/* Trạng thái NG (Khi có class active) */
-.toggle-switch.active {
-  background: var(--ng-bg);
-  color: var(--ng-text);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.toggle-switch.active:hover {
-  background: #fee2e2;
-}
-
-.toggle-switch:not(.active):hover {
-  background: #dcfce7;
-}
 
 /* --- QC Note --- */
 .qc-note {
@@ -1007,4 +923,77 @@ body {
 .val-sub[data-type="Điều chỉnh (Ngoại quan: Dị vật)"] {
   color: #fd7e14;
   font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Trầy)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Biến dạng)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Xước)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Chữ in)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Vón cục)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Màu)"] {
+  color: #fd7e14;
+  font-weight: bold;
+}
+
+/* Badge trạng thái QC dạng badge-ok / badge-ng đồng bộ với listBobinDetailView */
+.qc-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.vi-item {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  font-size: 13px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.vi-item span {
+  padding: 6px 12px;
+  color: #475569;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  font-weight: 600;
+}
+
+.vi-item strong {
+  padding: 6px 12px;
+  font-weight: 800;
+  min-width: 44px;
+  text-align: center;
+}
+
+.vi-item.badge-ok strong {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.vi-item.badge-ng strong {
+  background: #fee2e2;
+  color: #b91c1c;
 }

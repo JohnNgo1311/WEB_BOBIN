@@ -65,9 +65,12 @@ class BobinController extends Controller
 
     private function extrusion()
     {
+        // Gọi nạp dữ liệu CSDL để gán giá trị cho GlobalData::$pendingBobinCount
+        $listDataRepo = new ListdataRepository();
+        $listDataRepo->getListData(false);
+
         require_once "../app/views/extrusionView.php";
     }
-
     private function qc()
     {
         // Sử dụng header Location để chuyển hướng
@@ -144,6 +147,7 @@ class BobinController extends Controller
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getDetailBobinsForWindingPaginated($dto) ?? [];
+
             $totalRecords = $this->bobinService->countDetailBobinsForWinding($dto);
             $totalPages = (int)ceil($totalRecords / $dto->limit);
 
@@ -153,7 +157,7 @@ class BobinController extends Controller
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
 
-        $this->view('listBobinView_Winding', data: [
+        $this->view('windingView', data: [
             'bobins'     => $bobins,
             'capacityMap' => $capacityMap, // <-- Truyền xuống View
             'pagination' => [
@@ -198,7 +202,6 @@ class BobinController extends Controller
     }
     public function listBobinView_QC()
     {
-        //TODO 1. Chỉ chấp nhận GET
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -206,15 +209,16 @@ class BobinController extends Controller
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getDetailBobinsForQC($dto) ?? [];
-            if (empty($bobins)) {
-                $bobins = [];
-            } else {
-            }
+
+            // Lấy số lượng Bobin đang chờ hủy
+            $pendingCount = $this->bobinService->countPendingBobins();
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
+
         $this->view('qcView', data: [
-            'bobins'  => $bobins,
+            'bobins'       => $bobins,
+            'pendingCount' => $pendingCount ?? 0,
         ]);
     }
     public function listPendingCancellationView()
@@ -249,11 +253,14 @@ class BobinController extends Controller
             $bobins = $this->bobinService->getDetailBobinsForWindingPaginated($dto) ?? [];
             $totalRecords = $this->bobinService->countDetailBobinsForWinding($dto);
             $totalPages = (int)ceil($totalRecords / $dto->limit);
+            // Lấy số lượng Bobin đang chờ hủy
+            $pendingCount = $this->bobinService->countPendingBobins();
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
 
         $this->view('windingView', data: [
+            'pendingCount' => $pendingCount,
             'bobins'     => $bobins,
             'pagination' => [
                 'currentPage'  => $dto->page,
@@ -672,7 +679,7 @@ class BobinController extends Controller
             'Gel',
             'Dị vật',
             'Chất lượng màu',
-            'Chất lượng mực in',
+            'Chất lượng Chữ in',
             'Ghi chú QC',
             'Mã máy cuộn',
             'Mã nhân viên cuộn',

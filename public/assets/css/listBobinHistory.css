@@ -334,7 +334,13 @@ h1 {
 .val-sub[data-type="Bù"] { color: #007bff; font-weight: bold; }
 .val-sub[data-type="Điều chỉnh (Do CP)"],
 .val-sub[data-type="Điều chỉnh (Ngoại quan: Gel)"],
-.val-sub[data-type="Điều chỉnh (Ngoại quan: Dị vật)"] { color: #fd7e14; font-weight: bold; }
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Dị vật)"],
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Trầy)"],
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Biến dạng)"],
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Xước)"],
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Chữ in)"],
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Vón cục)"],
+.val-sub[data-type="Điều chỉnh (Ngoại quan: Màu)"]{ color: #fd7e14; font-weight: bold; }
 
 .divider { height: 1.5px; background: var(--border); margin: 0; }
 

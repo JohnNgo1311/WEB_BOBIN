@@ -25,6 +25,7 @@ class ListdataRepository
             'list_month' => "SELECT * FROM month_list",
             'list_day' => "SELECT * FROM day_list",
             'list_winding_machine' => "SELECT * FROM winding_machine_list",
+            'pending_count' => "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Pending_Cancellation'",
         ];
 
         $pdo = null;
@@ -44,6 +45,20 @@ class ListdataRepository
             throw new Exception("Database query failed: " . $e->getMessage());
         }
     }
+    // public function countPendingCancellation(): int
+    // {
+    //     $pdo = $this->db->pdo();
+    //     try {
+    //         $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Pending_Cancellation'";
+    //         $stmt = $pdo->query($sql);
+    //         $pendingCount = (int)$stmt->fetchColumn();
+
+    //         return $pendingCount;
+    //     } catch (PDOException $e) {
+    //         error_log("DB Error: " . $e->getMessage());
+    //         return 0;
+    //     }
+    // }
 
     private function fetchAllListData(array $queries, PDO $pdo): array
     {
@@ -51,7 +66,9 @@ class ListdataRepository
         foreach ($queries as $key => $sql) {
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
-            $response[$key] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $response[$key] = $key === 'pending_count'
+                ? (int) $stmt->fetchColumn()
+                : $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         return $response;
     }
@@ -67,6 +84,8 @@ class ListdataRepository
     }
     private function populateGlobalData(ListDataEntity $data): void
     {
+
+        GlobalData::$pendingBobinCount = $data->pending_count ?? 0;
         GlobalData::$listBobinEntity = $data->list_bobin ?? [];
         GlobalData::$listEmployeeEntity = $data->list_employee ?? [];
         GlobalData::$listMaterialLotEntity = $data->list_material_lot ?? [];

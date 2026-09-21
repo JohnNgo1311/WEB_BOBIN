@@ -8,17 +8,30 @@ let listData = {
   list_employee: [],
   list_product: [],
   list_material_lot: [],
-
   list_extrusion_machine: [],
   list_material: [],
   list_day: [],
   list_month: [],
   list_year: [],
+  pending_count: 0, // Biến mới để lưu số lượng bobin đang chờ hủy
 };
 
 // Biến cờ hiệu kiểm soát đồng hồ realtime
 let isManualTime = false;
+// Hàm cập nhật số lượng Badge trên Menu
+function updatePendingBadge(count) {
+  const badge = document.getElementById("badgePendingCancellation");
+  const pendingNum = parseInt(count, 10) || 0;
 
+  if (badge) {
+    if (pendingNum > 0) {
+      badge.textContent = pendingNum;
+      badge.style.display = "inline-block";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+}
 //TODO 2. HÀM CLOCK
 setInterval(() => {
   // Bỏ qua việc ghi đè realtime nếu người dùng đang chọn chỉnh sửa bằng Lịch
@@ -96,6 +109,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.success) {
         console.log("📥 Dữ liệu nhận về:", response);
         listData = response;
+        // Cập nhật con số hiển thị lên Menu
+        updatePendingBadge(response.pending_count);
         setupAutoPrintLot();
         reversePrintLot(); // Nếu đã có sẵn mã Lot in thì tự động điền ngược thông tin
         console.log(`👂 Bắt đầu theo dõi nhập dữ liệu`);
@@ -715,4 +730,5 @@ function reversePrintLot() {
       // dateInput.value = `${result.year}-${formattedMonth}-${formattedDay}`;
     }
   }
+
 }

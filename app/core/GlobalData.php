@@ -8,7 +8,7 @@ class GlobalData
     public static array $listData = [];
     public static string $userRole = '';
     public static string $userName = '';
-
+    public static array $listRackEntity = [];
     public static int $bobin_id = 0;
     public static int $employee_id = 0;
     public static int $material_lot_id = 0;

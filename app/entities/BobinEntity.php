@@ -1,18 +1,20 @@
 <?php
 // File: app/entities/BobinEntity.php
-require_once ROOT_PATH . '/app/entities/VisualInspectionEntity.php';
 require_once ROOT_PATH . '/app/entities/EmployeeEntity.php';
 require_once ROOT_PATH . '/app/entities/ProductEntity.php';
 require_once ROOT_PATH . '/app/entities/MaterialLotEntity.php';
 require_once ROOT_PATH . '/app/entities/DeFectEntity.php';
 require_once ROOT_PATH . '/app/entities/VisualInspectionEntity.php';
+require_once ROOT_PATH . '/app/entities/ExtrusionCheckEntity.php'; // Đã thêm
+require_once ROOT_PATH . '/app/entities/RackEntity.php'; // Đã thêm
 
 class BobinEntity
 {
     public ?int $id = 1;
     public string $bobinKeyCode;         // Unique Key (Mã + Time)
     public string $identificationCode;   // Mã định danh (BBA01...)
-
+    public ?ExtrusionCheckEntity $extrusion_check = null; // Đã thêm
+    public ?RackEntity $rack = null; // Đã thêm
     public string $size;
     public string $type;
 
@@ -44,6 +46,8 @@ class BobinEntity
         ?int $id = null,
         string $bobinKeyCode = '',
         string $identificationCode = '',
+        ?ExtrusionCheckEntity $extrusion_check = null,
+        ?RackEntity $rack = null,
         string $size = 'Chưa cập nhật',
         string $type = 'Chưa cập nhật',
         ?EmployeeEntity $extrusion_employee = null,
@@ -65,6 +69,8 @@ class BobinEntity
         $this->id = $id ?? 1;
         $this->bobinKeyCode = $bobinKeyCode;
         $this->identificationCode = $identificationCode;
+        $this->extrusion_check = $extrusion_check;
+        $this->rack = $rack;
         $this->size = $size;
         $this->type = $type;
         $this->extrusion_employee = $extrusion_employee ?? new EmployeeEntity();
@@ -83,13 +89,24 @@ class BobinEntity
         $this->winding_note = $winding_note;
         $this->updatedTime = $updatedTime ?? new DateTime();
     }
+
     public static function fromJson(string $json): self
     {
         $data = json_decode($json, true);
+
+        // Khởi tạo các Object phụ trợ 
+        $extrusionCheckObj = isset($data['extrusion_check']) && is_array($data['extrusion_check'])
+            ? ExtrusionCheckEntity::fromArray($data['extrusion_check']) : null;
+
+        $rackObj = isset($data['rack']) && is_array($data['rack'])
+            ? RackEntity::fromArray($data['rack']) : null;
+
         return new self(
             id: $data['id'] ?? 1,
             bobinKeyCode: $data['bobin_key_code'] ?? '',
             identificationCode: $data['bobin_identification_code'] ?? '',
+            extrusion_check: $extrusionCheckObj, // Đã gán
+            rack: $rackObj, // Đã gán
             size: $data['bobin_size'] ?? 'Chưa cập nhật',
             type: $data['bobin_type'] ?? 'Chưa cập nhật',
             extrusion_employee: isset($data['extrusion_employee']) ? EmployeeEntity::fromJson($data['extrusion_employee']) : new EmployeeEntity(),

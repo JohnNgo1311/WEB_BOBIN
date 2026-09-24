@@ -1,605 +1,90 @@
-/* ================= 1. RESET & BASE ================= */
+/* ================= 1. RESET & BASE (DIỆU MẮT & CHỐNG CHÓI) ================= */
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  
-  html {
-    font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: #eef2f7;
-    color: #2f3640;
-    height: 100%;
-  }
-  
-  body {
-    font-family:
-      "Segoe UI",
-      system-ui,
-      -apple-system,
-      sans-serif;
-    padding: 80px 20px 40px;
-    min-height: 100vh;
-  }
-  
-  /* ================= 2. MENU BAR ================= */
-  .menu-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 56px;
-    background: linear-gradient(135deg, #0984e3, #0652dd);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 1000;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .menu-left,
-  .menu-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .menu-bar a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 8px 12px;
-    border-radius: 6px;
-    transition: background 0.2s ease;
-  }
-  
-  .menu-bar a:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  
-  .logout-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  .logout-btn:hover {
-    background: #d63031 !important;
-    border-color: #d63031;
-  }
-  
-  /* ================= 3. TITLE ================= */
-  h1 {
-    color: #fc8b03;
-    max-width: 960px;
-    margin: 10px auto 20px;
-    font-size: 28px;
-    font-weight: 700;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  /* Modal Overlay - Phủ tối toàn màn hình */
-  .modal-overlay {
-    display: none;
-    /* Mặc định ẩn */
-    position: fixed;
-    /* Cố định vị trí so với cửa sổ trình duyệt */
-    z-index: 9999;
-    /* Số lớn để đảm bảo nằm trên cùng */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    /* Nền đen mờ */
-    display: flex;
-    /* Dùng flex để căn giữa */
-    align-items: center;
-    /* Căn giữa dọc */
-    justify-content: center;
-    /* Căn giữa ngang */
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity 0.3s ease,
-      visibility 0.3s ease;
-  }
-  
-  /* Kích hoạt hiển thị modal */
-  .modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  /* Hộp nội dung Modal */
-  .modal-content {
-    background-color: #fff;
-    width: 90%;
-    max-width: 600px;
-    /* Độ rộng tối đa */
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    transform: translateY(-20px);
-    transition: transform 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh;
-    /* Không cao quá màn hình */
-  }
-  
-  .modal-overlay.active .modal-content {
-    transform: translateY(0);
-  }
-  
-  /* Header Modal */
-  .modal-header {
-    background-color: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .modal-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #333;
-  }
-  
-  .close-modal {
-    font-size: 28px;
-    font-weight: bold;
-    color: #aaa;
-    cursor: pointer;
-  }
-  
-  .close-modal:hover {
-    color: #000;
-  }
-  
-  /* Body Modal */
-  .modal-body {
-    padding: 20px;
-    overflow-y: auto;
-    /* Cuộn nếu nội dung dài */
-  }
-  
-  /* Bảng Review */
-  .review-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .review-table td {
-    padding: 10px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
-  }
-  
-  .review-table td:first-child {
-    font-weight: 600;
-    color: #555;
-    width: 40%;
-    background-color: #fafafa;
-  }
-  
-  .review-table td:nth-child(2) {
-    color: #000;
-    font-weight: 500;
-  }
-  
-  /* Footer Modal */
-  .modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    text-align: right;
-    background-color: #fff;
-  }
-  
-  .modal-footer .btn {
-    margin-left: 10px;
-  }
-  
-  /* ================= 4. FORM CONTAINER ================= */
-  form#bobinForm {
-    max-width: 830px;
-    margin: 0 auto;
-    background: #ffffff;
-    padding: 32px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px 30px;
-    align-items: start;
-  }
-  /* --- Giao diện nhóm nhập liệu QR Code --- */
-  .qr-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 5px;
-  }
-  
-  /* Cho phép vùng suggestions (chứa input) co giãn chiếm hết không gian trống */
-  .qr-input-group .suggestions {
-    flex: 1;
-  }
-  
-  /* Đảm bảo ô input bên trong giãn đầy đủ 100% */
-  .qr-input-group input[type="text"] {
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  /* Khung hiển thị camera */
-  #qr-reader {
-    display: none;
-    width: 100%;
-    max-width: 400px;
-  
-    /* Dòng này giúp căn giữa khung camera */
-    margin: 15px auto;
-  
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    overflow: hidden;
-    background-color: #fff; /* Thêm nền trắng cho sạch sẽ */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Thêm chút viền đổ bóng cho đẹp */
-  }
-  label {
-    font-size: 15px;
-    font-weight: 600;
-    color: #4a4a4a;
-    text-transform: none;
-    letter-spacing: 0.3px;
-    margin-bottom: 6px;
-    display: block;
-  }
-  
-  input[type="text"],
-  input[type="number"],
-  input[type="date"],
-  input[type="datetime-local"],
-  select,
-  textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1.5px solid #dcdde1;
-    font-size: 14px;
-    background: #fff;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    color: #2f3640;
-  }
-  
-  input:focus,
-  select:focus {
-    border-color: #0984e3;
-    box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.15);
-    outline: none;
-  }
-  
-  input[readonly] {
-    background-color: #f5f6fa;
-    color: #636e72;
-    border-color: #e5e5e5;
-    cursor: not-allowed;
-  }
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  /* Custom Checkbox */
-  input[type="checkbox"]#manual_time_toggle {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      border: 1px solid #0284c7;
-      border-radius: 4px;
-      background-color: white;
-      display: inline-block;
-      position: relative;
-      cursor: pointer;
-      outline: none;
-      margin-top: 0;
-      vertical-align: middle;
-  }
-  
-  input[type="checkbox"]#manual_time_toggle:checked {
-      background-color: #0284c7;
-      border-color: #0284c7;
-  }
-  
-  input[type="checkbox"]#manual_time_toggle:checked::after {
-      content: '\2714';
-      font-size: 12px;
-      color: white;
-      position: absolute;
-      top: -1px;
-      left: 2px;
-  }
-  
-  /* ================= 5. BUTTONS ================= */
-  .btn-group {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 10px;
-    padding-top: 20px;
-    border-top: 1px solid #f1f2f6;
-  }
-  
-  .btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    border: none;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  /* --- Class màu Gradient dải xanh dương cho nút Scan QR --- */
-  .btn-scan-default {
-    background: linear-gradient(135deg, #0984e3, #0652dd);
-    color: #ffffff;
-    box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3); /* Bóng xanh xuyệt tông */
-    transition: all 0.3s ease; /* Hiệu ứng chuyển màu mượt */
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  
-  /* Hiệu ứng khi rê chuột vào */
-  .btn-scan-default:hover {
-    background: linear-gradient(135deg, #0652dd, #0984e3);
-    box-shadow: 0 6px 10px rgba(9, 132, 227, 0.4);
-  }
-  
-  /* Các class Bootstrap để đổi màu bằng JS */
-  .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  
-  .btn-primary {
-    background: linear-gradient(135deg, #0984e3, #0652dd);
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3);
-  }
-  
-  .btn-primary:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 6px 15px rgba(9, 132, 227, 0.4);
-  }
-  
-  .btn-secondary {
-    background: #dfe6e9;
-    color: #2d3436;
-  }
-  
-  .btn-secondary:hover {
-    background: #b2bec3;
-  }
-  
-  /* ================= 6. AUTOCOMPLETE (SUGGESTION BOX) ================= */
-  /* Class bao ngoài input để định vị relative */
-  .suggestions {
-    position: relative;
-  }
-  
-  /* Hộp gợi ý thả xuống */
-  .suggestion-box {
-    position: absolute;
-    top: 100%;
-    /* Nằm ngay dưới input */
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid #0984e3;
-    /* Viền xanh cho nổi bật */
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 9999;
-    /* Đảm bảo đè lên các thành phần khác */
-    display: none;
-    /* Ẩn mặc định */
-  }
-  
-  /* Từng dòng gợi ý */
-  .suggestion-item {
-    padding: 10px 12px;
-    font-size: 14px;
-    color: #2d3436;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f2f6;
-  }
-  
-  .suggestion-item:last-child {
-    border-bottom: none;
-  }
-  
-  .suggestion-item:hover {
-    background-color: #f0f9ff;
-    color: #0984e3;
-    font-weight: 600;
-  }
-  
-  /* ================= 7. MESSAGE ================= */
-  #message {
-    max-width: 600px;
-    margin: 20px auto;
-    text-align: center;
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 6px;
-  }
-  
-  /* ================= 8. RESPONSIVE ================= */
-  @media (max-width: 768px) {
-    form#bobinForm {
-      grid-template-columns: 1fr;
-      padding: 20px;
-    }
-  
-    .menu-bar {
-      padding: 0 10px;
-      flex-wrap: wrap;
-      height: auto;
-    }
-  
-    h1 {
-      font-size: 22px;
-    }
-  }
-  
-  /* Modal Styles */
-  .modal-overlay {
-    display: none;
-    /* Mặc định ẩn */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    /* Màu nền tối mờ */
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .modal-overlay.active {
-    display: flex;
-    /* Hiện lên khi có class active */
-  }
-  
-  .modal-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: slideDown 0.3s ease-out;
-  }
-  
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-  }
-  
-  .modal-header h3 {
-    margin: 0;
-    color: #333;
-  }
-  
-  .close-modal {
-    cursor: pointer;
-    font-size: 24px;
-    font-weight: bold;
-    color: #aaa;
-  }
-  
-  .modal-body table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .modal-body table td {
-    padding: 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: top;
-  }
-  
-  .modal-body table td:first-child {
-    font-weight: bold;
-    width: 40%;
-    color: #555;
-  }
-  
-  .modal-footer {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-  }
-  
-  @keyframes slideDown {
-    from {
-      transform: translateY(-20px);
-      opacity: 0;
-    }
-  
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  
-  /* ================= 9. TOAST MESSAGE ================= */
-  .toast-message {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: #2ecc71;
-    /* Màu xanh lá */
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 9999;
-    font-weight: bold;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.5s ease;
-  }
-  
-  .toast-message.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  
-  .toast-error {
-    background-color: #e74c3c;
-    /* Màu đỏ nếu lỗi */
-  }
-  /* ================= BADGE CHỜ HỦY TRÊN MENU ================= */
+:root {
+  --bg-app: #edf2f7;
+  --bg-card: #ffffff;
+  --border-card: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --primary-blue: #2563eb;
+  --primary-dark: #1d4ed8;
+  --accent-teal: #0d9488;
+  --accent-amber: #d97706;
+  --ok-green: #16a34a;
+  --ng-red: #dc2626;
+}
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg-app);
+  color: var(--text-main);
+  height: 100%;
+}
+
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  padding: 68px 16px 36px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e6ecf3 0%, #edf2f7 100%);
+}
+
+/* ================= 2. MENU BAR NỔI BẬT ================= */
+.menu-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0284c7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  z-index: 1000;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.15);
+}
+
+.menu-left,
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-bar a {
+  color: #f8fafc;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.menu-bar a:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.menu-bar a.active-nav {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.logout-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.logout-btn:hover {
+  background: #dc2626 !important;
+}
+
 .menu-pending-link {
   display: inline-flex;
   align-items: center;
@@ -607,14 +92,425 @@
 }
 
 .badge-pending-count {
-  background-color: #ef4444; /* Đỏ tươi nổi bật */
+  background-color: #ef4444;
   color: #ffffff;
   font-size: 11px;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 12px;
   min-width: 18px;
   text-align: center;
-  line-height: 1.4;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ================= 3. TIÊU ĐỀ TRANG ================= */
+.page-header {
+  max-width: 860px;
+  margin: 10px auto 14px;
+  text-align: center;
+}
+
+h1 {
+  color: #ea580c;
+  font-size: 22px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 2px;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.05);
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ================= 4. FORM CARD CHÍNH ================= */
+form#bobinForm {
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  padding: 20px 24px;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-card);
+  border-top: 4px solid var(--primary-blue);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+  align-items: start;
+}
+
+/* TIÊU ĐỀ PHÂN KHU (SECTION DIVIDERS) */
+.form-section-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  border-left: 3px solid var(--primary-blue);
+}
+
+.form-section-header:first-of-type {
+  margin-top: 0;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--primary-blue);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.section-badge.badge-teal { background: var(--accent-teal); }
+.section-badge.badge-amber { background: var(--accent-amber); }
+
+/* CÁC Ô FORM GROUP */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+/* INPUT & SELECT */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+select {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1.5px solid #cbd5e1;
+  font-size: 13.5px;
+  background: #fdfdfd;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  color: #1e293b;
+  outline: none;
+  box-sizing: border-box;
+}
+
+input:focus,
+select:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Ô CHỈ ĐỌC (TỰ ĐỘNG) */
+.input-readonly {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+/* Điểm nhấn Lot in */
+.highlight-printlot {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+  color: #166534 !important;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* Ô Mã Định danh nổi bật */
+.primary-highlight input[type="text"] {
+  border-color: #93c5fd;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+/* Ô Chiều dài */
+.length-highlight input {
+  font-weight: 800;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+/* Ô Vị trí Rack */
+.rack-highlight input {
+  font-weight: 800;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+/* QR Code Input Group */
+.qr-input-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.qr-input-group .suggestions {
+  flex: 1;
+}
+
+.btn-scan-default {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
+.btn-scan-default:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+#qr-reader {
+  display: none;
+  width: 100%;
+  max-width: 380px;
+  margin: 10px auto;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 2px solid #cbd5e1;
+}
+
+/* ================= 5. THỜI GIAN HOÀN THÀNH ================= */
+.time-group-wrapper {
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.manual-time-label {
+  font-size: 12px;
+  color: #0284c7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.input-realtime {
+  font-family: monospace;
+  font-size: 14px !important;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* ================= 6. NGOẠI QUAN ĐÙN (CHIPS MÀU SẮC TRỰC QUAN) ================= */
+.ext-checks-group {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.ext-check-box {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  padding: 6px 8px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.ext-check-box:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.check-box-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.ext-toggle-btn {
+  width: 100%;
+  height: 28px;
+  border: none;
+  border-radius: 5px;
+  font-weight: 800;
+  font-size: 12.5px;
+  cursor: pointer;
+  background: var(--ng-red);
+  color: #fff;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+.ext-toggle-btn.active {
+  background: var(--ok-green);
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.25);
+}
+
+.ext-toggle-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* ================= 7. NÚT HÀNH ĐỘNG (SUBMIT / RESET) ================= */
+.btn-group {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1.5px dashed #e2e8f0;
+}
+
+.btn {
+  padding: 10px 22px;
+  border-radius: 7px;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.3);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.btn-secondary:hover {
+  background: #cbd5e1;
+  color: #1e293b;
+}
+
+/* ================= 8. AUTOCOMPLETE DROPDOWN ================= */
+.suggestions {
+  position: relative;
+}
+
+.suggestion-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid #2563eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+  max-height: 180px;
+  overflow-y: auto;
+  z-index: 9999;
+  display: none;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #1e293b;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* Toast */
+.toast-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #16a34a;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 7px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+.toast-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-error {
+  background-color: #dc2626;
+}
+
+/* ================= 9. RESPONSIVE ================= */
+@media (max-width: 768px) {
+  form#bobinForm {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .ext-checks-group {
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+  }
 }

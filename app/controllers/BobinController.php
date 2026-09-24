@@ -116,14 +116,12 @@ class BobinController extends Controller
         $bobins = [];
         $statusCounts = [];
         $capacityMap = []; // Thêm biến lưu trữ dung lượng
-
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
             $statusCounts = $this->bobinService->getBobinHistoryStats($dto);
-
-            // Lấy dung lượng động từ cơ sở dữ liệu
             $capacityMap = $this->bobinService->getBobinCapacities();
+            $racks = $this->bobinService->getAllRacks(); // <-- Thêm lấy danh sách Rack
         } catch (Throwable $e) {
             $errorMsg = $e->getMessage();
         }
@@ -131,7 +129,8 @@ class BobinController extends Controller
         $this->view('listBobinHistoryView', data: [
             'bobins'       => $bobins,
             'statusCounts' => $statusCounts,
-            'capacityMap'  => $capacityMap, // <-- Truyền xuống View
+            'capacityMap'  => $capacityMap,
+            'racks'        => $racks ?? [], // <-- Truyền xuống View
             'error'        => $errorMsg,
             'success'      => empty($errorMsg),
         ]);
@@ -181,9 +180,10 @@ class BobinController extends Controller
             $totalPages = (int)ceil($totalRecords / $dto->limit);
 
             $statusCounts = $this->bobinService->getBobinStatusStats($dto);
-
-            // Lấy dung lượng động từ cơ sở dữ liệu
             $capacityMap = $this->bobinService->getBobinCapacities();
+
+            // Lấy danh sách Rack truyền xuống View
+            $racks = $this->bobinService->getAllRacks();
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -191,7 +191,8 @@ class BobinController extends Controller
         $this->view('listBobinDetailView', data: [
             'bobins'       => $bobins,
             'statusCounts' => $statusCounts,
-            'capacityMap'  => $capacityMap, // <-- Truyền xuống View
+            'capacityMap'  => $capacityMap,
+            'racks'        => $racks, // <-- Thêm danh sách Racks
             'pagination'   => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
@@ -600,20 +601,24 @@ class BobinController extends Controller
     //? Xuất Excel danh sách lịch sử Bobin
     public function exportHistoryExcel()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
-        }
-
         try {
-            $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
+            $dto = BobinGetListDTO::fromRequest($_REQUEST);
 
-            if (empty($bobins)) {
-                $bobins = [];
-            } else {
-                $filename = "Bobin_History_List_" . date('Y-m-d_H_i') . ".csv";
-                $this->outputCsvFile($filename, $bobins);
+            // Tiếp nhận danh sách bản ghi chọn qua checkbox nếu có
+            $selectedIds = [];
+            if (!empty($_REQUEST['selected_ids'])) {
+                if (is_array($_REQUEST['selected_ids'])) {
+                    $selectedIds = $_REQUEST['selected_ids'];
+                } else {
+                    $selectedIds = explode(',', $_REQUEST['selected_ids']);
+                }
+                $selectedIds = array_filter(array_map('trim', $selectedIds));
             }
+
+            $bobins = $this->bobinService->getBobinsHistory($dto, $selectedIds) ?? [];
+
+            $filename = "Lich_Su_Bobin_" . date('Y-m-d_H_i') . ".csv";
+            $this->outputEnhancedCsvHistory($filename, $bobins);
         } catch (Throwable $e) {
             http_response_code(500);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -621,31 +626,7 @@ class BobinController extends Controller
         }
     }
 
-    //? Xuất Excel danh sách Bobin ngoài line hiện tại
-    public function exportDetailExcel()
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
-        }
-
-        try {
-            $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getDetailBobins($dto) ?? [];
-
-            if (empty($bobins)) {
-                $bobins = [];
-            } else {
-                $filename = "Bobin_Detail_List_" . date('Y-m-d_H_i') . ".csv";
-                $this->outputCsvFile($filename, $bobins);
-            }
-        } catch (Throwable $e) {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-            exit;
-        }
-    }
-
-    private function outputCsvFile(string $filename, array $bobins): void
+    private function outputEnhancedCsvHistory(string $filename, array $bobins): void
     {
         if (ob_get_level()) {
             ob_end_clean();
@@ -657,98 +638,371 @@ class BobinController extends Controller
         header('Expires: 0');
 
         $output = fopen('php://output', 'w');
-        fputs($output, "\xEF\xBB\xBF");
+        fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM hiển thị tiếng Việt có dấu chuẩn trên Excel
 
         $headers = [
             'Bobin Key ID',
-            'Bobin ID',
+            'Mã định danh Bobin',
             'Kích thước Bobin',
             'Loại Bobin',
+            'Vị trí Rack',
             'Mã Chỉ thị sản xuất',
             'Mã Sản phẩm',
-            'Mã Nhân viên',
-            'Tên Nhân viên',
-            'Ca làm việc',
+            'Mã NV Đùn',
+            'Họ tên NV Đùn',
+            'Ca sản xuất',
             'Lot vật liệu',
-            'Lot in',
-            'Chiều dài Bobin (m)',
+            'Lot in (Print Lot)',
+            'Chiều dài (m)',
             'Ngày đùn',
             'Thời gian hoàn thành cuộn',
-            'Mã nhân viên QC',
-            'Tên nhân viên QC',
-            'Gel',
-            'Dị vật',
-            'Chất lượng màu',
-            'Chất lượng Chữ in',
+            'Đùn - Đường kính',
+            'Đùn - Gel',
+            'Đùn - Dị vật',
+            'Đùn - Màu sắc',
+            'Đùn - Chữ in',
+            'Mã NV QC',
+            'Họ tên NV QC',
+            'Thời gian QC',
+            'QC - Gel',
+            'QC - Dị vật',
+            'QC - Màu sắc',
+            'QC - Chữ in',
             'Ghi chú QC',
             'Mã máy cuộn',
-            'Mã nhân viên cuộn',
-            'Tên nhân viên cuộn',
+            'Mã NV cuộn',
+            'Họ tên NV cuộn',
+            'Kết quả thông khí',
             'Ghi chú cuộn',
-            'Thời gian cập nhật gần nhất',
-            'Trạng thái hiện tại'
+            'Thời điểm ghi nhận lịch sử',
+            'Trạng thái tại thời điểm ghi nhận'
         ];
         fputcsv($output, $headers);
 
+        $totalLength = 0;
+        $statusStats = [
+            'Rolled'               => 0,
+            'Busy_Unchecked'       => 0,
+            'Busy_Checked'         => 0,
+            'Pending_Cancellation' => 0,
+            'Cancelled'            => 0
+        ];
+
         foreach ($bobins as $row) {
-            $rowData = $this->prepareRowData($row);
+            $totalLength += floatval($row['length_m'] ?? 0);
+            $st = $row['bobin_current_status'] ?? 'Unknown';
+            if (isset($statusStats[$st])) {
+                $statusStats[$st]++;
+            }
+
+            $rowData = $this->prepareHistoryRowData($row);
             fputcsv($output, $rowData);
         }
+
+        // BẢNG TỔNG KẾT Ở CUỐI FILE
+        fputcsv($output, []);
+        fputcsv($output, ['=== BẢNG THỐNG KÊ LỊCH SỬ TỔNG HỢP ===']);
+        fputcsv($output, ['Tổng số lượt cập nhật:', count($bobins) . ' lượt']);
+        fputcsv($output, ['Tổng chiều dài sản xuất:', number_format($totalLength, 1) . ' mét']);
+        fputcsv($output, [
+            'Chi tiết trạng thái:',
+            "Đã cuộn: {$statusStats['Rolled']} | Đã đùn (Chưa QC): {$statusStats['Busy_Unchecked']} | Đã QC: {$statusStats['Busy_Checked']} | Đã hủy: {$statusStats['Cancelled']}"
+        ]);
 
         fclose($output);
         exit;
     }
 
-    private function prepareRowData(array $row): array
+    private function prepareHistoryRowData(array $row): array
     {
-        $viRaw = $row['visual_inspection'] ?? '{}';
-        $productsRaw = $row['products'] ?? '{}';
-        $extrusionEmployeeRaw = $row['extrusion_employee'] ?? '{}';
-        $materialLotRaw = $row['material_lot'] ?? '{}';
-        $windingEmployeeRaw = $row['winding_employee'] ?? '{}';
+        $products = $this->jsonDecode($row['products'] ?? '{}');
+        $extEmp   = $this->jsonDecode($row['extrusion_employee'] ?? '{}');
+        $matLot   = $this->jsonDecode($row['material_lot'] ?? '{}');
+        $extCheck = $this->jsonDecode($row['extrusion_check'] ?? '{}');
+        $rack     = $this->jsonDecode($row['rack'] ?? '{}');
+        $vi       = $this->jsonDecode($row['visual_inspection'] ?? '{}');
+        $defects  = $vi['defects'] ?? [];
+        $windEmp  = $this->jsonDecode($row['winding_employee'] ?? '{}');
 
-
-        $vi = $this->jsonDecode($viRaw);
-        $products = $this->jsonDecode($productsRaw);
-        $employee = $this->jsonDecode($extrusionEmployeeRaw);
-        $materialLot = $this->jsonDecode($materialLotRaw);
-        $windingEmployee = $this->jsonDecode($windingEmployeeRaw);
-
-        $defects = $vi['defects'] ?? [];
-        $gel = $defects['gel'] ?? false;
-        $colorIssue = $defects['color_issue'] ?? false;
-        $foreignObject = $defects['foreign_object'] ?? false;
-        $printQuality = $defects['print_quality'] ?? false;
+        $statusName = match ($row['bobin_current_status'] ?? '') {
+            'Rolled'               => 'Đã cuộn',
+            'Busy_Unchecked'       => 'Đã đùn (Chưa QC)',
+            'Busy_Checked'         => 'Đã QC',
+            'Pending_Cancellation' => 'Chờ hủy',
+            'Cancelled'            => 'Đã hủy',
+            default                => $row['bobin_current_status'] ?? 'Chưa cập nhật'
+        };
 
         return [
             $row['bobin_key_code'] ?? '',
             $row['bobin_identification_code'] ?? '',
             $row['bobin_size'] ?? 'Chưa cập nhật',
             $row['bobin_type'] ?? 'Chưa cập nhật',
+            $rack['code'] ?? 'Chưa cập nhật',
             $products['production_order_code'] ?? 'Chưa cập nhật',
             $products['product_code'] ?? 'Chưa cập nhật',
-            $employee['employee_code'] ?? 'Chưa cập nhật',
-            $employee['employee_name'] ?? 'Chưa cập nhật',
-            $row['shift'] ?? 'Hành chính',
-            $materialLot['lot'] ?? 'Chưa cập nhật',
+            $extEmp['employee_code'] ?? 'Chưa cập nhật',
+            $extEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['shift'] ?? 'Chưa cập nhật',
+            $matLot['lot'] ?? 'Chưa cập nhật',
             $row['print_lot'] ?? 'Chưa cập nhật',
-
             $row['length_m'] ?? '0',
             $row['extrusion_date'] ?? '',
             $row['finish_time'] ?? '',
-            $vi['inspector_code'] ?? 'Chưa cập nhật ',
+            // 5 tiêu chí Đùn check
+            ($extCheck['diameter'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['gel'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['foreign_object'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['color'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['print'] ?? true) ? 'OK' : 'NG',
+            // QC Check
+            $vi['inspector_code'] ?? 'Chưa cập nhật',
             $vi['inspector_name'] ?? 'Chưa cập nhật',
-            $gel ? 'NG' : 'OK',
-            $foreignObject ? 'NG' : 'OK',
-            $colorIssue ? 'NG' : 'OK',
-            $printQuality ? 'NG' : 'OK',
+            $vi['inspection_time'] ?? 'Chưa cập nhật',
+            ($defects['gel'] ?? false) ? 'OK' : 'NG',
+            ($defects['foreign_object'] ?? false) ? 'OK' : 'NG',
+            ($defects['color_issue'] ?? false) ? 'OK' : 'NG',
+            ($defects['print_quality'] ?? false) ? 'OK' : 'NG',
             $defects['note'] ?? 'Chưa cập nhật',
+            // Cuộn
             $row['winding_machine'] ?? 'Chưa cập nhật',
-            $windingEmployee['employee_code'] ?? 'Chưa cập nhật',
-            $windingEmployee['employee_name'] ?? 'Chưa cập nhật',
+            $windEmp['employee_code'] ?? 'Chưa cập nhật',
+            $windEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['flow_test_result'] ?? 'Chưa cập nhật',
             $row['winding_note'] ?? 'Chưa cập nhật',
             $row['updated_time'] ?? '',
-            $row['bobin_current_status'] ?? ''
+            $statusName
+        ];
+    }
+
+    private function prepareRowData(array $row): array
+    {
+        $products = $this->jsonDecode($row['products'] ?? '{}');
+        $extEmp = $this->jsonDecode($row['extrusion_employee'] ?? '{}');
+        $matLot = $this->jsonDecode($row['material_lot'] ?? '{}');
+        $visual = $this->jsonDecode($row['visual_inspection'] ?? '{}');
+        $defects = $visual['defects'] ?? [];
+        $windEmp = $this->jsonDecode($row['winding_employee'] ?? '{}');
+
+        $status = match ($row['bobin_current_status'] ?? '') {
+            'Rolled' => 'Đã cuộn',
+            'Busy_Unchecked' => 'Chưa QC',
+            'Busy_Checked' => 'Đã QC',
+            'Pending_Cancellation' => 'Chờ hủy',
+            'Cancelled' => 'Đã hủy',
+            default => $row['bobin_current_status'] ?? 'Chưa cập nhật'
+        };
+
+        return [
+            $row['bobin_key_code'] ?? '',
+            $row['bobin_identification_code'] ?? ($row['bobin_code'] ?? ''),
+            $row['bobin_size'] ?? 'Chưa cập nhật',
+            $row['bobin_type'] ?? 'Chưa cập nhật',
+            $products['production_order_code'] ?? 'Chưa cập nhật',
+            $products['product_code'] ?? 'Chưa cập nhật',
+            $extEmp['employee_code'] ?? 'Chưa cập nhật',
+            $extEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['shift'] ?? 'Chưa cập nhật',
+            $matLot['lot'] ?? 'Chưa cập nhật',
+            $row['print_lot'] ?? 'Chưa cập nhật',
+            $row['length_m'] ?? '0',
+            $row['extrusion_date'] ?? '',
+            $row['finish_time'] ?? '',
+            $visual['inspector_code'] ?? 'Chưa cập nhật',
+            $visual['inspector_name'] ?? 'Chưa cập nhật',
+            ($defects['gel'] ?? false) ? 'OK' : 'NG',
+            ($defects['foreign_object'] ?? false) ? 'OK' : 'NG',
+            ($defects['color_issue'] ?? false) ? 'OK' : 'NG',
+            ($defects['print_quality'] ?? false) ? 'OK' : 'NG',
+            $defects['note'] ?? 'Chưa cập nhật',
+            $row['winding_machine'] ?? 'Chưa cập nhật',
+            $windEmp['employee_code'] ?? 'Chưa cập nhật',
+            $windEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['winding_note'] ?? 'Chưa cập nhật',
+            $row['updated_time'] ?? '',
+            $status
+        ];
+    }
+
+    //? Xuất Excel danh sách Bobin ngoài line hiện tại
+    public function exportDetailExcel()
+    {
+        try {
+            $dto = BobinGetListDTO::fromRequest($_REQUEST);
+
+            // Kiểm tra xem người dùng có chọn cụ thể danh sách Bobin nào không
+            $selectedCodes = [];
+            if (!empty($_REQUEST['selected_codes'])) {
+                if (is_array($_REQUEST['selected_codes'])) {
+                    $selectedCodes = $_REQUEST['selected_codes'];
+                } else {
+                    $selectedCodes = explode(',', $_REQUEST['selected_codes']);
+                }
+                $selectedCodes = array_filter(array_map('trim', $selectedCodes));
+            }
+
+            // Lấy toàn bộ Bobin theo yêu cầu (không phân trang 50 dòng)
+            $bobins = $this->bobinService->getDetailBobinsForExport($dto, $selectedCodes);
+
+            $filename = "Danh_Sach_Bobin_" . date('Y-m-d_H_i') . ".csv";
+            $this->outputEnhancedCsvDetail($filename, $bobins);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
+        }
+    }
+
+    private function outputEnhancedCsvDetail(string $filename, array $bobins): void
+    {
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header("Content-Disposition: attachment; filename=\"{$filename}\"");
+        header('Pragma: public');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+        fputs($output, "\xEF\xBB\xBF"); // UTF-8 BOM để Excel hiển thị đúng tiếng Việt
+
+        // TIÊU ĐỀ 35 CỘT DỮ LIỆU ĐẦY ĐỦ
+        $headers = [
+            'Bobin Key ID',
+            'Mã định danh Bobin',
+            'Kích thước Bobin',
+            'Loại Bobin',
+            'Vị trí Rack',
+            'Mã Chỉ thị sản xuất',
+            'Mã Sản phẩm',
+            'Mã NV Đùn',
+            'Họ tên NV Đùn',
+            'Ca sản xuất',
+            'Lot vật liệu',
+            'Lot in (Print Lot)',
+            'Chiều dài (m)',
+            'Ngày đùn',
+            'Thời gian hoàn thành cuộn',
+            'Đùn - Đường kính',
+            'Đùn - Gel',
+            'Đùn - Dị vật',
+            'Đùn - Màu sắc',
+            'Đùn - Chữ in',
+            'Mã NV QC',
+            'Họ tên NV QC',
+            'Thời gian QC',
+            'QC - Gel',
+            'QC - Dị vật',
+            'QC - Màu sắc',
+            'QC - Chữ in',
+            'Ghi chú QC',
+            'Mã máy cuộn',
+            'Mã NV cuộn',
+            'Họ tên NV cuộn',
+            'Kết quả thông khí',
+            'Ghi chú cuộn',
+            'Thời gian cập nhật gần nhất',
+            'Trạng thái hiện tại'
+        ];
+        fputcsv($output, $headers);
+
+        // BIẾN THỐNG KÊ TỔNG KẾT
+        $totalLength = 0;
+        $statusStats = [
+            'Rolled' => 0,
+            'Busy_Unchecked' => 0,
+            'Busy_Checked' => 0,
+            'Pending_Cancellation' => 0,
+            'Cancelled' => 0
+        ];
+
+        foreach ($bobins as $row) {
+            $length = floatval($row['length_m'] ?? 0);
+            $totalLength += $length;
+
+            $status = $row['bobin_current_status'] ?? 'Unknown';
+            if (isset($statusStats[$status])) {
+                $statusStats[$status]++;
+            }
+
+            $rowData = $this->prepareDetailRowData($row);
+            fputcsv($output, $rowData);
+        }
+
+        // // THÊM CÁC DÒNG TỔNG KẾT Ở CUỐI BẢNG
+        // fputcsv($output, []); // Dòng trống ngăn cách
+        // fputcsv($output, ['=== BẢNG THỐNG KÊ TỔNG HỢP ===']);
+        // fputcsv($output, ['Tổng số lượng Bobin:', count($bobins) . ' cuộn']);
+        // fputcsv($output, ['Tổng chiều dài sản xuất:', number_format($totalLength, 1) . ' mét']);
+        // fputcsv($output, [
+        //     'Chi tiết trạng thái:',
+        //     "Đã cuộn: {$statusStats['Rolled']} | Chưa QC: {$statusStats['Busy_Unchecked']} | Đã QC: {$statusStats['Busy_Checked']} | Chờ hủy: {$statusStats['Pending_Cancellation']}"
+        // ]);
+
+        fclose($output);
+        exit;
+    }
+
+    private function prepareDetailRowData(array $row): array
+    {
+        $products = $this->jsonDecode($row['products'] ?? '{}');
+        $extEmp   = $this->jsonDecode($row['extrusion_employee'] ?? '{}');
+        $matLot   = $this->jsonDecode($row['material_lot'] ?? '{}');
+        $extCheck = $this->jsonDecode($row['extrusion_check'] ?? '{}');
+        $rack     = $this->jsonDecode($row['rack'] ?? '{}');
+        $vi       = $this->jsonDecode($row['visual_inspection'] ?? '{}');
+        $defects  = $vi['defects'] ?? [];
+        $windEmp  = $this->jsonDecode($row['winding_employee'] ?? '{}');
+
+        $statusName = match ($row['bobin_current_status'] ?? '') {
+            'Rolled'               => 'Đã cuộn',
+            'Busy_Unchecked'       => 'Chưa QC',
+            'Busy_Checked'         => 'Đã QC',
+            'Pending_Cancellation' => 'Chờ hủy',
+            'Cancelled'            => 'Đã hủy',
+            default                => $row['bobin_current_status'] ?? 'Chưa cập nhật'
+        };
+
+        return [
+            $row['bobin_key_code'] ?? '',
+            $row['bobin_identification_code'] ?? '',
+            $row['bobin_size'] ?? 'Chưa cập nhật',
+            $row['bobin_type'] ?? 'Chưa cập nhật',
+            $rack['code'] ?? 'Chưa cập nhật',
+            $products['production_order_code'] ?? 'Chưa cập nhật',
+            $products['product_code'] ?? 'Chưa cập nhật',
+            $extEmp['employee_code'] ?? 'Chưa cập nhật',
+            $extEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['shift'] ?? 'Chưa cập nhật',
+            $matLot['lot'] ?? 'Chưa cập nhật',
+            $row['print_lot'] ?? 'Chưa cập nhật',
+            $row['length_m'] ?? '0',
+            $row['extrusion_date'] ?? '',
+            $row['finish_time'] ?? '',
+            // 5 tiêu chí Đùn check
+            ($extCheck['diameter'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['gel'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['foreign_object'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['color'] ?? true) ? 'OK' : 'NG',
+            ($extCheck['print'] ?? true) ? 'OK' : 'NG',
+            // QC Check
+            $vi['inspector_code'] ?? 'Chưa cập nhật',
+            $vi['inspector_name'] ?? 'Chưa cập nhật',
+            $vi['inspection_time'] ?? 'Chưa cập nhật',
+            ($defects['gel'] ?? false) ? 'OK' : 'NG',
+            ($defects['foreign_object'] ?? false) ? 'OK' : 'NG',
+            ($defects['color_issue'] ?? false) ? 'OK' : 'NG',
+            ($defects['print_quality'] ?? false) ? 'OK' : 'NG',
+            $defects['note'] ?? 'Chưa cập nhật',
+            // Cuộn
+            $row['winding_machine'] ?? 'Chưa cập nhật',
+            $windEmp['employee_code'] ?? 'Chưa cập nhật',
+            $windEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['flow_test_result'] ?? 'Chưa cập nhật',
+            $row['winding_note'] ?? 'Chưa cập nhật',
+            $row['updated_time'] ?? '',
+            $statusName
         ];
     }
     #endregion

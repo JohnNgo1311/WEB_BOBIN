@@ -15,6 +15,7 @@ class ListdataRepository
     public function getListData(bool $isFull): ListDataEntity
     {
         $queries = [
+            'list_rack' => "SELECT * FROM rack_list",
             'list_bobin' => $isFull ? "SELECT * FROM bobin_list_general" : "SELECT * FROM bobin_list_general WHERE bobin_current_status = 'Rolled' OR bobin_current_status = 'Cancelled'",
             'list_employee' => "SELECT * FROM employee_list",
             'list_material_lot' => "SELECT * FROM material_lot_list",
@@ -84,7 +85,7 @@ class ListdataRepository
     }
     private function populateGlobalData(ListDataEntity $data): void
     {
-
+        GlobalData::$listRackEntity = $data->list_rack ?? [];
         GlobalData::$pendingBobinCount = $data->pending_count ?? 0;
         GlobalData::$listBobinEntity = $data->list_bobin ?? [];
         GlobalData::$listEmployeeEntity = $data->list_employee ?? [];

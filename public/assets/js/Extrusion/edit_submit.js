@@ -1,5 +1,5 @@
 /* =========================================
-    MODULE TOAST: Display notifications
+    MODULE TOAST & DIALOG
 ========================================= */
 const Toast = {
     show(message, type = 'success') {
@@ -14,31 +14,27 @@ const Toast = {
 
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 500);
+            setTimeout(() => toast.remove(), 400);
         }, 3000);
     }
 };
 
-/* =========================================
-    MODULE DIALOG: Display confirmation dialog
-========================================= */
 const ConfirmDialog = (() => {
     let styleInjected = false;
 
     const injectStyles = () => {
         if (styleInjected) return;
-
         const style = document.createElement('style');
         style.id = 'confirm-dialog-style';
         style.textContent = `
-                .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-                .confirm-dialog-box { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif; }
-                .confirm-dialog-title { margin-top: 0; font-size: 18px; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-                .confirm-dialog-content { margin: 15px 0; font-size: 14px; color: #333; max-height: 60vh; overflow-y: auto; }
-                .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-          `;
-
-
+            .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+            .confirm-dialog-box { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif; }
+            .confirm-dialog-title { margin-top: 0; font-size: 17px; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 8px; font-weight: 700; }
+            .confirm-dialog-content { margin: 12px 0; font-size: 13.5px; color: #333; max-height: 65vh; overflow-y: auto; }
+            .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+            .vi-badge-ok { background: #22c55e; color: #fff; padding: 2px 7px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
+            .vi-badge-ng { background: #ef4444; color: #fff; padding: 2px 7px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
+        `;
         document.head.appendChild(style);
         styleInjected = true;
     };
@@ -53,13 +49,13 @@ const ConfirmDialog = (() => {
             const box = document.createElement('div');
             box.className = 'confirm-dialog-box';
             box.innerHTML = `
-                     <h3 class="confirm-dialog-title">${title}</h3>
-                     <div class="confirm-dialog-content">${contentHTML}</div>
-                     <div class="confirm-dialog-actions">
-                          <button type="button" class="btn btn-secondary cancel-btn" style="padding: 8px 16px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: #c3c3c3; color: white;">Hủy bỏ</button>
-                          <button type="button" class="btn btn-primary confirm-btn" style="padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; background: #2563eb; color: white;">Xác nhận</button>
-                     </div>
-                `;
+                <h3 class="confirm-dialog-title">${title}</h3>
+                <div class="confirm-dialog-content">${contentHTML}</div>
+                <div class="confirm-dialog-actions">
+                    <button type="button" class="btn btn-secondary cancel-btn" style="padding: 7px 16px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: #e2e8f0; color: #334155; font-weight: 600;">Hủy bỏ</button>
+                    <button type="button" class="btn btn-primary confirm-btn" style="padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; background: #2563eb; color: white; font-weight: 700;">Xác nhận</button>
+                </div>
+            `;
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);
@@ -75,103 +71,142 @@ const ConfirmDialog = (() => {
 })();
 
 /* =========================================
-    MODULE FORM: Handle form submission via AJAX
+    LOGIC QUẢN LÝ CHẾ ĐỘ SỬA ĐỘC QUYỀN
 ========================================= */
-function registerAjaxForm(formSelector, apiUrl, method = 'POST', onSuccessCallback = null) {
-    const form = document.querySelector(formSelector);
-    if (!form) return;
+let currentEditingContainer = null;
+let originalDataBackup = null;
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+// Bấm nút bật/tắt OK/NG cho 5 tiêu chí đùn
+function toggleExtCheck(btn) {
+    if (btn.disabled) return;
+    btn.classList.toggle('active');
+    const isActive = btn.classList.contains('active');
+    btn.dataset.value = isActive ? 'true' : 'false';
+    btn.textContent = isActive ? 'OK' : 'NG';
+}
 
-        const fd = new FormData(form);
-        const reviewHTML = buildReviewHTML(form, fd);
+// 1. BẮT ĐẦU CHỈNH SỬA
+function startEdit(btnElement) {
+    const container = btnElement.closest('.bobin-item');
+    if (!container) return;
 
-        ConfirmDialog.show(
-            'Kiểm tra lại thông tin',
-            `<div style="background-color: #fff3cd; color: #856404; padding: 10px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 15px; border-left: 4px solid #ffeeba;">
-                ⚠️ Vui lòng xác nhận thông tin Bobin trước khi gửi đi:
-                </div>
-                ${reviewHTML}`,
-            () => submitForm(form, apiUrl, method, fd, onSuccessCallback)
-        );
+    // Nếu đang có 1 Bobin khác sửa -> Chặn lại
+    if (currentEditingContainer && currentEditingContainer !== container) {
+        Toast.show("⚠️ Vui lòng hoàn thành hoặc hủy Bobin đang sửa trước!", "error");
+        currentEditingContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    currentEditingContainer = container;
+
+    // SAO LƯU DỮ LIỆU BAN ĐẦU ĐỂ PHỤC HỒI NẾU HỦY
+    originalDataBackup = {
+        product_code: container.querySelector('#product_code')?.value || '',
+        production_order_code: container.querySelector('#production_order_code')?.value || '',
+        extrusion_employee_code: container.querySelector('#extrusion_employee_code')?.value || '',
+        extrusion_employee_name: container.querySelector('#extrusion_employee_name')?.value || '',
+        bobin_type: container.querySelector('#bobin_type')?.value || '',
+        material_lot: container.querySelector('#material_lot')?.value || '',
+        extrusion_machine: container.querySelector('#extrusion_machine')?.value || '',
+        material: container.querySelector('#material')?.value || '',
+        grinding_time: container.querySelector('#grinding_time')?.value || '',
+        print_lot: container.querySelector('#print_lot')?.value || '',
+        length_m: container.querySelector('#length_m')?.value || '',
+        rack_code: container.querySelector('#rack_code')?.value || '',
+        shift: container.querySelector('#shift')?.value || '',
+        extrusion_date: container.querySelector('#extrusion_date')?.value || '',
+        finish_time: container.querySelector('#finish_time')?.value || '',
+        extChecks: {}
+    };
+
+    container.querySelectorAll('.ext-toggle-btn').forEach(b => {
+        const field = b.getAttribute('data-field');
+        originalDataBackup.extChecks[field] = {
+            value: b.getAttribute('data-value'),
+            text: b.textContent.trim(),
+            active: b.classList.contains('active')
+        };
     });
-}
 
-function buildReviewHTML(form, formData) {
-    let html = '<ul style="list-style: none; padding: 10px; background: #f4f6f8; border-radius: 6px; text-align: left;">';
+    // KÍCH HOẠT CÁC Ô NHẬP LIỆU CỦA BOBIN NÀY
+    const editableInputs = container.querySelectorAll(
+        '#product_code, #extrusion_employee_code, #bobin_type, #material_lot, #extrusion_machine, #material, #grinding_time, #length_m, #rack_code, #shift, #extrusion_date, #finish_time'
+    );
+    editableInputs.forEach(input => {
+        input.disabled = false;
+    });
 
-    for (const [key, value] of formData.entries()) {
-        if (key === 'extrusion_machine' || key === 'grinding_time') continue;
-        if (!value) continue;
+    // Mở khóa các nút toggle ngoại quan
+    container.querySelectorAll('.ext-toggle-btn').forEach(b => b.disabled = false);
 
-        const labelText = getLabelText(form, key);
-        html += `<li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px;">
-                <strong>${labelText}:</strong> <span style="color: #0056b3;">${value}</span>
-          </li>`;
-    }
+    // Thay đổi trạng thái nút bấm
+    container.querySelector('.btn-edit').style.display = 'none';
+    container.querySelector('.btn-cancel-edit').style.display = 'inline-flex';
+    container.querySelector('.btn-confirm').style.display = 'inline-flex';
 
-    return html + '</ul>';
-}
+    // Đánh dấu card này đang sửa
+    container.classList.add('is-editing');
 
-function getLabelText(form, fieldName) {
-    // Skip these fields
-    if (fieldName === 'extrusion_machine' || fieldName === 'grinding_time') {
-        return null;
-    }
-
-    const inputEl = form.querySelector(`[name="${fieldName}"]`);
-    if (!inputEl) return fieldName;
-
-    const label = inputEl.previousElementSibling?.tagName === 'LABEL'
-        ? inputEl.previousElementSibling
-        : inputEl.parentElement?.previousElementSibling?.tagName === 'LABEL'
-            ? inputEl.parentElement.previousElementSibling
-            : null;
-
-    return label ? label.innerText.replace(/:/g, '').trim() : fieldName;
-}
-
-async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn?.innerText || '';
-
-    if (submitBtn) {
-        submitBtn.innerText = 'Đang lưu...';
-        submitBtn.disabled = true;
-    }
-
-    try {
-        const response = await fetch(apiUrl, { method, body: formData });
-        const res = await response.json();
-
-        if (res.success) {
-            Toast.show(res.message, 'success');
-
-            const idCodeInput = form.querySelector('input[name="bobin_identification_code"]');
-            if (idCodeInput) idCodeInput.value = '';
-
-            const productCodeInput = form.querySelector('input[name="product_code"]');
-            if (productCodeInput) productCodeInput.value = '';
-
-            const orderCodeInput = form.querySelector('input[name="production_order_code"]');
-            if (orderCodeInput) orderCodeInput.value = '';
-
-            const lengthInput = form.querySelector('input[name="length_m"]');
-            if (lengthInput) lengthInput.value = '';
-
-            onSuccessCallback?.(res, form);
-        } else {
-            Toast.show(`❌ Lỗi: ${res.message}`, 'error');
+    // Khóa tất cả các Bobin khác
+    document.querySelectorAll('.bobin-item').forEach(item => {
+        if (item !== container) {
+            item.classList.add('is-locked');
         }
-    } catch (err) {
-        Toast.show(`❌ Đã có lỗi xảy ra. ${err.message}`, 'error');
-    } finally {
-        if (submitBtn) {
-            submitBtn.innerText = originalText;
-            submitBtn.disabled = false;
+    });
+
+    // Focus vào ô đầu tiên
+    container.querySelector('#product_code')?.focus();
+}
+
+// 2. HỦY CHỈNH SỬA
+function cancelEdit(btnElement) {
+    const container = btnElement.closest('.bobin-item');
+    if (!container || !originalDataBackup) return;
+
+    // PHỤC HỒI TOÀN BỘ GIÁ TRỊ GỐC
+    for (const [key, val] of Object.entries(originalDataBackup)) {
+        if (key === 'extChecks') continue;
+        const el = container.querySelector('#' + key);
+        if (el) el.value = val;
+    }
+
+    // Phục hồi 5 nút ngoại quan
+    for (const [field, state] of Object.entries(originalDataBackup.extChecks)) {
+        const b = container.querySelector(`[data-field="${field}"]`);
+        if (b) {
+            b.setAttribute('data-value', state.value);
+            b.textContent = state.text;
+            if (state.active) b.classList.add('active');
+            else b.classList.remove('active');
         }
     }
+
+    // KHÓA LẠI TẤT CẢ Ô NHẬP LIỆU
+    const editableInputs = container.querySelectorAll(
+        '#product_code, #extrusion_employee_code, #bobin_type, #material_lot, #extrusion_machine, #material, #grinding_time, #length_m, #rack_code, #shift, #extrusion_date, #finish_time'
+    );
+    editableInputs.forEach(input => {
+        input.disabled = true;
+    });
+
+    container.querySelectorAll('.ext-toggle-btn').forEach(b => b.disabled = true);
+
+    // Đổi lại nút bấm
+    container.querySelector('.btn-edit').style.display = 'inline-flex';
+    container.querySelector('.btn-cancel-edit').style.display = 'none';
+    container.querySelector('.btn-confirm').style.display = 'none';
+
+    // Bỏ trạng thái sửa
+    container.classList.remove('is-editing');
+
+    // Mở khóa các Bobin khác
+    document.querySelectorAll('.bobin-item').forEach(item => {
+        item.classList.remove('is-locked');
+    });
+
+    currentEditingContainer = null;
+    originalDataBackup = null;
+    Toast.show("Đã hủy bỏ thay đổi", "success");
 }
 
 /* =========================================
@@ -180,13 +215,17 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
 async function handleDelete(btnElement, bobinCode) {
     const container = btnElement.closest('.bobin-item');
     if (!bobinCode) {
-        alert("Lỗi: Thiếu mã định danh của Bobin!");
+        Toast.show("Lỗi: Thiếu mã định danh của Bobin!", "error");
         return;
     }
 
-    // Đã thay đổi: Sử dụng [name="..."] thay vì #id
-    const inEmployeeCode = container.querySelector('[id="extrusion_employee_code"]')?.value.trim() || 'Chưa cập nhật';
-    const inEmployeeName = container.querySelector('[id="extrusion_employee_name"]')?.value.trim() || 'Chưa cập nhật';
+    const inEmployeeCode = container.querySelector('#extrusion_employee_code')?.value.trim() || '';
+    const inEmployeeName = container.querySelector('#extrusion_employee_name')?.value.trim() || '';
+
+    if (!inEmployeeCode || inEmployeeCode === 'Chưa cập nhật') {
+        Toast.show("⚠️ Vui lòng bấm 'Chỉnh sửa' và nhập Mã nhân viên đùn trước khi hủy!", "error");
+        return;
+    }
 
     const bodyData = {
         bobin_identification_code: bobinCode,
@@ -194,24 +233,23 @@ async function handleDelete(btnElement, bobinCode) {
         extrusion_employee_name: inEmployeeName,
     };
 
-    let reviewHTML = `
-          <ul style="list-style: none; padding: 12px; background: #f9fafb; border-radius: 6px; text-align: left; border: 1px solid #e5e7eb;">
-                <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Mã định danh Bobin:</strong> <span style="color: #1f2937; font-family: monospace;">${bobinCode}</span></li>
-                <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Mã số nhân viên:</strong> <span style="color: #1f2937;">${inEmployeeCode}</span></li>
-                <li style="margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; display: flex; justify-content: space-between;"><strong>Họ tên nhân viên:</strong> <span style="color: #1f2937;">${inEmployeeName}</span></li>
-          </ul>
-     `;
+    const reviewHTML = `
+        <ul style="list-style: none; padding: 10px 12px; background: #f9fafb; border-radius: 6px; text-align: left; border: 1px solid #e5e7eb; margin: 0;">
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #1f2937; font-family: monospace; font-weight: 700;">${bobinCode}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã nhân viên:</strong> <span>${inEmployeeCode}</span></li>
+            <li style="display: flex; justify-content: space-between;"><strong>Họ tên nhân viên:</strong> <span>${inEmployeeName}</span></li>
+        </ul>
+    `;
 
     ConfirmDialog.show(
         '⚠️ Xác nhận Hủy Bobin',
         `
-          <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); color: #7f1d1d; padding: 12px 14px; border-radius: 6px; font-weight: 600; margin-bottom: 16px; border-left: 4px solid #dc2626; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        ❗Hủy Bobin <strong style="color: #991b1b;">${bobinCode}</strong> - Hành động này không thể hoàn tác
-          </div>
-          ${reviewHTML}
-          `,
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); color: #7f1d1d; padding: 10px 12px; border-radius: 6px; font-weight: 600; margin-bottom: 12px; border-left: 4px solid #dc2626;">
+            ❗ Chuyển Bobin <strong style="color: #991b1b;">${bobinCode}</strong> sang danh sách chờ hủy?
+        </div>
+        ${reviewHTML}
+        `,
         async () => {
-
             const requestUrl = `${API_BASE_URL}bobin/extrusionDeleteBobin`;
             const originalBtnText = btnElement.innerHTML;
 
@@ -221,226 +259,168 @@ async function handleDelete(btnElement, bobinCode) {
             try {
                 const response = await fetch(requestUrl, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(bodyData)
                 });
 
                 const data = await response.json();
-
                 if (data.success) {
-                    console.log("Response từ API", data);
                     Toast.show(data.message, 'success');
-                    setTimeout(() => {
-                        window.location.reload(); // Tự động reload trang sau 3s
-                    }, 2000);
+                    setTimeout(() => window.location.reload(), 1200);
                 } else {
-                    console.log("Lỗi từ API", data);
                     Toast.show("Lỗi: " + (data.message || "Hủy thất bại"), 'error');
                     btnElement.innerHTML = originalBtnText;
                     btnElement.disabled = false;
                 }
             } catch (error) {
-                console.error('Error:', error);
                 Toast.show("Đã xảy ra lỗi kết nối!", 'error');
                 btnElement.innerHTML = originalBtnText;
                 btnElement.disabled = false;
             }
-        },
-        (dialogBox) => {
-            const selectedErrors = Array.from(dialogBox.querySelectorAll('.error-toggle-btn.active')).map(btn => btn.dataset.error);
-            let newNote = originalNote; // Lưu ý: originalNote chưa được định nghĩa ở code cũ, bạn cần kiểm tra lại biến này nếu có sử dụng
-
-            if (selectedErrors.length > 0) {
-                const errorString = "Lỗi Hủy: " + selectedErrors.join(", ");
-                newNote = originalNote ? originalNote + " - " + errorString : errorString;
-            }
-
-            const noteDisplay = dialogBox.querySelector('#dynamic-note-display');
-            if (noteDisplay) {
-                noteDisplay.innerText = newNote || 'Không có ghi chú';
-                noteDisplay.style.fontStyle = newNote ? 'normal' : 'italic';
-            }
-            dialogBox.dataset.currentNote = newNote;
         }
     );
 }
 
 /* =========================================
-    HÀM XỬ LÝ: Cập nhật Bobin (Trong List)
+    HÀM XỬ LÝ: Cập nhật Bobin
 ========================================= */
 async function handleConfirm(buttonElement, bobinCode) {
     try {
         const container = buttonElement.closest('.bobin-item');
-        if (!container) {
-            throw new Error("Không tìm thấy dữ liệu Bobin tương ứng.");
+        if (!container) throw new Error("Không tìm thấy dòng Bobin tương ứng.");
+
+        const productCode = container.querySelector('#product_code')?.value.trim() || '';
+        const orderCode = container.querySelector('#production_order_code')?.value.trim() || '';
+        const empCode = container.querySelector('#extrusion_employee_code')?.value.trim() || '';
+        const empName = container.querySelector('#extrusion_employee_name')?.value.trim() || '';
+        const bobinType = container.querySelector('#bobin_type')?.value || '';
+        const materialLot = container.querySelector('#material_lot')?.value.trim() || '';
+        const material = container.querySelector('#material')?.value.trim() || '';
+        const printLot = container.querySelector('#print_lot')?.value.trim() || '';
+        const lengthM = container.querySelector('#length_m')?.value || 0;
+        const rackCode = container.querySelector('#rack_code')?.value.trim() || '';
+        const shift = container.querySelector('#shift')?.value || '';
+        const extrusionDate = container.querySelector('#extrusion_date')?.value || '';
+        const finishTimeRaw = container.querySelector('#finish_time')?.value.trim() || '';
+        const finishTime = finishTimeRaw.replace('T', ' ');
+
+        if (!empCode) {
+            Toast.show("⚠️ Vui lòng nhập mã nhân viên đùn!", "error");
+            container.querySelector('#extrusion_employee_code')?.focus();
+            return;
+        }
+        if (!productCode) {
+            Toast.show("⚠️ Vui lòng nhập mã sản phẩm!", "error");
+            container.querySelector('#product_code')?.focus();
+            return;
         }
 
-        // Lấy dữ liệu
-        const productCode = container.querySelector('[id="product_code"]')?.value || '';
-        const orderCode = container.querySelector('[id="production_order_code"]')?.value || '';
-        const empCode = container.querySelector('[id="extrusion_employee_code"]')?.value || '';
-        const empName = container.querySelector('[id="extrusion_employee_name"]')?.value || ''; // Đã sửa empid thành empName
-        const bobinType = container.querySelector('[name="bobin_type"]')?.value || '';
-        const materialLot = container.querySelector('[id="material_lot"]')?.value || '';
-        // const machine = container.querySelector('[id="machine"]')?.value || '';
-        const material = container.querySelector('[id="material"]')?.value || '';
-        // const grindingTime = container.querySelector('[id="grinding_time"]')?.value || '';
-        const printLot = container.querySelector('[id="print_lot"]')?.value || '';
-        const lengthM = container.querySelector('[id="length_m"]')?.value || 0;
-        const shift = container.querySelector('[id="shift"]')?.value || '';
-        const finishTime = container.querySelector('[id="finish_time"]')?.value || '';
+        // Thu thập 5 nút ngoại quan Đùn
+        const extChecks = {};
+        container.querySelectorAll('.ext-toggle-btn').forEach(btn => {
+            const field = btn.getAttribute('data-field');
+            extChecks[field] = (btn.getAttribute('data-value') === 'true');
+        });
 
         const payload = {
             bobin_identification_code: bobinCode,
-            // bobin_key_code: bobinKeyCode,
             product_code: productCode,
             production_order_code: orderCode,
             extrusion_employee_code: empCode,
             extrusion_employee_name: empName,
             bobin_type: bobinType,
             material_lot: materialLot,
-            // machine: machine,
             material: material,
-            // grinding_time: grindingTime,
             print_lot: printLot,
             length_m: lengthM,
+            rack_code: rackCode,
             shift: shift,
-            finish_time: finishTime
+            extrusion_date: extrusionDate,
+            finish_time: finishTime,
+            ext_check_diameter: extChecks['ext_check_diameter'] ?? true,
+            ext_check_gel: extChecks['ext_check_gel'] ?? true,
+            ext_check_foreign_object: extChecks['ext_check_foreign_object'] ?? true,
+            ext_check_color: extChecks['ext_check_color'] ?? true,
+            ext_check_print: extChecks['ext_check_print'] ?? true
         };
 
-        // Tạo giao diện Review thông tin
-        let reviewHTML = `
-            <ul style="list-style: none; padding: 12px; background: #f9fafb; border-radius: 6px; text-align: left; border: 1px solid #e5e7eb;">
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã định danh Bobin:</strong> <span style="color: #0056b3; font-family: monospace;">${bobinCode}</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Loại Bobin:</strong> <span style="color: #0056b3; font-family: monospace;">${bobinType}</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Sản phẩm:</strong> <span style="color: #0056b3;">${productCode}</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Nhân viên:</strong> <span style="color: #0056b3;">${empCode} - ${empName}</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Vật liệu:</strong> <span style="color: #0056b3;">${material} (Lot: ${materialLot})</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Lot in:</strong> <span style="color: #0056b3;">${printLot}</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Chiều dài:</strong> <span style="color: #0056b3;">${lengthM} m</span></li>
-                <li style="margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Ca:</strong> <span style="color: #0056b3;">${shift}</span></li>
-                <li style="margin-bottom: 4px; display: flex; justify-content: space-between;"><strong>Thời gian:</strong> <span style="color: #0056b3;">${finishTime}</span></li>
+        const extDisplay = [
+            { label: 'Đường kính', ok: payload.ext_check_diameter },
+            { label: 'Gel', ok: payload.ext_check_gel },
+            { label: 'Dị vật', ok: payload.ext_check_foreign_object },
+            { label: 'Màu sắc', ok: payload.ext_check_color },
+            { label: 'Chữ in', ok: payload.ext_check_print }
+        ];
+
+        let checksHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">';
+        extDisplay.forEach(item => {
+            checksHTML += `
+                <div style="background:#fff;border:1px solid #cbd5e1;padding:3px 6px;border-radius:4px;display:flex;gap:4px;align-items:center;">
+                    <span style="font-size:11px;color:#475569;">${item.label}:</span>
+                    <span class="${item.ok ? 'vi-badge-ok' : 'vi-badge-ng'}">${item.ok ? 'OK' : 'NG'}</span>
+                </div>
+            `;
+        });
+        checksHTML += '</div>';
+
+        const reviewHTML = `
+            <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #0056b3; font-weight: bold;">${bobinCode}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Sản phẩm:</strong> <span style="color: #dc2626; font-weight: bold;">${productCode}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Loại Bobin:</strong> <span>${bobinType}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Nhân viên:</strong> <span>${empCode} - ${empName}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Vị trí Rack:</strong> <span style="color: #0284c7; font-weight: 800;">${rackCode || 'Chưa chọn'}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Chiều dài:</strong> <span>${lengthM} m</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Ngày đùn:</strong> <span>${extrusionDate}</span></li>
+                <li style="display: flex; justify-content: space-between;"><strong>Thời gian hoàn thành:</strong> <span>${finishTime}</span></li>
             </ul>
+            <div style="margin-top:10px;text-align:left;padding:8px 10px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
+                <strong style="font-size:12.5px;color:#0369a1;">🏭 Ngoại quan Đùn Check:</strong>
+                ${checksHTML}
+            </div>
         `;
 
-        // Gọi ConfirmDialog
         ConfirmDialog.show(
             'Kiểm tra thông tin cập nhật',
             `
-            <div style="background-color: #e0f7fa; color: #006064; padding: 10px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 15px; border-left: 4px solid #00bcd4;">
-                ℹ️ Vui lòng xem lại thông tin Bobin trước khi lưu vào hệ thống:
+            <div style="background-color: #e0f2fe; color: #0369a1; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #0284c7;">
+                ℹ️ Xác nhận lưu các thay đổi cho Bobin này:
             </div>
             ${reviewHTML}
             `,
             async () => {
-                // Hành động thực thi khi người dùng nhấn "Xác nhận"
                 const originalText = buttonElement.innerText;
                 buttonElement.innerText = 'Đang lưu...';
                 buttonElement.disabled = true;
 
                 try {
-                    console.log("Payload gửi đi:", bobinCode);
                     const apiUrl = `${API_BASE_URL}bobin/extrusionUpdateBobin`;
-
                     const response = await fetch(apiUrl, {
                         method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify(payload)
                     });
 
                     const res = await response.json();
-
                     if (res.success) {
-                        console.log("✅ Bobin đã được cập nhật thành công:", res);
                         Toast.show(res.message, 'success');
                         buttonElement.innerText = 'Đã lưu ✔️';
-                        buttonElement.classList.add('btn-success');
-                        setTimeout(() => {
-                            buttonElement.innerText = originalText;
-                            buttonElement.classList.remove('btn-success');
-                            buttonElement.disabled = false;
-                            window.location.reload(); // Tự động reload trang sau 3s
-                        }, 3000);
+                        currentEditingContainer = null;
+                        originalDataBackup = null;
+                        setTimeout(() => window.location.reload(), 1200);
                     } else {
-                        console.error("❌ Lỗi từ API:", res);
                         Toast.show(`❌ Lỗi: ${res.message}`, 'error');
                         buttonElement.innerText = originalText;
                         buttonElement.disabled = false;
                     }
-
                 } catch (err) {
-                    console.error("Lỗi cập nhật Bobin:", err);
                     Toast.show(`❌ Đã có lỗi xảy ra: ${err.message}`, 'error');
                     buttonElement.innerText = originalText;
                     buttonElement.disabled = false;
                 }
             }
         );
-
     } catch (err) {
-        console.error("Lỗi chuẩn bị dữ liệu:", err);
-        Toast.show(`❌ Đã có lỗi xảy ra: ${err.message}`, 'error');
+        Toast.show(`❌ ${err.message}`, 'error');
     }
 }
-
-/* =========================================
-    MODULE CLICK OUTSIDE: Close box on outside click
-========================================= */
-function registerOutsideClickCleaner(pairs) {
-    document.addEventListener('click', (e) => {
-        pairs.forEach(({ input, box }) => {
-            const boxEl = document.getElementById(box);
-            if (boxEl && e.target.id !== input && !boxEl.contains(e.target)) {
-                boxEl.style.display = 'none';
-            }
-        });
-    });
-}
-
-/* =========================================
-    INITIALIZATION
-========================================= */
-document.addEventListener('DOMContentLoaded', () => {
-    registerOutsideClickCleaner([
-        { input: 'bobin_identification_code', box: 'bobin_suggestions' },
-        { input: 'extrusion_employee_code', box: 'employee_suggestions' },
-        { input: 'product_code', box: 'product_suggestions' },
-        { input: 'machine', box: 'machine_suggestions' },
-        { input: 'material', box: 'material_suggestions' },
-        { input: 'material_lot', box: 'material_lot_suggestions' }
-    ]);
-
-    registerAjaxForm(
-        '#bobinForm',
-        `${API_BASE_URL}bobin/createBobin`,
-        'POST',
-        (response, formElement) => {
-            const dateInput = formElement.querySelector('input[name="extrusion_date"]');
-            if (dateInput) dateInput.valueAsDate = new Date();
-            console.log("✅ Bobin mới đã được tạo thành công:", response);
-            console.log("🚀 Bắt đầu gọi lại API...");
-            fetch(API_BASE_URL + "listdata/getListData")
-                .then((res) => res.json())
-                .then((response) => {
-                    if (response.success) {
-                        console.log("📥 Dữ liệu nhận về:", response);
-                        listData = response;
-                        if (typeof setupAutoPrintLot === 'function') setupAutoPrintLot();
-                        if (typeof reversePrintLot === 'function') reversePrintLot(); // Nếu đã có sẵn mã Lot in thì tự động điền ngược thông tin
-                        console.log(`👂 Bắt đầu theo dõi nhập dữ liệu`);
-                    } else {
-                        console.error(
-                            "❌ Lỗi từ API: Truy xuất dữ liệu ListData không thành công.",
-                        );
-                    }
-                })
-                .catch(console.error);
-        }
-    );
-}); 

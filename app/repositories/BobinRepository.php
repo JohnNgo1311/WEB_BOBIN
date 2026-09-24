@@ -11,7 +11,19 @@ class BobinRepository
     {
         $this->db = Database::getInstance();
     }
-
+    // Bổ sung hàm lấy toàn bộ Rack để hiển thị lên Dropdown
+    public function getAllRacks(): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT id, rack_code FROM rack_list ORDER BY rack_code ASC";
+            $stmt = $pdo->query($sql);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            return [];
+        }
+    }
     public function getBobinCapacities(): array
     {
         $pdo = $this->db->pdo();
@@ -43,7 +55,7 @@ class BobinRepository
     //! GET
     #region GET LIST
 
-    public function getBobinsHistory(array $filters = [])
+    public function getBobinsHistory(array $filters = [], array $selectedIds = [])
     {
         $pdo = $this->db->pdo();
 
@@ -52,8 +64,25 @@ class BobinRepository
                     WHERE updated_time BETWEEN :from_date AND :to_date";
             $params = [
                 ':from_date' => $filters['from_date'],
-                ':to_date' => $filters['to_date']
+                ':to_date'   => $filters['to_date']
             ];
+
+            // NẾU CÓ CHỌN CỤ THỂ CÁC BẢN GHI QUA CHECKBOX
+            if (!empty($selectedIds)) {
+                $inPlaceholders = [];
+                foreach ($selectedIds as $index => $val) {
+                    $paramKey = ":sel_id_" . $index;
+                    $inPlaceholders[] = $paramKey;
+                    $params[$paramKey] = $val;
+                }
+                $firstVal = reset($selectedIds);
+                if (is_numeric($firstVal)) {
+                    $sql .= " AND id IN (" . implode(',', $inPlaceholders) . ")";
+                } else {
+                    $sql .= " AND bobin_key_code IN (" . implode(',', $inPlaceholders) . ")";
+                }
+            }
+
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
                 $sql .= " AND bobin_size = :bsize";
                 $params[':bsize'] = $filters['bobin_size'];
@@ -63,34 +92,36 @@ class BobinRepository
                 $sql .= " AND bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
             }
+
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                $params[':rack'] = $filters['rack'];
+            }
+
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
-                bobin_identification_code LIKE :kw1 OR  
-                JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
-                JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
-                JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
-                JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
-                print_lot LIKE :kw6 OR
-                winding_machine LIKE :kw7 OR
-                bobin_type LIKE :kw8
-            )";
-
-                $params[':kw1'] = $searchStr;
-                $params[':kw2'] = $searchStr;
-                $params[':kw3'] = $searchStr;
-                $params[':kw4'] = $searchStr;
-                $params[':kw5'] = $searchStr;
-                $params[':kw6'] = $searchStr;
-                $params[':kw7'] = $searchStr;
-                $params[':kw8'] = $searchStr;
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
             }
+
             if (!empty($filters['status'])) {
                 if ($filters['status'] !== 'all') {
                     $sql .= " AND bobin_current_status = :status";
                     $params[':status'] = $filters['status'];
                 }
             }
+
             $sql .= " ORDER BY updated_time DESC";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -207,7 +238,10 @@ class BobinRepository
                 $sql .= " AND bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
             }
-
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                $params[':rack'] = $filters['rack'];
+            }
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
@@ -294,15 +328,25 @@ class BobinRepository
             $sql = "SELECT * FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
 
+            // 1. Lọc theo Kích thước
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
                 $sql .= " AND bobin_size = :bsize";
                 $params[':bsize'] = $filters['bobin_size'];
             }
 
+            // 2. Lọc theo Loại Bobin
             if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
                 $sql .= " AND bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
             }
+
+            // 3. Lọc theo Vị trí Rack
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                $params[':rack'] = $filters['rack'];
+            }
+
+            // 4. Tìm kiếm từ khóa (Keyword)
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
@@ -320,6 +364,7 @@ class BobinRepository
                 }
             }
 
+            // 5. Lọc theo Trạng thái
             if (!empty($filters['status'])) {
                 if ($filters['status'] === 'Line') {
                     $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
@@ -329,8 +374,17 @@ class BobinRepository
                 }
             }
 
+            // 6. SẮP XẾP (Đặt sau tất cả điều kiện WHERE)
+            $sort = $filters['sort'] ?? 'default';
+            if ($sort === 'newest') {
+                $sql .= " ORDER BY updated_time DESC, bobin_identification_code ASC";
+            } else {
+                $sql .= " ORDER BY bobin_identification_code ASC";
+            }
+
+            // 7. PHÂN TRANG (Đặt ở cuối cùng của truy vấn)
             $offset = ($page - 1) * $limit;
-            $sql .= " ORDER BY bobin_identification_code LIMIT :limit OFFSET :offset";
+            $sql .= " LIMIT :limit OFFSET :offset";
 
             $stmt = $pdo->prepare($sql);
             foreach ($params as $k => $v) {
@@ -637,11 +691,11 @@ class BobinRepository
 
         $sql = "INSERT INTO bobin_history (
                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                extrusion_employee, products, material_lot, print_lot, length_m,
+                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
                 shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                 winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
             ) VALUES (
-                :key, :ident, :size, :type, :extrusionemp, :prod, :mat, :plot, :len,
+                :key, :ident, :size, :type, :extrusionemp, :ext_check, :rack, :prod, :mat, :plot, :len,
                 :shift, :edate, :ftime, :visual, :winding_machine, :winding_employee,
                 :flow_test_result, :status, :note, {$timeExpression}
             )";
@@ -661,17 +715,19 @@ class BobinRepository
     {
         $sql = "INSERT INTO bobin_list_detail (
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                    extrusion_employee, products, material_lot, print_lot, length_m,
+                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                     winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
                 ) VALUES (
-                    :key, :ident, :size, :type, :extrusionemp, :prod, :mat, :plot, :len,
+                    :key, :ident, :size, :type, :extrusionemp, :ext_check, :rack, :prod, :mat, :plot, :len,
                     :shift, :edate, :ftime, :visual, :winding_machine, :winding_employee,
                     :flow_test_result, :status, :note, :updated
                 ) ON DUPLICATE KEY UPDATE
                     bobin_key_code = VALUES(bobin_key_code),
                     bobin_size = VALUES(bobin_size),
                     bobin_type = VALUES(bobin_type),
+                    extrusion_check = VALUES(extrusion_check),
+                    rack = VALUES(rack),
                     extrusion_employee = VALUES(extrusion_employee),
                     products = VALUES(products),
                     material_lot = VALUES(material_lot),
@@ -725,7 +781,10 @@ class BobinRepository
             ':ident' => $entity->identificationCode,
             ':size' => $entity->size,
             ':type' => $entity->type,
+
             ':extrusionemp' => $this->json_utf8($entity->extrusion_employee),
+            ':ext_check' => $entity->extrusion_check ? $this->json_utf8($entity->extrusion_check) : null, // Mới thêm
+            ':rack' => $entity->rack ? $this->json_utf8($entity->rack) : null, // Mới thêm
             ':prod' => $this->json_utf8($entity->product),
             ':mat' => $this->json_utf8($entity->materialLot),
             ':plot' => $entity->printLot,
@@ -741,7 +800,6 @@ class BobinRepository
             ':note' => $entity->winding_note
         ];
     }
-
     #region Ext PUT
     public function extrusionUpdateBobin(BobinEntity $entity): bool
     {
@@ -771,6 +829,8 @@ class BobinRepository
         $sql = "UPDATE bobin_list_detail SET
                     bobin_type = :type,
                     extrusion_employee = :extrusionemp,
+                    extrusion_check = :ext_check,
+                    rack = :rack,
                     products = :prod,
                     material_lot = :mat,
                     print_lot = :plot,
@@ -788,7 +848,6 @@ class BobinRepository
         $params[':updated'] = $entity->updatedTime->format('Y-m-d H:i:s');
         $stmt->execute($params);
     }
-
     private function extUpdateBobinGeneral(PDO $pdo, BobinEntity $entity): void
     {
         $sql = "UPDATE bobin_list_general SET
@@ -809,12 +868,12 @@ class BobinRepository
     {
         $sql = "INSERT INTO bobin_history (
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                    extrusion_employee, products, material_lot, print_lot, length_m,
+                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                     winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
                 ) SELECT 
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                    extrusion_employee, products, material_lot, print_lot, length_m, 
+                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                     shift, extrusion_date, finish_time, visual_inspection, 
                     winding_machine, winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
                 FROM bobin_list_detail
@@ -834,6 +893,8 @@ class BobinRepository
             ':ident' => $entity->identificationCode,
             ':type' => $entity->type,
             ':extrusionemp' => $this->json_utf8($entity->extrusion_employee),
+            ':ext_check' => $entity->extrusion_check ? $this->json_utf8($entity->extrusion_check) : null, // Mới thêm
+            ':rack' => $entity->rack ? $this->json_utf8($entity->rack) : null, // Mới thêm
             ':prod' => $this->json_utf8($entity->product),
             ':mat' => $this->json_utf8($entity->materialLot),
             ':plot' => $entity->printLot,
@@ -1430,6 +1491,90 @@ class BobinRepository
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
             return 0;
+        }
+    }
+    /**
+     * Lấy toàn bộ danh sách Bobin để xuất file Excel (Bỏ qua Limit/Offset phân trang)
+     */
+    public function getBobinListDetailForExport(array $filters = [], array $selectedCodes = []): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $baseTable = $this->getActiveBaseTable();
+            $sql = "SELECT * FROM $baseTable AS active_bobins WHERE 1=1";
+            $params = [];
+
+            // Nếu người dùng chọn đích danh các Bobin qua Checkbox
+            if (!empty($selectedCodes)) {
+                $inPlaceholders = [];
+                foreach ($selectedCodes as $index => $code) {
+                    $paramKey = ":sel_code_" . $index;
+                    $inPlaceholders[] = $paramKey;
+                    $params[$paramKey] = $code;
+                }
+                $sql .= " AND bobin_identification_code IN (" . implode(',', $inPlaceholders) . ")";
+            }
+
+            // Lọc kích thước
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            // Lọc loại bobin
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+
+            // Lọc vị trí Rack
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                $params[':rack'] = $filters['rack'];
+            }
+
+            // Lọc từ khóa
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            // Lọc trạng thái
+            if (!empty($filters['status'])) {
+                if ($filters['status'] === 'Line') {
+                    $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
+                } elseif ($filters['status'] !== 'all') {
+                    $sql .= " AND bobin_current_status = :status";
+                    $params[':status'] = $filters['status'];
+                }
+            }
+
+            // Sắp xếp
+            $sort = $filters['sort'] ?? 'default';
+            if ($sort === 'newest') {
+                $sql .= " ORDER BY updated_time DESC, bobin_identification_code ASC";
+            } else {
+                $sql .= " ORDER BY bobin_identification_code ASC";
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Export Error: " . $e->getMessage());
+            throw new Exception("Lỗi truy vấn xuất dữ liệu: " . $e->getMessage());
         }
     }
     #region JSON

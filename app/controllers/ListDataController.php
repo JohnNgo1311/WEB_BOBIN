@@ -42,6 +42,7 @@ class ListDataController extends Controller
 
     private function populateGlobalData(object $data): void
     {
+        GlobalData::$listRackEntity = $data->list_rack ?? [];
         GlobalData::$pendingBobinCount = $data->pending_count ?? 0;
         GlobalData::$listBobinEntity = $data->list_bobin ?? [];
         GlobalData::$listEmployeeEntity = $data->list_employee ?? [];

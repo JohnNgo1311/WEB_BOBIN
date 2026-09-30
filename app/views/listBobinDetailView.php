@@ -335,94 +335,94 @@ $typeOptions = [
         </div>
 
         <script>
-        (function() {
-            const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
-            const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-            const totalRealBobins = <?= (int)$totalRealBobins ?>;
-            const maxVal = Math.max(...rawData, 0);
+            (function() {
+                const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
+                const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+                const totalRealBobins = <?= (int)$totalRealBobins ?>;
+                const maxVal = Math.max(...rawData, 0);
 
-            const statusChart = new BaseChart('#statusPieChart', {
-                chart: {
-                    type: 'bar',
-                    height: 220,
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                    toolbar: {
-                        show: false
-                    },
-                    animations: {
-                        enabled: true,
-                        speed: 300
-                    }
-                },
-                series: [{
-                    name: 'Số lượng Bobin',
-                    data: rawData
-                }],
-                colors: ['#94a3b8', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
-                plotOptions: {
-                    bar: {
-                        horizontal: true,
-                        borderRadius: 4,
-                        barHeight: '62%',
-                        distributed: true,
-                        dataLabels: {
-                            position: 'top'
-                        }
-                    }
-                },
-                dataLabels: {
-                    enabled: true,
-                    textAnchor: 'start',
-                    offsetX: 8,
-                    formatter: function(val) {
-                        const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
-                            1) : 0;
-                        return `${val.toLocaleString('vi-VN')} (${percent}%)`;
-                    },
-                    style: {
-                        fontSize: '12px',
-                        fontWeight: 800,
-                        colors: ["#475569"]
-                    }
-                },
-                grid: {
-                    borderColor: '#f1f5f9',
-                    strokeDashArray: 3,
-                    padding: {
-                        top: -12,
-                        right: 35,
-                        bottom: -10,
-                        left: 15
-                    }
-                },
-                xaxis: {
-                    categories: labels,
-                    min: 0,
-                    max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
-                    labels: {
-                        style: {
-                            colors: '#64748b',
-                            fontSize: '11px',
-                            fontWeight: 600
+                const statusChart = new BaseChart('#statusPieChart', {
+                    chart: {
+                        type: 'bar',
+                        height: 220,
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        toolbar: {
+                            show: false
                         },
-                        formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
-                    }
-                },
-                yaxis: {
-                    labels: {
-                        style: {
-                            colors: '#1e293b',
-                            fontSize: '12.5px',
-                            fontWeight: 700
+                        animations: {
+                            enabled: true,
+                            speed: 300
                         }
+                    },
+                    series: [{
+                        name: 'Số lượng Bobin',
+                        data: rawData
+                    }],
+                    colors: ['#94a3b8', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            borderRadius: 4,
+                            barHeight: '62%',
+                            distributed: true,
+                            dataLabels: {
+                                position: 'top'
+                            }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        textAnchor: 'start',
+                        offsetX: 8,
+                        formatter: function(val) {
+                            const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
+                                1) : 0;
+                            return `${val.toLocaleString('vi-VN')} (${percent}%)`;
+                        },
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            colors: ["#475569"]
+                        }
+                    },
+                    grid: {
+                        borderColor: '#f1f5f9',
+                        strokeDashArray: 3,
+                        padding: {
+                            top: -12,
+                            right: 35,
+                            bottom: -10,
+                            left: 15
+                        }
+                    },
+                    xaxis: {
+                        categories: labels,
+                        min: 0,
+                        max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
+                        labels: {
+                            style: {
+                                colors: '#64748b',
+                                fontSize: '11px',
+                                fontWeight: 600
+                            },
+                            formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: {
+                                colors: '#1e293b',
+                                fontSize: '12.5px',
+                                fontWeight: 700
+                            }
+                        }
+                    },
+                    legend: {
+                        show: false
                     }
-                },
-                legend: {
-                    show: false
-                }
-            });
-            statusChart.render();
-        })();
+                });
+                statusChart.render();
+            })();
         </script>
 
         <!-- BỘ LỌC 4 DROPDOWN TRÊN 1 HÀNG NGANG (TIẾT KIỆM KHÔNG GIAN) -->
@@ -455,10 +455,10 @@ $typeOptions = [
                     <div class="filter-label">📌 Trạng thái:</div>
                     <select id="statusFilter" class="filter-select" onchange="window.location.href = this.value;">
                         <?php foreach ($statusOptions as $key => $label): ?>
-                        <option value="<?= buildFilterUrl(['status' => $key, 'page' => 1]) ?>"
-                            <?= $currentStatus === $key ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($label) ?>
-                        </option>
+                            <option value="<?= buildFilterUrl(['status' => $key, 'page' => 1]) ?>"
+                                <?= $currentStatus === $key ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -467,10 +467,10 @@ $typeOptions = [
                     <div class="filter-label">📏 Kích thước:</div>
                     <select id="sizeFilter" class="filter-select" onchange="window.location.href = this.value;">
                         <?php foreach ($sizeOptions as $key => $label): ?>
-                        <option value="<?= buildFilterUrl(['bobin_size' => $key, 'page' => 1]) ?>"
-                            <?= $currentSize === $key ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($label) ?>
-                        </option>
+                            <option value="<?= buildFilterUrl(['bobin_size' => $key, 'page' => 1]) ?>"
+                                <?= $currentSize === $key ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -479,10 +479,10 @@ $typeOptions = [
                     <div class="filter-label">🏷️ Loại Bobin:</div>
                     <select id="typeFilter" class="filter-select" onchange="window.location.href = this.value;">
                         <?php foreach ($typeOptions as $key => $label): ?>
-                        <option value="<?= buildFilterUrl(['bobin_type' => $key, 'page' => 1]) ?>"
-                            <?= $currentType === $key ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($label) ?>
-                        </option>
+                            <option value="<?= buildFilterUrl(['bobin_type' => $key, 'page' => 1]) ?>"
+                                <?= $currentType === $key ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -495,13 +495,13 @@ $typeOptions = [
                             Tất cả các Rack
                         </option>
                         <?php foreach ($racks as $r): ?>
-                        <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
-                        <?php if (!empty($rCode)): ?>
-                        <option value="<?= buildFilterUrl(['rack' => $rCode, 'page' => 1]) ?>"
-                            <?= $currentRack === $rCode ? 'selected' : '' ?>>
-                            📍 Rack: <?= htmlspecialchars($rCode) ?>
-                        </option>
-                        <?php endif; ?>
+                            <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
+                            <?php if (!empty($rCode)): ?>
+                                <option value="<?= buildFilterUrl(['rack' => $rCode, 'page' => 1]) ?>"
+                                    <?= $currentRack === $rCode ? 'selected' : '' ?>>
+                                    📍 Rack: <?= htmlspecialchars($rCode) ?>
+                                </option>
+                            <?php endif; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -511,11 +511,11 @@ $typeOptions = [
         <!-- DANH SÁCH THẺ BOBIN -->
         <div class="list-card">
             <?php if (empty($bobins)): ?>
-            <div class="empty-state">Không tìm thấy Bobin nào khớp với bộ lọc.</div>
+                <div class="empty-state">Không tìm thấy Bobin nào khớp với bộ lọc.</div>
             <?php else: ?>
-            <div class="bobin-list">
-                <?php foreach ($bobins as $item): ?>
-                <?php
+                <div class="bobin-list">
+                    <?php foreach ($bobins as $item): ?>
+                        <?php
                         $rawStatus = $item['bobin_current_status'] ?? 'Unknown';
                         $status = strtolower($rawStatus);
                         $statusClass = match ($status) {
@@ -572,10 +572,10 @@ $typeOptions = [
                             : $productCode . '$' . $materialLot . '$' . $printLot . '$' . $formatted_time;
                         ?>
 
-                <div class="bobin-item <?= $statusClass ?>">
-                    <div class="card-top">
-                        <div class="key-info">
-                            <?php
+                        <div class="bobin-item <?= $statusClass ?>">
+                            <div class="card-top">
+                                <div class="key-info">
+                                    <?php
                                     $rawKey = $item['bobin_key_code'] ?? '';
                                     $displayKey = htmlspecialchars($rawKey);
                                     if (is_string($rawKey) && strpos($rawKey, '_') !== false) {
@@ -592,26 +592,26 @@ $typeOptions = [
                                         }
                                     }
                                     ?>
-                            <!-- CHECKBOX CHỌN BOBIN -->
-                            <input type="checkbox" class="bobin-select-checkbox"
-                                value="<?= htmlspecialchars($item['bobin_identification_code']) ?>"
-                                title="Chọn Bobin này để xuất Excel">
+                                    <!-- CHECKBOX CHỌN BOBIN -->
+                                    <input type="checkbox" class="bobin-select-checkbox"
+                                        value="<?= htmlspecialchars($item['bobin_identification_code']) ?>"
+                                        title="Chọn Bobin này để xuất Excel">
 
-                            <span class="key-code"><?= $displayKey ?></span>
-                            <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
-                        </div>
-                        <div class="main-info-wrapper">
-                            <div class="main-info">
-                                <?= htmlspecialchars($mainInfoText) ?>
-                            </div>
-                            <button type="button" class="btn-copy" data-copy="<?= htmlspecialchars($mainInfoText) ?>"
-                                onclick="copyToClipboard(this)" title="Copy nội dung">
-                                📋 Copy
-                            </button>
-                        </div>
+                                    <span class="key-code"><?= $displayKey ?></span>
+                                    <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
+                                </div>
+                                <div class="main-info-wrapper">
+                                    <div class="main-info">
+                                        <?= htmlspecialchars($mainInfoText) ?>
+                                    </div>
+                                    <button type="button" class="btn-copy" data-copy="<?= htmlspecialchars($mainInfoText) ?>"
+                                        onclick="copyToClipboard(this)" title="Copy nội dung">
+                                        📋 Copy
+                                    </button>
+                                </div>
 
-                        <div class="status-badge">
-                            <?php
+                                <div class="status-badge">
+                                    <?php
                                     $displayStatus = match ($rawStatus) {
                                         'Rolled'               => 'Đã cuộn',
                                         'Busy_Unchecked'       => 'Đang đợi QC kiểm tra',
@@ -622,76 +622,76 @@ $typeOptions = [
                                     };
                                     echo htmlspecialchars($displayStatus);
                                     ?>
-                        </div>
-                    </div>
+                                </div>
+                            </div>
 
-                    <!-- 12 THÔNG SỐ TRÌNH BÀY DẠNG GRID TỐI ƯU -->
-                    <div class="info-grid">
-                        <div class="field-item">
-                            <label>Mã sản phẩm</label>
-                            <div class="val-sub"><?= htmlspecialchars($productCode) ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Mã nhân viên</label>
-                            <div class="val-sub"><?= htmlspecialchars($extrusion_employeeCode) ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Họ tên nhân viên</label>
-                            <div class="val-sub"><?= htmlspecialchars($extrusion_employeeName) ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Vị trí RACK</label>
-                            <div class="val-sub">
-                                <span class="val-rack <?= $isRackEmpty ? 'val-empty' : '' ?>">
-                                    <?= htmlspecialchars($rackCode) ?>
-                                </span>
+                            <!-- 12 THÔNG SỐ TRÌNH BÀY DẠNG GRID TỐI ƯU -->
+                            <div class="info-grid">
+                                <div class="field-item">
+                                    <label>Mã sản phẩm</label>
+                                    <div class="val-sub"><?= htmlspecialchars($productCode) ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Mã nhân viên</label>
+                                    <div class="val-sub"><?= htmlspecialchars($extrusion_employeeCode) ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Họ tên nhân viên</label>
+                                    <div class="val-sub"><?= htmlspecialchars($extrusion_employeeName) ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Vị trí RACK</label>
+                                    <div class="val-sub">
+                                        <span class="val-rack <?= $isRackEmpty ? 'val-empty' : '' ?>">
+                                            <?= htmlspecialchars($rackCode) ?>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Ca làm việc</label>
+                                    <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Kích thước Bobin</label>
+                                    <div class="val-sub"><?= htmlspecialchars($item['bobin_size'] ?? 'Chưa cập nhật') ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Loại Bobin</label>
+                                    <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
+                                        <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
+                                    </div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Lot vật liệu</label>
+                                    <div class="val-sub"><?= htmlspecialchars($materialLot) ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Lot in</label>
+                                    <div class="val-sub"><?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?></div>
+                                </div>
+                                <div class="field-item highlight-box">
+                                    <label>Chiều dài (m)</label>
+                                    <div class="val-highlight">
+                                        <?= number_format($item['length_m'] ?? 0, 0, ".", ",") ?> m
+                                    </div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Ngày đùn</label>
+                                    <div class="val-sub"><?= htmlspecialchars($item['extrusion_date'] ?? '') ?></div>
+                                </div>
+                                <div class="field-item">
+                                    <label>Thời điểm hoàn thành cuộn</label>
+                                    <div class="val-sub"><?= htmlspecialchars($item['finish_time'] ?? '') ?></div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="field-item">
-                            <label>Ca làm việc</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Kích thước Bobin</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['bobin_size'] ?? 'Chưa cập nhật') ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Loại Bobin</label>
-                            <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
-                                <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
-                            </div>
-                        </div>
-                        <div class="field-item">
-                            <label>Lot vật liệu</label>
-                            <div class="val-sub"><?= htmlspecialchars($materialLot) ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Lot in</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?></div>
-                        </div>
-                        <div class="field-item highlight-box">
-                            <label>Chiều dài (m)</label>
-                            <div class="val-highlight">
-                                <?= number_format($item['length_m'] ?? 0, 0, ".", ",") ?> m
-                            </div>
-                        </div>
-                        <div class="field-item">
-                            <label>Ngày đùn</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['extrusion_date'] ?? '') ?></div>
-                        </div>
-                        <div class="field-item">
-                            <label>Thời điểm hoàn thành cuộn</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['finish_time'] ?? '') ?></div>
-                        </div>
-                    </div>
 
-                    <!-- GỘP 3 KHỐI KIỂM SOÁT THÀNH 3 CỘT SONG SONG -->
-                    <div class="inspection-pipeline-grid">
-                        <!-- CỘT 1: ĐÙN CHECK -->
-                        <div class="pipeline-col extrusion-col">
-                            <div class="qc-title">🏭 Đùn Check</div>
-                            <div class="qc-badges">
-                                <?php
+                            <!-- GỘP 3 KHỐI KIỂM SOÁT THÀNH 3 CỘT SONG SONG -->
+                            <div class="inspection-pipeline-grid">
+                                <!-- CỘT 1: ĐÙN CHECK -->
+                                <div class="pipeline-col extrusion-col">
+                                    <div class="qc-title">🏭 Đùn Check</div>
+                                    <div class="qc-badges">
+                                        <?php
                                         $extItems = [
                                             'Đường kính' => $extCheck['diameter'] ?? true,
                                             'Gel'        => $extCheck['gel'] ?? true,
@@ -703,111 +703,111 @@ $typeOptions = [
                                             echo viBadge($label, $isOk);
                                         }
                                         ?>
-                            </div>
-                        </div>
+                                    </div>
+                                </div>
 
-                        <!-- CỘT 2: QC CHECK -->
-                        <div class="pipeline-col qc-col">
-                            <div class="qc-title">🛡️ QC Check</div>
-                            <div class="qc-header">
-                                <div class="qc-info-row">
-                                    <div class="qc-meta-item">
-                                        <label class="val-text">Mã NV:</label>
-                                        <span
-                                            class="val-sub"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa cập nhật') ?></span>
+                                <!-- CỘT 2: QC CHECK -->
+                                <div class="pipeline-col qc-col">
+                                    <div class="qc-title">🛡️ QC Check</div>
+                                    <div class="qc-header">
+                                        <div class="qc-info-row">
+                                            <div class="qc-meta-item">
+                                                <label class="val-text">Mã NV:</label>
+                                                <span
+                                                    class="val-sub"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa cập nhật') ?></span>
+                                            </div>
+                                            <div class="qc-meta-item">
+                                                <label class="val-text">Họ tên:</label>
+                                                <span
+                                                    class="val-sub"><?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa cập nhật') ?></span>
+                                            </div>
+                                            <div class="qc-meta-item">
+                                                <label class="val-text">Thời gian:</label>
+                                                <span
+                                                    class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? 'Chưa cập nhật') ?></span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="qc-meta-item">
-                                        <label class="val-text">Họ tên:</label>
-                                        <span
-                                            class="val-sub"><?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa cập nhật') ?></span>
+                                    <div class="qc-badges">
+                                        <?= viBadge('Gel', $defects['gel'] ?? false) ?>
+                                        <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
+                                        <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
+                                        <?= viBadge('In', $defects['print_quality'] ?? false) ?>
                                     </div>
-                                    <div class="qc-meta-item">
-                                        <label class="val-text">Thời gian:</label>
-                                        <span
-                                            class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? 'Chưa cập nhật') ?></span>
+                                    <div class="qc-note">📝 <?= htmlspecialchars($defects['note'] ?? 'Chưa cập nhật') ?></div>
+                                </div>
+
+                                <!-- CỘT 3: THÔNG TIN CUỘN -->
+                                <div class="pipeline-col winding-col">
+                                    <div class="winding-title">📍 Thông tin cuộn</div>
+                                    <div class="winding-header">
+                                        <div class="winding-info-row">
+                                            <div class="winding-input">
+                                                <label class="val-text">Máy cuộn:</label>
+                                                <span
+                                                    class="val-sub"><?= htmlspecialchars($item['winding_machine'] ?? 'Chưa cập nhật') ?></span>
+                                            </div>
+                                            <div class="winding-input">
+                                                <label class="val-text">Mã NV:</label>
+                                                <span class="val-sub"><?= htmlspecialchars($winding_employeeCode) ?></span>
+                                            </div>
+                                            <div class="winding-input">
+                                                <label class="val-text">Họ tên:</label>
+                                                <span class="val-sub"><?= htmlspecialchars($winding_employeeName) ?></span>
+                                            </div>
+                                            <div class="winding-input">
+                                                <label class="val-text">Thông khí:</label>
+                                                <span class="val-sub"><?= htmlspecialchars($flow_test_result) ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="winding-note">📝
+                                            <?= htmlspecialchars(trim($item['winding_note'] ?? '') === '' ? 'Chưa cập nhật' : $item['winding_note']) ?>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="qc-badges">
-                                <?= viBadge('Gel', $defects['gel'] ?? false) ?>
-                                <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
-                                <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
-                                <?= viBadge('In', $defects['print_quality'] ?? false) ?>
-                            </div>
-                            <div class="qc-note">📝 <?= htmlspecialchars($defects['note'] ?? 'Chưa cập nhật') ?></div>
-                        </div>
 
-                        <!-- CỘT 3: THÔNG TIN CUỘN -->
-                        <div class="pipeline-col winding-col">
-                            <div class="winding-title">📍 Thông tin cuộn</div>
-                            <div class="winding-header">
-                                <div class="winding-info-row">
-                                    <div class="winding-input">
-                                        <label class="val-text">Máy cuộn:</label>
-                                        <span
-                                            class="val-sub"><?= htmlspecialchars($item['winding_machine'] ?? 'Chưa cập nhật') ?></span>
-                                    </div>
-                                    <div class="winding-input">
-                                        <label class="val-text">Mã NV:</label>
-                                        <span class="val-sub"><?= htmlspecialchars($winding_employeeCode) ?></span>
-                                    </div>
-                                    <div class="winding-input">
-                                        <label class="val-text">Họ tên:</label>
-                                        <span class="val-sub"><?= htmlspecialchars($winding_employeeName) ?></span>
-                                    </div>
-                                    <div class="winding-input">
-                                        <label class="val-text">Thông khí:</label>
-                                        <span class="val-sub"><?= htmlspecialchars($flow_test_result) ?></span>
-                                    </div>
-                                </div>
-                                <div class="winding-note">📝
-                                    <?= htmlspecialchars(trim($item['winding_note'] ?? '') === '' ? 'Chưa cập nhật' : $item['winding_note']) ?>
-                                </div>
+                            <div class="card-footer-simple">
+                                <?php if (!empty($item['updated_time'])): ?>
+                                    <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
+                                        <?= htmlspecialchars($item['updated_time']) ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="card-footer-simple">
-                        <?php if (!empty($item['updated_time'])): ?>
-                        <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
-                            <?= htmlspecialchars($item['updated_time']) ?></div>
-                        <?php endif; ?>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
-            </div>
 
-            <!-- PHÂN TRANG -->
-            <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
-            <div class="pagination-wrapper">
-                <?php if ($pagination['currentPage'] > 1): ?>
-                <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] - 1]) ?>" class="page-btn">
-                    ‹ Trước
-                </a>
-                <?php endif; ?>
+                <!-- PHÂN TRANG -->
+                <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
+                    <div class="pagination-wrapper">
+                        <?php if ($pagination['currentPage'] > 1): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] - 1]) ?>" class="page-btn">
+                                ‹ Trước
+                            </a>
+                        <?php endif; ?>
 
-                <?php
+                        <?php
                         $start = max(1, $pagination['currentPage'] - 2);
                         $end = min($pagination['totalPages'], $pagination['currentPage'] + 2);
                         for ($p = $start; $p <= $end; $p++): $isActive = ($p === (int)$pagination['currentPage']);
                         ?>
-                <a href="<?= buildFilterUrl(['page' => $p]) ?>" class="page-btn <?= $isActive ? 'active' : '' ?>">
-                    <?= $p ?>
-                </a>
-                <?php endfor; ?>
+                            <a href="<?= buildFilterUrl(['page' => $p]) ?>" class="page-btn <?= $isActive ? 'active' : '' ?>">
+                                <?= $p ?>
+                            </a>
+                        <?php endfor; ?>
 
-                <?php if ($pagination['currentPage'] < $pagination['totalPages']): ?>
-                <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] + 1]) ?>" class="page-btn">
-                    Sau ›
-                </a>
+                        <?php if ($pagination['currentPage'] < $pagination['totalPages']): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] + 1]) ?>" class="page-btn">
+                                Sau ›
+                            </a>
+                        <?php endif; ?>
+
+                        <span class="page-info">
+                            Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
+                            <?= number_format($totalRecords) ?> Bobin)
+                        </span>
+                    </div>
                 <?php endif; ?>
-
-                <span class="page-info">
-                    Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
-                    <?= number_format($totalRecords) ?> Bobin)
-                </span>
-            </div>
-            <?php endif; ?>
 
             <?php endif; ?>
         </div>
@@ -817,89 +817,89 @@ $typeOptions = [
     <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=1"></script>
 
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const interactiveElements = document.querySelectorAll(
-            ".filter-dashboard select, .filter-dashboard a, .pagination-wrapper a");
-        interactiveElements.forEach(el => {
-            const eventType = el.tagName === "SELECT" ? "change" : "click";
-            el.addEventListener(eventType, function() {
-                sessionStorage.setItem("bobin_scroll_pos", window.scrollY);
+        document.addEventListener("DOMContentLoaded", function() {
+            const interactiveElements = document.querySelectorAll(
+                ".filter-dashboard select, .filter-dashboard a, .pagination-wrapper a");
+            interactiveElements.forEach(el => {
+                const eventType = el.tagName === "SELECT" ? "change" : "click";
+                el.addEventListener(eventType, function() {
+                    sessionStorage.setItem("bobin_scroll_pos", window.scrollY);
+                });
             });
-        });
 
-        const scrollPos = sessionStorage.getItem("bobin_scroll_pos");
-        if (scrollPos !== null) {
-            window.scrollTo({
-                top: parseInt(scrollPos, 10),
-                behavior: "instant"
-            });
-            sessionStorage.removeItem("bobin_scroll_pos");
-        }
-    });
+            const scrollPos = sessionStorage.getItem("bobin_scroll_pos");
+            if (scrollPos !== null) {
+                window.scrollTo({
+                    top: parseInt(scrollPos, 10),
+                    behavior: "instant"
+                });
+                sessionStorage.removeItem("bobin_scroll_pos");
+            }
+        });
     </script>
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const btnToggle = document.getElementById('btnToggleExportMenu');
-        const menuBox = document.getElementById('exportMenuBox');
-        const selectAllCb = document.getElementById('selectAllCheckbox');
-        const itemCheckboxes = document.querySelectorAll('.bobin-select-checkbox');
-        const countText = document.getElementById('selectedCountText');
-        const btnExportSelected = document.getElementById('btnExportSelectedItems');
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnToggle = document.getElementById('btnToggleExportMenu');
+            const menuBox = document.getElementById('exportMenuBox');
+            const selectAllCb = document.getElementById('selectAllCheckbox');
+            const itemCheckboxes = document.querySelectorAll('.bobin-select-checkbox');
+            const countText = document.getElementById('selectedCountText');
+            const btnExportSelected = document.getElementById('btnExportSelectedItems');
 
-        // Bật/tắt menu xuất Excel
-        if (btnToggle && menuBox) {
-            btnToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                menuBox.classList.toggle('show');
-            });
-            document.addEventListener('click', function() {
-                menuBox.classList.remove('show');
-            });
-        }
-
-        // Cập nhật số lượng đã chọn
-        function updateSelectedCount() {
-            const selected = Array.from(itemCheckboxes).filter(cb => cb.checked);
-            if (countText) {
-                countText.textContent = `Đã chọn: ${selected.length} Bobin`;
+            // Bật/tắt menu xuất Excel
+            if (btnToggle && menuBox) {
+                btnToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    menuBox.classList.toggle('show');
+                });
+                document.addEventListener('click', function() {
+                    menuBox.classList.remove('show');
+                });
             }
-            if (selectAllCb) {
-                selectAllCb.checked = (selected.length === itemCheckboxes.length && itemCheckboxes.length > 0);
-            }
-        }
 
-        // Chọn tất cả
-        if (selectAllCb) {
-            selectAllCb.addEventListener('change', function() {
-                itemCheckboxes.forEach(cb => cb.checked = selectAllCb.checked);
-                updateSelectedCount();
-            });
-        }
-
-        itemCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateSelectedCount);
-        });
-
-        // Kích hoạt xuất các mục đã chọn
-        if (btnExportSelected) {
-            btnExportSelected.addEventListener('click', function() {
-                const selectedCodes = Array.from(itemCheckboxes)
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
-
-                if (selectedCodes.length === 0) {
-                    alert("⚠️ Vui lòng tích chọn ít nhất 1 Bobin trong danh sách trước khi xuất!");
-                    return;
+            // Cập nhật số lượng đã chọn
+            function updateSelectedCount() {
+                const selected = Array.from(itemCheckboxes).filter(cb => cb.checked);
+                if (countText) {
+                    countText.textContent = `Đã chọn: ${selected.length} Bobin`;
                 }
+                if (selectAllCb) {
+                    selectAllCb.checked = (selected.length === itemCheckboxes.length && itemCheckboxes.length > 0);
+                }
+            }
 
-                // Lấy URL bộ lọc hiện tại và đính kèm danh sách mã đã chọn
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('url', 'bobin/exportDetailExcel');
-                currentUrl.searchParams.set('selected_codes', selectedCodes.join(','));
-                window.location.href = currentUrl.toString();
+            // Chọn tất cả
+            if (selectAllCb) {
+                selectAllCb.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => cb.checked = selectAllCb.checked);
+                    updateSelectedCount();
+                });
+            }
+
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedCount);
             });
-        }
-    });
+
+            // Kích hoạt xuất các mục đã chọn
+            if (btnExportSelected) {
+                btnExportSelected.addEventListener('click', function() {
+                    const selectedCodes = Array.from(itemCheckboxes)
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+
+                    if (selectedCodes.length === 0) {
+                        alert("⚠️ Vui lòng tích chọn ít nhất 1 Bobin trong danh sách trước khi xuất!");
+                        return;
+                    }
+
+                    // Lấy URL bộ lọc hiện tại và đính kèm danh sách mã đã chọn
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('url', 'bobin/exportDetailExcel');
+                    currentUrl.searchParams.set('selected_codes', selectedCodes.join(','));
+                    window.location.href = currentUrl.toString();
+                });
+            }
+        });
     </script>
 </body>
 

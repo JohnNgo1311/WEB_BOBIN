@@ -2,7 +2,7 @@
 // ==========================================
 // 1. CẤU HÌNH MÔI TRƯỜNG & HIỂN THỊ LỖI
 // ==========================================
-define('ENVIRONMENT', 'development'); // Đổi thành 'production' khi đưa lên server thực tế
+define('ENVIRONMENT', 'development'); // Đổi thành 'production' khi triển khai chính thức
 
 if (ENVIRONMENT === 'development') {
     error_reporting(E_ALL);
@@ -18,25 +18,23 @@ if (ENVIRONMENT === 'development') {
 // ==========================================
 define('ROOT_PATH', dirname(__DIR__));
 
-// Tự động nhận diện BASE_URL linh hoạt (không sợ đổi tên thư mục hay đổi domain)
+// Tự động nhận diện BASE_URL linh hoạt theo thư mục cài đặt thực tế
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
 define('BASE_URL', rtrim($protocol . $_SERVER['HTTP_HOST'] . $scriptDir, '/'));
 
 // ==========================================
-// 3. THIẾT LẬP SESSION AN TOÀN
+// 3. THIẾT LẬP SESSION BẢO MẬT
 // ==========================================
 if (session_status() === PHP_SESSION_NONE) {
-    // Ngăn chặn Javascript truy cập vào Session Cookie (chống XSS)
     ini_set('session.cookie_httponly', '1');
     ini_set('session.use_only_cookies', '1');
     ini_set('session.cookie_samesite', 'Lax');
-
     session_start();
 }
 
 // ==========================================
-// 4. NẠP CÁC FILE CỐT LÕI
+// 4. NẠP CORE & DATABASE
 // ==========================================
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/core/GlobalData.php';

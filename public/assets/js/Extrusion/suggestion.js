@@ -91,15 +91,18 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((res) => res.json())
     .then((response) => {
       if (response.success) {
+        console.log("✅ Danh mục gợi ý đã được tải thành công:", response);
         listData = response;
         updatePendingBadge(response.pending_count);
         setupAutoPrintLot();
         reversePrintLot();
       } else {
-        console.error("❌ Không thể tải danh mục gợi ý.");
+        console.error("❌ Không thể tải danh mục gợi ý:", response.message || response.error);
       }
     })
-    .catch(console.error);
+    .catch((err) => {
+      console.error("❌ Lỗi kết nối API listdata:", err);
+    });
 });
 
 // 4. LOGIC GỢI Ý CÁC TRƯỜNG NHẬP LIỆU

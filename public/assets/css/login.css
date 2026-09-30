@@ -1,6 +1,3 @@
-/* ========================================================
-   GLOBAL RESET & BIẾN MÀU SẮC CHỐNG CHÓI (SMC THEME)
-   ======================================================== */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -25,9 +22,7 @@ html, body {
     background-color: #0f172a;
 }
 
-/* ========================================================
-   BỐ CỤC CHIA ĐÔI MÀN HÌNH (SPLIT-SCREEN LAYOUT)
-   ======================================================== */
+/* ================= BỐ CỤC CHIA ĐÔI MÀN HÌNH ================= */
 .login-split-wrapper {
     display: flex;
     min-height: 100vh;
@@ -35,9 +30,7 @@ html, body {
     overflow-x: hidden;
 }
 
-/* ========================================================
-   CỘT TRÁI: SHOWCASE & CỔNG THEO DÕI NHANH (~58%)
-   ======================================================== */
+/* ================= CỘT TRÁI: SHOWCASE (~58%) ================= */
 .showcase-section {
     flex: 1.35;
     background: linear-gradient(145deg, #0b1e4f 0%, #1e3a8a 40%, #0369a1 100%);
@@ -50,7 +43,6 @@ html, body {
     box-shadow: inset -4px 0 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Họa tiết lưới mờ trang trí phía sau */
 .showcase-section::before {
     content: "";
     position: absolute;
@@ -114,7 +106,7 @@ html, body {
     color: #ffffff;
 }
 
-/* KHỐI CỔNG THEO DÕI NHANH */
+/* KHỐI CỔNG THEO DÕI */
 .quick-portal-box {
     background: rgba(15, 23, 42, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -154,7 +146,6 @@ html, body {
     letter-spacing: 0.4px;
 }
 
-/* Lưới các thẻ cổng */
 .portal-cards-grid {
     display: flex;
     flex-direction: column;
@@ -182,7 +173,6 @@ html, body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: transform 0.2s ease;
 }
 
 .card-detail .portal-icon {
@@ -227,7 +217,6 @@ html, body {
     transition: transform 0.2s ease, color 0.2s ease;
 }
 
-/* Hiệu ứng rê chuột vào thẻ */
 .portal-card:hover {
     background: rgba(255, 255, 255, 0.16);
     border-color: rgba(255, 255, 255, 0.35);
@@ -254,9 +243,7 @@ html, body {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* ========================================================
-   CỘT PHẢI: FORM ĐĂNG NHẬP CHUYÊN NGHIỆP (~42%)
-   ======================================================== */
+/* ================= CỘT PHẢI: FORM ĐĂNG NHẬP (~42%) ================= */
 .login-panel {
     flex: 1;
     background: #ffffff;
@@ -297,7 +284,6 @@ html, body {
     color: #64748b;
 }
 
-/* CẢNH BÁO LỖI */
 .login-alert-error {
     background: #fef2f2;
     border: 1px solid #fecaca;
@@ -312,7 +298,6 @@ html, body {
     gap: 8px;
 }
 
-/* FORM VÀ INPUT */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -365,7 +350,6 @@ html, body {
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
 }
 
-/* Nút ẩn/hiện mật khẩu */
 .btn-toggle-pwd {
     position: absolute;
     right: 12px;
@@ -377,14 +361,12 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s ease;
 }
 
 .btn-toggle-pwd:hover {
     color: #334155;
 }
 
-/* NÚT SUBMIT ĐĂNG NHẬP */
 .btn-login-submit {
     margin-top: 10px;
     height: 48px;
@@ -420,9 +402,7 @@ html, body {
     text-align: center;
 }
 
-/* ========================================================
-   RESPONSIVE DESIGN (TABLET & MOBILE)
-   ======================================================== */
+/* ================= RESPONSIVE DESIGN ================= */
 @media (max-width: 1024px) {
     .login-split-wrapper {
         flex-direction: column;

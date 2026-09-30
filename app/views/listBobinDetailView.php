@@ -2,6 +2,11 @@
 $bobins = $data['bobins'] ?? [];
 $pagination = $data['pagination'] ?? [];
 
+
+$userRole   = $_SESSION['user']['role'] ?? '';
+$currentUrl = $_GET['url'] ?? '';
+$pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? 0);
+
 // 1. TỔNG HỢP SỐ LIỆU TỪ DATABASE
 $defaultStatus = [
     'Rolled'               => 0,
@@ -137,6 +142,70 @@ $typeOptions = [
 </head>
 
 <body>
+
+    <div class="menu-bar">
+        <div class="menu-left">
+            <!-- Nhóm Đùn -->
+            <?php if (in_array($userRole, ['extrusion', 'admin'])): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
+                    class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>">
+                    Nhóm đùn
+                </a>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
+                    class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>">
+                    Điều chỉnh đùn
+                </a>
+            <?php endif; ?>
+
+            <!-- Nhóm QC -->
+            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
+                    class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>">
+                    QC
+                </a>
+            <?php endif; ?>
+
+            <!-- Nhóm Cuộn -->
+            <?php if (in_array($userRole, ['winding', 'admin'])): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
+                    class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>">
+                    Cuộn
+                </a>
+            <?php endif; ?>
+
+            <!-- Các trang theo dõi công khai -->
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView"
+                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>">
+                Danh sách Bobin
+            </a>
+
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView"
+                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>">
+                Lịch sử Bobin
+            </a>
+
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
+                Danh sách chờ hủy
+                <?php if ($pCount > 0): ?>
+                    <span class="badge-pending-count"><?= $pCount ?></span>
+                <?php endif; ?>
+            </a>
+        </div>
+
+        <div class="menu-right">
+            <?php if (isset($_SESSION['user'])): ?>
+                <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
+                    👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
+                </span>
+                <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
+            <?php else: ?>
+                <a href="/WEB_BOBIN/public/index.php?url=auth/login"
+                    style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;">Đăng
+                    nhập</a>
+            <?php endif; ?>
+        </div>
+    </div>
 
     <h1>Danh sách Bobin hiện tại</h1>
 

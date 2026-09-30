@@ -1,3 +1,8 @@
+<?php
+// Lấy thông tin nhân viên đã đăng nhập
+$currentEmpCode = $_SESSION['user']['employee_code'] ?? '';
+$currentEmpName = $_SESSION['user']['employee_name'] ?? '';
+?>
 <!doctype html>
 <html lang="vi">
 
@@ -11,23 +16,46 @@
 </head>
 
 <body>
-    <!-- MENU BAR -->
+    <!-- MENU BAR PHÂN QUYỀN ĐỘNG -->
+    <?php
+    $userRole = $_SESSION['user']['role'] ?? '';
+    $pCount = GlobalData::$pendingBobinCount ?? 0;
+    ?>
     <div class="menu-bar">
         <div class="menu-left">
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/index" class="active-nav">Nhóm đùn</a>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView">Điều chỉnh thông tin Bobin</a>
+            <?php if (in_array($userRole, ['extrusion', 'admin'])): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/index" class="active-nav">Nhóm đùn</a>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView">Điều chỉnh đùn</a>
+            <?php endif; ?>
+
+            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC">QC</a>
+            <?php endif; ?>
+
+            <?php if (in_array($userRole, ['winding', 'admin'])): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView">Cuộn</a>
+            <?php endif; ?>
+
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView">Danh sách Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView">Lịch sử Bobin</a>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView" class="menu-pending-link">
                 Danh sách chờ hủy
-                <span class="badge-pending-count" id="badgePendingCancellation"
-                    style="<?= (GlobalData::$pendingBobinCount > 0) ? '' : 'display: none;' ?>">
-                    <?= GlobalData::$pendingBobinCount ?>
-                </span>
+                <?php if ($pCount > 0): ?>
+                    <span class="badge-pending-count"><?= $pCount ?></span>
+                <?php endif; ?>
             </a>
         </div>
         <div class="menu-right">
-            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
+            <?php if (isset($_SESSION['user'])): ?>
+                <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
+                    👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
+                </span>
+                <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
+            <?php else: ?>
+                <a href="/WEB_BOBIN/public/index.php?url=auth/login"
+                    style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;">Đăng
+                    nhập</a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -39,7 +67,7 @@
     <div id="qr-reader"></div>
 
     <form id="bobinForm">
-        <!-- PHÂN KHU 1: ĐỊNH DANH & KẾ HOẠCH -->
+        <!-- PHÂN KHU 1: ĐỊNH DANH & NHÂN SỰ -->
         <div class="form-section-header">
             <span class="section-badge">1</span>
             <span>Định danh Bobin & Nhân sự</span>
@@ -64,19 +92,17 @@
                 placeholder="Tự động theo mã Bobin">
         </div>
 
+        <!-- TỰ ĐỘNG LẤY TỪ TÀI KHOẢN ĐĂNG NHẬP -->
         <div class="form-group">
-            <label>Mã số nhân viên: <span class="required">*</span></label>
-            <div class="suggestions">
-                <input type="text" name="extrusion_employee_code" id="extrusion_employee_code"
-                    placeholder="Nhập mã nhân viên đùn..." autocomplete="off" required>
-                <div id="employee_suggestions" class="suggestion-box"></div>
-            </div>
+            <label>Mã số nhân viên đùn:</label>
+            <input type="text" name="extrusion_employee_code" id="extrusion_employee_code" class="input-readonly"
+                readonly value="<?= htmlspecialchars($currentEmpCode) ?>" required>
         </div>
 
         <div class="form-group">
-            <label>Họ tên nhân viên:</label>
+            <label>Họ tên nhân viên đùn:</label>
             <input type="text" name="extrusion_employee_name" id="extrusion_employee_name" class="input-readonly"
-                readonly placeholder="Tự động cập nhật tên">
+                readonly value="<?= htmlspecialchars($currentEmpName) ?>">
         </div>
 
         <!-- PHÂN KHU 2: THÔNG TIN SẢN XUẤT -->
@@ -125,10 +151,6 @@
                 <option value="Hành chính">Hành chính</option>
             </select>
         </div>
-
-
-
-
 
         <div class="form-group">
             <label>Số máy: <span class="required">*</span></label>
@@ -220,16 +242,16 @@
                 ];
                 foreach ($checks as $key => $label):
                 ?>
-                <div class="ext-check-box">
-                    <span class="check-box-label"><?= $label ?></span>
-                    <button type="button" class="ext-toggle-btn active" data-field="ext_check_<?= $key ?>"
-                        data-value="true" onclick="this.classList.toggle('active'); 
+                    <div class="ext-check-box">
+                        <span class="check-box-label"><?= $label ?></span>
+                        <button type="button" class="ext-toggle-btn active" data-field="ext_check_<?= $key ?>"
+                            data-value="true" onclick="this.classList.toggle('active'); 
                                      const isActive = this.classList.contains('active');
                                      this.dataset.value = isActive ? 'true' : 'false';
                                      this.textContent = isActive ? 'OK' : 'NG';">
-                        OK
-                    </button>
-                </div>
+                            OK
+                        </button>
+                    </div>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -242,7 +264,7 @@
     </form>
 
     <script>
-    const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+        const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/suggestion.js?v=<?= time() ?>"></script>

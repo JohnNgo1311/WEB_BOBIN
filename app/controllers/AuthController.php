@@ -1,61 +1,112 @@
 <?php
 
 require_once ROOT_PATH . '/app/core/Controller.php';
-require_once ROOT_PATH . '/app/core/GlobalData.php';
-
 
 class AuthController extends Controller
 {
-    public function login()
+    public function login(): void
     {
         $this->view('loginView');
     }
-    public function validateLogin()
+
+    public function index(): void
     {
-        // 1. Lấy dữ liệu và CHUẨN HÓA ngay lập tức
-        // - trim: Xóa khoảng trắng thừa (tránh lỗi copy paste)
-        // - strtolower: Chuyển hết thành chữ thường để so sánh
-        $usernameInput = $_POST['username'] ?? '';
-        $username = strtolower(trim($usernameInput));
+        $this->login();
+    }
 
-        $password = $_POST['password'] ?? '';
-
-        //? giả lập dữ liệu người dùng (Key phải viết thường)
-        $users = [
-            'ext' => ['pass' => '123', 'role' => 'extrusion'],
-            'qc'  => ['pass' => '123', 'role' => 'qc'],
-            'win' => ['pass' => '123', 'role' => 'winding'],
-            'mgr' => ['pass' => '123', 'role' => 'manager'],
-            'admin' => ['pass' => '123', 'role' => 'admin']
-        ];
-
-        //? kiểm tra
-        // Lúc này $username đã là chữ thường, nên sẽ khớp với key trong mảng $users
-        if (!isset($users[$username]) || $users[$username]['pass'] !== $password) {
-            // Lưu ý: Password vẫn phân biệt hoa thường (bảo mật)
-            return $this->view('loginView', ['error' => 'Sai tài khoản hoặc mật khẩu']);
+    public function validateLogin(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+            exit;
         }
 
-        //? lưu session (người dùng)
-        $_SESSION['user'] = [
-            'username' => $username, // Lưu username đã chuẩn hóa (ext, qc...)
-            'role' => $users[$username]['role']
-        ];
+        $loginInput = trim($_POST['username'] ?? ''); // Cho phép nhập mã nhân viên hoặc username
+        $password   = trim($_POST['password'] ?? '');
 
-        // Cập nhật biến Global (nếu logic của bạn cần)
-        GlobalData::$userRole = $_SESSION['user']['role'];
-        GlobalData::$userName = $_SESSION['user']['username'];
+        if ($loginInput === '' || $password === '') {
+            $this->redirectWithError('Vui lòng nhập đầy đủ mã nhân viên/tài khoản và mật khẩu.');
+            return;
+        }
 
-        //? chuyển hướng
-        // Chuyển hướng về Controller, Controller sẽ tự định tuyến dựa trên Role như bạn đã viết ở hàm index()
-        header('Location: index.php?url=bobin/index', true, 302);
+        try {
+            $pdo = Database::getInstance()->pdo();
+
+            // SỬA TẠI ĐÂY: Dùng 2 placeholder riêng (:emp_code và :uname)
+            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role, username, password, is_active 
+                                   FROM employee_list 
+                                   WHERE (employee_code = :emp_code OR username = :uname) AND is_active = 1 
+                                   LIMIT 1");
+            $stmt->execute([
+                ':emp_code' => $loginInput,
+                ':uname'    => $loginInput
+            ]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            $isValid = false;
+            if ($user) {
+                if (password_verify($password, $user['password'])) {
+                    $isValid = true;
+                } elseif ($password === $user['password']) {
+                    // Nếu là mật khẩu thuần, tự động nâng cấp sang bcrypt
+                    $newHash = password_hash($password, PASSWORD_DEFAULT);
+                    $up = $pdo->prepare("UPDATE employee_list SET password = :hash WHERE id = :id");
+                    $up->execute([':hash' => $newHash, ':id' => $user['id']]);
+                    $isValid = true;
+                }
+            }
+
+            if (!$user || !$isValid) {
+                $this->redirectWithError('Mã nhân viên / Tên đăng nhập hoặc mật khẩu không chính xác.');
+                return;
+            }
+
+            // Lưu phiên làm việc vào Session
+            $_SESSION['user'] = [
+                'id'            => (int)$user['id'],
+                'employee_code' => $user['employee_code'],
+                'employee_name' => $user['employee_name'],
+                'username'      => $user['username'],
+                'role'          => strtolower($user['role']),
+                'logged_at'     => date('Y-m-d H:i:s')
+            ];
+
+            // Tự động phân luồng điều hướng theo vai trò
+            switch ($_SESSION['user']['role']) {
+                case 'extrusion':
+                    header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+                    break;
+                case 'qc':
+                    header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_QC');
+                    break;
+                case 'winding':
+                    header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_Winding');
+                    break;
+                case 'admin':
+                default:
+                    header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinDetailView');
+                    break;
+            }
+            exit;
+        } catch (Throwable $e) {
+            error_log("Login Error: " . $e->getMessage());
+            $this->redirectWithError('Lỗi kết nối cơ sở dữ liệu. Vui lòng thử lại sau. ' . $e->getMessage());
+        }
+    }
+
+    public function logout(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = [];
+            session_destroy();
+        }
+        header('Location: ' . BASE_URL . '/index.php?url=auth/login');
         exit;
     }
-    //? đăng xuất
-    public function logout()
+
+    private function redirectWithError(string $msg): void
     {
-        session_destroy();
-        header('Location: index.php?url=auth/login');
+        header('Location: ' . BASE_URL . '/index.php?url=auth/login&error=' . urlencode($msg));
         exit;
     }
 }

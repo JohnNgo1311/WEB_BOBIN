@@ -44,22 +44,18 @@ class BobinController extends Controller
         $role = $_SESSION['user']['role'] ?? null;
         switch ($role) {
             case 'extrusion':
+            case 'admin': // ✅ Admin được phép truy cập giao diện Nhóm đùn
                 $this->extrusion();
                 break;
             case 'qc':
-                $this->qc();
-                break;
+                header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_QC');
+                exit;
             case 'winding':
-                $this->winding();
-                break;
-            case 'manager':
-                $this->manageCapacityView();
-                break;
-            case 'admin':
-                $this->admin();
-                break;
+                header('Location: ' . BASE_URL . '/index.php?url=bobin/windingView');
+                exit;
             default:
-                $this->view('403View');
+                header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+                exit;
         }
     }
 

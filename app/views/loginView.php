@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống Quản lý Bobin | SMC</title>
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/login.css?v=4">
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/login.css?v=5">
     <link rel="icon" href="data:,">
 </head>
 
@@ -15,18 +15,17 @@
         <!-- ================= CỘT TRÁI: SHOWCASE & CỔNG THEO DÕI NHANH ================= -->
         <div class="showcase-section">
             <div class="showcase-content">
-                <!-- Header thương hiệu -->
                 <div class="brand-badge">
                     <span class="pulse-dot"></span> PLASTIC EXTRUSION BUILDING
                 </div>
 
-                <h1 class="showcase-title">HỆ THỐNG QUẢN LÝ & THEO DÕI BOBIN</h1>
+                <h1 class="showcase-title">HỆ THỐNG QUẢN LÝ BOBIN</h1>
                 <p class="showcase-desc">
                     Nền tảng kiểm soát thông tin thời gian thực giữa các công đoạn <strong>Nhóm Đùn</strong>,
-                    <strong>QC</strong>, <strong>Nhóm Cuộn</strong>.
+                    <strong>Nhóm QC</strong>, <strong>Nhóm Cuộn</strong>.
                 </p>
 
-                <!-- KHU VỰC TRUY CẬP NHANH (KHÔNG CẦN ĐĂNG NHẬP) -->
+                <!-- KHU VỰC TRUY CẬP THEO DÕI NHANH -->
                 <div class="quick-portal-box">
                     <div class="portal-header">
                         <div class="portal-header-title">
@@ -103,7 +102,6 @@
                     </div>
                 </div>
 
-                <!-- Footer thông tin -->
                 <div class="showcase-footer">
                     <div class="stat-pill">⚡ Quét QR tốc độ cao</div>
                     <div class="stat-pill">📊 Báo cáo biểu đồ thời gian thực</div>
@@ -112,17 +110,14 @@
             </div>
         </div>
 
-        <!-- ================= CỘT PHẢI: FORM ĐĂNG NHẬP CHUYÊN NGHIỆP ================= -->
+        <!-- ================= CỘT PHẢI: FORM ĐĂNG NHẬP ================= -->
         <div class="login-panel">
             <div class="login-box">
-                <!-- Logo & Lời chào -->
                 <div class="login-header">
                     <img src="/WEB_BOBIN/public/assets/images/smcLogo.png" alt="SMC Logo" class="login-logo">
                     <h2>ĐĂNG NHẬP HỆ THỐNG</h2>
-                    <p>Dành cho cán bộ quản lý và nhân viên vận hành phân xưởng</p>
                 </div>
 
-                <!-- Hiển thị thông báo lỗi (nếu có truyền từ backend) -->
                 <?php if (!empty($_GET['error'])): ?>
                     <div class="login-alert-error">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -135,9 +130,7 @@
                     </div>
                 <?php endif; ?>
 
-                <!-- Form đăng nhập -->
                 <form method="POST" action="/WEB_BOBIN/public/index.php?url=auth/validateLogin" class="login-form">
-                    <!-- Tên đăng nhập -->
                     <div class="form-group">
                         <label for="username">Tên đăng nhập / Mã nhân viên</label>
                         <div class="input-icon-wrapper">
@@ -148,12 +141,12 @@
                                     <circle cx="12" cy="7" r="4"></circle>
                                 </svg>
                             </span>
-                            <input type="text" id="username" name="username" placeholder="Ví dụ: NV01 hoặc admin..."
-                                required autocomplete="username" autofocus>
+                            <input type="text" id="username" name="username"
+                                placeholder="Ví dụ: dun01, qc01 hoặc admin..." required autocomplete="username"
+                                autofocus>
                         </div>
                     </div>
 
-                    <!-- Mật khẩu -->
                     <div class="form-group">
                         <div class="label-row">
                             <label for="password">Mật khẩu bảo mật</label>
@@ -162,14 +155,13 @@
                             <span class="field-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="11" width="18" height="11" radius="2" rx="2" ry="2"></rect>
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                                 </svg>
                             </span>
-                            <input type="password" id="password" name="password" placeholder="Nhập mật khẩu của bạn..."
-                                required autocomplete="current-password">
+                            <input type="password" id="password" name="password" placeholder="Nhập mật khẩu..." required
+                                autocomplete="current-password">
 
-                            <!-- Nút chuyển đổi ẩn/hiện mật khẩu -->
                             <button type="button" class="btn-toggle-pwd" id="togglePwd" title="Ẩn/Hiện mật khẩu">
                                 <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -181,7 +173,6 @@
                         </div>
                     </div>
 
-                    <!-- Nút bấm Đăng nhập -->
                     <button type="submit" class="btn-login-submit">
                         <span>Đăng nhập vào hệ thống</span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -199,7 +190,6 @@
         </div>
     </div>
 
-    <!-- Script nhỏ xử lý ẩn/hiện mật khẩu -->
     <script>
         document.getElementById('togglePwd')?.addEventListener('click', function() {
             const pwdInput = document.getElementById('password');

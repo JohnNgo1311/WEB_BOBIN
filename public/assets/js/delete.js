@@ -97,7 +97,7 @@ if (typeof ConfirmDialog === "undefined") {
                 <div class="confirm-dialog-content">${contentHTML}</div>
                 <div class="confirm-dialog-actions">
                     <button type="button" class="dialog-btn back-btn-dialog cancel-btn">Hủy bỏ</button>
-                    <button type="button" class="dialog-btn btn-danger-dialog confirm-btn">Hoàn tất hủy Bobin</button>
+                    <button type="button" class="dialog-btn btn-danger-dialog confirm-btn">Xác nhận</button>
                 </div>
             `;
 

@@ -9,8 +9,11 @@ $capacities = $data['capacities'] ?? [];
     <meta charset="UTF-8">
     <title>Quản lý dung lượng Bobin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <style>
         .capacity-container {
             max-width: 600px;

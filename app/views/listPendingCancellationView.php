@@ -4,11 +4,23 @@ $pendingCount = count($bobins);
 $userRole   = $_SESSION['user']['role'] ?? '';
 $currentUrl = $_GET['url'] ?? '';
 $pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? 0);
-if (!function_exists('viBadge')) {
-    function viBadge($label, $goodDefect)
+// Hàm badge kiểm tra công đoạn đùn: true = Đạt (OK), false = Lỗi (NG)
+if (!function_exists('extCheckBadge')) {
+    function extCheckBadge($label, $isOk)
     {
-        $class = $goodDefect ? 'badge-ok' : 'badge-ng';
-        $text  = $goodDefect ? 'OK' : 'NG';
+        $class = $isOk ? 'badge-ok' : 'badge-ng';
+        $text  = $isOk ? 'OK' : 'NG';
+        return "<div class='vi-item $class'><span>$label</span><strong>$text</strong></div>";
+    }
+}
+
+// Hàm badge kiểm tra QC: $hasDefect = true có lỗi (NG); false không lỗi (OK)
+if (!function_exists('qcDefectBadge')) {
+    function qcDefectBadge($label, $hasDefect)
+    {
+        $isOk = !$hasDefect;
+        $class = $isOk ? 'badge-ok' : 'badge-ng';
+        $text  = $isOk ? 'OK' : 'NG';
         return "<div class='vi-item $class'><span>$label</span><strong>$text</strong></div>";
     }
 }
@@ -30,10 +42,13 @@ if (!function_exists('decodeJsonObject')) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách Bobin chờ hủy</title>
+    <title><?= __('page_pending_cancel') ?> | SMC</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listPendingCancellation.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
 </head>
 
@@ -44,68 +59,85 @@ if (!function_exists('decodeJsonObject')) {
             <!-- Nhóm Đùn -->
             <?php if (in_array($userRole, ['extrusion', 'admin'])): ?>
                 <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
-                    class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>">
-                    Nhóm đùn
+                    class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>"
+                    data-i18n="nav_extrusion">
+                    <?= __('nav_extrusion') ?>
                 </a>
                 <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
-                    class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>">
-                    Điều chỉnh đùn
+                    class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>"
+                    data-i18n="nav_extrusion_edit">
+                    <?= __('nav_extrusion_edit') ?>
                 </a>
             <?php endif; ?>
 
             <!-- Nhóm QC -->
             <?php if (in_array($userRole, ['qc', 'admin'])): ?>
                 <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
-                    class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>">
-                    QC
+                    class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>"
+                    data-i18n="nav_qc">
+                    <?= __('nav_qc') ?>
                 </a>
             <?php endif; ?>
 
             <!-- Nhóm Cuộn -->
             <?php if (in_array($userRole, ['winding', 'admin'])): ?>
                 <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
-                    class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>">
-                    Cuộn
+                    class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>"
+                    data-i18n="nav_winding">
+                    <?= __('nav_winding') ?>
                 </a>
             <?php endif; ?>
 
             <!-- Các trang theo dõi công khai -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView"
-                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>">
-                Danh sách Bobin
+                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_bobin_list">
+                <?= __('nav_bobin_list') ?>
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView"
-                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>">
-                Lịch sử Bobin
+                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_bobin_history">
+                <?= __('nav_bobin_history') ?>
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
-                Danh sách chờ hủy
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_pending_cancel">
+                <?= __('nav_pending_cancel') ?>
                 <?php if ($pCount > 0): ?>
                     <span class="badge-pending-count"><?= $pCount ?></span>
                 <?php endif; ?>
             </a>
+
+            <!-- Quản trị viên: Danh sách nhân viên -->
+            <?php if ($userRole === 'admin'): ?>
+                <a href="/WEB_BOBIN/public/index.php?url=employee/index"
+                    class="<?= (strpos($currentUrl, 'employee') === 0) ? 'active-nav' : '' ?>"
+                    data-i18n="nav_employee_list">
+                    <?= __('nav_employee_list') ?>
+                </a>
+            <?php endif; ?>
         </div>
 
         <div class="menu-right">
+            <?php require ROOT_PATH . '/app/views/components/languageSwitcher.php'; ?>
             <?php if (isset($_SESSION['user'])): ?>
                 <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
                     👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
                 </span>
-                <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
+                <a href="/WEB_BOBIN/public/index.php?url=auth/changePassword" class="btn-change-pwd" title="Đổi mật khẩu tài khoản" data-i18n="nav_change_pwd"><?= __('nav_change_pwd') ?></a>
+                <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn" data-i18n="nav_logout"><?= __('nav_logout') ?></a>
             <?php else: ?>
                 <a href="/WEB_BOBIN/public/index.php?url=auth/login"
-                    style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;">Đăng
-                    nhập</a>
+                    style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;" data-i18n="nav_login"><?= __('nav_login') ?></a>
             <?php endif; ?>
         </div>
     </div>
 
     <!-- TIÊU ĐỀ TRANG -->
     <div class="page-header">
-        <h1>Danh sách Bobin chờ hủy</h1>
+        <h1 data-i18n="page_pending_cancel"><?= __('page_pending_cancel') ?></h1>
         <!-- <p class="page-subtitle">Rà soát nguyên nhân lỗi từ Đùn, QC, Cuộn và xác nhận hoàn tất hủy Bobin</p> -->
     </div>
 
@@ -147,7 +179,7 @@ if (!function_exists('decodeJsonObject')) {
                                 <rect x="14" y="14" width="7" height="7"></rect>
                                 <path d="M3 14h7v7H3z"></path>
                             </svg>
-                            Quét QR
+                            <span>Quét QR</span>
                         </button>
 
                         <button class="btn-modern btn-filter" type="submit" id="btnFilter">
@@ -165,7 +197,7 @@ if (!function_exists('decodeJsonObject')) {
         <!-- LIST CARD -->
         <div class="list-card">
             <div class="header-row">
-                <h2>Số lượng Bobin chờ hủy: <span class="counter-badge"><?= $pendingCount ?></span> Bobin</h2>
+                <h2>Số lượng Bobin chờ hủy: <span class="counter-badge" id="pendingCounterBadge"><?= $pendingCount ?></span> Bobin</h2>
             </div>
 
             <?php if (empty($bobins)): ?>
@@ -310,11 +342,11 @@ if (!function_exists('decodeJsonObject')) {
                                 <div class="pipeline-col extrusion-col">
                                     <div class="pipeline-title">🏭 Đùn Check (Tự kiểm tra)</div>
                                     <div class="qc-badges-static">
-                                        <?= viBadge('Đ.Kính', $extCheck['diameter'] ?? true) ?>
-                                        <?= viBadge('Gel', $extCheck['gel'] ?? true) ?>
-                                        <?= viBadge('Dị vật', $extCheck['foreign_object'] ?? true) ?>
-                                        <?= viBadge('Màu', $extCheck['color'] ?? true) ?>
-                                        <?= viBadge('In', $extCheck['print'] ?? true) ?>
+                                        <?= extCheckBadge('Đ.Kính', $extCheck['diameter'] ?? true) ?>
+                                        <?= extCheckBadge('Gel', $extCheck['gel'] ?? true) ?>
+                                        <?= extCheckBadge('Dị vật', $extCheck['foreign_object'] ?? true) ?>
+                                        <?= extCheckBadge('Màu', $extCheck['color'] ?? true) ?>
+                                        <?= extCheckBadge('In', $extCheck['print'] ?? true) ?>
                                     </div>
                                 </div>
 
@@ -323,13 +355,13 @@ if (!function_exists('decodeJsonObject')) {
                                     <div class="pipeline-title">
                                         <span>🛡️ QC Check</span>
                                         <span
-                                            class="pipeline-submeta"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa kiểm') ?></span>
+                                             class="pipeline-submeta"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa kiểm') ?></span>
                                     </div>
                                     <div class="qc-badges-static">
-                                        <?= viBadge('Gel', $defects['gel'] ?? false) ?>
-                                        <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
-                                        <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
-                                        <?= viBadge('In', $defects['print_quality'] ?? false) ?>
+                                        <?= qcDefectBadge('Gel', $defects['gel'] ?? false) ?>
+                                        <?= qcDefectBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
+                                        <?= qcDefectBadge('Màu', $defects['color_issue'] ?? false) ?>
+                                        <?= qcDefectBadge('In', $defects['print_quality'] ?? false) ?>
                                     </div>
                                     <div class="qc-note-text">
                                         📝
@@ -355,17 +387,28 @@ if (!function_exists('decodeJsonObject')) {
                                 </div>
                             </div>
 
-                            <!-- FOOTER: NÚT HOÀN TẤT HỦY -->
+                            <!-- FOOTER: CHỈ ADMIN MỚI ĐƯỢC PHÉP HOÀN TẤT HỦY -->
                             <div class="card-footer-simple">
                                 <?php if (!empty($item['updated_time'])): ?>
                                     <div class="update-time">🕒 <span class="val-text">Thời điểm yêu cầu hủy:</span>
                                         <?= htmlspecialchars($item['updated_time']) ?></div>
                                 <?php endif; ?>
                                 <div class="button-group">
-                                    <button type="button" class="btn-cancel-final"
-                                        onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code'] ?? '') ?>')">
-                                        🗑️ Hoàn tất hủy Bobin
-                                    </button>
+                                    <?php if ($userRole === 'admin'): ?>
+                                        <button type="button" class="btn-cancel-final"
+                                            onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code'] ?? '') ?>')">
+                                            🗑️ Hoàn tất hủy Bobin
+                                        </button>
+                                    <?php elseif (!empty($_SESSION['user'])): ?>
+                                        <span style="font-size: 12px; color: #94a3b8; font-style: italic; align-self: center;">
+                                            🔒 Chỉ Quản trị viên (Admin) mới có quyền hoàn tất hủy
+                                        </span>
+                                    <?php else: ?>
+                                        <a href="/WEB_BOBIN/public/index.php?url=auth/login" class="btn-cancel-final"
+                                            style="text-decoration: none; background: #64748b; font-size: 12px;">
+                                            🔒 Đăng nhập để thao tác
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -378,9 +421,9 @@ if (!function_exists('decodeJsonObject')) {
     <script>
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
-    <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
-    <script src="/WEB_BOBIN/public/assets/js/copyText.js?v=1"></script>
     <script src="/WEB_BOBIN/public/assets/js/delete.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
 </body>
 

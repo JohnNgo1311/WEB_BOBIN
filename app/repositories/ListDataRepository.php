@@ -12,7 +12,7 @@ class ListdataRepository
         $this->db = Database::getInstance();
     }
 
-    public function getListData(bool $isFull): ListDataEntity
+    public function getListData(bool $isFull = true): ListDataEntity
     {
         $queries = [
             'list_rack'              => "SELECT * FROM rack_list",

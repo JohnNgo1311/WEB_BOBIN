@@ -32,10 +32,13 @@ if (!function_exists('decodeJsonObject')) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Điều chỉnh thông tin Bobin</title>
+    <title><?= __('page_extrusion_edit') ?> | SMC</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/extrusionEditBobin.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
 </head>
 
@@ -46,67 +49,84 @@ if (!function_exists('decodeJsonObject')) {
         <div class="menu-left">
             <!-- Nhóm Đùn -->
             <?php if (in_array($userRole, ['extrusion', 'admin'])): ?>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
-                    class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>">
-                    Nhóm đùn
-                </a>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
-                    class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>">
-                    Điều chỉnh đùn
-                </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
+                class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>"
+                data-i18n="nav_extrusion">
+                <?= __('nav_extrusion') ?>
+            </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
+                class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_extrusion_edit">
+                <?= __('nav_extrusion_edit') ?>
+            </a>
             <?php endif; ?>
 
             <!-- Nhóm QC -->
             <?php if (in_array($userRole, ['qc', 'admin'])): ?>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
-                    class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>">
-                    QC
-                </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
+                class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>"
+                data-i18n="nav_qc">
+                <?= __('nav_qc') ?>
+            </a>
             <?php endif; ?>
 
             <!-- Nhóm Cuộn -->
             <?php if (in_array($userRole, ['winding', 'admin'])): ?>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
-                    class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>">
-                    Cuộn
-                </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
+                class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>"
+                data-i18n="nav_winding">
+                <?= __('nav_winding') ?>
+            </a>
             <?php endif; ?>
 
             <!-- Các trang theo dõi công khai -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView"
-                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>">
-                Danh sách Bobin
+                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_bobin_list">
+                <?= __('nav_bobin_list') ?>
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView"
-                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>">
-                Lịch sử Bobin
+                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_bobin_history">
+                <?= __('nav_bobin_history') ?>
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
-                Danh sách chờ hủy
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_pending_cancel">
+                <?= __('nav_pending_cancel') ?>
                 <?php if ($pCount > 0): ?>
-                    <span class="badge-pending-count"><?= $pCount ?></span>
+                <span class="badge-pending-count"><?= $pCount ?></span>
                 <?php endif; ?>
             </a>
+
+            <!-- Quản trị viên: Danh sách nhân viên -->
+            <?php if ($userRole === 'admin'): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=employee/index"
+                class="<?= (strpos($currentUrl, 'employee') === 0) ? 'active-nav' : '' ?>"
+                data-i18n="nav_employee_list">
+                <?= __('nav_employee_list') ?>
+            </a>
+            <?php endif; ?>
         </div>
 
         <div class="menu-right">
+            <?php require ROOT_PATH . '/app/views/components/languageSwitcher.php'; ?>
             <?php if (isset($_SESSION['user'])): ?>
-                <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
-                    👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
-                </span>
-                <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
+            <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
+                👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
+            </span>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/changePassword" class="btn-change-pwd" title="Đổi mật khẩu tài khoản" data-i18n="nav_change_pwd"><?= __('nav_change_pwd') ?></a>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn" data-i18n="nav_logout"><?= __('nav_logout') ?></a>
             <?php else: ?>
-                <a href="/WEB_BOBIN/public/index.php?url=auth/login"
-                    style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;">Đăng
-                    nhập</a>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/login"
+                style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;" data-i18n="nav_login"><?= __('nav_login') ?></a>
             <?php endif; ?>
         </div>
     </div>
     <div class="page-header">
-        <h1>Nhóm đùn - Điều chỉnh thông tin Bobin</h1>
+        <h1 data-i18n="page_extrusion_edit"><?= __('page_extrusion_edit') ?></h1>
         <!-- <p class="page-subtitle">Nhấn "Chỉnh sửa" trên từng Bobin để mở khóa nhập liệu thông số</p> -->
     </div>
 
@@ -134,8 +154,15 @@ if (!function_exists('decodeJsonObject')) {
                             value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                     </div>
 
-                    <button type="button" id="btnScanQR" class="btn-scan-qr btn-scan-default">
-                        📷 Quét QR
+                    <button type="button" id="btnScanQR" class="btn-modern btn-scan">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <path d="M3 14h7v7H3z"></path>
+                        </svg>
+                        <span>Quét QR</span>
                     </button>
                     <button type="submit" class="btn-filter" id="btnFilter">Lọc</button>
                 </div>
@@ -148,11 +175,11 @@ if (!function_exists('decodeJsonObject')) {
             </div>
 
             <?php if (empty($bobins)): ?>
-                <div class="empty-state">Không có Bobin nào cần điều chỉnh.</div>
+            <div class="empty-state">Không có Bobin nào cần điều chỉnh.</div>
             <?php else: ?>
-                <div class="bobin-list">
-                    <?php foreach ($bobins as $item): ?>
-                        <?php
+            <div class="bobin-list">
+                <?php foreach ($bobins as $item): ?>
+                <?php
                         $products = decodeJsonObject($item['products'] ?? '');
                         $productCode = $products['product_code'] ?? '';
                         $productionOrderCode = $products['production_order_code'] ?? '';
@@ -193,135 +220,135 @@ if (!function_exists('decodeJsonObject')) {
                             if ($ts) $finishTimeVal = date('Y-m-d\TH:i:s', $ts);
                         }
                         ?>
-                        <div class="bobin-item status_busy_unchecked"
-                            data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>">
-                            <div class="card-top">
-                                <div class="key-info">
-                                    <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
-                                    <span class="key-code"><?= $displayKey ?></span>
-                                </div>
-                                <div class="status-badge">
-                                    ⏳ Chưa kiểm tra QC
-                                </div>
-                            </div>
+                <div class="bobin-item status_busy_unchecked"
+                    data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>">
+                    <div class="card-top">
+                        <div class="key-info">
+                            <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
+                            <span class="key-code"><?= $displayKey ?></span>
+                        </div>
+                        <div class="status-badge">
+                            ⏳ Chưa kiểm tra QC
+                        </div>
+                    </div>
 
-                            <!-- CÁC Ô INPUT MẶC ĐỊNH LÀ DISABLED -->
-                            <div class="info-grid">
-                                <div class="field-item suggestion-wrapper highlight-input">
-                                    <label>Mã sản phẩm:</label>
-                                    <input id="product_code" class="input-field font-bold-blue" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($productCode) ?>" disabled>
-                                    <input type="hidden" id="production_order_code"
-                                        value="<?= htmlspecialchars($productionOrderCode) ?>">
-                                    <div id="product_suggestions" class="suggestion-box"></div>
-                                </div>
+                    <!-- CÁC Ô INPUT MẶC ĐỊNH LÀ DISABLED -->
+                    <div class="info-grid">
+                        <div class="field-item suggestion-wrapper highlight-input">
+                            <label>Mã sản phẩm:</label>
+                            <input id="product_code" class="input-field font-bold-blue" type="text" autocomplete="off"
+                                value="<?= htmlspecialchars($productCode) ?>" disabled>
+                            <input type="hidden" id="production_order_code"
+                                value="<?= htmlspecialchars($productionOrderCode) ?>">
+                            <div id="product_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <div class="field-item suggestion-wrapper">
-                                    <label>Mã nhân viên:</label>
-                                    <input id="extrusion_employee_code" class="input-field" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($extrusion_employeeCode) ?>" disabled>
-                                    <div id="employee_suggestions" class="suggestion-box"></div>
-                                </div>
+                        <div class="field-item highlight-box">
+                            <label>Chiều dài (m):</label>
+                            <input id="length_m" class="input-field font-bold-green" type="number"
+                                value="<?= htmlspecialchars($item['length_m'] ?? 0) ?>" disabled>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Họ tên nhân viên:</label>
-                                    <input id="extrusion_employee_name" class="edit-input input-readonly" type="text"
-                                        value="<?= htmlspecialchars($extrusion_employeeName) ?>" readonly tabindex="-1">
-                                </div>
+                        <div class="field-item">
+                            <label>Loại Bobin:</label>
+                            <select id="bobin_type" name="bobin_type" disabled required>
+                                <?php foreach ($typeOptions as $val => $lbl): ?>
+                                <option value="<?= $val ?>"
+                                    <?= ($item['bobin_type'] ?? '') === $val ? 'selected' : '' ?>>
+                                    <?= $lbl ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Loại Bobin:</label>
-                                    <select id="bobin_type" name="bobin_type" disabled required>
-                                        <?php foreach ($typeOptions as $val => $lbl): ?>
-                                            <option value="<?= $val ?>"
-                                                <?= ($item['bobin_type'] ?? '') === $val ? 'selected' : '' ?>>
-                                                <?= $lbl ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
+                        <div class="field-item">
+                            <label>Ca sản xuất:</label>
+                            <select id="shift" name="shift" disabled required>
+                                <option value="Ca 1" <?= ($item['shift'] ?? '') === 'Ca 1' ? 'selected' : '' ?>>Ca 1
+                                </option>
+                                <option value="Ca 2" <?= ($item['shift'] ?? '') === 'Ca 2' ? 'selected' : '' ?>>Ca 2
+                                </option>
+                                <option value="Ca 3" <?= ($item['shift'] ?? '') === 'Ca 3' ? 'selected' : '' ?>>Ca 3
+                                </option>
+                                <option value="Hành chính"
+                                    <?= ($item['shift'] ?? '') === 'Hành chính' ? 'selected' : '' ?>>Hành chính</option>
+                            </select>
+                        </div>
 
-                                <div class="field-item suggestion-wrapper">
-                                    <label>Lot vật liệu:</label>
-                                    <input id="material_lot" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($materialLot) ?>" disabled>
-                                    <div id="material_lot_suggestions" class="suggestion-box"></div>
-                                </div>
+                        <div class="field-item suggestion-wrapper">
+                            <label>Số máy đùn:</label>
+                            <input type="text" id="extrusion_machine" placeholder="Nhập số máy..." autocomplete="off"
+                                disabled>
+                            <div id="machine_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <div class="field-item suggestion-wrapper">
-                                    <label>Số máy đùn:</label>
-                                    <input type="text" id="extrusion_machine" placeholder="Nhập số máy..." autocomplete="off"
-                                        disabled>
-                                    <div id="machine_suggestions" class="suggestion-box"></div>
-                                </div>
+                        <div class="field-item suggestion-wrapper">
+                            <label>Vật liệu:</label>
+                            <input type="text" id="material" placeholder="Nhập vật liệu..." autocomplete="off" disabled>
+                            <div id="material_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <div class="field-item suggestion-wrapper">
-                                    <label>Vật liệu:</label>
-                                    <input type="text" id="material" placeholder="Nhập vật liệu..." autocomplete="off" disabled>
-                                    <div id="material_suggestions" class="suggestion-box"></div>
-                                </div>
+                        <div class="field-item">
+                            <label>Số lần nghiền:</label>
+                            <input type="number" id="grinding_time" min="0" max="2" step="1" placeholder="0, 1 hoặc 2"
+                                oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)" disabled>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Số lần nghiền:</label>
-                                    <input type="number" id="grinding_time" min="0" max="2" step="1" placeholder="0, 1 hoặc 2"
-                                        oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)" disabled>
-                                </div>
+                        <div class="field-item suggestion-wrapper">
+                            <label>Lot vật liệu:</label>
+                            <input id="material_lot" type="text" autocomplete="off"
+                                value="<?= htmlspecialchars($materialLot) ?>" disabled>
+                            <div id="material_lot_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <div class="field-item suggestion-wrapper">
-                                    <label>Lot in:</label>
-                                    <input id="print_lot" class="edit-input highlight-printlot" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($item['print_lot'] ?? '') ?>" readonly tabindex="-1">
-                                    <div id="print_lot_suggestions" class="suggestion-box"></div>
-                                </div>
+                        <div class="field-item suggestion-wrapper">
+                            <label>Lot in:</label>
+                            <input id="print_lot" class="edit-input highlight-printlot" type="text" autocomplete="off"
+                                value="<?= htmlspecialchars($item['print_lot'] ?? '') ?>" readonly tabindex="-1">
+                            <div id="print_lot_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <div class="field-item highlight-box">
-                                    <label>Chiều dài (m):</label>
-                                    <input id="length_m" class="input-field font-bold-green" type="number"
-                                        value="<?= htmlspecialchars($item['length_m'] ?? 0) ?>" disabled>
-                                </div>
+                        <div class="field-item suggestion-wrapper">
+                            <label>Mã nhân viên:</label>
+                            <input id="extrusion_employee_code" class="input-field" type="text" autocomplete="off"
+                                value="<?= htmlspecialchars($extrusion_employeeCode) ?>" disabled>
+                            <div id="employee_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <!-- VỊ TRÍ ĐẶT RACK -->
-                                <div class="field-item suggestion-wrapper rack-box">
-                                    <label>Vị trí đặt (Rack):</label>
-                                    <input id="rack_code" class="input-field font-bold-cyan" type="text" autocomplete="off"
-                                        placeholder="Chọn mã Rack..." value="<?= htmlspecialchars($rackCode) ?>" disabled>
-                                    <div id="rack_suggestions" class="suggestion-box"></div>
-                                </div>
+                        <div class="field-item">
+                            <label>Họ tên nhân viên:</label>
+                            <input id="extrusion_employee_name" class="edit-input input-readonly" type="text"
+                                value="<?= htmlspecialchars($extrusion_employeeName) ?>" readonly tabindex="-1">
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Ca sản xuất:</label>
-                                    <select id="shift" name="shift" disabled required>
-                                        <option value="Ca 1" <?= ($item['shift'] ?? '') === 'Ca 1' ? 'selected' : '' ?>>Ca 1
-                                        </option>
-                                        <option value="Ca 2" <?= ($item['shift'] ?? '') === 'Ca 2' ? 'selected' : '' ?>>Ca 2
-                                        </option>
-                                        <option value="Ca 3" <?= ($item['shift'] ?? '') === 'Ca 3' ? 'selected' : '' ?>>Ca 3
-                                        </option>
-                                        <option value="Hành chính"
-                                            <?= ($item['shift'] ?? '') === 'Hành chính' ? 'selected' : '' ?>>Hành chính</option>
-                                    </select>
-                                </div>
+                        <!-- VỊ TRÍ ĐẶT RACK -->
+                        <div class="field-item suggestion-wrapper rack-box">
+                            <label>Vị trí đặt (Rack):</label>
+                            <input id="rack_code" class="input-field font-bold-cyan" type="text" autocomplete="off"
+                                placeholder="Chọn mã Rack..." value="<?= htmlspecialchars($rackCode) ?>" disabled>
+                            <div id="rack_suggestions" class="suggestion-box"></div>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Ngày đùn:</label>
-                                    <input id="extrusion_date" name="extrusion_date" class="input-field" type="date"
-                                        value="<?= htmlspecialchars($item['extrusion_date'] ?? '') ?>" disabled>
-                                </div>
+                        <div class="field-item">
+                            <label>Ngày đùn:</label>
+                            <input id="extrusion_date" name="extrusion_date" class="input-field" type="date"
+                                value="<?= htmlspecialchars($item['extrusion_date'] ?? '') ?>" disabled>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Thời điểm hoàn thành:</label>
-                                    <input id="finish_time" name="finish_time" class="input-field" type="datetime-local"
-                                        step="1" value="<?= htmlspecialchars($finishTimeVal) ?>"
-                                        onclick="try { this.showPicker(); } catch(e) {}"
-                                        onkeydown="return ['Tab', 'Escape'].includes(event.key)" disabled>
-                                </div>
-                            </div>
+                        <div class="field-item">
+                            <label>Thời điểm hoàn thành:</label>
+                            <input id="finish_time" name="finish_time" class="input-field" type="datetime-local"
+                                step="1" value="<?= htmlspecialchars($finishTimeVal) ?>"
+                                onclick="try { this.showPicker(); } catch(e) {}"
+                                onkeydown="return ['Tab', 'Escape'].includes(event.key)" disabled>
+                        </div>
+                    </div>
 
-                            <!-- 5 TIÊU CHÍ ĐÙN CHECK -->
-                            <div class="ext-check-strip">
-                                <span class="ext-title">🏭 Đùn Check:</span>
-                                <div class="ext-checks-group">
-                                    <?php
+                    <!-- 5 TIÊU CHÍ ĐÙN CHECK -->
+                    <div class="ext-check-strip">
+                        <span class="ext-title">🏭 Đùn Check:</span>
+                        <div class="ext-checks-group">
+                            <?php
                                     $checks = [
                                         'diameter'       => ['label' => 'Đường kính', 'val' => $chkDiameter],
                                         'gel'            => ['label' => 'Gel',        'val' => $chkGel],
@@ -332,55 +359,55 @@ if (!function_exists('decodeJsonObject')) {
                                     foreach ($checks as $key => $c):
                                         $isOk = (bool)$c['val'];
                                     ?>
-                                        <div class="ext-check-box">
-                                            <span class="check-box-label"><?= $c['label'] ?></span>
-                                            <button type="button" class="ext-toggle-btn <?= $isOk ? 'active' : '' ?>"
-                                                data-field="ext_check_<?= $key ?>" data-value="<?= $isOk ? 'true' : 'false' ?>"
-                                                onclick="toggleExtCheck(this)" disabled>
-                                                <?= $isOk ? 'OK' : 'NG' ?>
-                                            </button>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
+                            <div class="ext-check-box">
+                                <span class="check-box-label"><?= $c['label'] ?></span>
+                                <button type="button" class="ext-toggle-btn <?= $isOk ? 'active' : '' ?>"
+                                    data-field="ext_check_<?= $key ?>" data-value="<?= $isOk ? 'true' : 'false' ?>"
+                                    onclick="toggleExtCheck(this)" disabled>
+                                    <?= $isOk ? 'OK' : 'NG' ?>
+                                </button>
                             </div>
-
-                            <!-- CÁC NÚT HÀNH ĐỘNG -->
-                            <div class="card-footer-simple">
-                                <?php if (!empty($item['updated_time'])): ?>
-                                    <div class="update-time">🕒 Cập nhật: <?= htmlspecialchars($item['updated_time']) ?></div>
-                                <?php endif; ?>
-                                <div class="button-group">
-                                    <!-- Nút Sửa ban đầu -->
-                                    <button type="button" class="btn-edit" onclick="startEdit(this)">
-                                        ✏️ Chỉnh sửa
-                                    </button>
-
-                                    <!-- Nút Hủy và Lưu (chỉ hiện khi bấm Chỉnh sửa) -->
-                                    <button type="button" class="btn-cancel-edit" style="display: none;"
-                                        onclick="cancelEdit(this)">
-                                        ✕ Hủy sửa
-                                    </button>
-                                    <button type="button" class="btn-confirm" style="display: none;"
-                                        onclick="handleConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
-                                        💾 Cập nhật
-                                    </button>
-
-                                    <!-- Nút Hủy Bobin -->
-                                    <button type="button" class="btn-delete"
-                                        onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
-                                        🗑️ Hủy Bobin
-                                    </button>
-                                </div>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                    </div>
+
+                    <!-- CÁC NÚT HÀNH ĐỘNG -->
+                    <div class="card-footer-simple">
+                        <?php if (!empty($item['updated_time'])): ?>
+                        <div class="update-time">🕒 Cập nhật: <?= htmlspecialchars($item['updated_time']) ?></div>
+                        <?php endif; ?>
+                        <div class="button-group">
+                            <!-- Nút Sửa ban đầu -->
+                            <button type="button" class="btn-edit" onclick="startEdit(this)">
+                                ✏️ Chỉnh sửa
+                            </button>
+
+                            <!-- Nút Hủy và Lưu (chỉ hiện khi bấm Chỉnh sửa) -->
+                            <button type="button" class="btn-cancel-edit" style="display: none;"
+                                onclick="cancelEdit(this)">
+                                ✕ Hủy sửa
+                            </button>
+                            <button type="button" class="btn-confirm" style="display: none;"
+                                onclick="handleConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
+                                💾 Cập nhật
+                            </button>
+
+                            <!-- Nút Hủy Bobin -->
+                            <button type="button" class="btn-delete"
+                                onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
+                                🗑️ Hủy Bobin
+                            </button>
+                        </div>
+                    </div>
                 </div>
+                <?php endforeach; ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>
 
     <script>
-        const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+    const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_suggestion.js?v=<?= time() ?>"></script>

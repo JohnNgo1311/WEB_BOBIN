@@ -1055,11 +1055,32 @@ class BobinController extends Controller
     private function validFormExtrusion(BobinCreateDTO $dto): void
     {
         if (empty($dto->bobin_identification_code)) {
-            throw new Exception('Mã định danh Bobin không được để trống');
+            throw new Exception('Mã định danh Bobin không được để trống.');
         }
-        // if (empty($dto->bobin_size)) {
-        //     throw new Exception('Kích thước Bobin không được để trống');
-        // }
+        if (empty($dto->bobin_size) || $dto->bobin_size === 'Chưa cập nhật') {
+            throw new Exception('Kích thước Bobin không hợp lệ hoặc chưa được cập nhật từ mã Bobin.');
+        }
+        if (empty($dto->extrusion_employee_code)) {
+            throw new Exception('Mã nhân viên đùn không được để trống.');
+        }
+        if (empty($dto->product_code)) {
+            throw new Exception('Mã sản phẩm không được để trống.');
+        }
+        if (empty($dto->production_order_code) || $dto->production_order_code === 'Chưa cập nhật') {
+            throw new Exception('Mã chỉ thị sản xuất không hợp lệ');
+        }
+        if (empty($dto->print_lot) || $dto->print_lot === 'Chưa cập nhật') {
+            throw new Exception('Lot in không hợp lệ.');
+        }
+        if (empty($dto->material_lot)) {
+            throw new Exception('Lot vật liệu không được để trống.');
+        }
+        if ($dto->length_m <= 0) {
+            throw new Exception('Chiều dài Bobin không hợp lệ');
+        }
+        if (empty($dto->rack_code)) {
+            throw new Exception('Vui lòng chọn Vị trí đặt (Rack) lưu kho.');
+        }
     }
     private function validBobin(BobinGetSpecificDTO $dto): void
     {

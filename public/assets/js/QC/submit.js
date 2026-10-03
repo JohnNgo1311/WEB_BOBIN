@@ -1,26 +1,38 @@
 /* =========================================
-   MODULE TOAST: Hiển thị thông báo (Tránh khai báo trùng)
+   MODULE TOAST: Hiển thị thông báo
 ========================================= */
 if (typeof Toast === "undefined") {
-  window.Toast = {
-    show: function (message, type = "success") {
+  /* =========================================
+    MODULE TOAST: Hiển thị thông báo chuẩn
+========================================= */
+  window.Toast = window.Toast || {
+    show(message, type = "success") {
+      // Xóa các toast cũ nếu có để tránh chồng chéo
+      document.querySelectorAll(".toast-message").forEach(el => el.remove());
+
       const toast = document.createElement("div");
-      toast.className = `toast-message ${type === "error" ? "toast-error" : ""}`;
-      toast.innerHTML = message;
+      toast.className = `toast-message ${type === "error" ? "toast-error" : "toast-success"}`;
+
+      // Gắn icon trực quan
+      const icon = type === "error" ? "❌" : "✅";
+      toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+
       document.body.appendChild(toast);
 
-      setTimeout(() => toast.classList.add("show"), 10);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add("show"));
+      });
 
       setTimeout(() => {
         toast.classList.remove("show");
         setTimeout(() => toast.remove(), 400);
-      }, 2500);
+      }, 3000);
     },
   };
 }
 
 /* =========================================
-   MODULE DIALOG: Hiển thị bảng xác nhận (Tránh khai báo trùng)
+   MODULE DIALOG: Hộp thoại xác nhận
 ========================================= */
 if (typeof ConfirmDialog === "undefined") {
   window.ConfirmDialog = {
@@ -34,8 +46,8 @@ if (typeof ConfirmDialog === "undefined") {
           <h3 class="confirm-dialog-title">${title}</h3>
           <div class="confirm-dialog-content">${contentHTML}</div>
           <div class="confirm-dialog-actions">
-              <button type="button" class="btn btn-secondary cancel-btn" style="padding: 7px 16px; border: 1px solid #cbd5e1; border-radius: 5px; cursor: pointer; background: #e2e8f0; color: #334155; font-weight: 600;">Trở lại</button>
-              <button type="button" class="btn btn-primary confirm-btn" style="padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; background: #2563eb; color: white; font-weight: 700;">Xác nhận</button>
+              <button type="button" class="btn btn-secondary cancel-btn" style="padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; background: #e2e8f0; color: #334155; font-weight: 600;">Hủy bỏ</button>
+              <button type="button" class="btn btn-primary confirm-btn" style="padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; background: #2563eb; color: white; font-weight: 700;">Xác nhận</button>
           </div>
       `;
 
@@ -46,13 +58,13 @@ if (typeof ConfirmDialog === "undefined") {
         const style = document.createElement("style");
         style.id = "confirm-dialog-style";
         style.innerHTML = `
-              .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-              .confirm-dialog-box { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif; }
-              .confirm-dialog-title { margin-top: 0; font-size: 17px; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 8px; font-weight: 700; }
-              .confirm-dialog-content { margin: 12px 0; font-size: 13.5px; color: #333; max-height: 65vh; overflow-y: auto; }
-              .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-              .vi-badge-ok { background: #16a34a; color: #fff; padding: 2px 7px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
-              .vi-badge-ng { background: #dc2626; color: #fff; padding: 2px 7px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
+              .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+              .confirm-dialog-box { background: #fff; padding: 20px 24px; border-radius: 12px; width: 92%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+              .confirm-dialog-title { margin-top: 0; font-size: 17px; color: #0f172a; text-align: center; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 10px; font-weight: 800; }
+              .confirm-dialog-content { margin: 12px 0; font-size: 13.5px; color: #334155; max-height: 65vh; overflow-y: auto; }
+              .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; border-top: 1.5px solid #e2e8f0; padding-top: 12px; }
+              .vi-badge-ok { background: #16a34a; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
+              .vi-badge-ng { background: #dc2626; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
         `;
         document.head.appendChild(style);
       }
@@ -68,23 +80,23 @@ if (typeof ConfirmDialog === "undefined") {
 }
 
 /* =========================================
-   HÀM XỬ LÝ: Xác nhận QC Bobin
+   1. XÁC NHẬN HOÀN THÀNH QC
 ========================================= */
 function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
   const container = btnElement.closest(".bobin-item");
 
   if (!bobinCode || !bobinKeyCode) {
-    Toast.show("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
+    Toast.show("⚠️ Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
     return;
   }
 
-  const inspectorCode = container.querySelector(".input-inspector-code")?.value.trim() || "";
-  const inspectorName = container.querySelector(".input-inspector-name")?.value.trim() || "";
-  const note = container.querySelector(".note-field")?.value.trim() || "";
+  const inspectorCode = container?.querySelector(".input-inspector-code")?.value?.trim() || "";
+  const inspectorName = container?.querySelector(".input-inspector-name")?.value?.trim() || "";
+  const note = container?.querySelector(".note-field")?.value?.trim() || "";
 
-  if (!inspectorCode || inspectorCode === "Chưa cập nhật") {
-    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC!", "error");
-    const inputCode = container.querySelector(".input-inspector-code");
+  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
+    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi xác nhận!", "error");
+    const inputCode = container?.querySelector(".input-inspector-code");
     if (inputCode) {
       inputCode.style.border = "2px solid red";
       inputCode.focus();
@@ -94,7 +106,7 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
   }
 
   const defects = {};
-  container.querySelectorAll(".vi-item-switch").forEach((switchItem) => {
+  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
     const key = switchItem.getAttribute("data-key");
     const goodDefect = switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") === "true";
     defects[key] = goodDefect;
@@ -117,20 +129,20 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
 
   let reviewHTML = `
         <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Mã định danh Bobin:</strong> <span style="color: #0056b3; font-weight: bold;">${bobinCode}</span></li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectBadge(bodyData.defect_gel)}</li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectBadge(bodyData.defect_foreign_object)}</li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Màu sắc:</strong> ${defectBadge(bodyData.defect_color_issue)}</li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectBadge(bodyData.defect_print_quality)}</li>
-            <li style="display: flex; justify-content: space-between;"><strong>Ghi chú:</strong> <span>${note || "Không có ghi chú"}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #0056b3; font-weight: 700;">${bobinCode}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectBadge(bodyData.defect_gel)}</li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectBadge(bodyData.defect_foreign_object)}</li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Màu sắc:</strong> ${defectBadge(bodyData.defect_color_issue)}</li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectBadge(bodyData.defect_print_quality)}</li>
+            <li style="display: flex; justify-content: space-between;"><strong>Ghi chú:</strong> <span style="color: #334155;">${note || "Không có"}</span></li>
         </ul>
   `;
 
   ConfirmDialog.show(
     "Xác nhận kết quả kiểm tra QC",
     `
-    <div style="background-color: #f0fdf4; color: #166534; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #16a34a;">
+    <div style="background-color: #f0fdf4; color: #166534; padding: 8px 12px; border-radius: 6px; font-weight: 700; margin-bottom: 12px; border-left: 4px solid #16a34a;">
         ✓ Xác nhận kết quả QC để chuyển Bobin sang công đoạn Cuộn:
     </div>
     ${reviewHTML}
@@ -139,7 +151,7 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
       const requestUrl = "/WEB_BOBIN/public/index.php?url=bobin/updateQCBobin";
       const originalBtnText = btnElement.innerHTML;
 
-      btnElement.innerHTML = "Đang lưu...";
+      btnElement.innerHTML = "⏳ Đang lưu...";
       btnElement.disabled = true;
 
       try {
@@ -159,7 +171,7 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
           btnElement.disabled = false;
         }
       } catch (error) {
-        Toast.show("Đã xảy ra lỗi kết nối!", "error");
+        Toast.show("Đã xảy ra lỗi kết nối hệ thống!", "error");
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }
@@ -168,23 +180,23 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
 }
 
 /* =========================================
-   HÀM XỬ LÝ: Hủy QC Bobin
+   2. HỦY BOBIN TẠI QC
 ========================================= */
 function handleCancel(btnElement, bobinCode, bobinKeyCode) {
   const container = btnElement.closest(".bobin-item");
 
   if (!bobinCode || !bobinKeyCode) {
-    Toast.show("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
+    Toast.show("⚠️ Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
     return;
   }
 
-  const inspectorCode = container.querySelector(".input-inspector-code")?.value.trim() || "";
-  const inspectorName = container.querySelector(".input-inspector-name")?.value.trim() || "";
-  const note = container.querySelector(".note-field")?.value.trim() || "";
+  const inspectorCode = container?.querySelector(".input-inspector-code")?.value?.trim() || "";
+  const inspectorName = container?.querySelector(".input-inspector-name")?.value?.trim() || "";
+  const note = container?.querySelector(".note-field")?.value?.trim() || "";
 
-  if (!inspectorCode || inspectorCode === "Chưa cập nhật") {
+  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
     Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi hủy!", "error");
-    const inputCode = container.querySelector(".input-inspector-code");
+    const inputCode = container?.querySelector(".input-inspector-code");
     if (inputCode) {
       inputCode.style.border = "2px solid red";
       inputCode.focus();
@@ -194,8 +206,8 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
   }
 
   if (!note) {
-    Toast.show("⚠️ Vui lòng nhập lý do hủy vào phần Ghi chú!", "error");
-    const noteField = container.querySelector(".note-field");
+    Toast.show("⚠️ Vui lòng nhập lý do hủy vào phần Ghi chú QC!", "error");
+    const noteField = container?.querySelector(".note-field");
     if (noteField) {
       noteField.style.border = "2px solid red";
       noteField.focus();
@@ -205,7 +217,7 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
   }
 
   const defects = {};
-  container.querySelectorAll(".vi-item-switch").forEach((switchItem) => {
+  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
     const key = switchItem.getAttribute("data-key");
     const goodDefect = switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") === "true";
     defects[key] = goodDefect;
@@ -228,13 +240,13 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
 
   let reviewHTML = `
         <ul style="list-style: none; padding: 10px 12px; background: #f9fafb; border-radius: 6px; text-align: left; border: 1px solid #e5e7eb; margin: 0;">
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #1f2937; font-family: monospace; font-weight: 700;">${bobinCode}</span></li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectBadge(bodyData.defect_gel)}</li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectBadge(bodyData.defect_foreign_object)}</li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Màu sắc:</strong> ${defectBadge(bodyData.defect_color_issue)}</li>
-            <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectBadge(bodyData.defect_print_quality)}</li>
-            <li style="padding-top: 5px; margin-top: 3px; border-top: 1px dashed #cbd5e1;"><strong>Lý do hủy:</strong> <span style="color: #dc2626; font-weight: 700; display: block; margin-top: 2px;">${note}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #1f2937; font-family: monospace; font-weight: 700;">${bobinCode}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectBadge(bodyData.defect_gel)}</li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectBadge(bodyData.defect_foreign_object)}</li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Màu sắc:</strong> ${defectBadge(bodyData.defect_color_issue)}</li>
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectBadge(bodyData.defect_print_quality)}</li>
+            <li style="padding-top: 4px; display: flex; justify-content: space-between;"><strong>Lý do hủy:</strong> <span style="color: #dc2626; font-weight: 700;">${note}</span></li>
         </ul>
   `;
 
@@ -242,7 +254,7 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
     "⚠️ Xác nhận Hủy QC",
     `
     <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); color: #7f1d1d; padding: 10px 12px; border-radius: 6px; font-weight: 600; margin-bottom: 12px; border-left: 4px solid #dc2626;">
-          ❗ Hủy Bobin <strong style="color: #991b1b;">${bobinCode}</strong> - Hành động này sẽ chuyển sang danh sách chờ hủy!
+          ❗ Hủy Bobin <strong style="color: #991b1b;">${bobinCode}</strong> - Chuyển vào danh sách chờ hủy!
     </div>
     ${reviewHTML}
     `,
@@ -269,7 +281,7 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
           btnElement.disabled = false;
         }
       } catch (error) {
-        Toast.show("Đã xảy ra lỗi kết nối!", "error");
+        Toast.show("Đã xảy ra lỗi kết nối hệ thống!", "error");
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }
@@ -278,44 +290,45 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
 }
 
 /* =========================================
-   HÀM XỬ LÝ: Đổi loại Bobin sang ĐIỀU CHỈNH
+   3. ĐỔI LOẠI BOBIN SANG ĐIỀU CHỈNH
 ========================================= */
 function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
   const container = btnElement.closest(".bobin-item");
 
   if (!bobinCode || !bobinKeyCode) {
-    Toast.show("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
+    Toast.show("⚠️ Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
     return;
   }
 
-  const inspectorCode = container.querySelector(".input-inspector-code")?.value.trim() || "";
-  const inspectorName = container.querySelector(".input-inspector-name")?.value.trim() || "";
-  const note = container.querySelector(".note-field")?.value.trim() || "";
+  const inputCodeEl = container?.querySelector(".input-inspector-code");
+  const inspectorCode = inputCodeEl?.value?.trim() || "";
+  const inspectorName = container?.querySelector(".input-inspector-name")?.value?.trim() || "";
 
-  if (!inspectorCode || inspectorCode === "Chưa cập nhật") {
+  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
     Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi thực hiện!", "error");
-    const inputCode = container.querySelector(".input-inspector-code");
-    if (inputCode) {
-      inputCode.style.border = "2px solid red";
-      inputCode.focus();
-      setTimeout(() => (inputCode.style.border = "1.5px solid #cbd5e1"), 2000);
+    if (inputCodeEl) {
+      inputCodeEl.style.border = "2px solid red";
+      inputCodeEl.focus();
+      setTimeout(() => (inputCodeEl.style.border = "1.5px solid #cbd5e1"), 2000);
     }
     return;
   }
 
+  const noteInputEl = container?.querySelector(".note-field");
+  const note = noteInputEl?.value?.trim() || "";
+
   if (!note) {
-    Toast.show("⚠️ Vui lòng nhập lý do giải trình vào phần Ghi chú trước khi chuyển loại!", "error");
-    const noteField = container.querySelector(".note-field");
-    if (noteField) {
-      noteField.style.border = "2px solid red";
-      noteField.focus();
-      setTimeout(() => (noteField.style.border = "1.5px solid #cbd5e1"), 2500);
+    Toast.show("⚠️ Vui lòng nhập ghi chú giải trình lý do trước khi đưa Bobin về ĐIỀU CHỈNH!", "error");
+    if (noteInputEl) {
+      noteInputEl.style.border = "2px solid red";
+      noteInputEl.focus();
+      setTimeout(() => (noteInputEl.style.border = "1.5px solid #cbd5e1"), 2500);
     }
     return;
   }
 
   const defects = {};
-  container.querySelectorAll(".vi-item-switch").forEach((switchItem) => {
+  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
     const key = switchItem.getAttribute("data-key");
     const goodDefect = switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") === "true";
     defects[key] = goodDefect;
@@ -331,7 +344,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
               background: #f8fafc; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s; font-size: 13px;
           }
           .type-toggle-input:checked + .type-toggle-label {
-              border-color: #f59e0b; background: #fffbeb; color: #b45309;
+              border-color: #f59e0b; background: #fffbeb; color: #b45309; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
           }
           .type-toggle-input:checked + .type-toggle-label::after {
               content: '✔'; font-weight: 900; color: #b45309;
@@ -339,11 +352,8 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
       </style>
       
       <div style="background-color: #fffbeb; color: #b45309; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #f59e0b;">
-          Đang xác nhận QC và chuyển đổi Bobin <strong>${bobinCode}</strong>.<br>
-          <div style="margin-top: 4px; padding: 4px 8px; background: rgba(245, 158, 11, 0.1); border-radius: 4px; font-size: 12.5px;">
-              <strong>📝 Lý do:</strong> <span>${note}</span>
-          </div>
-          <div style="margin-top: 8px; font-weight: bold;">Chọn loại Bobin điều chỉnh tương ứng:</div>
+          Chuyển đổi Bobin <strong>${bobinCode}</strong> sang hàng ĐIỀU CHỈNH.<br>
+          <div style="margin-top: 4px; font-size: 12.5px;"><strong>📝 Ghi chú:</strong> ${note}</div>
       </div>
       
       <div class="type-toggle-group">
@@ -387,7 +397,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
   `;
 
   ConfirmDialog.show(
-    "Xác nhận QC & Đổi sang loại Điều chỉnh",
+    "Xác nhận QC & Đổi loại Bobin",
     dialogHTML,
     async (dialogBox) => {
       const selectedType = dialogBox.querySelector('input[name="new_bobin_type"]:checked')?.value || "Điều chỉnh (Do CP)";
@@ -408,7 +418,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
       const requestUrl = "/WEB_BOBIN/public/index.php?url=bobin/updateQCAndChangeType";
       const originalBtnText = btnElement.innerHTML;
 
-      btnElement.innerHTML = "⏳ Đang xử lý...";
+      btnElement.innerHTML = "⏳ Đang chuyển...";
       btnElement.disabled = true;
 
       try {
@@ -428,7 +438,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
           btnElement.disabled = false;
         }
       } catch (error) {
-        Toast.show("Đã xảy ra lỗi kết nối!", "error");
+        Toast.show("Đã xảy ra lỗi kết nối hệ thống!", "error");
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }

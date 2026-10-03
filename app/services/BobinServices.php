@@ -571,6 +571,7 @@ class BobinServices
                 'to_date'    => $to,
                 'bobin_size' => trim($dto->bobinSize ?? 'all'),
                 'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
             ];
 
             if ($filters['from_date'] !== '' && $filters['to_date'] !== '') {
@@ -610,8 +611,10 @@ class BobinServices
     {
         try {
             $filters = [
+                'keyword'    => trim($dto->keyword ?? ''),
                 'bobin_size' => trim($dto->bobinSize ?? 'all'),
                 'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
             ];
             return $this->bobinRepo->getBobinStatusStats($filters);
         } catch (Exception $e) {

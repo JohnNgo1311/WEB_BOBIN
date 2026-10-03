@@ -34,10 +34,12 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // ==========================================
-// 4. NẠP CORE & DATABASE
+// 4. NẠP CORE & DATABASE & I18N
 // ==========================================
 require_once ROOT_PATH . '/config/database.php';
 require_once ROOT_PATH . '/app/core/GlobalData.php';
+require_once ROOT_PATH . '/app/core/Language.php';
+Language::init();
 require_once ROOT_PATH . '/app/core/Router.php';
 
 // ==========================================

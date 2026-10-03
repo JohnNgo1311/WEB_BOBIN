@@ -15,9 +15,10 @@ $statusCounts = array_merge($defaultStatus, $data['statusCounts'] ?? []);
 
 $statusOptions = [
     'all'                  => '📦 Tất cả trạng thái',
-    'Busy_Unchecked'       => '✅ ĐÃ ĐÙN',
-    'Rolled'               => '✅ ĐÃ CUỘN',
+    'Busy_Unchecked'       => '⏳ CHƯA KIỂM TRA QC',
     'Busy_Checked'         => '🛡️ ĐÃ KIỂM TRA QC',
+    'Rolled'               => '✅ ĐÃ CUỘN',
+    'Pending_Cancellation' => '⚠️ CHỜ HỦY',
     'Cancelled'            => '🗑️ ĐÃ HỦY'
 ];
 
@@ -26,6 +27,11 @@ $currentSize   = $_GET['bobin_size'] ?? 'all';
 $currentType   = $_GET['bobin_type'] ?? 'all';
 $currentRack   = $_GET['rack'] ?? 'all';
 $racks         = $data['racks'] ?? [];
+
+$defaultToDate   = date('Y-m-d');
+$defaultFromDate = date('Y-m-d', strtotime('-7 days'));
+$fromDateVal     = !empty($_GET['from_date']) ? $_GET['from_date'] : $defaultFromDate;
+$toDateVal       = !empty($_GET['to_date']) ? $_GET['to_date'] : $defaultToDate;
 
 // ========================================================
 // TÍNH TOÁN DUNG LƯỢNG VÀ BOBIN TRỐNG
@@ -42,29 +48,18 @@ if ($currentSize === 'all') {
     $totalRealBobins = $capacityMap[$currentSize] ?? 0;
 }
 
-$extrudedCount = $statusCounts['Busy_Unchecked'];
-
-$uniqueRolledKeys = [];
-foreach ($bobins as $b) {
-    if (($b['bobin_current_status'] ?? '') === 'Rolled') {
-        $keyCode = $b['bobin_key_code'] ?? '';
-        if (!empty($keyCode)) {
-            $uniqueRolledKeys[$keyCode] = true;
-        }
-    }
-}
-$uniqueRolledCount = count($uniqueRolledKeys);
-$emptyBobins = min($totalRealBobins, max(0, $totalRealBobins - ($extrudedCount - $uniqueRolledCount)));
-$untestedQC = max(0, $statusCounts['Busy_Unchecked'] - $statusCounts['Busy_Checked']);
+$occupiedBobins = ($statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'] + $statusCounts['Pending_Cancellation']);
+$emptyBobins = max(0, $totalRealBobins - $occupiedBobins);
 $totalRecords = count($bobins);
 
-// 2. DỮ LIỆU BIỂU ĐỒ
-$chartLabels = ['Trống', 'Đã đùn', 'Chưa kiểm tra QC', 'Đã kiểm tra QC', 'Đã hủy'];
+// 2. DỮ LIỆU BIỂU ĐỒ (6 TIÊU CHÍ RÕ RÀNG THEO ĐÚNG DỮ LIỆU THỰC TẾ)
+$chartLabels = ['Trống', 'Chưa KT QC', 'Đã KT QC', 'Đã cuộn', 'Chờ hủy', 'Đã hủy'];
 $chartSeries = [
     $emptyBobins,
-    $extrudedCount,
-    $untestedQC,
+    $statusCounts['Busy_Unchecked'],
     $statusCounts['Busy_Checked'],
+    $statusCounts['Rolled'],
+    $statusCounts['Pending_Cancellation'],
     $statusCounts['Cancelled']
 ];
 
@@ -93,13 +88,21 @@ $typeOptions = [
 if (!function_exists('buildFilterUrl')) {
     function buildFilterUrl(array $overrideParams = []): string
     {
+        global $fromDateVal, $toDateVal;
         $query = $_GET ?? [];
         if (!isset($query['url'])) {
             $query['url'] = 'bobin/listBobinHistoryView';
         }
+        if (!isset($query['from_date']) && !empty($fromDateVal)) {
+            $query['from_date'] = $fromDateVal;
+        }
+        if (!isset($query['to_date']) && !empty($toDateVal)) {
+            $query['to_date'] = $toDateVal;
+        }
+
         $query = array_merge($query, $overrideParams);
         foreach ($query as $key => $value) {
-            if (is_null($value) || $value === '') {
+            if (is_null($value) || $value === '' || $value === 'all') {
                 unset($query[$key]);
             }
         }
@@ -107,11 +110,23 @@ if (!function_exists('buildFilterUrl')) {
     }
 }
 
-if (!function_exists('viBadge')) {
-    function viBadge($label, $goodDefect)
+// Hàm badge kiểm tra công đoạn đùn: true = Đạt (OK), false = Lỗi (NG)
+if (!function_exists('extCheckBadge')) {
+    function extCheckBadge($label, $isOk)
     {
-        $class = $goodDefect ? 'badge-ok' : 'badge-ng';
-        $text  = $goodDefect ? 'OK' : 'NG';
+        $class = $isOk ? 'badge-ok' : 'badge-ng';
+        $text  = $isOk ? 'OK' : 'NG';
+        return "<div class='vi-item $class'><span>$label</span><strong>$text</strong></div>";
+    }
+}
+
+// Hàm badge kiểm tra QC: $hasDefect = true có lỗi (NG); false không lỗi (OK)
+if (!function_exists('qcDefectBadge')) {
+    function qcDefectBadge($label, $hasDefect)
+    {
+        $isOk = !$hasDefect;
+        $class = $isOk ? 'badge-ok' : 'badge-ng';
+        $text  = $isOk ? 'OK' : 'NG';
         return "<div class='vi-item $class'><span>$label</span><strong>$text</strong></div>";
     }
 }
@@ -133,10 +148,13 @@ if (!function_exists('decodeJsonObject')) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Lịch sử Bobin</title>
+    <title><?= __('page_bobin_history') ?> | SMC</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinHistory.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/apexcharts.min.js"></script>
     <script src="/WEB_BOBIN/public/assets/js/chart-helper.js"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
@@ -148,66 +166,83 @@ if (!function_exists('decodeJsonObject')) {
         <div class="menu-left">
             <!-- Nhóm Đùn -->
             <?php if (in_array($userRole, ['extrusion', 'admin'])): ?>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
-                    class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>">
-                    Nhóm đùn
-                </a>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
-                    class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>">
-                    Điều chỉnh đùn
-                </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
+                class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>"
+                data-i18n="nav_extrusion">
+                <?= __('nav_extrusion') ?>
+            </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
+                class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_extrusion_edit">
+                <?= __('nav_extrusion_edit') ?>
+            </a>
             <?php endif; ?>
 
             <!-- Nhóm QC -->
             <?php if (in_array($userRole, ['qc', 'admin'])): ?>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
-                    class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>">
-                    QC
-                </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
+                class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>"
+                data-i18n="nav_qc">
+                <?= __('nav_qc') ?>
+            </a>
             <?php endif; ?>
 
             <!-- Nhóm Cuộn -->
             <?php if (in_array($userRole, ['winding', 'admin'])): ?>
-                <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
-                    class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>">
-                    Cuộn
-                </a>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
+                class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>"
+                data-i18n="nav_winding">
+                <?= __('nav_winding') ?>
+            </a>
             <?php endif; ?>
 
             <!-- Các trang theo dõi công khai -->
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView"
-                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>">
-                Danh sách Bobin
+                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_bobin_list">
+                <?= __('nav_bobin_list') ?>
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView"
-                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>">
-                Lịch sử Bobin
+                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_bobin_history">
+                <?= __('nav_bobin_history') ?>
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
-                Danh sách chờ hủy
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_pending_cancel">
+                <?= __('nav_pending_cancel') ?>
                 <?php if ($pCount > 0): ?>
-                    <span class="badge-pending-count"><?= $pCount ?></span>
+                <span class="badge-pending-count"><?= $pCount ?></span>
                 <?php endif; ?>
             </a>
+
+            <!-- Quản trị viên: Danh sách nhân viên -->
+            <?php if ($userRole === 'admin'): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=employee/index"
+                class="<?= (strpos($currentUrl, 'employee') === 0) ? 'active-nav' : '' ?>"
+                data-i18n="nav_employee_list">
+                <?= __('nav_employee_list') ?>
+            </a>
+            <?php endif; ?>
         </div>
 
         <div class="menu-right">
+            <?php require ROOT_PATH . '/app/views/components/languageSwitcher.php'; ?>
             <?php if (isset($_SESSION['user'])): ?>
-                <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
-                    👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
-                </span>
-                <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn">Đăng xuất</a>
+            <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
+                👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
+            </span>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/changePassword" class="btn-change-pwd" title="Đổi mật khẩu tài khoản" data-i18n="nav_change_pwd"><?= __('nav_change_pwd') ?></a>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn" data-i18n="nav_logout"><?= __('nav_logout') ?></a>
             <?php else: ?>
-                <a href="/WEB_BOBIN/public/index.php?url=auth/login"
-                    style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;">Đăng
-                    nhập</a>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/login"
+                style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;" data-i18n="nav_login"><?= __('nav_login') ?></a>
             <?php endif; ?>
         </div>
     </div>
-    <h1>Lịch sử Bobin</h1>
+    <h1 data-i18n="page_bobin_history"><?= __('page_bobin_history') ?></h1>
 
     <div class="container">
         <div id="qr-reader"></div>
@@ -225,6 +260,18 @@ if (!function_exists('decodeJsonObject')) {
             <div class="control-main">
                 <form method="GET" action="/WEB_BOBIN/public/index.php" class="filter-form-modern" id="filterForm">
                     <input type="hidden" name="url" value="bobin/listBobinHistoryView">
+                    <?php if ($currentStatus !== 'all'): ?>
+                    <input type="hidden" name="status" value="<?= htmlspecialchars($currentStatus) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentSize !== 'all'): ?>
+                    <input type="hidden" name="bobin_size" value="<?= htmlspecialchars($currentSize) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentType !== 'all'): ?>
+                    <input type="hidden" name="bobin_type" value="<?= htmlspecialchars($currentType) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentRack !== 'all'): ?>
+                    <input type="hidden" name="rack" value="<?= htmlspecialchars($currentRack) ?>">
+                    <?php endif; ?>
 
                     <div class="control-row">
                         <!-- TÌM KIẾM KEYWORD -->
@@ -240,12 +287,6 @@ if (!function_exists('decodeJsonObject')) {
                         </div>
 
                         <!-- CHỌN KHOẢNG NGÀY -->
-                        <?php
-                        $defaultToDate = date('Y-m-d');
-                        $defaultFromDate = date('Y-m-d', strtotime('-7 days'));
-                        $fromDateVal = !empty($_GET['from_date']) ? $_GET['from_date'] : $defaultFromDate;
-                        $toDateVal = !empty($_GET['to_date']) ? $_GET['to_date'] : $defaultToDate;
-                        ?>
                         <div class="date-picker-compact">
                             <input type="date" name="from_date" id="fromDate"
                                 value="<?= htmlspecialchars($fromDateVal) ?>">
@@ -261,7 +302,7 @@ if (!function_exists('decodeJsonObject')) {
                                 <rect x="14" y="14" width="7" height="7"></rect>
                                 <path d="M3 14h7v7H3z"></path>
                             </svg>
-                            Quét QR
+                            <span>Quét QR</span>
                         </button>
 
                         <button type="submit" class="btn-modern btn-filter" id="btnFilter">
@@ -275,6 +316,8 @@ if (!function_exists('decodeJsonObject')) {
                         <?php
                         $exportParams = $_GET;
                         $exportParams['url'] = 'bobin/exportHistoryExcel';
+                        if (empty($exportParams['from_date'])) $exportParams['from_date'] = $fromDateVal;
+                        if (empty($exportParams['to_date'])) $exportParams['to_date'] = $toDateVal;
                         $exportUrl = '/WEB_BOBIN/public/index.php?' . http_build_query($exportParams);
                         ?>
                         <!-- MENU XUẤT EXCEL THÔNG MINH CHO LỊCH SỬ -->
@@ -359,24 +402,11 @@ if (!function_exists('decodeJsonObject')) {
 
                     <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
                         <div class="kpi-left">
-                            <span class="kpi-icon">✅</span>
-                            <span class="kpi-name">ĐÃ ĐÙN</span>
-                        </div>
-                        <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($extrudedCount) ?></strong>
-                            <span class="kpi-arrow">›</span>
-                        </div>
-                    </a>
-
-
-
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
-                        <div class="kpi-left">
                             <span class="kpi-icon">⏳</span>
                             <span class="kpi-name">CHƯA KT QC</span>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($untestedQC) ?></strong>
+                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
@@ -391,6 +421,7 @@ if (!function_exists('decodeJsonObject')) {
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
+
                     <a href="<?= buildFilterUrl(['status' => 'Rolled']) ?>" class="kpi-card rolled">
                         <div class="kpi-left">
                             <span class="kpi-icon">✅</span>
@@ -401,6 +432,18 @@ if (!function_exists('decodeJsonObject')) {
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
+
+                    <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation']) ?>" class="kpi-card pending">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">⚠️</span>
+                            <span class="kpi-name">CHỜ HỦY</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation']) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
+
                     <a href="<?= buildFilterUrl(['status' => 'Cancelled']) ?>" class="kpi-card cancelled">
                         <div class="kpi-left">
                             <span class="kpi-icon">🗑️</span>
@@ -416,94 +459,94 @@ if (!function_exists('decodeJsonObject')) {
         </div>
 
         <script>
-            (function() {
-                const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
-                const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-                const totalRealBobins = <?= (int)$totalRealBobins ?>;
-                const maxVal = Math.max(...rawData, 0);
+        (function() {
+            const rawData = <?= json_encode($chartSeries, JSON_NUMERIC_CHECK) ?>;
+            const labels = <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+            const totalRealBobins = <?= (int)$totalRealBobins ?>;
+            const maxVal = Math.max(...rawData, 0);
 
-                const statusChart = new BaseChart('#statusPieChart', {
-                    chart: {
-                        type: 'bar',
-                        height: 220,
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        toolbar: {
-                            show: false
-                        },
-                        animations: {
-                            enabled: true,
-                            speed: 300
-                        }
-                    },
-                    series: [{
-                        name: 'Số lượng Bobin',
-                        data: rawData
-                    }],
-                    colors: ['#94a3b8', '#34d399', '#fb923c', '#38bdf8', '#fb7185'],
-                    plotOptions: {
-                        bar: {
-                            horizontal: true,
-                            borderRadius: 4,
-                            barHeight: '62%',
-                            distributed: true,
-                            dataLabels: {
-                                position: 'top'
-                            }
-                        }
-                    },
-                    dataLabels: {
-                        enabled: true,
-                        textAnchor: 'start',
-                        offsetX: 8,
-                        formatter: function(val) {
-                            const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
-                                1) : 0;
-                            return `${val.toLocaleString('vi-VN')} (${percent}%)`;
-                        },
-                        style: {
-                            fontSize: '12px',
-                            fontWeight: 800,
-                            colors: ["#475569"]
-                        }
-                    },
-                    grid: {
-                        borderColor: '#f1f5f9',
-                        strokeDashArray: 3,
-                        padding: {
-                            top: -12,
-                            right: 35,
-                            bottom: -10,
-                            left: 15
-                        }
-                    },
-                    xaxis: {
-                        categories: labels,
-                        min: 0,
-                        max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
-                        labels: {
-                            style: {
-                                colors: '#64748b',
-                                fontSize: '11px',
-                                fontWeight: 600
-                            },
-                            formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
-                        }
-                    },
-                    yaxis: {
-                        labels: {
-                            style: {
-                                colors: '#1e293b',
-                                fontSize: '12.5px',
-                                fontWeight: 700
-                            }
-                        }
-                    },
-                    legend: {
+            const statusChart = new BaseChart('#statusPieChart', {
+                chart: {
+                    type: 'bar',
+                    height: 220,
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    toolbar: {
                         show: false
+                    },
+                    animations: {
+                        enabled: true,
+                        speed: 300
                     }
-                });
-                statusChart.render();
-            })();
+                },
+                series: [{
+                    name: 'Số lượng Bobin',
+                    data: rawData
+                }],
+                colors: ['#94a3b8', '#f97316', '#38bdf8', '#22c55e', '#f59e0b', '#ef4444'],
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                        borderRadius: 4,
+                        barHeight: '62%',
+                        distributed: true,
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    textAnchor: 'start',
+                    offsetX: 8,
+                    formatter: function(val) {
+                        const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
+                            1) : 0;
+                        return `${val.toLocaleString('vi-VN')} (${percent}%)`;
+                    },
+                    style: {
+                        fontSize: '12px',
+                        fontWeight: 800,
+                        colors: ["#475569"]
+                    }
+                },
+                grid: {
+                    borderColor: '#f1f5f9',
+                    strokeDashArray: 3,
+                    padding: {
+                        top: -12,
+                        right: 35,
+                        bottom: -10,
+                        left: 15
+                    }
+                },
+                xaxis: {
+                    categories: labels,
+                    min: 0,
+                    max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
+                    labels: {
+                        style: {
+                            colors: '#64748b',
+                            fontSize: '11px',
+                            fontWeight: 600
+                        },
+                        formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: {
+                            colors: '#1e293b',
+                            fontSize: '12.5px',
+                            fontWeight: 700
+                        }
+                    }
+                },
+                legend: {
+                    show: false
+                }
+            });
+            statusChart.render();
+        })();
         </script>
 
         <!-- BỘ LỌC 4 DROPDOWN TRÊN 1 HÀNG NGANG (TIẾT KIỆM KHÔNG GIAN) -->
@@ -526,10 +569,10 @@ if (!function_exists('decodeJsonObject')) {
                     <div class="filter-label">📌 Trạng thái:</div>
                     <select id="statusFilter" class="filter-select" onchange="window.location.href = this.value;">
                         <?php foreach ($statusOptions as $key => $label): ?>
-                            <option value="<?= buildFilterUrl(['status' => $key]) ?>"
-                                <?= $currentStatus === $key ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($label) ?>
-                            </option>
+                        <option value="<?= buildFilterUrl(['status' => $key]) ?>"
+                            <?= $currentStatus === $key ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -538,10 +581,10 @@ if (!function_exists('decodeJsonObject')) {
                     <div class="filter-label">📏 Kích thước:</div>
                     <select id="sizeFilter" class="filter-select" onchange="window.location.href = this.value;">
                         <?php foreach ($sizeOptions as $key => $label): ?>
-                            <option value="<?= buildFilterUrl(['bobin_size' => $key]) ?>"
-                                <?= $currentSize === $key ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($label) ?>
-                            </option>
+                        <option value="<?= buildFilterUrl(['bobin_size' => $key]) ?>"
+                            <?= $currentSize === $key ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -550,10 +593,10 @@ if (!function_exists('decodeJsonObject')) {
                     <div class="filter-label">🏷️ Loại Bobin:</div>
                     <select id="typeFilter" class="filter-select" onchange="window.location.href = this.value;">
                         <?php foreach ($typeOptions as $key => $label): ?>
-                            <option value="<?= buildFilterUrl(['bobin_type' => $key]) ?>"
-                                <?= $currentType === $key ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($label) ?>
-                            </option>
+                        <option value="<?= buildFilterUrl(['bobin_type' => $key]) ?>"
+                            <?= $currentType === $key ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($label) ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -566,13 +609,13 @@ if (!function_exists('decodeJsonObject')) {
                             Tất cả các Rack
                         </option>
                         <?php foreach ($racks as $r): ?>
-                            <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
-                            <?php if (!empty($rCode)): ?>
-                                <option value="<?= buildFilterUrl(['rack' => $rCode]) ?>"
-                                    <?= $currentRack === $rCode ? 'selected' : '' ?>>
-                                    📍 Rack: <?= htmlspecialchars($rCode) ?>
-                                </option>
-                            <?php endif; ?>
+                        <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
+                        <?php if (!empty($rCode)): ?>
+                        <option value="<?= buildFilterUrl(['rack' => $rCode]) ?>"
+                            <?= $currentRack === $rCode ? 'selected' : '' ?>>
+                            📍 Rack: <?= htmlspecialchars($rCode) ?>
+                        </option>
+                        <?php endif; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -582,11 +625,11 @@ if (!function_exists('decodeJsonObject')) {
         <!-- DANH SÁCH BOBIN THỰC TẾ -->
         <div class="list-card">
             <?php if (empty($bobins)): ?>
-                <div class="empty-state">Không tìm thấy dữ liệu nào trong khoảng thời gian này.</div>
+            <div class="empty-state">Không tìm thấy dữ liệu nào trong khoảng thời gian này.</div>
             <?php else: ?>
-                <div class="bobin-list">
-                    <?php foreach ($bobins as $item): ?>
-                        <?php
+            <div class="bobin-list">
+                <?php foreach ($bobins as $item): ?>
+                <?php
                         $rawStatus = $item['bobin_current_status'] ?? 'Unknown';
                         $status = strtolower($rawStatus);
                         $statusClass = match ($status) {
@@ -634,10 +677,10 @@ if (!function_exists('decodeJsonObject')) {
                             ? 'Chưa cập nhật đầy đủ thông tin cần thiết'
                             : $productCode . '$' . $materialLot . '$' . $printLot . '$' . $formatted_time;
                         ?>
-                        <div class="bobin-item <?= $statusClass ?>">
-                            <div class="card-top">
-                                <div class="key-info">
-                                    <?php
+                <div class="bobin-item <?= $statusClass ?>">
+                    <div class="card-top">
+                        <div class="key-info">
+                            <?php
                                     $rawKey = $item['bobin_key_code'] ?? '';
                                     $displayKey = htmlspecialchars($rawKey);
                                     if (is_string($rawKey) && strpos($rawKey, '_') !== false) {
@@ -654,27 +697,27 @@ if (!function_exists('decodeJsonObject')) {
                                         }
                                     }
                                     ?>
-                                    <input type="checkbox" class="bobin-select-checkbox"
-                                        value="<?= htmlspecialchars($item['id'] ?? $item['bobin_key_code']) ?>"
-                                        title="Chọn bản ghi này để xuất Excel">
+                            <input type="checkbox" class="bobin-select-checkbox"
+                                value="<?= htmlspecialchars($item['id'] ?? $item['bobin_key_code']) ?>"
+                                title="Chọn bản ghi này để xuất Excel">
 
-                                    <span class="key-code"><?= $displayKey ?></span>
-                                    <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
-                                </div>
+                            <span class="key-code"><?= $displayKey ?></span>
+                            <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
+                        </div>
 
-                                <!-- ĐƯA MAIN-INFO VÀ STATUS-BADGE VÀO LẠI BÊN TRONG CARD-TOP -->
-                                <div class="main-info-wrapper">
-                                    <div class="main-info">
-                                        <?= htmlspecialchars($mainInfoText) ?>
-                                    </div>
-                                    <button type="button" class="btn-copy" data-copy="<?= htmlspecialchars($mainInfoText) ?>"
-                                        onclick="copyToClipboard(this)" title="Copy nội dung">
-                                        📋 Copy
-                                    </button>
-                                </div>
+                        <!-- ĐƯA MAIN-INFO VÀ STATUS-BADGE VÀO LẠI BÊN TRONG CARD-TOP -->
+                        <div class="main-info-wrapper">
+                            <div class="main-info">
+                                <?= htmlspecialchars($mainInfoText) ?>
+                            </div>
+                            <button type="button" class="btn-copy" data-copy="<?= htmlspecialchars($mainInfoText) ?>"
+                                onclick="copyToClipboard(this)" title="Copy nội dung">
+                                📋 Copy
+                            </button>
+                        </div>
 
-                                <div class="status-badge">
-                                    <?php
+                        <div class="status-badge">
+                            <?php
                                     $displayStatus = match ($rawStatus) {
                                         'Rolled'               => 'Đã cuộn',
                                         'Busy_Unchecked'       => 'Đang đợi QC kiểm tra',
@@ -685,76 +728,76 @@ if (!function_exists('decodeJsonObject')) {
                                     };
                                     echo htmlspecialchars($displayStatus);
                                     ?>
-                                </div>
-                            </div> <!-- ĐÓNG THẺ CARD-TOP TẠI ĐÂY -->
+                        </div>
+                    </div> <!-- ĐÓNG THẺ CARD-TOP TẠI ĐÂY -->
 
-                            <!-- 12 THÔNG SỐ TRÌNH BÀY DẠNG GRID TỐI ƯU -->
-                            <div class="info-grid">
-                                <div class="field-item">
-                                    <label>Mã sản phẩm</label>
-                                    <div class="val-sub"><?= htmlspecialchars($productCode) ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Mã nhân viên</label>
-                                    <div class="val-sub"><?= htmlspecialchars($extrusion_employeeCode) ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Họ tên nhân viên</label>
-                                    <div class="val-sub"><?= htmlspecialchars($extrusion_employeeName) ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Vị trí RACK</label>
-                                    <div class="val-sub">
-                                        <span class="val-rack <?= $isRackEmpty ? 'val-empty' : '' ?>">
-                                            <?= htmlspecialchars($rackCode) ?>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Ca làm việc</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Kích thước Bobin</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['bobin_size'] ?? 'Chưa cập nhật') ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Loại Bobin</label>
-                                    <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
-                                        <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
-                                    </div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Lot vật liệu</label>
-                                    <div class="val-sub"><?= htmlspecialchars($materialLot) ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Lot in</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?></div>
-                                </div>
-                                <div class="field-item highlight-box">
-                                    <label>Chiều dài (m)</label>
-                                    <div class="val-highlight">
-                                        <?= number_format($item['length_m'] ?? 0, 0, ".", ",") ?> m
-                                    </div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Ngày đùn</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['extrusion_date'] ?? '') ?></div>
-                                </div>
-                                <div class="field-item">
-                                    <label>Thời điểm hoàn thành cuộn</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['finish_time'] ?? '') ?></div>
-                                </div>
+                    <!-- 12 THÔNG SỐ TRÌNH BÀY DẠNG GRID TỐI ƯU -->
+                    <div class="info-grid">
+                        <div class="field-item">
+                            <label>Mã sản phẩm</label>
+                            <div class="val-sub"><?= htmlspecialchars($productCode) ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Mã nhân viên</label>
+                            <div class="val-sub"><?= htmlspecialchars($extrusion_employeeCode) ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Họ tên nhân viên</label>
+                            <div class="val-sub"><?= htmlspecialchars($extrusion_employeeName) ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Vị trí RACK</label>
+                            <div class="val-sub">
+                                <span class="val-rack <?= $isRackEmpty ? 'val-empty' : '' ?>">
+                                    <?= htmlspecialchars($rackCode) ?>
+                                </span>
                             </div>
+                        </div>
+                        <div class="field-item">
+                            <label>Ca làm việc</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Kích thước Bobin</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['bobin_size'] ?? 'Chưa cập nhật') ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Loại Bobin</label>
+                            <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
+                                <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
+                            </div>
+                        </div>
+                        <div class="field-item">
+                            <label>Lot vật liệu</label>
+                            <div class="val-sub"><?= htmlspecialchars($materialLot) ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Lot in</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?></div>
+                        </div>
+                        <div class="field-item highlight-box">
+                            <label>Chiều dài (m)</label>
+                            <div class="val-highlight">
+                                <?= number_format($item['length_m'] ?? 0, 0, ".", ",") ?> m
+                            </div>
+                        </div>
+                        <div class="field-item">
+                            <label>Ngày đùn</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['extrusion_date'] ?? '') ?></div>
+                        </div>
+                        <div class="field-item">
+                            <label>Thời điểm hoàn thành cuộn</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['finish_time'] ?? '') ?></div>
+                        </div>
+                    </div>
 
-                            <!-- GỘP 3 KHỐI KIỂM SOÁT THÀNH 3 CỘT SONG SONG -->
-                            <div class="inspection-pipeline-grid">
-                                <!-- CỘT 1: ĐÙN CHECK -->
-                                <div class="pipeline-col extrusion-col">
-                                    <div class="qc-title">🏭 Đùn Check</div>
-                                    <div class="qc-badges">
-                                        <?php
+                    <!-- GỘP 3 KHỐI KIỂM SOÁT THÀNH 3 CỘT SONG SONG -->
+                    <div class="inspection-pipeline-grid">
+                        <!-- CỘT 1: ĐÙN CHECK -->
+                        <div class="pipeline-col extrusion-col">
+                            <div class="qc-title">🏭 Đùn Check</div>
+                            <div class="qc-badges">
+                                <?php
                                         $extItems = [
                                             'Đường kính' => $extCheck['diameter'] ?? true,
                                             'Gel'        => $extCheck['gel'] ?? true,
@@ -763,189 +806,210 @@ if (!function_exists('decodeJsonObject')) {
                                             'Chữ in'     => $extCheck['print'] ?? true,
                                         ];
                                         foreach ($extItems as $label => $isOk) {
-                                            echo viBadge($label, $isOk);
+                                            echo extCheckBadge($label, $isOk);
                                         }
                                         ?>
-                                    </div>
-                                </div>
-
-                                <!-- CỘT 2: QC CHECK -->
-                                <div class="pipeline-col qc-col">
-                                    <div class="qc-title">🛡️ QC Check</div>
-                                    <div class="qc-header">
-                                        <div class="qc-info-row">
-                                            <div class="qc-meta-item">
-                                                <label class="val-text">Mã NV:</label>
-                                                <span
-                                                    class="val-sub"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa cập nhật') ?></span>
-                                            </div>
-                                            <div class="qc-meta-item">
-                                                <label class="val-text">Họ tên:</label>
-                                                <span
-                                                    class="val-sub"><?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa cập nhật') ?></span>
-                                            </div>
-                                            <div class="qc-meta-item">
-                                                <label class="val-text">Thời gian:</label>
-                                                <span
-                                                    class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? 'Chưa cập nhật') ?></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="qc-badges">
-                                        <?= viBadge('Gel', $defects['gel'] ?? false) ?>
-                                        <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
-                                        <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
-                                        <?= viBadge('In', $defects['print_quality'] ?? false) ?>
-                                    </div>
-                                    <div class="qc-note">📝
-                                        <?= htmlspecialchars(trim($defects['note'] ?? '') === '' ? 'Chưa cập nhật' : $defects['note']) ?>
-                                    </div>
-                                </div>
-
-                                <!-- CỘT 3: THÔNG TIN CUỘN -->
-                                <div class="pipeline-col winding-col">
-                                    <div class="winding-title">📍 Thông tin cuộn</div>
-                                    <div class="winding-header">
-                                        <div class="winding-info-row">
-                                            <div class="winding-input">
-                                                <label class="val-text">Máy cuộn:</label>
-                                                <span
-                                                    class="val-sub"><?= htmlspecialchars($item['winding_machine'] ?? 'Chưa cập nhật') ?></span>
-                                            </div>
-                                            <div class="winding-input">
-                                                <label class="val-text">Mã NV:</label>
-                                                <span class="val-sub"><?= htmlspecialchars($winding_employeeCode) ?></span>
-                                            </div>
-                                            <div class="winding-input">
-                                                <label class="val-text">Họ tên:</label>
-                                                <span class="val-sub"><?= htmlspecialchars($winding_employeeName) ?></span>
-                                            </div>
-                                            <div class="winding-input">
-                                                <label class="val-text">Thông khí:</label>
-                                                <span class="val-sub"><?= htmlspecialchars($flow_test_result) ?></span>
-                                            </div>
-                                        </div>
-                                        <div class="winding-note">📝
-                                            <?= htmlspecialchars(trim($item['winding_note'] ?? '') === '' ? 'Chưa cập nhật' : $item['winding_note']) ?>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="card-footer-simple">
-                                <?php if (!empty($item['updated_time'])): ?>
-                                    <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
-                                        <?= htmlspecialchars($item['updated_time']) ?></div>
-                                <?php endif; ?>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+
+                        <!-- CỘT 2: QC CHECK -->
+                        <div class="pipeline-col qc-col">
+                            <div class="qc-title">🛡️ QC Check</div>
+                            <?php $hasQcInspected = !empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật'; ?>
+                            <?php if (!$hasQcInspected): ?>
+                            <div
+                                style="padding: 10px 0; color: #d97706; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                                <span>⏳ Chưa có dữ liệu kiểm tra QC</span>
+                            </div>
+                            <?php else: ?>
+                            <div class="qc-header">
+                                <div class="qc-info-row">
+                                    <div class="qc-meta-item">
+                                        <label class="val-text">Mã NV:</label>
+                                        <span
+                                            class="val-sub"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa cập nhật') ?></span>
+                                    </div>
+                                    <div class="qc-meta-item">
+                                        <label class="val-text">Họ tên:</label>
+                                        <span
+                                            class="val-sub"><?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa cập nhật') ?></span>
+                                    </div>
+                                    <div class="qc-meta-item">
+                                        <label class="val-text">Thời gian:</label>
+                                        <span
+                                            class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? 'Chưa cập nhật') ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="qc-badges">
+                                <?= qcDefectBadge('Gel', $defects['gel'] ?? false) ?>
+                                <?= qcDefectBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
+                                <?= qcDefectBadge('Màu', $defects['color_issue'] ?? false) ?>
+                                <?= qcDefectBadge('In', $defects['print_quality'] ?? false) ?>
+                            </div>
+                            <?php if (!empty($defects['note']) && $defects['note'] !== 'Chưa cập nhật'): ?>
+                            <div class="qc-note">📝 <?= htmlspecialchars($defects['note']) ?></div>
+                            <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- CỘT 3: THÔNG TIN CUỘN -->
+                        <div class="pipeline-col winding-col">
+                            <div class="winding-title">📍 Thông tin cuộn</div>
+                            <?php $hasWinding = !empty($item['finish_time']) || (!empty($winding_employeeCode) && $winding_employeeCode !== 'Chưa cập nhật') || ($rawStatus === 'Rolled'); ?>
+                            <?php if (!$hasWinding): ?>
+                            <div
+                                style="padding: 10px 0; color: #64748b; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                                <span>⏳ Chưa hoàn thành cuộn</span>
+                            </div>
+                            <?php else: ?>
+                            <div class="winding-header">
+                                <div class="winding-info-row">
+                                    <div class="winding-input">
+                                        <label class="val-text">Máy cuộn:</label>
+                                        <span
+                                            class="val-sub"><?= htmlspecialchars($item['winding_machine'] ?? 'Chưa cập nhật') ?></span>
+                                    </div>
+                                    <div class="winding-input">
+                                        <label class="val-text">Mã NV:</label>
+                                        <span class="val-sub"><?= htmlspecialchars($winding_employeeCode) ?></span>
+                                    </div>
+                                    <div class="winding-input">
+                                        <label class="val-text">Họ tên:</label>
+                                        <span class="val-sub"><?= htmlspecialchars($winding_employeeName) ?></span>
+                                    </div>
+                                    <div class="winding-input">
+                                        <label class="val-text">Thông khí:</label>
+                                        <span class="val-sub"><?= htmlspecialchars($flow_test_result) ?></span>
+                                    </div>
+                                </div>
+                                <?php if (!empty($item['winding_note']) && $item['winding_note'] !== 'Chưa cập nhật'): ?>
+                                <div class="winding-note">📝 <?= htmlspecialchars($item['winding_note']) ?></div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="card-footer-simple">
+                        <?php if (!empty($item['updated_time'])): ?>
+                        <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
+                            <?= htmlspecialchars($item['updated_time']) ?></div>
+                        <?php endif; ?>
+                    </div>
                 </div>
+                <?php endforeach; ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>
 
     <?php if (!empty($data['error'])): ?>
-        <div id="toastMessage" class="toast-message toast-error show">
-            ⚠️ <?= htmlspecialchars($data['error']) ?>
-        </div>
-        <script>
-            setTimeout(() => {
-                const toast = document.getElementById('toastMessage');
-                if (toast) {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 400);
-                }
-            }, 3000);
-        </script>
+    <div id="toastMessage" class="toast-message toast-error show">
+        ⚠️ <?= htmlspecialchars($data['error']) ?>
+    </div>
+    <script>
+    setTimeout(() => {
+        const toast = document.getElementById('toastMessage');
+        if (toast) {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }
+    }, 3000);
+    </script>
     <?php endif; ?>
 
-    <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=1"></script>
-    <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=1"></script>
+    <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
+    <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const interactiveElements = document.querySelectorAll(
-                ".filter-dashboard select, .filter-dashboard a, .kpi-list a");
-            interactiveElements.forEach(el => {
-                const eventType = el.tagName === "SELECT" ? "change" : "click";
-                el.addEventListener(eventType, function() {
-                    sessionStorage.setItem("bobin_history_scroll_pos", window.scrollY);
-                });
+    document.addEventListener("DOMContentLoaded", function() {
+        const interactiveElements = document.querySelectorAll(
+            ".filter-dashboard select, .filter-dashboard a, .kpi-list a");
+        interactiveElements.forEach(el => {
+            const eventType = el.tagName === "SELECT" ? "change" : "click";
+            el.addEventListener(eventType, function() {
+                sessionStorage.setItem("bobin_history_scroll_pos", window.scrollY);
             });
-
-            const scrollPos = sessionStorage.getItem("bobin_history_scroll_pos");
-            if (scrollPos !== null) {
-                window.scrollTo({
-                    top: parseInt(scrollPos, 10),
-                    behavior: "instant"
-                });
-                sessionStorage.removeItem("bobin_history_scroll_pos");
-            }
         });
+
+        const scrollPos = sessionStorage.getItem("bobin_history_scroll_pos");
+        if (scrollPos !== null) {
+            window.scrollTo({
+                top: parseInt(scrollPos, 10),
+                behavior: "instant"
+            });
+            sessionStorage.removeItem("bobin_history_scroll_pos");
+        }
+    });
     </script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const btnToggle = document.getElementById('btnToggleExportMenu');
-            const menuBox = document.getElementById('exportMenuBox');
-            const selectAllCb = document.getElementById('selectAllCheckbox');
-            const itemCheckboxes = document.querySelectorAll('.bobin-select-checkbox');
-            const countText = document.getElementById('selectedCountText');
-            const btnExportSelected = document.getElementById('btnExportSelectedItems');
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnToggle = document.getElementById('btnToggleExportMenu');
+        const menuBox = document.getElementById('exportMenuBox');
+        const selectAllCb = document.getElementById('selectAllCheckbox');
+        const itemCheckboxes = document.querySelectorAll('.bobin-select-checkbox');
+        const countText = document.getElementById('selectedCountText');
+        const btnExportSelected = document.getElementById('btnExportSelectedItems');
 
-            // Bật/tắt menu dropdown xuất Excel
-            if (btnToggle && menuBox) {
-                btnToggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    menuBox.classList.toggle('show');
-                });
-                document.addEventListener('click', function() {
-                    menuBox.classList.remove('show');
-                });
-            }
-
-            // Cập nhật số lượng bản ghi đã tích chọn
-            function updateSelectedCount() {
-                const selected = Array.from(itemCheckboxes).filter(cb => cb.checked);
-                if (countText) {
-                    countText.textContent = `Đã chọn: ${selected.length} bản ghi`;
-                }
-                if (selectAllCb) {
-                    selectAllCb.checked = (selected.length === itemCheckboxes.length && itemCheckboxes.length > 0);
-                }
-            }
-
-            // Chọn tất cả
-            if (selectAllCb) {
-                selectAllCb.addEventListener('change', function() {
-                    itemCheckboxes.forEach(cb => cb.checked = selectAllCb.checked);
-                    updateSelectedCount();
-                });
-            }
-
-            itemCheckboxes.forEach(cb => {
-                cb.addEventListener('change', updateSelectedCount);
+        // Bật/tắt menu dropdown xuất Excel
+        if (btnToggle && menuBox) {
+            btnToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menuBox.classList.toggle('show');
             });
+            document.addEventListener('click', function() {
+                menuBox.classList.remove('show');
+            });
+        }
 
-            // Xử lý xuất các mục đã chọn
-            if (btnExportSelected) {
-                btnExportSelected.addEventListener('click', function() {
-                    const selectedIds = Array.from(itemCheckboxes)
-                        .filter(cb => cb.checked)
-                        .map(cb => cb.value);
-
-                    if (selectedIds.length === 0) {
-                        alert("⚠️ Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!");
-                        return;
-                    }
-
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('url', 'bobin/exportHistoryExcel');
-                    currentUrl.searchParams.set('selected_ids', selectedIds.join(','));
-                    window.location.href = currentUrl.toString();
-                });
+        // Cập nhật số lượng bản ghi đã tích chọn
+        function updateSelectedCount() {
+            const selected = Array.from(itemCheckboxes).filter(cb => cb.checked);
+            if (countText) {
+                countText.textContent = `Đã chọn: ${selected.length} bản ghi`;
             }
+            if (selectAllCb) {
+                selectAllCb.checked = (selected.length === itemCheckboxes.length && itemCheckboxes.length > 0);
+            }
+        }
+
+        // Chọn tất cả
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', function() {
+                itemCheckboxes.forEach(cb => cb.checked = selectAllCb.checked);
+                updateSelectedCount();
+            });
+        }
+
+        itemCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateSelectedCount);
         });
+
+        // Xử lý xuất các mục đã chọn
+        if (btnExportSelected) {
+            btnExportSelected.addEventListener('click', function() {
+                const selectedIds = Array.from(itemCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                if (selectedIds.length === 0) {
+                    if (typeof Toast !== 'undefined' && Toast.show) {
+                        Toast.show("Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!",
+                            "warning");
+                    } else {
+                        alert("⚠️ Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!");
+                    }
+                    return;
+                }
+
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('url', 'bobin/exportHistoryExcel');
+                currentUrl.searchParams.set('selected_ids', selectedIds.join(','));
+                window.location.href = currentUrl.toString();
+            });
+        }
+    });
     </script>
 </body>
 

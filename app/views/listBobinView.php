@@ -45,8 +45,12 @@ if (!function_exists('viBadge')) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách Bobin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= __('page_bobin_detail') ?> | SMC</title>
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobin.css">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
 </head>
 
 <body>

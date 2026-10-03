@@ -42,7 +42,7 @@ class Router
 
         // ================= 3. DANH MỤC CÔNG KHAI (KHÔNG CẦN LOGIN) =================
         $publicActions = [
-            'auth' => ['login', 'validatelogin', 'logout', 'index'],
+            'auth' => ['login', 'validatelogin', 'logout', 'index', 'changepassword', 'postchangepassword', 'setlanguage'],
             'listdata' => ['getlistdata', 'index'], // API nạp danh mục gợi ý máy, nhân viên...
             'bobin' => [
                 'listbobindetailview',         // Xem chi tiết danh sách
@@ -109,6 +109,26 @@ class Router
             exit;
         }
 
+        // ================= 4.1. KIỂM TRA BẮT BUỘC ĐỔI MẬT KHẨU LẦN ĐẦU =================
+        if (isset($_SESSION['user']) && !empty($_SESSION['user']['is_first_login'])) {
+            $isChangePwdAction = ($controllerLower === 'auth' && in_array($methodLower, ['changepassword', 'postchangepassword', 'logout', 'setlanguage'], true));
+            if (!$isChangePwdAction) {
+                if ($isApi) {
+                    http_response_code(403);
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode([
+                        'success' => false,
+                        'error'   => 'Bạn bắt buộc phải đổi mật khẩu trong lần đăng nhập đầu tiên.',
+                        'must_change_password' => true
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+
+                header('Location: ' . BASE_URL . '/index.php?url=auth/changePassword&first_login=1');
+                exit;
+            }
+        }
+
         // ================= 5. KIỂM TRA PHÂN QUYỀN VAI TRÒ (ROLE) =================
         if (isset($_SESSION['user']) && !$isPublic && $controllerLower === 'bobin') {
             $userRole = strtolower($_SESSION['user']['role'] ?? '');
@@ -139,6 +159,27 @@ class Router
                     header("Location: {$redirectUrl}");
                     exit;
                 }
+            }
+        }
+
+        // Phân quyền cho module Employee: Chỉ Admin mới có quyền truy cập
+        if ($controllerLower === 'employee') {
+            $userRole = strtolower($_SESSION['user']['role'] ?? '');
+            if ($userRole !== 'admin') {
+                if ($isApi) {
+                    http_response_code(403);
+                    header('Content-Type: application/json; charset=utf-8');
+                    echo json_encode(['success' => false, 'error' => 'Chỉ Quản trị viên (Admin) mới có quyền truy cập.'], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                $redirectUrl = match ($userRole) {
+                    'extrusion' => BASE_URL . '/index.php?url=bobin/index',
+                    'qc'        => BASE_URL . '/index.php?url=bobin/listBobinView_QC',
+                    'winding'   => BASE_URL . '/index.php?url=bobin/listBobinView_Winding',
+                    default     => BASE_URL . '/index.php?url=bobin/listBobinDetailView',
+                };
+                header("Location: {$redirectUrl}");
+                exit;
             }
         }
 

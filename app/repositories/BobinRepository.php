@@ -143,6 +143,21 @@ class BobinRepository
                 ':to_date'   => $filters['to_date']
             ];
 
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                $params[':rack'] = $filters['rack'];
+            }
+
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
@@ -294,6 +309,28 @@ class BobinRepository
             if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
                 $sql .= " AND bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
+            }
+
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                $params[':rack'] = $filters['rack'];
+            }
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
             }
 
             $sql .= " GROUP BY bobin_current_status";

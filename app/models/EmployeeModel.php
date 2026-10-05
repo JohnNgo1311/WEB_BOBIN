@@ -36,9 +36,15 @@ class EmployeeModel
         }
 
         // Lọc theo trạng thái làm việc (1: đang làm, 0: nghỉ/khóa)
+        // Hỗ trợ cả giá trị string 'active'/'inactive' từ form và số nguyên 0/1
         if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== 'all') {
             $sql .= " AND is_active = :status";
-            $params[':status'] = (int)$filters['status'];
+            $statusVal = match ($filters['status']) {
+                'active'   => 1,
+                'inactive' => 0,
+                default    => (int)$filters['status']
+            };
+            $params[':status'] = $statusVal;
         }
 
         $sql .= " ORDER BY id ASC";
@@ -141,13 +147,12 @@ class EmployeeModel
     }
 
     /**
-     * Cập nhật thông tin nhân viên (Họ tên, Vai trò, Username, Tình trạng)
+     * Cập nhật thông tin nhân viên (Họ tên, Vai trò, Tình trạng)
      */
     public function update(int $id, array $data): bool
     {
         $name = trim($data['employee_name'] ?? '');
         $role = trim($data['role'] ?? 'extrusion');
-        $username = trim($data['username'] ?? '');
         $isActive = isset($data['is_active']) ? (int)$data['is_active'] : 1;
 
         if ($name === '') {
@@ -159,10 +164,29 @@ class EmployeeModel
             $role = 'extrusion';
         }
 
+        // Nếu có truyền username hợp lệ thì cập nhật, ngược lại chỉ cập nhật tên, vai trò và tình trạng
+        if (!empty($data['username'])) {
+            $username = trim($data['username']);
+            $sql = "UPDATE employee_list 
+                    SET employee_name = :name, 
+                        role = :role, 
+                        username = :username, 
+                        is_active = :is_active, 
+                        updated_time = NOW() 
+                    WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([
+                ':name'      => $name,
+                ':role'      => $role,
+                ':username'  => $username,
+                ':is_active' => $isActive,
+                ':id'        => $id
+            ]);
+        }
+
         $sql = "UPDATE employee_list 
                 SET employee_name = :name, 
                     role = :role, 
-                    username = :username, 
                     is_active = :is_active, 
                     updated_time = NOW() 
                 WHERE id = :id";
@@ -170,7 +194,6 @@ class EmployeeModel
         return $stmt->execute([
             ':name'      => $name,
             ':role'      => $role,
-            ':username'  => $username,
             ':is_active' => $isActive,
             ':id'        => $id
         ]);

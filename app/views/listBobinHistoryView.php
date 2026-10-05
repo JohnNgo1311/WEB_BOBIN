@@ -5,6 +5,7 @@ $currentUrl = $_GET['url'] ?? '';
 $pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? 0);
 // 1. TỔNG HỢP SỐ LIỆU TỪ DATABASE
 $defaultStatus = [
+    'Extruded'             => 0,
     'Rolled'               => 0,
     'Busy_Unchecked'       => 0,
     'Busy_Checked'         => 0,
@@ -14,12 +15,19 @@ $defaultStatus = [
 $statusCounts = array_merge($defaultStatus, $data['statusCounts'] ?? []);
 
 $statusOptions = [
-    'all'                  => '📦 Tất cả trạng thái',
-    'Busy_Unchecked'       => '⏳ CHƯA KIỂM TRA QC',
-    'Busy_Checked'         => '🛡️ ĐÃ KIỂM TRA QC',
-    'Rolled'               => '✅ ĐÃ CUỘN',
-    'Pending_Cancellation' => '⚠️ CHỜ HỦY',
-    'Cancelled'            => '🗑️ ĐÃ HỦY'
+    'all'                            => '📦 Tất cả trạng thái',
+    'Extruded'                       => '⚙️ ĐÃ ĐÙN',
+    'Busy_Unchecked'                 => '⏳ CHƯA KIỂM TRA QC',
+    'Busy_Checked'                   => '🛡️ ĐÃ KIỂM TRA QC (Tất cả)',
+    'Busy_Checked_InPeriod'          => '🛡️ ĐÃ KT QC (Đùn trong khoảng)',
+    'Busy_Checked_Before'            => '🛡️ ĐÃ KT QC (Đùn trước đó)',
+    'Rolled'                         => '✅ ĐÃ CUỘN',
+    'Pending_Cancellation'          => '⚠️ CHỜ HỦY (Tất cả)',
+    'Pending_Cancellation_InPeriod' => '⚠️ CHỜ HỦY (Đùn trong khoảng)',
+    'Pending_Cancellation_Before'   => '⚠️ CHỜ HỦY (Đùn trước đó)',
+    'Cancelled'                      => '🗑️ ĐÃ HỦY (Tất cả)',
+    'Cancelled_InPeriod'             => '🗑️ ĐÃ HỦY (Đùn trong khoảng)',
+    'Cancelled_Before'               => '🗑️ ĐÃ HỦY (Đùn trước đó)'
 ];
 
 $currentStatus = $_GET['status'] ?? 'all';
@@ -30,11 +38,12 @@ $racks         = $data['racks'] ?? [];
 
 $defaultToDate   = date('Y-m-d');
 $defaultFromDate = date('Y-m-d', strtotime('-7 days'));
-$fromDateVal     = !empty($_GET['from_date']) ? $_GET['from_date'] : $defaultFromDate;
 $toDateVal       = !empty($_GET['to_date']) ? $_GET['to_date'] : $defaultToDate;
+$fromDateVal     = !empty($_GET['from_date']) ? $_GET['from_date'] : $defaultFromDate;
 
 // ========================================================
-// TÍNH TOÁN DUNG LƯỢNG VÀ BOBIN TRỐNG
+// TÍNH TOÁN DUNG LƯỢNG VÀ BOBIN TRỐNG (THEO TIÊU CHÍ 7)
+// Số Bobin thực tế - Số Bobin [ĐÃ ĐÙN] + Số Bobin [ĐÃ CUỘN]
 // ========================================================
 $capacityMap = (!empty($data['capacityMap'])) ? $data['capacityMap'] : [
     'PL4-7 (TU04.TU06)' => 420,
@@ -48,19 +57,22 @@ if ($currentSize === 'all') {
     $totalRealBobins = $capacityMap[$currentSize] ?? 0;
 }
 
-$occupiedBobins = ($statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'] + $statusCounts['Pending_Cancellation']);
-$emptyBobins = max(0, $totalRealBobins - $occupiedBobins);
-$totalRecords = count($bobins);
+$extrudedBobins = (int)($statusCounts['Extruded'] ?? 0);
+$rolledBobins   = (int)($statusCounts['Rolled'] ?? 0);
+$emptyBobins    = max(0, $totalRealBobins - $extrudedBobins + $rolledBobins);
+$totalRecords   = count($bobins);
 
-// 2. DỮ LIỆU BIỂU ĐỒ (6 TIÊU CHÍ RÕ RÀNG THEO ĐÚNG DỮ LIỆU THỰC TẾ)
-$chartLabels = ['Trống', 'Chưa KT QC', 'Đã KT QC', 'Đã cuộn', 'Chờ hủy', 'Đã hủy'];
+// 2. DỮ LIỆU BIỂU ĐỒ (7 TIÊU CHÍ THEO YÊU CẦU 10)
+// [Trống, Đã đùn, Chưa QC, Đã QC, Đã cuộn, Chờ hủy, Đã hủy]
+$chartLabels = ['Trống', 'Đã đùn', 'Chưa QC', 'Đã QC', 'Đã cuộn', 'Chờ hủy', 'Đã hủy'];
 $chartSeries = [
     $emptyBobins,
-    $statusCounts['Busy_Unchecked'],
-    $statusCounts['Busy_Checked'],
-    $statusCounts['Rolled'],
-    $statusCounts['Pending_Cancellation'],
-    $statusCounts['Cancelled']
+    $extrudedBobins,
+    (int)($statusCounts['Busy_Unchecked'] ?? 0),
+    (int)($statusCounts['Busy_Checked'] ?? 0),
+    $rolledBobins,
+    (int)($statusCounts['Pending_Cancellation'] ?? 0),
+    (int)($statusCounts['Cancelled'] ?? 0)
 ];
 
 $sizeOptions = [
@@ -93,6 +105,10 @@ if (!function_exists('buildFilterUrl')) {
         if (!isset($query['url'])) {
             $query['url'] = 'bobin/listBobinHistoryView';
         }
+
+        $effectiveToDate = $overrideParams['to_date'] ?? ($query['to_date'] ?? $toDateVal);
+        $effectiveFromDate = $overrideParams['from_date'] ?? ($query['from_date'] ?? $fromDateVal);
+
         if (!isset($query['from_date']) && !empty($fromDateVal)) {
             $query['from_date'] = $fromDateVal;
         }
@@ -181,8 +197,7 @@ if (!function_exists('decodeJsonObject')) {
             <!-- Nhóm QC -->
             <?php if (in_array($userRole, ['qc', 'admin'])): ?>
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
-                class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>"
-                data-i18n="nav_qc">
+                class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>" data-i18n="nav_qc">
                 <?= __('nav_qc') ?>
             </a>
             <?php endif; ?>
@@ -210,9 +225,8 @@ if (!function_exists('decodeJsonObject')) {
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_pending_cancel">
-                <?= __('nav_pending_cancel') ?>
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
+                <span data-i18n="nav_pending_cancel"><?= __('nav_pending_cancel') ?></span>
                 <?php if ($pCount > 0): ?>
                 <span class="badge-pending-count"><?= $pCount ?></span>
                 <?php endif; ?>
@@ -234,11 +248,14 @@ if (!function_exists('decodeJsonObject')) {
             <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
                 👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
             </span>
-            <a href="/WEB_BOBIN/public/index.php?url=auth/changePassword" class="btn-change-pwd" title="Đổi mật khẩu tài khoản" data-i18n="nav_change_pwd"><?= __('nav_change_pwd') ?></a>
-            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn" data-i18n="nav_logout"><?= __('nav_logout') ?></a>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/changePassword" class="btn-change-pwd"
+                title="Đổi mật khẩu tài khoản" data-i18n="nav_change_pwd"><?= __('nav_change_pwd') ?></a>
+            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn"
+                data-i18n="nav_logout"><?= __('nav_logout') ?></a>
             <?php else: ?>
             <a href="/WEB_BOBIN/public/index.php?url=auth/login"
-                style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;" data-i18n="nav_login"><?= __('nav_login') ?></a>
+                style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;"
+                data-i18n="nav_login"><?= __('nav_login') ?></a>
             <?php endif; ?>
         </div>
     </div>
@@ -292,6 +309,18 @@ if (!function_exists('decodeJsonObject')) {
                                 value="<?= htmlspecialchars($fromDateVal) ?>">
                             <span class="date-sep">➝</span>
                             <input type="date" name="to_date" id="toDate" value="<?= htmlspecialchars($toDateVal) ?>">
+                        </div>
+
+                        <!-- PHÍM CHỌN NHANH THỜI GIAN -->
+                        <div class="quick-date-pills">
+                            <button type="button" class="btn-pill-date" onclick="setQuickDate('today')"
+                                title="Hôm nay">Hôm nay</button>
+                            <button type="button" class="btn-pill-date" onclick="setQuickDate('yesterday')"
+                                title="Hôm qua">Hôm qua</button>
+                            <button type="button" class="btn-pill-date" onclick="setQuickDate('7days')"
+                                title="7 ngày gần nhất">7 ngày</button>
+                            <button type="button" class="btn-pill-date" onclick="setQuickDate('1month')"
+                                title="1 tháng gần nhất">1 tháng</button>
                         </div>
 
                         <button type="button" id="btnScanQR" class="btn-modern btn-scan">
@@ -364,7 +393,7 @@ if (!function_exists('decodeJsonObject')) {
                             <rect x="2" y="14" width="4" height="6" fill="#34d399" stroke="none"></rect>
                         </svg>
                     </div>
-                    <h3>Thống kê lịch sử cập nhật trạng thái Bobin</h3>
+                    <h3 data-i18n="chart_history_status_stats">Thống kê lịch sử cập nhật trạng thái Bobin</h3>
                 </div>
 
                 <div class="chart-box">
@@ -388,9 +417,9 @@ if (!function_exists('decodeJsonObject')) {
                     </div>
                 </div>
 
-                <!-- LƯỚI 2 CỘT KPI THU GỌN -->
+                <!-- LƯỚI 2 CỘT KPI THU GỌN (CHỈ HIỂN THỊ SỐ, KHÔNG PHẢI NÚT NHẤN) -->
                 <div class="kpi-grid">
-                    <div class="kpi-card empty-bobin" style="cursor: default;">
+                    <div class="kpi-card empty-bobin">
                         <div class="kpi-left">
                             <span class="kpi-icon">📦</span>
                             <span class="kpi-name">BOBIN TRỐNG</span>
@@ -400,60 +429,92 @@ if (!function_exists('decodeJsonObject')) {
                         </div>
                     </div>
 
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Unchecked']) ?>" class="kpi-card unchecked">
+                    <div class="kpi-card extruded">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">⚙️</span>
+                            <span class="kpi-name">ĐÃ ĐÙN</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Extruded'] ?? 0) ?></strong>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card unchecked">
                         <div class="kpi-left">
                             <span class="kpi-icon">⏳</span>
                             <span class="kpi-name">CHƯA KT QC</span>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked']) ?></strong>
-                            <span class="kpi-arrow">›</span>
+                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Unchecked'] ?? 0) ?></strong>
                         </div>
-                    </a>
+                    </div>
 
-                    <a href="<?= buildFilterUrl(['status' => 'Busy_Checked']) ?>" class="kpi-card checked">
+                    <div class="kpi-card checked">
                         <div class="kpi-left">
                             <span class="kpi-icon">🛡️</span>
-                            <span class="kpi-name">ĐÃ KT QC</span>
+                            <div class="kpi-title-wrap">
+                                <span class="kpi-name">ĐÃ KT QC</span>
+                                <div class="kpi-sub-breakdown">
+                                    <span class="sub-pill in-period" title="Bobin được đùn trong khoảng thời gian tra cứu">Trong: <strong><?= number_format($statusCounts['Busy_Checked_InPeriod'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill before" title="Bobin được đùn trước khoảng thời gian tra cứu">Trước: <strong><?= number_format($statusCounts['Busy_Checked_Before'] ?? 0) ?></strong></span>
+                                </div>
+                            </div>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Checked']) ?></strong>
-                            <span class="kpi-arrow">›</span>
+                            <strong class="kpi-val"><?= number_format($statusCounts['Busy_Checked'] ?? 0) ?></strong>
                         </div>
-                    </a>
+                    </div>
 
-                    <a href="<?= buildFilterUrl(['status' => 'Rolled']) ?>" class="kpi-card rolled">
+                    <div class="kpi-card rolled">
                         <div class="kpi-left">
                             <span class="kpi-icon">✅</span>
                             <span class="kpi-name">ĐÃ CUỘN</span>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Rolled']) ?></strong>
-                            <span class="kpi-arrow">›</span>
+                            <strong class="kpi-val"><?= number_format($statusCounts['Rolled'] ?? 0) ?></strong>
                         </div>
-                    </a>
+                    </div>
 
-                    <a href="<?= buildFilterUrl(['status' => 'Pending_Cancellation']) ?>" class="kpi-card pending">
+                    <div class="kpi-card pending">
                         <div class="kpi-left">
                             <span class="kpi-icon">⚠️</span>
-                            <span class="kpi-name">CHỜ HỦY</span>
+                            <div class="kpi-title-wrap">
+                                <span class="kpi-name">CHỜ HỦY</span>
+                                <div class="kpi-sub-breakdown">
+                                    <span class="sub-pill in-period" title="Bobin được đùn trong khoảng thời gian tra cứu">Trong: <strong><?= number_format($statusCounts['Pending_Cancellation_InPeriod'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill before" title="Bobin được đùn trước khoảng thời gian tra cứu">Trước: <strong><?= number_format($statusCounts['Pending_Cancellation_Before'] ?? 0) ?></strong></span>
+                                </div>
+                            </div>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation']) ?></strong>
-                            <span class="kpi-arrow">›</span>
+                            <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation'] ?? 0) ?></strong>
                         </div>
-                    </a>
+                    </div>
 
-                    <a href="<?= buildFilterUrl(['status' => 'Cancelled']) ?>" class="kpi-card cancelled">
+                    <div class="kpi-card cancelled">
                         <div class="kpi-left">
                             <span class="kpi-icon">🗑️</span>
-                            <span class="kpi-name">ĐÃ HỦY</span>
+                            <div class="kpi-title-wrap">
+                                <span class="kpi-name">ĐÃ HỦY</span>
+                                <div class="kpi-sub-breakdown">
+                                    <span class="sub-pill in-period" title="Bobin được đùn trong khoảng thời gian tra cứu">Trong: <strong><?= number_format($statusCounts['Cancelled_InPeriod'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill before" title="Bobin được đùn trước khoảng thời gian tra cứu">Trước: <strong><?= number_format($statusCounts['Cancelled_Before'] ?? 0) ?></strong></span>
+                                </div>
+                            </div>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Cancelled']) ?></strong>
-                            <span class="kpi-arrow">›</span>
+                            <strong class="kpi-val"><?= number_format($statusCounts['Cancelled'] ?? 0) ?></strong>
                         </div>
-                    </a>
+                    </div>
+                </div>
+
+                <!-- BẢNG BẢO TOÀN SỐ LIỆU ĐÃ ĐÙN -->
+                <div class="conservation-banner">
+                    <span class="banner-icon">⚖️</span>
+                    <div class="banner-text">
+                        <strong>Bảo toàn số lượng ĐÃ ĐÙN (<?= number_format($statusCounts['Extruded'] ?? 0) ?>):</strong>
+                        <span>Đã QC (<?= number_format($statusCounts['Conserved_Busy_Checked'] ?? 0) ?>) + Chưa QC (<?= number_format($statusCounts['Conserved_Busy_Unchecked'] ?? 0) ?>) + Đã cuộn (<?= number_format($statusCounts['Conserved_Rolled'] ?? 0) ?>) + Chờ hủy (<?= number_format($statusCounts['Conserved_Pending_Cancellation'] ?? 0) ?>) + Đã hủy (<?= number_format($statusCounts['Conserved_Cancelled'] ?? 0) ?>) = <strong><?= number_format(($statusCounts['Conserved_Busy_Checked'] ?? 0) + ($statusCounts['Conserved_Busy_Unchecked'] ?? 0) + ($statusCounts['Conserved_Rolled'] ?? 0) + ($statusCounts['Conserved_Pending_Cancellation'] ?? 0) + ($statusCounts['Conserved_Cancelled'] ?? 0)) ?></strong></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -465,10 +526,24 @@ if (!function_exists('decodeJsonObject')) {
             const totalRealBobins = <?= (int)$totalRealBobins ?>;
             const maxVal = Math.max(...rawData, 0);
 
+            const extrudedBobins = <?= (int)$extrudedBobins ?>;
+
+            const translatedLabels = labels.map(function(lbl) {
+                if (typeof window.t !== 'function') return lbl;
+                if (lbl === 'Trống') return window.t('chart_empty', 'Trống');
+                if (lbl === 'Đã đùn') return window.t('status_extruded', 'Đã đùn');
+                if (lbl === 'Chưa QC') return window.t('status_unchecked', 'Chưa QC');
+                if (lbl === 'Đã QC') return window.t('status_checked', 'Đã QC');
+                if (lbl === 'Đã cuộn') return window.t('status_ready', 'Đã cuộn');
+                if (lbl === 'Chờ hủy') return window.t('status_pending_cancel', 'Chờ hủy');
+                if (lbl === 'Đã hủy') return window.t('status_cancelled', 'Đã hủy');
+                return lbl;
+            });
+
             const statusChart = new BaseChart('#statusPieChart', {
                 chart: {
                     type: 'bar',
-                    height: 220,
+                    height: 240,
                     fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                     toolbar: {
                         show: false
@@ -479,10 +554,11 @@ if (!function_exists('decodeJsonObject')) {
                     }
                 },
                 series: [{
-                    name: 'Số lượng Bobin',
+                    name: (typeof window.t === 'function' ? window.t('chart_bobin_count',
+                        'Số lượng Bobin') : 'Số lượng Bobin'),
                     data: rawData
                 }],
-                colors: ['#94a3b8', '#f97316', '#38bdf8', '#22c55e', '#f59e0b', '#ef4444'],
+                colors: ['#94a3b8', '#0d9488', '#f97316', '#0284c7', '#22c55e', '#f59e0b', '#ef4444'],
                 plotOptions: {
                     bar: {
                         horizontal: true,
@@ -498,9 +574,18 @@ if (!function_exists('decodeJsonObject')) {
                     enabled: true,
                     textAnchor: 'start',
                     offsetX: 8,
-                    formatter: function(val) {
-                        const percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(
-                            1) : 0;
+                    formatter: function(val, opt) {
+                        const idx = opt.dataPointIndex;
+                        let percent = 0;
+                        if (idx === 0 || idx === 1) {
+                            // Trống và Đã đùn: tính theo Tổng số lượng Bobin thực tế
+                            percent = totalRealBobins > 0 ? ((val / totalRealBobins) * 100).toFixed(1) :
+                                0;
+                        } else {
+                            // Chưa QC, Đã QC, Đã cuộn, Chờ hủy, Đã hủy: tính theo số lượng ĐÃ ĐÙN
+                            percent = extrudedBobins > 0 ? ((val / extrudedBobins) * 100).toFixed(1) :
+                                0;
+                        }
                         return `${val.toLocaleString('vi-VN')} (${percent}%)`;
                     },
                     style: {
@@ -514,15 +599,15 @@ if (!function_exists('decodeJsonObject')) {
                     strokeDashArray: 3,
                     padding: {
                         top: -12,
-                        right: 35,
+                        right: 45,
                         bottom: -10,
                         left: 15
                     }
                 },
                 xaxis: {
-                    categories: labels,
+                    categories: translatedLabels,
                     min: 0,
-                    max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
+                    max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.3),
                     labels: {
                         style: {
                             colors: '#64748b',
@@ -796,6 +881,20 @@ if (!function_exists('decodeJsonObject')) {
                         <!-- CỘT 1: ĐÙN CHECK -->
                         <div class="pipeline-col extrusion-col">
                             <div class="qc-title">🏭 Đùn Check</div>
+                            <?php
+                                    $hasExtCheck = !empty($extCheck) && (
+                                        isset($extCheck['diameter']) ||
+                                        isset($extCheck['gel']) ||
+                                        isset($extCheck['foreign_object']) ||
+                                        isset($extCheck['color']) ||
+                                        isset($extCheck['print'])
+                                    );
+                            ?>
+                            <?php if (!$hasExtCheck): ?>
+                            <div class="empty-pipeline-notice notice-ext" data-i18n="pipeline_no_ext_data">
+                                <?= __('pipeline_no_ext_data') ?>
+                            </div>
+                            <?php else: ?>
                             <div class="qc-badges">
                                 <?php
                                         $extItems = [
@@ -810,6 +909,7 @@ if (!function_exists('decodeJsonObject')) {
                                         }
                                         ?>
                             </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- CỘT 2: QC CHECK -->
@@ -817,9 +917,8 @@ if (!function_exists('decodeJsonObject')) {
                             <div class="qc-title">🛡️ QC Check</div>
                             <?php $hasQcInspected = !empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật'; ?>
                             <?php if (!$hasQcInspected): ?>
-                            <div
-                                style="padding: 10px 0; color: #d97706; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 5px;">
-                                <span>⏳ Chưa có dữ liệu kiểm tra QC</span>
+                            <div class="empty-pipeline-notice notice-qc" data-i18n="pipeline_no_qc_data">
+                                <?= __('pipeline_no_qc_data') ?>
                             </div>
                             <?php else: ?>
                             <div class="qc-header">
@@ -856,11 +955,10 @@ if (!function_exists('decodeJsonObject')) {
                         <!-- CỘT 3: THÔNG TIN CUỘN -->
                         <div class="pipeline-col winding-col">
                             <div class="winding-title">📍 Thông tin cuộn</div>
-                            <?php $hasWinding = !empty($item['finish_time']) || (!empty($winding_employeeCode) && $winding_employeeCode !== 'Chưa cập nhật') || ($rawStatus === 'Rolled'); ?>
+                            <?php $hasWinding = (!empty($item['winding_machine']) && $item['winding_machine'] !== 'Chưa cập nhật') || (!empty($winding_employeeCode) && $winding_employeeCode !== 'Chưa cập nhật') || ($rawStatus === 'Rolled'); ?>
                             <?php if (!$hasWinding): ?>
-                            <div
-                                style="padding: 10px 0; color: #64748b; font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; gap: 5px;">
-                                <span>⏳ Chưa hoàn thành cuộn</span>
+                            <div class="empty-pipeline-notice notice-winding" data-i18n="pipeline_no_winding_data">
+                                <?= __('pipeline_no_winding_data') ?>
                             </div>
                             <?php else: ?>
                             <div class="winding-header">
@@ -923,6 +1021,53 @@ if (!function_exists('decodeJsonObject')) {
     <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
 
     <script>
+    function setQuickDate(type) {
+        const fromInput = document.getElementById('fromDate');
+        const toInput = document.getElementById('toDate');
+        const filterForm = document.getElementById('filterForm');
+        if (!fromInput || !toInput) return;
+
+        const formatDate = (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const today = new Date();
+        let fromDate = new Date();
+        let toDate = new Date();
+
+        switch (type) {
+            case 'today':
+                fromDate = new Date(today);
+                toDate = new Date(today);
+                break;
+            case 'yesterday':
+                fromDate = new Date(today);
+                fromDate.setDate(today.getDate() - 1);
+                toDate = new Date(fromDate);
+                break;
+            case '7days':
+                fromDate = new Date(today);
+                fromDate.setDate(today.getDate() - 7);
+                toDate = new Date(today);
+                break;
+            case '1month':
+                fromDate = new Date(today);
+                fromDate.setMonth(today.getMonth() - 1);
+                toDate = new Date(today);
+                break;
+        }
+
+        fromInput.value = formatDate(fromDate);
+        toInput.value = formatDate(toDate);
+
+        if (filterForm) {
+            filterForm.submit();
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         const interactiveElements = document.querySelectorAll(
             ".filter-dashboard select, .filter-dashboard a, .kpi-list a");

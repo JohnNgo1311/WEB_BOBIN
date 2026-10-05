@@ -35,6 +35,13 @@ class BobinController extends Controller
         // Cài đặt múi giờ (nếu chưa có trong config chung)
         date_default_timezone_set('Asia/Ho_Chi_Minh');
         $this->bobinService = new BobinServices();
+        try {
+            // Nạp danh mục và số lượng pending cancellation vào GlobalData
+            $listDataRepo = new ListdataRepository();
+            $listDataRepo->getListData(false);
+        } catch (Throwable $e) {
+            error_log("ListData init error: " . $e->getMessage());
+        }
     }
     // private BobinModel $model;
 
@@ -127,6 +134,7 @@ class BobinController extends Controller
             'statusCounts' => $statusCounts,
             'capacityMap'  => $capacityMap,
             'racks'        => $racks ?? [], // <-- Truyền xuống View
+            'pendingCount' => $this->bobinService->countPendingBobins(),
             'error'        => $errorMsg,
             'success'      => empty($errorMsg),
         ]);
@@ -153,9 +161,10 @@ class BobinController extends Controller
         }
 
         $this->view('windingView', data: [
-            'bobins'     => $bobins,
-            'capacityMap' => $capacityMap, // <-- Truyền xuống View
-            'pagination' => [
+            'bobins'       => $bobins,
+            'capacityMap'  => $capacityMap, // <-- Truyền xuống View
+            'pendingCount' => $this->bobinService->countPendingBobins(),
+            'pagination'   => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
                 'totalRecords' => $totalRecords,
@@ -189,6 +198,7 @@ class BobinController extends Controller
             'statusCounts' => $statusCounts,
             'capacityMap'  => $capacityMap,
             'racks'        => $racks, // <-- Thêm danh sách Racks
+            'pendingCount' => $this->bobinService->countPendingBobins(),
             'pagination'   => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
@@ -206,6 +216,7 @@ class BobinController extends Controller
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getDetailBobinsForQC($dto) ?? [];
+            $totalWaiting = $this->bobinService->countDetailBobinsForQC($dto);
 
             // Lấy số lượng Bobin đang chờ hủy
             $pendingCount = $this->bobinService->countPendingBobins();
@@ -215,6 +226,7 @@ class BobinController extends Controller
 
         $this->view('qcView', data: [
             'bobins'       => $bobins,
+            'totalWaiting' => $totalWaiting ?? count($bobins),
             'pendingCount' => $pendingCount ?? 0,
         ]);
     }
@@ -236,7 +248,8 @@ class BobinController extends Controller
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
         $this->view('listPendingCancellationView', data: [
-            'bobins'  => $bobins,
+            'bobins'       => $bobins,
+            'pendingCount' => count($bobins),
         ]);
     }
     public function windingView()

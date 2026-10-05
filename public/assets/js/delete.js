@@ -165,8 +165,14 @@ if (typeof ConfirmDialog === "undefined") {
             };
 
             box.querySelector('.cancel-btn').addEventListener('click', closeDialog);
-            box.querySelector('.confirm-btn').addEventListener('click', () => {
-                if (typeof onConfirm === 'function') onConfirm();
+            box.querySelector('.confirm-btn').addEventListener('click', async () => {
+                if (typeof onConfirm === 'function') {
+                    try {
+                        await onConfirm(box);
+                    } catch (err) {
+                        console.error('ConfirmDialog callback error:', err);
+                    }
+                }
                 closeDialog();
             });
         }

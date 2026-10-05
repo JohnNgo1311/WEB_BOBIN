@@ -142,7 +142,8 @@ class BobinServices
             $entity->bobinKeyCode = $this->resolveKeyCode($dto->bobin_identification_code);
         }
         if ($function === 'extCreate') {
-            $entity->bobinKeyCode = $dto->bobin_identification_code . "_" . date('Y_m_d_H_i_s');
+            $finishDt = $this->parseDate($dto->finish_time ?? null);
+            $entity->bobinKeyCode = $dto->bobin_identification_code . "_" . $finishDt->format('Y_m_d_H_i_s');
         }
         $entity->identificationCode = $dto->bobin_identification_code;
 
@@ -178,7 +179,18 @@ class BobinServices
             }
 
             if (!empty($date) && is_string($date)) {
-                return new DateTime($date);
+                $trimmed = trim($date);
+                // Trường hợp định dạng DD/MM/YYYY HH:mm:ss hoặc DD/MM/YYYY HH:mm
+                if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/', $trimmed, $m)) {
+                    $d = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+                    $mo = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+                    $y = $m[3];
+                    $h = isset($m[4]) ? str_pad($m[4], 2, '0', STR_PAD_LEFT) : '00';
+                    $mi = isset($m[5]) ? str_pad($m[5], 2, '0', STR_PAD_LEFT) : '00';
+                    $s = isset($m[6]) ? str_pad($m[6], 2, '0', STR_PAD_LEFT) : '00';
+                    return new DateTime("{$y}-{$mo}-{$d} {$h}:{$mi}:{$s}");
+                }
+                return new DateTime($trimmed);
             }
         } catch (Exception $e) {
         }
@@ -372,6 +384,11 @@ class BobinServices
         // Bắt buộc nhập ghi chú ở tầng backend
         if (empty($defectNote)) {
             throw new Exception("Vui lòng nhập ghi chú giải trình lý do trước khi điều chỉnh.");
+        }
+
+        $expectedPrefix = "Phán định chuyển Bobin sang: " . $newType;
+        if (strpos($defectNote, 'Phán định chuyển Bobin sang:') === false) {
+            $defectNote = $expectedPrefix . ' - ' . $defectNote;
         }
 
         $this->employeeRepo->getListEmployee();
@@ -699,6 +716,22 @@ class BobinServices
             ];
 
             return $this->bobinRepo->getDetailBobinsForQC($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobinsForQC(BobinGetListDTO $dto): int
+    {
+        try {
+            $keywordRaw = $dto->keyword ?? '';
+            $keyword    = trim($keywordRaw);
+
+            $filters = [
+                'keyword' => mb_substr($keyword, 0, 255),
+            ];
+
+            return $this->bobinRepo->countDetailBobinsForQC($filters);
         } catch (Exception $e) {
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }

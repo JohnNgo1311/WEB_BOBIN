@@ -79,9 +79,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_pending_cancel">
-                <?= __('nav_pending_cancel') ?>
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
+                <span data-i18n="nav_pending_cancel"><?= __('nav_pending_cancel') ?></span>
                 <?php if ($pCount > 0): ?>
                     <span class="badge-pending-count"><?= $pCount ?></span>
                 <?php endif; ?>
@@ -159,7 +158,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
         <!-- DANH SÁCH BOBIN CHỜ CUỘN -->
         <div class="list-card">
             <div class="header-row">
-                <h2>Số lượng Bobin chờ cuộn: <span class="counter-badge"><?= count($bobins) ?></span></h2>
+                <h2>Số lượng Bobin chờ cuộn: <span class="counter-badge"><?= (int)($pagination['totalRecords'] ?? count($bobins)) ?></span></h2>
             </div>
 
             <?php if (empty($bobins)): ?>

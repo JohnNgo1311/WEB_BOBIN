@@ -207,9 +207,8 @@ $typeOptions = [
             </a>
 
             <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_pending_cancel">
-                <?= __('nav_pending_cancel') ?>
+                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
+                <span data-i18n="nav_pending_cancel"><?= __('nav_pending_cancel') ?></span>
                 <?php if ($pCount > 0): ?>
                 <span class="badge-pending-count"><?= $pCount ?></span>
                 <?php endif; ?>
@@ -355,7 +354,7 @@ $typeOptions = [
                             <rect x="2" y="14" width="4" height="6" fill="#34d399" stroke="none"></rect>
                         </svg>
                     </div>
-                    <h3>Thống kê trạng thái Bobin</h3>
+                    <h3 data-i18n="chart_status_stats">Thống kê trạng thái Bobin</h3>
                 </div>
 
                 <div class="chart-box">
@@ -458,6 +457,17 @@ $typeOptions = [
             const totalRealBobins = <?= (int)$totalRealBobins ?>;
             const maxVal = Math.max(...rawData, 0);
 
+            const translatedLabels = labels.map(function(lbl) {
+                if (typeof window.t !== 'function') return lbl;
+                if (lbl === 'Trống') return window.t('chart_empty', 'Trống');
+                if (lbl === 'Chưa QC' || lbl === 'Chưa KT QC') return window.t('status_unchecked', 'Chưa QC');
+                if (lbl === 'Đã QC' || lbl === 'Đã KT QC') return window.t('status_checked', 'Đã QC');
+                if (lbl === 'Đã cuộn') return window.t('status_ready', 'Đã cuộn');
+                if (lbl === 'Chờ hủy') return window.t('status_pending_cancel', 'Chờ hủy');
+                if (lbl === 'Đã hủy') return window.t('status_cancelled', 'Đã hủy');
+                return lbl;
+            });
+
             const statusChart = new BaseChart('#statusPieChart', {
                 chart: {
                     type: 'bar',
@@ -472,7 +482,7 @@ $typeOptions = [
                     }
                 },
                 series: [{
-                    name: 'Số lượng Bobin',
+                    name: (typeof window.t === 'function' ? window.t('chart_bobin_count', 'Số lượng Bobin') : 'Số lượng Bobin'),
                     data: rawData
                 }],
                 colors: ['#94a3b8', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
@@ -513,7 +523,7 @@ $typeOptions = [
                     }
                 },
                 xaxis: {
-                    categories: labels,
+                    categories: translatedLabels,
                     min: 0,
                     max: maxVal === 0 ? 10 : Math.ceil(maxVal * 1.25),
                     labels: {
@@ -610,15 +620,41 @@ $typeOptions = [
                             <?= $currentRack === 'all' ? 'selected' : '' ?>>
                             Tất cả các Rack
                         </option>
-                        <?php foreach ($racks as $r): ?>
-                        <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
-                        <?php if (!empty($rCode)): ?>
-                        <option value="<?= buildFilterUrl(['rack' => $rCode, 'page' => 1]) ?>"
-                            <?= $currentRack === $rCode ? 'selected' : '' ?>>
-                            📍 Rack: <?= htmlspecialchars($rCode) ?>
-                        </option>
+
+                        <!-- CÁC KHU VỰC RACK (XƯỞNG & TẦNG) -->
+                        <optgroup label="🏭 Khu vực Rack theo Xưởng / Tầng">
+                            <option value="<?= buildFilterUrl(['rack' => 'B021', 'page' => 1]) ?>"
+                                <?= $currentRack === 'B021' ? 'selected' : '' ?>>
+                                🏢 B021 => Xưởng 2, tầng 1
+                            </option>
+                            <option value="<?= buildFilterUrl(['rack' => 'B022', 'page' => 1]) ?>"
+                                <?= $currentRack === 'B022' ? 'selected' : '' ?>>
+                                🏢 B022 => Xưởng 2, tầng 2
+                            </option>
+                            <option value="<?= buildFilterUrl(['rack' => 'B031', 'page' => 1]) ?>"
+                                <?= $currentRack === 'B031' ? 'selected' : '' ?>>
+                                🏢 B031 => Xưởng 3, tầng 1
+                            </option>
+                            <option value="<?= buildFilterUrl(['rack' => 'B032', 'page' => 1]) ?>"
+                                <?= $currentRack === 'B032' ? 'selected' : '' ?>>
+                                🏢 B032 => Xưởng 3, tầng 2
+                            </option>
+                        </optgroup>
+
+                        <!-- CHI TIẾT TỪNG MÃ RACK CỤ THỂ -->
+                        <?php if (!empty($racks)): ?>
+                        <optgroup label="📍 Chi tiết từng Rack cụ thể">
+                            <?php foreach ($racks as $r): ?>
+                            <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
+                            <?php if (!empty($rCode)): ?>
+                            <option value="<?= buildFilterUrl(['rack' => $rCode, 'page' => 1]) ?>"
+                                <?= $currentRack === $rCode ? 'selected' : '' ?>>
+                                📍 <?= htmlspecialchars($rCode) ?>
+                            </option>
+                            <?php endif; ?>
+                            <?php endforeach; ?>
+                        </optgroup>
                         <?php endif; ?>
-                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>
@@ -806,6 +842,20 @@ $typeOptions = [
                         <!-- CỘT 1: ĐÙN CHECK -->
                         <div class="pipeline-col extrusion-col">
                             <div class="qc-title">🏭 Đùn Check</div>
+                            <?php
+                                    $hasExtCheck = !empty($extCheck) && (
+                                        isset($extCheck['diameter']) ||
+                                        isset($extCheck['gel']) ||
+                                        isset($extCheck['foreign_object']) ||
+                                        isset($extCheck['color']) ||
+                                        isset($extCheck['print'])
+                                    );
+                            ?>
+                            <?php if (!$hasExtCheck): ?>
+                            <div class="empty-pipeline-notice notice-ext" data-i18n="pipeline_no_ext_data">
+                                <?= __('pipeline_no_ext_data') ?>
+                            </div>
+                            <?php else: ?>
                             <div class="qc-badges">
                                 <?php
                                         $extItems = [
@@ -820,11 +870,18 @@ $typeOptions = [
                                         }
                                         ?>
                             </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- CỘT 2: QC CHECK -->
                         <div class="pipeline-col qc-col">
                             <div class="qc-title">🛡️ QC Check</div>
+                            <?php $hasQcInspected = !empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật'; ?>
+                            <?php if (!$hasQcInspected): ?>
+                            <div class="empty-pipeline-notice notice-qc" data-i18n="pipeline_no_qc_data">
+                                <?= __('pipeline_no_qc_data') ?>
+                            </div>
+                            <?php else: ?>
                             <div class="qc-header">
                                 <div class="qc-info-row">
                                     <div class="qc-meta-item">
@@ -850,12 +907,21 @@ $typeOptions = [
                                 <?= qcDefectBadge('Màu', $defects['color_issue'] ?? false) ?>
                                 <?= qcDefectBadge('In', $defects['print_quality'] ?? false) ?>
                             </div>
-                            <div class="qc-note">📝 <?= htmlspecialchars($defects['note'] ?? 'Chưa cập nhật') ?></div>
+                            <?php if (!empty($defects['note']) && $defects['note'] !== 'Chưa cập nhật'): ?>
+                            <div class="qc-note">📝 <?= htmlspecialchars($defects['note']) ?></div>
+                            <?php endif; ?>
+                            <?php endif; ?>
                         </div>
 
                         <!-- CỘT 3: THÔNG TIN CUỘN -->
                         <div class="pipeline-col winding-col">
                             <div class="winding-title">📍 Thông tin cuộn</div>
+                            <?php $hasWinding = (!empty($item['winding_machine']) && $item['winding_machine'] !== 'Chưa cập nhật') || (!empty($winding_employeeCode) && $winding_employeeCode !== 'Chưa cập nhật') || ($rawStatus === 'Rolled'); ?>
+                            <?php if (!$hasWinding): ?>
+                            <div class="empty-pipeline-notice notice-winding" data-i18n="pipeline_no_winding_data">
+                                <?= __('pipeline_no_winding_data') ?>
+                            </div>
+                            <?php else: ?>
                             <div class="winding-header">
                                 <div class="winding-info-row">
                                     <div class="winding-input">
@@ -876,10 +942,11 @@ $typeOptions = [
                                         <span class="val-sub"><?= htmlspecialchars($flow_test_result) ?></span>
                                     </div>
                                 </div>
-                                <div class="winding-note">📝
-                                    <?= htmlspecialchars(trim($item['winding_note'] ?? '') === '' ? 'Chưa cập nhật' : $item['winding_note']) ?>
-                                </div>
+                                <?php if (!empty($item['winding_note']) && $item['winding_note'] !== 'Chưa cập nhật'): ?>
+                                <div class="winding-note">📝 <?= htmlspecialchars($item['winding_note']) ?></div>
+                                <?php endif; ?>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 

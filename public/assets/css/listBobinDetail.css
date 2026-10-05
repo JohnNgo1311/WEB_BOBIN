@@ -37,43 +37,39 @@ body {
   min-height: 100vh;
 }
 
-/* ================= MENU BAR DÙNG CHUNG (RESPONSIVE TOUCH) ================= */
 .menu-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #1e293b;
-  padding: 10px 16px;
+  padding: 8px 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 12px;
-  gap: 10px;
+  gap: 8px;
 }
 
 .menu-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 2px;
 }
 .menu-left::-webkit-scrollbar { display: none; }
 
 .menu-left a {
   color: #cbd5e1;
   text-decoration: none;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 11px;
   border-radius: 6px;
-  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
 }
-
 .menu-left a:hover { background: #334155; color: #ffffff; }
 .menu-left a.active-nav { background: #2563eb; color: #ffffff; }
 
@@ -83,18 +79,16 @@ body {
   gap: 8px;
   flex-shrink: 0;
 }
-
 .logout-btn {
   background: #ef4444;
   color: #ffffff;
   padding: 6px 12px;
   border-radius: 6px;
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 700;
   white-space: nowrap;
 }
-.logout-btn:hover { background: #dc2626; }
 .btn-change-pwd {
   background: rgba(255, 255, 255, 0.12);
   color: #e2e8f0;
@@ -102,8 +96,8 @@ body {
   padding: 6px 12px;
   border-radius: 6px;
   text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 700;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -115,7 +109,6 @@ body {
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.45);
 }
-
 .badge-pending-count {
   background: #ef4444;
   color: #ffffff;
@@ -125,6 +118,7 @@ body {
   border-radius: 10px;
   margin-left: 5px;
 }
+
 
 h1 {
   color: #ea580c;
@@ -429,6 +423,8 @@ h1 {
 }
 
 /* ================= 4. THẺ BOBIN ITEM ================= */
+.empty-state { text-align: center; padding: 40px; color: #ef4444; font-weight: 700; background: #fff; border-radius: 10px; border: 2px dashed #e2e8f0; }
+
 .bobin-list { display: flex; flex-direction: column; gap: 10px; }
 
 .bobin-item {
@@ -595,6 +591,18 @@ h1 {
 }
 .qc-note { color: #e11d48; background: #fff1f2; border-left: 2.5px solid #f43f5e; }
 .winding-note { color: #475569; background: #f1f5f9; border-left: 2.5px solid #94a3b8; }
+
+.empty-pipeline-notice {
+  padding: 10px 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.empty-pipeline-notice.notice-ext { color: #0284c7; }
+.empty-pipeline-notice.notice-qc { color: #d97706; }
+.empty-pipeline-notice.notice-winding { color: #64748b; }
 
 .card-footer-simple {
   padding: 4px 12px;

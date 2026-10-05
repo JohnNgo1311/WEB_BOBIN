@@ -492,19 +492,19 @@ function updatePrintLot() {
     return;
   }
 
-  const machineCode = findCode(listData.list_extrusion_machine, "machine_name", machineName, "machine_code");
+  const machineCode = findCode(listData.list_extrusion_machine, "machine_name", machineName, "machine_code").trim();
   const materialCode =
-    listData.list_material
+    (listData.list_material || [])
       .filter(
         (item) =>
-          String(item.brand).trim().toLowerCase() === String(materialBrand).trim().toLowerCase() &&
+          String(item.brand ?? "").trim().toLowerCase() === String(materialBrand).trim().toLowerCase() &&
           item.grinding_time == grindingTime
       )
-      .map((item) => item.code)[0] || "";
+      .map((item) => String(item.code ?? "").trim())[0] || "";
 
-  const dayCode = findCode(listData.list_day, "day", day, "code");
-  const monthCode = findCode(listData.list_month, "month", month, "code");
-  const yearCode = findCode(listData.list_year, "year", year, "code");
+  const dayCode = findCode(listData.list_day, "day", day, "code").trim();
+  const monthCode = findCode(listData.list_month, "month", month, "code").trim();
+  const yearCode = findCode(listData.list_year, "year", year, "code").trim();
 
   if (!machineCode || !materialCode || !dayCode || !monthCode || !yearCode) {
     if (printLotEl.value !== "") printLotEl.value = "";
@@ -520,52 +520,67 @@ function updatePrintLot() {
 function reversePrintLot() {
   const lotEl = document.getElementById("print_lot");
   if (!lotEl) return;
-  const lotString = lotEl.value.trim();
-  if (!lotString) return;
+  const rawLot = lotEl.value.trim();
+  if (!rawLot || rawLot === "Chưa cập nhật") return;
 
-  let remainingStr = lotString;
+  const cleanLot = rawLot.replace(/\s+/g, '');
+  if (cleanLot.length < 5) return;
+
+  const dayChar = cleanLot.slice(-1);
+  const monthChar = cleanLot.slice(-2, -1);
+  const yearChar = cleanLot.slice(-3, -2);
+  const machineChar = cleanLot.slice(0, 1);
+  const materialChar = cleanLot.slice(1, -3);
+
   const result = { machine: "", material: "", grinding_time: "", day: "", month: "", year: "" };
 
-  const dayObj = listData.list_day.find((item) => remainingStr.endsWith(item.code));
-  if (dayObj) {
-    result.day = dayObj.day;
-    remainingStr = remainingStr.slice(0, -dayObj.code.length);
+  if (Array.isArray(listData.list_day)) {
+    const dayObj = listData.list_day.find((item) => String(item.code ?? "").trim() === dayChar);
+    if (dayObj) result.day = dayObj.day;
   }
 
-  const monthObj = listData.list_month.find((item) => remainingStr.endsWith(item.code));
-  if (monthObj) {
-    result.month = monthObj.month;
-    remainingStr = remainingStr.slice(0, -monthObj.code.length);
+  if (Array.isArray(listData.list_month)) {
+    const monthObj = listData.list_month.find((item) => String(item.code ?? "").trim() === monthChar);
+    if (monthObj) result.month = monthObj.month;
   }
 
-  const yearObj = listData.list_year.find((item) => remainingStr.endsWith(item.code));
-  if (yearObj) {
-    result.year = yearObj.year;
-    remainingStr = remainingStr.slice(0, -yearObj.code.length);
+  if (Array.isArray(listData.list_year)) {
+    const yearObj = listData.list_year.find((item) => String(item.code ?? "").trim() === yearChar);
+    if (yearObj) result.year = yearObj.year;
   }
 
-  const machineObj = listData.list_extrusion_machine.find((item) => remainingStr.startsWith(item.machine_code));
-  if (machineObj) {
-    result.machine = machineObj.machine_name;
-    remainingStr = remainingStr.slice(machineObj.machine_code.length);
+  if (Array.isArray(listData.list_extrusion_machine)) {
+    const machineObj = listData.list_extrusion_machine.find((item) => String(item.machine_code ?? "").trim() === machineChar);
+    if (machineObj) result.machine = String(machineObj.machine_name ?? "").trim();
   }
 
-  const materialObj = listData.list_material.find((item) => item.code === remainingStr);
-  if (materialObj) {
-    result.material = materialObj.brand;
-    result.grinding_time = materialObj.grinding_time;
+  if (Array.isArray(listData.list_material)) {
+    const materialObj = listData.list_material.find((item) => String(item.code ?? "").trim() === materialChar);
+    if (materialObj) {
+      result.material = String(materialObj.brand ?? "").trim();
+      result.grinding_time = materialObj.grinding_time;
+    }
   }
 
-  if (result.machine) document.getElementById("machine").value = result.machine;
-  if (result.material) document.getElementById("material").value = result.material;
-  if (result.grinding_time !== undefined) document.getElementById("grinding_time").value = result.grinding_time;
+  if (result.machine) {
+    const el = document.getElementById("machine");
+    if (el) el.value = result.machine;
+  }
+  if (result.material) {
+    const el = document.getElementById("material");
+    if (el) el.value = result.material;
+  }
+  if (result.grinding_time !== undefined && result.grinding_time !== "") {
+    const el = document.getElementById("grinding_time");
+    if (el) el.value = result.grinding_time;
+  }
 
   if (result.day && result.month && result.year) {
     const formattedDay = String(result.day).padStart(2, "0");
     const formattedMonth = String(result.month).padStart(2, "0");
     const dateInput = document.querySelector('input[name="extrusion_date"]');
 
-    if (dateInput) {
+    if (dateInput && !dateInput.value) {
       dateInput.value = `${result.year}-${formattedMonth}-${formattedDay}`;
     }
   }

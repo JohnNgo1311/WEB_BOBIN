@@ -400,7 +400,12 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
     "Xác nhận QC & Đổi loại Bobin",
     dialogHTML,
     async (dialogBox) => {
-      const selectedType = dialogBox.querySelector('input[name="new_bobin_type"]:checked')?.value || "Điều chỉnh (Do CP)";
+      const selectedType = (dialogBox ? dialogBox.querySelector('input[name="new_bobin_type"]:checked')?.value : null)
+        || document.querySelector('input[name="new_bobin_type"]:checked')?.value
+        || "Điều chỉnh (Do CP)";
+
+      const prefixNote = `Phán định chuyển Bobin sang: ${selectedType}`;
+      const fullNote = note ? `${prefixNote} - ${note}` : prefixNote;
 
       const bodyData = {
         bobin_identification_code: bobinCode,
@@ -408,7 +413,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
         new_bobin_type: selectedType,
         inspector_code: inspectorCode,
         inspector_name: inspectorName,
-        defect_note: note,
+        defect_note: fullNote,
         defect_gel: defects["gel"] || false,
         defect_foreign_object: defects["foreign_object"] || false,
         defect_color_issue: defects["color_issue"] || false,

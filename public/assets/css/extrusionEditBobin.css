@@ -509,3 +509,44 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
     max-width: none;
   }
 }
+
+/* ================= AUTOCOMPLETE SUGGESTIONS ================= */
+.suggestion-wrapper {
+  position: relative !important;
+}
+
+.suggestion-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid #2563eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999;
+  display: none;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #1e293b;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s, color 0.15s;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+

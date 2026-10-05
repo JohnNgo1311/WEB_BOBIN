@@ -224,8 +224,8 @@ document.addEventListener("click", (e) => {
 // 3. TỰ ĐỘNG TÍNH TOÁN VÀ DỊCH NGƯỢC PRINT LOT
 function findCode(list, keyToCompare, valueToCompare, keyToReturn) {
     if (!list || !Array.isArray(list)) return "";
-    const found = list.find(item => String(item[keyToCompare]).trim().toLowerCase() === String(valueToCompare).trim().toLowerCase());
-    return found ? found[keyToReturn] : "";
+    const found = list.find(item => String(item[keyToCompare] ?? "").trim().toLowerCase() === String(valueToCompare ?? "").trim().toLowerCase());
+    return found ? String(found[keyToReturn] ?? "").trim() : "";
 }
 
 function updatePrintLot(container) {
@@ -257,12 +257,12 @@ function updatePrintLot(container) {
         year = parseInt(parts[2], 10);
     }
 
-    if (!day || !month || !year) return;
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return;
 
     const machineCode = findCode(listData.list_extrusion_machine, "machine_name", machineName, "machine_code");
-    const materialCode = listData.list_material
-        .filter(item => String(item.brand).trim().toLowerCase() === String(materialBrand).trim().toLowerCase() && item.grinding_time == grindingTime)
-        .map(item => item.code)[0] || "";
+    const materialCode = (listData.list_material || [])
+        .filter(item => String(item.brand ?? "").trim().toLowerCase() === String(materialBrand).trim().toLowerCase() && item.grinding_time == grindingTime)
+        .map(item => String(item.code ?? "").trim())[0] || "";
 
     const dayCode = findCode(listData.list_day, "day", day, "code");
     const monthCode = findCode(listData.list_month, "month", month, "code");
@@ -281,36 +281,74 @@ function reversePrintLot(container) {
     const printLotEl = container.querySelector("#print_lot");
     if (!printLotEl) return;
 
-    const lotString = printLotEl.value.trim();
-    if (!lotString) return;
+    const rawLot = printLotEl.value.trim();
+    if (!rawLot || rawLot === "Chưa cập nhật") return;
 
-    let remainingStr = lotString;
+    // Chuẩn hóa chuỗi: loại bỏ toàn bộ khoảng trắng thừa
+    const cleanLot = rawLot.replace(/\s+/g, '');
+    if (cleanLot.length < 5) return;
+
+    // Theo cấu trúc mã hóa lot in: ${machineCode}${materialCode}${yearCode}${monthCode}${dayCode}
+    // dayCode: 1 ký tự cuối
+    // monthCode: 1 ký tự kế cuối
+    // yearCode: 1 ký tự trước monthCode
+    // machineCode: 1 ký tự đầu tiên
+    // materialCode: phần nằm giữa machineCode và yearCode
+    const dayChar = cleanLot.slice(-1);
+    const monthChar = cleanLot.slice(-2, -1);
+    const yearChar = cleanLot.slice(-3, -2);
+    const machineChar = cleanLot.slice(0, 1);
+    const materialChar = cleanLot.slice(1, -3);
+
     const result = { machine: "", material: "", grinding_time: "", day: "", month: "", year: "" };
 
-    const dayObj = listData.list_day.find(item => remainingStr.endsWith(item.code));
-    if (dayObj) { result.day = dayObj.day; remainingStr = remainingStr.slice(0, -dayObj.code.length); }
+    if (Array.isArray(listData.list_day)) {
+        const dayObj = listData.list_day.find(item => String(item.code ?? "").trim() === dayChar);
+        if (dayObj) result.day = dayObj.day;
+    }
 
-    const monthObj = listData.list_month.find(item => remainingStr.endsWith(item.code));
-    if (monthObj) { result.month = monthObj.month; remainingStr = remainingStr.slice(0, -monthObj.code.length); }
+    if (Array.isArray(listData.list_month)) {
+        const monthObj = listData.list_month.find(item => String(item.code ?? "").trim() === monthChar);
+        if (monthObj) result.month = monthObj.month;
+    }
 
-    const yearObj = listData.list_year.find(item => remainingStr.endsWith(item.code));
-    if (yearObj) { result.year = yearObj.year; remainingStr = remainingStr.slice(0, -yearObj.code.length); }
+    if (Array.isArray(listData.list_year)) {
+        const yearObj = listData.list_year.find(item => String(item.code ?? "").trim() === yearChar);
+        if (yearObj) result.year = yearObj.year;
+    }
 
-    const machineObj = listData.list_extrusion_machine.find(item => remainingStr.startsWith(item.machine_code));
-    if (machineObj) { result.machine = machineObj.machine_name; remainingStr = remainingStr.slice(machineObj.machine_code.length); }
+    if (Array.isArray(listData.list_extrusion_machine)) {
+        const machineObj = listData.list_extrusion_machine.find(item => String(item.machine_code ?? "").trim() === machineChar);
+        if (machineObj) result.machine = String(machineObj.machine_name ?? "").trim();
+    }
 
-    const materialObj = listData.list_material.find(item => item.code === remainingStr);
-    if (materialObj) { result.material = materialObj.brand; result.grinding_time = materialObj.grinding_time; }
+    if (Array.isArray(listData.list_material)) {
+        const materialObj = listData.list_material.find(item => String(item.code ?? "").trim() === materialChar);
+        if (materialObj) {
+            result.material = String(materialObj.brand ?? "").trim();
+            result.grinding_time = materialObj.grinding_time;
+        }
+    }
 
-    if (result.machine) { const el = container.querySelector("#extrusion_machine"); if (el && !el.value) el.value = result.machine; }
-    if (result.material) { const el = container.querySelector("#material"); if (el && !el.value) el.value = result.material; }
-    if (result.grinding_time !== undefined) { const el = container.querySelector("#grinding_time"); if (el && el.value === "") el.value = result.grinding_time; }
+    // Gán dữ liệu dịch ngược vào các ô input trong container
+    if (result.machine) {
+        const el = container.querySelector("#extrusion_machine");
+        if (el) el.value = result.machine;
+    }
+    if (result.material) {
+        const el = container.querySelector("#material");
+        if (el) el.value = result.material;
+    }
+    if (result.grinding_time !== undefined && result.grinding_time !== "") {
+        const el = container.querySelector("#grinding_time");
+        if (el) el.value = result.grinding_time;
+    }
 
     if (result.day && result.month && result.year) {
         const formattedDay = String(result.day).padStart(2, '0');
         const formattedMonth = String(result.month).padStart(2, '0');
         const dateInput = container.querySelector("#extrusion_date");
-        if (dateInput) {
+        if (dateInput && !dateInput.value) {
             dateInput.value = `${result.year}-${formattedMonth}-${formattedDay}`;
         }
     }

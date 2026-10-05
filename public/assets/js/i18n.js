@@ -88,10 +88,10 @@
             btn_cancel_bobin: 'Báo hủy Bobin', btn_restore_bobin: 'Khôi phục Bobin',
             status_ready: 'Đã cuộn', status_unchecked: 'Chưa QC',
             status_checked: 'Đang QC', status_pending_cancel: 'Chờ hủy',
-            status_cancelled: 'Đã hủy',
+            status_cancelled: 'Đã hủy', status_extruded: 'Đã đùn',
             // Quản lý nhân viên
             emp_manage_title: 'DANH SÁCH NHÂN VIÊN',
-            emp_manage_subtitle: 'Quản lý tài khoản, phân quyền vai trò và cấp lại mật khẩu cho nhân viên phân xưởng.',
+            emp_manage_subtitle: 'Quản lý tài khoản, phân quyền vai trò và cấp lại mật khẩu cho nhân viên',
             emp_total_stat: 'Tổng nhân viên', emp_ext_stat: 'Nhóm Đùn',
             emp_qc_stat: 'Nhóm QC', emp_wind_stat: 'Nhóm Cuộn', emp_admin_stat: 'Quản trị viên',
             emp_code: 'Mã nhân viên', emp_name: 'Họ và tên', emp_username: 'Tên đăng nhập',
@@ -108,7 +108,104 @@
             emp_modal_add_title: 'Thêm nhân viên mới', emp_modal_edit_title: 'Chỉnh sửa nhân viên',
             emp_modal_reset_title: 'Cấp lại mật khẩu nhân viên',
             emp_modal_import_title: 'Nhập nhân viên từ file Excel / CSV',
-            emp_confirm_delete: 'Bạn có chắc chắn muốn xóa nhân viên này khỏi hệ thống không?'
+            emp_confirm_delete: 'Bạn có chắc chắn muốn xóa nhân viên này khỏi hệ thống không?',
+            emp_chart_title: 'Phân bổ vai trò',
+            emp_chart_no_data: 'Chưa có dữ liệu',
+            emp_active_count: 'Đang làm việc',
+            emp_inactive_count: 'Đã nghỉ việc',
+            emp_showing: 'Hiển thị',
+            emp_of: '/',
+            emp_staff: 'nhân viên',
+            emp_search_ph: 'Tìm theo Mã NV hoặc Họ tên...',
+            emp_all_roles: '-- Tất cả vai trò --',
+            emp_all_status: '-- Tất cả tình trạng --',
+            emp_notice_title: 'Cơ chế tự động thông minh',
+            emp_notice_username: 'Tên đăng nhập sẽ tự động đặt là Mã nhân viên',
+            emp_notice_password: 'Mật khẩu khởi tạo mặc định là 123 (bắt buộc đổi khi đăng nhập)',
+            emp_code_ph: 'VD: 02619486 hoặc NV01',
+            emp_name_ph: 'VD: Nguyễn Văn A',
+            emp_code_hint: 'Mã định danh cá nhân duy nhất trong xưởng.',
+            emp_role_hint: 'Chọn phân xưởng hoặc vai trò trực thuộc của nhân viên.',
+            emp_self_badge: 'Bạn',
+            emp_updated_prefix: 'Cập nhật:',
+            emp_new_badge: 'Mới tạo',
+            emp_profile_label: 'Mã số nhân viên (Tài khoản):',
+            emp_reset_target: 'Nhân viên cần cấp lại:',
+            emp_reset_desc_title: 'Quy trình bảo mật nội bộ:',
+            emp_reset_desc_body: 'Mật khẩu tài khoản sẽ được khôi phục về mặc định: 123. Hệ thống sẽ bắt buộc nhân viên đổi mật khẩu mới ngay sau khi đăng nhập thành công.',
+            emp_reset_custom_label: '⚙️ Đặt mật khẩu tùy chỉnh khác (Nếu cần)',
+            emp_reset_custom_ph: 'Để trống = Mặc định 123',
+            emp_reset_btn: '⚡ Khôi phục về 123',
+            emp_import_title: 'Chọn file Excel / CSV nhân viên',
+            emp_import_sub: 'Hệ thống hỗ trợ file .CSV (UTF-8) xuất trực tiếp từ Microsoft Excel',
+            emp_import_update: 'Cập nhật thông tin nếu Mã nhân viên đã có trên hệ thống',
+            emp_import_col_title: '📌 Cấu trúc các cột chuẩn trong file:',
+            emp_import_col1: 'Cột 1: Mã NV (Bắt buộc)',
+            emp_import_col2: 'Cột 2: Họ và tên (Bắt buộc)',
+            emp_import_col3: 'Cột 3: Vai trò (extrusion/qc/winding/admin)',
+            emp_import_col4: 'Cột 4: Tên đăng nhập (Có thể để trống)',
+            emp_import_col5: 'Cột 5: Trạng thái (1: Làm việc, 0: Khóa)',
+            emp_import_download: 'Tải file mẫu chuẩn (Mau_nhap_nhan_vien_SMC.csv)',
+            emp_import_start: '🚀 Bắt đầu nhập dữ liệu',
+            emp_import_hint: 'Chọn file định dạng .csv hoặc .xlsx theo cấu trúc file mẫu để nhập hàng loạt.',
+            emp_delete_confirm_full: 'Bạn có chắc chắn muốn xóa nhân viên khỏi hệ thống không? Thao tác này không thể hoàn tác!',
+            emp_msg_added: 'Thêm nhân viên mới thành công!',
+            emp_msg_updated: 'Cập nhật thông tin nhân viên thành công!',
+            emp_msg_deleted: 'Đã xóa nhân viên thành công!',
+            emp_msg_reset_done: 'Đã cấp lại mật khẩu về mặc định (123) thành công!',
+            emp_msg_imported: 'Nhập file Excel hoàn tất thành công!',
+            emp_msg_success: '✅',
+            emp_msg_error: '❌',
+            pipeline_no_ext_data: '⏳ Chưa có dữ liệu sản xuất Đùn',
+            pipeline_no_qc_data: '⏳ Chưa có dữ liệu kiểm tra QC',
+            pipeline_no_winding_data: '⏳ Chưa có dữ liệu thông tin cuộn',
+            // Chart & Analytics
+            chart_empty: 'Trống',
+            chart_bobin_count: 'Số lượng Bobin',
+            chart_status_stats: 'Thống kê trạng thái Bobin',
+            chart_history_status_stats: 'Thống kê lịch sử cập nhật trạng thái Bobin',
+            chart_ratio: 'Tỷ lệ',
+            chart_status_distribution: 'Phân bố trạng thái Bobin',
+            // Section & Card Titles
+            sec_bobin_identification: 'Định danh Bobin & Người phụ trách',
+            sec_bobin_identification_desc: 'Quét mã QR hoặc nhập mã Bobin và thông tin nhân viên phụ trách',
+            sec_production_info: 'THÔNG TIN SẢN XUẤT',
+            sec_production_info_desc: 'Mã sản phẩm, Chiều dài, Lot in',
+            sec_time_and_rack: 'Thời điểm đùn và vị trí Rack',
+            sec_time_and_rack_desc: 'Thời điểm hoàn thành Bobin và vị trí đặt Rack',
+            sec_ext_check1: 'Nhóm đùn Check lần 1',
+            sec_ext_check1_desc: 'Xác nhận chất lượng ban đầu trước công đoạn QC',
+            sec_ext_visual_check: 'Tự kiểm tra ngoại quan đùn',
+            // Labels & Units
+            lbl_bobin_id_code: 'Mã định danh Bobin',
+            lbl_bobin_size: 'Kích thước Bobin',
+            lbl_ext_emp_code: 'Mã số nhân viên',
+            lbl_ext_emp_name: 'Họ tên nhân viên',
+            lbl_machine_no: 'Số máy đùn',
+            lbl_material_type: 'Vật liệu',
+            lbl_grind_time: 'Số lần nghiền',
+            lbl_rack_location: 'Vị trí Rack',
+            lbl_ext_date: 'Ngày đùn',
+            lbl_finish_time: 'Thời gian hoàn thành',
+            lbl_manual_time: 'Chọn thời gian thủ công',
+            unit_meter: 'mét',
+            chk_diameter: 'Đường kính',
+            chk_gel: 'Gel',
+            chk_foreign_object: 'Dị vật',
+            chk_color: 'Màu sắc',
+            chk_print: 'Chữ in',
+            btn_refresh: 'Làm mới',
+            btn_scan_qr: 'Quét QR',
+            // Placeholders
+            ph_scan_bobin: 'Nhập hoặc quét mã Bobin...',
+            ph_auto_size: 'Tự động theo mã Bobin',
+            ph_search_product: 'Gõ để tìm mã sản phẩm...',
+            ph_select_machine: 'Chọn số máy đùn...',
+            ph_select_material: 'Chọn loại vật liệu...',
+            ph_grind_hint: 'Nhập 0, 1 hoặc 2',
+            ph_enter_material_lot: 'Nhập Lot vật liệu...',
+            ph_auto_printlot: 'Lot in được tạo tự động',
+            ph_select_rack: 'Chọn Rack đặt...'
         },
 
         en: {
@@ -191,7 +288,7 @@
             btn_cancel_bobin: 'Report Bobin Scrap', btn_restore_bobin: 'Restore Bobin',
             status_ready: 'Ready', status_unchecked: 'Unchecked',
             status_checked: 'QC Checked', status_pending_cancel: 'Pending Scrap',
-            status_cancelled: 'Scrapped',
+            status_cancelled: 'Scrapped', status_extruded: 'Extruded',
             // Employee Management
             emp_manage_title: 'EMPLOYEE LIST',
             emp_manage_subtitle: 'Manage accounts, roles, access permissions and reset passwords for factory staff.',
@@ -211,7 +308,104 @@
             emp_modal_add_title: 'Add New Employee', emp_modal_edit_title: 'Edit Employee',
             emp_modal_reset_title: 'Reset Employee Password',
             emp_modal_import_title: 'Import Employees from Excel / CSV',
-            emp_confirm_delete: 'Are you sure you want to delete this employee from system?'
+            emp_confirm_delete: 'Are you sure you want to delete this employee from system?',
+            emp_chart_title: 'Role Distribution',
+            emp_chart_no_data: 'No data',
+            emp_active_count: 'Active',
+            emp_inactive_count: 'Inactive',
+            emp_showing: 'Showing',
+            emp_of: '/',
+            emp_staff: 'staff',
+            emp_search_ph: 'Search by ID or Name...',
+            emp_all_roles: '-- All Roles --',
+            emp_all_status: '-- All Status --',
+            emp_notice_title: 'Auto Setup Rules',
+            emp_notice_username: 'Username is auto-set to Employee ID',
+            emp_notice_password: 'Default password is 123 (must change on first login)',
+            emp_code_ph: 'e.g. 02619486 or EMP01',
+            emp_name_ph: 'e.g. John Smith',
+            emp_code_hint: 'Unique personal ID in the factory.',
+            emp_role_hint: "Select the employee's department or role.",
+            emp_self_badge: 'You',
+            emp_updated_prefix: 'Updated:',
+            emp_new_badge: 'Newly Added',
+            emp_profile_label: 'Employee ID (Username):',
+            emp_reset_target: 'Employee to reset:',
+            emp_reset_desc_title: 'Internal Security Process:',
+            emp_reset_desc_body: 'The account password will be reset to default: 123. The system will require the employee to change their password immediately after login.',
+            emp_reset_custom_label: '⚙️ Set custom password (Optional)',
+            emp_reset_custom_ph: 'Leave blank = Default 123',
+            emp_reset_btn: '⚡ Reset to 123',
+            emp_import_title: 'Select Employee Excel / CSV',
+            emp_import_sub: 'Supports .CSV (UTF-8) exported directly from Microsoft Excel',
+            emp_import_update: 'Update info if Employee ID already exists',
+            emp_import_col_title: '📌 Required CSV Column Structure:',
+            emp_import_col1: 'Column 1: Employee ID (Required)',
+            emp_import_col2: 'Column 2: Full Name (Required)',
+            emp_import_col3: 'Column 3: Role (extrusion/qc/winding/admin)',
+            emp_import_col4: 'Column 4: Username (Optional)',
+            emp_import_col5: 'Column 5: Status (1: Active, 0: Locked)',
+            emp_import_download: 'Download sample template (Employee_Import_SMC.csv)',
+            emp_import_start: '🚀 Start Import',
+            emp_import_hint: 'Select a .csv or .xlsx file structured like the sample template.',
+            emp_delete_confirm_full: 'Are you sure you want to delete this employee from the system? This action cannot be undone!',
+            emp_msg_added: 'New employee added successfully!',
+            emp_msg_updated: 'Employee details updated successfully!',
+            emp_msg_deleted: 'Employee deleted successfully!',
+            emp_msg_reset_done: 'Password has been reset to default (123) successfully!',
+            emp_msg_imported: 'Excel import completed successfully!',
+            emp_msg_success: '✅',
+            emp_msg_error: '❌',
+            pipeline_no_ext_data: '⏳ No extrusion production data',
+            pipeline_no_qc_data: '⏳ No QC inspection data',
+            pipeline_no_winding_data: '⏳ No winding information',
+            // Chart & Analytics
+            chart_empty: 'Empty',
+            chart_bobin_count: 'Bobin Quantity',
+            chart_status_stats: 'Bobin Status Statistics',
+            chart_history_status_stats: 'Bobin Status Update History',
+            chart_ratio: 'Percentage',
+            chart_status_distribution: 'Bobin Status Distribution',
+            // Section & Card Titles
+            sec_bobin_identification: 'Bobin Identification & In-charge',
+            sec_bobin_identification_desc: 'Scan QR or enter Bobin ID and operator info',
+            sec_production_info: 'PRODUCTION INFORMATION',
+            sec_production_info_desc: 'Product Code, Length, Print Lot',
+            sec_time_and_rack: 'Extrusion Time & Rack Location',
+            sec_time_and_rack_desc: 'Bobin completion time and Rack storage location',
+            sec_ext_check1: 'Extrusion 1st Inspection',
+            sec_ext_check1_desc: 'Initial quality verification before QC inspection',
+            sec_ext_visual_check: 'Extrusion Visual Check',
+            // Labels & Units
+            lbl_bobin_id_code: 'Bobin ID Code',
+            lbl_bobin_size: 'Bobin Size',
+            lbl_ext_emp_code: 'Employee ID',
+            lbl_ext_emp_name: 'Employee Name',
+            lbl_machine_no: 'Extruder Machine No.',
+            lbl_material_type: 'Material',
+            lbl_grind_time: 'Grinding Times',
+            lbl_rack_location: 'Rack Location',
+            lbl_ext_date: 'Extrusion Date',
+            lbl_finish_time: 'Completion Time',
+            lbl_manual_time: 'Manual Time Selection',
+            unit_meter: 'meter',
+            chk_diameter: 'Diameter',
+            chk_gel: 'Gel',
+            chk_foreign_object: 'Foreign Object',
+            chk_color: 'Color',
+            chk_print: 'Print Text',
+            btn_refresh: 'Refresh',
+            btn_scan_qr: 'Scan QR',
+            // Placeholders
+            ph_scan_bobin: 'Enter or scan Bobin code...',
+            ph_auto_size: 'Auto generated by Bobin code',
+            ph_search_product: 'Type to search product code...',
+            ph_select_machine: 'Select extruder machine...',
+            ph_select_material: 'Select material...',
+            ph_grind_hint: 'Enter 0, 1 or 2',
+            ph_enter_material_lot: 'Enter material lot...',
+            ph_auto_printlot: 'Auto merged Print Lot',
+            ph_select_rack: 'Select Rack location...'
         },
 
         ja: {
@@ -294,7 +488,7 @@
             btn_cancel_bobin: 'ボビン廃棄登録', btn_restore_bobin: 'ボビン復帰',
             status_ready: '巻取済', status_unchecked: '未検査',
             status_checked: 'QC済', status_pending_cancel: '廃棄待ち',
-            status_cancelled: '廃棄済',
+            status_cancelled: '廃棄済', status_extruded: '押出済',
             // Employee Management
             emp_manage_title: '従業員一覧',
             emp_manage_subtitle: '工場スタッフのアカウント管理、権限設定、パスワード再発行を行います。',
@@ -314,7 +508,104 @@
             emp_modal_add_title: '新規従業員の登録', emp_modal_edit_title: '従業員情報の編集',
             emp_modal_reset_title: 'パスワード再発行',
             emp_modal_import_title: 'Excel/CSVから一括取込',
-            emp_confirm_delete: 'この従業員をシステムから削除してもよろしいですか？'
+            emp_confirm_delete: 'この従業員をシステムから削除してもよろしいですか？',
+            emp_chart_title: '役職分布',
+            emp_chart_no_data: 'データなし',
+            emp_active_count: '在職中',
+            emp_inactive_count: '退職/ロック',
+            emp_showing: '表示中',
+            emp_of: 'のうち',
+            emp_staff: '名',
+            emp_search_ph: '社員番号または氏名で検索...',
+            emp_all_roles: '-- すべての役職 --',
+            emp_all_status: '-- すべての状態 --',
+            emp_notice_title: '自動設定ルール',
+            emp_notice_username: 'ログインIDは社員番号に自動設定',
+            emp_notice_password: '初期パスワードは123（初回ログイン時に変更必須）',
+            emp_code_ph: '例：02619486 または EMP01',
+            emp_name_ph: '例：田中太郎',
+            emp_code_hint: '工場内の固有の個人識別コード。',
+            emp_role_hint: '従業員の所属部門または役職を選択。',
+            emp_self_badge: 'あなた',
+            emp_updated_prefix: '更新:',
+            emp_new_badge: '新規追加',
+            emp_profile_label: '社員番号（ログインID）：',
+            emp_reset_target: '再発行対象：',
+            emp_reset_desc_title: '社内セキュリティ手順：',
+            emp_reset_desc_body: 'アカウントのパスワードがデフォルト（123）にリセットされます。次回ログイン後、直ちに新しいパスワードへの変更が必須となります。',
+            emp_reset_custom_label: '⚙️ カスタムパスワードの設定（任意）',
+            emp_reset_custom_ph: '空白 = デフォルト123',
+            emp_reset_btn: '⚡ 123にリセット',
+            emp_import_title: '従業員Excel/CSVファイルを選択',
+            emp_import_sub: 'Microsoft ExcelからエクスポートされたCSV（UTF-8）に対応',
+            emp_import_update: '社員番号が既に存在する場合は情報を更新',
+            emp_import_col_title: '📌 ファイルの標準列構造：',
+            emp_import_col1: '列1：社員番号（必須）',
+            emp_import_col2: '列2：氏名（必須）',
+            emp_import_col3: '列3：役職（extrusion/qc/winding/admin）',
+            emp_import_col4: '列4：ログインID（省略可）',
+            emp_import_col5: '列5：状態（1：在職中、0：ロック）',
+            emp_import_download: 'ひな形ファイルをダウンロード（従業員インポートひな形.csv）',
+            emp_import_start: '🚀 インポート開始',
+            emp_import_hint: 'ひな形に沿った.csvまたは.xlsxファイルを選択してください。',
+            emp_delete_confirm_full: 'この従業員をシステムから削除してもよろしいですか？この操作は元に戻せません！',
+            emp_msg_added: '従業員を追加しました！',
+            emp_msg_updated: '従業員情報を更新しました！',
+            emp_msg_deleted: '従業員を削除しました！',
+            emp_msg_reset_done: 'パスワードを初期値 (123) に再発行しました！',
+            emp_msg_imported: 'Excelの一括取込が正常に完了しました！',
+            emp_msg_success: '✅',
+            emp_msg_error: '❌',
+            pipeline_no_ext_data: '⏳ 押出製造データなし',
+            pipeline_no_qc_data: '⏳ QC検査データなし',
+            pipeline_no_winding_data: '⏳ 巻取情報データなし',
+            // Chart & Analytics
+            chart_empty: '空き',
+            chart_bobin_count: 'ボビン数量',
+            chart_status_stats: 'ボビン状態別統計',
+            chart_history_status_stats: 'ボビン更新履歴統計',
+            chart_ratio: '割合',
+            chart_status_distribution: 'ボビン状態別分布',
+            // Section & Card Titles
+            sec_bobin_identification: 'ボビン識別・担当者',
+            sec_bobin_identification_desc: 'QRスキャンまたはボビン番号と担当者情報を入力',
+            sec_production_info: '製造情報',
+            sec_production_info_desc: '製品コード・長さ・印字ロット',
+            sec_time_and_rack: '押出日時・ラック位置',
+            sec_time_and_rack_desc: 'ボビン完了日時とラック保管位置',
+            sec_ext_check1: '押出工程1次検査',
+            sec_ext_check1_desc: 'QC検査前の初期品質確認',
+            sec_ext_visual_check: '押出工程外観自己検査',
+            // Labels & Units
+            lbl_bobin_id_code: 'ボビン識別番号',
+            lbl_bobin_size: 'ボビンサイズ',
+            lbl_ext_emp_code: '社員番号',
+            lbl_ext_emp_name: '氏名',
+            lbl_machine_no: '押出機番号',
+            lbl_material_type: '原材料',
+            lbl_grind_time: '粉砕回数',
+            lbl_rack_location: 'ラック位置',
+            lbl_ext_date: '押出日',
+            lbl_finish_time: '完了日時',
+            lbl_manual_time: '手動時間選択',
+            unit_meter: 'm',
+            chk_diameter: '外径',
+            chk_gel: 'ゲル',
+            chk_foreign_object: '異物',
+            chk_color: '色調',
+            chk_print: '印字',
+            btn_refresh: 'リフレッシュ',
+            btn_scan_qr: 'QRスキャン',
+            // Placeholders
+            ph_scan_bobin: 'ボビン番号を入力またはスキャン...',
+            ph_auto_size: 'ボビン番号から自動',
+            ph_search_product: '製品コードを検索...',
+            ph_select_machine: '押出機を選択...',
+            ph_select_material: '材料を選択...',
+            ph_grind_hint: '0, 1または2を入力',
+            ph_enter_material_lot: '材料ロットを入力...',
+            ph_auto_printlot: '印字ロット自動生成',
+            ph_select_rack: 'ラック位置を選択...'
         }
     };
 
@@ -359,7 +650,9 @@
             { vi: 'Tình trạng làm việc', en: 'Work Status', ja: '勤務状態' },
             { vi: 'Tình trạng', en: 'Status', ja: '状態' },
             { vi: 'Lần đầu đăng nhập', en: 'First Login', ja: '初回ログイン' },
-            { vi: 'Đổi MK lần đầu', en: 'First Login PW', ja: '初回PW変更' }
+            { vi: 'Đổi MK lần đầu', en: 'First Login PW', ja: '初回PW変更' },
+            { vi: 'Mã NV / Tài khoản', en: 'Employee ID / Username', ja: '社員番号 / ログインID' },
+            { vi: 'Họ tên', en: 'Full Name', ja: '氏名' }
         ],
 
         // Form Labels
@@ -391,7 +684,39 @@
             { vi: 'Mật khẩu', en: 'Password', ja: 'パスワード' },
             { vi: 'Mật khẩu bảo mật', en: 'Security Password', ja: 'パスワード' },
             { vi: 'Tình trạng làm việc', en: 'Work Status', ja: '勤務状態' },
-            { vi: 'Loại Bobin', en: 'Bobin Type', ja: 'ボビン種別' }
+            { vi: 'Loại Bobin', en: 'Bobin Type', ja: 'ボビン種別' },
+            { vi: 'Mã định danh Bobin', en: 'Bobin ID Code', ja: 'ボビン識別番号' },
+            { vi: 'Kích thước Bobin', en: 'Bobin Size', ja: 'ボビンサイズ' },
+            { vi: 'Số máy đùn', en: 'Extruder Machine', ja: '押出機番号' },
+            { vi: 'Vật liệu', en: 'Material', ja: '原材料' },
+            { vi: 'Số lần nghiền', en: 'Grinding Times', ja: '粉砕回数' },
+            { vi: 'Lot vật liệu', en: 'Material Lot', ja: '材料ロット' },
+            { vi: 'Lot in (Print Lot)', en: 'Print Lot', ja: '印字ロット' },
+            { vi: 'Vị trí Rack', en: 'Rack Location', ja: 'ラック位置' },
+            { vi: 'Ngày đùn', en: 'Extrusion Date', ja: '押出日' },
+            { vi: 'Thời gian hoàn thành', en: 'Completion Time', ja: '完了日時' },
+            { vi: 'Ca sản xuất', en: 'Production Shift', ja: '製造シフト' },
+            { vi: 'Đường kính', en: 'Diameter', ja: '外径' },
+            { vi: 'Gel', en: 'Gel', ja: 'ゲル' },
+            { vi: 'Dị vật', en: 'Foreign Object', ja: '異物' },
+            { vi: 'Màu sắc', en: 'Color', ja: '色調' },
+            { vi: 'Chữ in', en: 'Printing', ja: '印字' },
+            { vi: 'Mã số nhân viên (Tài khoản):', en: 'Employee ID (Username):', ja: '社員番号（ログインID）：' },
+            { vi: 'Nhân viên cần cấp lại:', en: 'Employee to reset:', ja: '再発行対象：' }
+        ],
+
+        // Section & Card Headers
+        sections: [
+            { vi: 'Định danh Bobin & Người phụ trách', en: 'Bobin Identification & In-charge', ja: 'ボビン識別・担当者' },
+            { vi: 'Quét mã QR hoặc nhập mã Bobin và thông tin nhân viên phụ trách', en: 'Scan QR or enter Bobin ID and operator info', ja: 'QRスキャンまたはボビン番号と担当者情報を入力' },
+            { vi: 'THÔNG TIN SẢN XUẤT', en: 'PRODUCTION INFORMATION', ja: '製造情報' },
+            { vi: 'Mã sản phẩm, Chiều dài, Lot in', en: 'Product Code, Length, Print Lot', ja: '製品コード・長さ・印字ロット' },
+            { vi: 'Thời điểm đùn và vị trí Rack', en: 'Extrusion Time & Rack Location', ja: '押出日時・ラック位置' },
+            { vi: 'Thời điểm hoàn thành Bobin và vị trí đặt Rack', en: 'Bobin completion time and Rack storage location', ja: 'ボビン完了日時とラック保管位置' },
+            { vi: 'Nhóm đùn Check lần 1', en: 'Extrusion 1st Inspection', ja: '押出工程1次検査' },
+            { vi: 'Xác nhận chất lượng ban đầu trước công đoạn QC', en: 'Initial quality verification before QC inspection', ja: 'QC検査前の初期品質確認' },
+            { vi: 'Thống kê trạng thái Bobin', en: 'Bobin Status Statistics', ja: 'ボビン状態別統計' },
+            { vi: 'Thống kê lịch sử cập nhật trạng thái Bobin', en: 'Bobin Status Update History', ja: 'ボビン更新履歴統計' }
         ],
 
         // Button texts & links
@@ -422,20 +747,29 @@
             { vi: 'Báo hủy Bobin', en: 'Report Scrap', ja: '廃棄申請' },
             { vi: 'Khôi phục Bobin', en: 'Restore Bobin', ja: 'ボビン復帰' },
             { vi: 'Xác nhận QC', en: 'Confirm QC', ja: 'QC確定' },
-            { vi: 'Xác nhận hoàn thành', en: 'Confirm Finish', ja: '完了確定' }
+            { vi: 'Xác nhận hoàn thành', en: 'Confirm Finish', ja: '完了確定' },
+            { vi: 'Bắt đầu nhập dữ liệu', en: 'Start Import', ja: 'インポート開始' },
+            { vi: 'Khôi phục về 123', en: 'Reset to 123', ja: '123にリセット' },
+            { vi: 'Lưu nhân viên', en: 'Save Employee', ja: '従業員を保存' },
+            { vi: 'Cập nhật thông tin', en: 'Update Info', ja: '情報を更新' }
         ],
 
         // Status badges
         statusBadges: [
             { vi: 'Tất cả', en: 'All', ja: 'すべて' },
             { vi: 'Đã cuộn', en: 'Ready (Finished)', ja: '巻取済' },
+            { vi: 'Đã đùn', en: 'Extruded', ja: '押出済' },
             { vi: 'Chưa QC', en: 'Unchecked', ja: '未検査' },
             { vi: 'Đang QC', en: 'QC Checked', ja: 'QC済' },
             { vi: 'Chờ hủy', en: 'Pending Scrap', ja: '廃棄待ち' },
             { vi: 'Đã hủy', en: 'Scrapped', ja: '廃棄済' },
             { vi: 'Đang làm việc', en: 'Active', ja: '在職中' },
             { vi: 'Đã nghỉ việc', en: 'Inactive', ja: '退職/ロック' },
-            { vi: 'Đã nghỉ việc / Khóa', en: 'Inactive / Locked', ja: '退職/ロック' }
+            { vi: 'Đã nghỉ việc / Khóa', en: 'Inactive / Locked', ja: '退職/ロック' },
+            { vi: 'Mặc định (123)', en: 'Default (123)', ja: '初期値 (123)' },
+            { vi: 'Đã mã hóa', en: 'Encrypted Hash', ja: '暗号化済' },
+            { vi: 'Đã đổi MK riêng', en: 'Custom Password Set', ja: 'パスワード変更済' },
+            { vi: 'Chưa đổi (Bắt buộc)', en: 'Pending (Required)', ja: '未変更（必須）' }
         ]
     };
 
@@ -481,8 +815,8 @@
             fetch(`/WEB_BOBIN/public/index.php?url=auth/setLanguage&lang=${lang}`, {
                 method: 'GET',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }).catch(() => {});
-        } catch (e) {}
+            }).catch(() => { });
+        } catch (e) { }
 
         if (reload) {
             window.location.reload();
@@ -516,17 +850,29 @@
 
         // C. Dịch tất cả Form Labels <label>
         document.querySelectorAll('label').forEach(lbl => {
-            // Nếu có thẻ con (ví dụ required span), giữ lại
             const reqSpan = lbl.querySelector('.required, span[style*="red"]');
+            const hintSpan = lbl.querySelector('.label-hint');
             let raw = lbl.textContent.replace('*', '').trim();
+            let clean = raw.replace(/:/g, '').replace(/\(mét\)/gi, '').replace(/\(m\)/gi, '').replace(/\(0, 1 hoặc 2\)/gi, '').replace(/\(Tự động ghép mã\)/gi, '').trim();
+
             for (const item of DOM_MAPPINGS.labels) {
-                if (raw === item.vi || raw === item.en || raw === item.ja) {
+                const itemCleanVi = item.vi.replace(/:/g, '').trim();
+                const itemCleanEn = item.en.replace(/:/g, '').trim();
+                const itemCleanJa = item.ja.replace(/:/g, '').trim();
+
+                if (clean === itemCleanVi || clean === itemCleanEn || clean === itemCleanJa || raw === item.vi || raw === item.en || raw === item.ja) {
                     const translated = item[currentLang] || item.vi;
-                    if (reqSpan) {
-                        lbl.innerHTML = `${translated} <span class="required" style="color:#ef4444;">*</span>`;
-                    } else {
-                        lbl.textContent = translated;
+                    let html = translated;
+                    if (raw.includes(':') || reqSpan) {
+                        html += ':';
                     }
+                    if (hintSpan) {
+                        html += ' ' + hintSpan.outerHTML;
+                    }
+                    if (reqSpan) {
+                        html += ' <span class="required" style="color:#ef4444;">*</span>';
+                    }
+                    lbl.innerHTML = html;
                     break;
                 }
             }
@@ -569,6 +915,24 @@
             const ph = input.getAttribute('placeholder').trim();
             if (ph.includes('Nhập thông tin') || ph.includes('Search') || ph.includes('検索')) {
                 input.setAttribute('placeholder', window.t('keyword_search'));
+            } else if (ph.includes('quét mã Bobin') || ph.includes('Bobin code') || ph.includes('ボビン番号')) {
+                input.setAttribute('placeholder', window.t('ph_scan_bobin'));
+            } else if (ph.includes('Tự động theo mã') || ph.includes('Auto by Bobin') || ph.includes('ボビン番号から自動')) {
+                input.setAttribute('placeholder', window.t('ph_auto_size'));
+            } else if (ph.includes('tìm mã sản phẩm') || ph.includes('search product') || ph.includes('製品コードを検索')) {
+                input.setAttribute('placeholder', window.t('ph_search_product'));
+            } else if (ph.includes('máy đùn') || ph.includes('extruder') || ph.includes('押出機')) {
+                input.setAttribute('placeholder', window.t('ph_select_machine'));
+            } else if (ph.includes('loại vật liệu') || ph.includes('material') || ph.includes('材料')) {
+                input.setAttribute('placeholder', window.t('ph_select_material'));
+            } else if (ph.includes('0, 1 hoặc 2') || ph.includes('0, 1 or 2') || ph.includes('0, 1または2')) {
+                input.setAttribute('placeholder', window.t('ph_grind_hint'));
+            } else if (ph.includes('Lot vật liệu') || ph.includes('material lot') || ph.includes('材料ロット')) {
+                input.setAttribute('placeholder', window.t('ph_enter_material_lot'));
+            } else if (ph.includes('Tự động ghép mã') || ph.includes('Auto merged') || ph.includes('印字ロット自動')) {
+                input.setAttribute('placeholder', window.t('ph_auto_printlot'));
+            } else if (ph.includes('Rack đặt') || ph.includes('Rack location') || ph.includes('ラック位置')) {
+                input.setAttribute('placeholder', window.t('ph_select_rack'));
             } else if (ph.includes('Nhập mã số nhân viên') || ph.includes('employee ID') || ph.includes('社員番号')) {
                 input.setAttribute('placeholder', window.t('login_username_ph'));
             } else if (ph.includes('Nhập mật khẩu') || ph.includes('password') || ph.includes('パスワード')) {
@@ -598,9 +962,14 @@
             } else if (text.includes('Lịch sử Bobin') || text.includes('Bobin History') || text.includes('ボビン履歴')) {
                 a.textContent = window.t('nav_bobin_history');
             } else if (text.includes('chờ hủy') || text.includes('Pending') || text.includes('廃棄待ち')) {
+                const span = a.querySelector('[data-i18n="nav_pending_cancel"]');
                 const badge = a.querySelector('.badge-pending-count');
-                const badgeText = badge ? badge.outerHTML : '';
-                a.innerHTML = window.t('nav_pending_cancel') + ' ' + badgeText;
+                if (span) {
+                    span.textContent = window.t('nav_pending_cancel');
+                } else {
+                    const badgeText = badge ? badge.outerHTML : '';
+                    a.innerHTML = '<span data-i18n="nav_pending_cancel">' + window.t('nav_pending_cancel') + '</span> ' + badgeText;
+                }
             } else if (text.includes('nhân viên') || text.includes('Employee') || text.includes('従業員')) {
                 a.textContent = window.t('nav_employee_list');
             }
@@ -612,6 +981,49 @@
         });
         document.querySelectorAll('.logout-btn, .btn-nav-logout').forEach(btn => {
             btn.textContent = window.t('nav_logout');
+        });
+
+        // G. Dịch các phần tử đặc thù của trang nhân viên
+        document.querySelectorAll('.badge-self').forEach(el => {
+            el.textContent = window.t('emp_self_badge');
+        });
+        document.querySelectorAll('.profile-label').forEach(el => {
+            if (el.textContent.includes('Mã số') || el.textContent.includes('Employee ID') || el.textContent.includes('社員番号')) {
+                el.textContent = window.t('emp_profile_label');
+            }
+        });
+        document.querySelectorAll('.target-sub').forEach(el => {
+            if (el.textContent.includes('cần cấp') || el.textContent.includes('reset') || el.textContent.includes('再発行')) {
+                el.textContent = window.t('emp_reset_target');
+            }
+        });
+        // Chart legend labels
+        document.querySelectorAll('[data-chart-role]').forEach(el => {
+            const role = el.getAttribute('data-chart-role');
+            const keyMap = {
+                extrusion: 'emp_role_extrusion',
+                qc: 'emp_role_qc',
+                winding: 'emp_role_winding',
+                admin: 'emp_role_admin'
+            };
+            if (keyMap[role]) el.textContent = window.t(keyMap[role]);
+        });
+
+        // H. Dịch các Section Title, Section Desc và Checkbox Labels
+        document.querySelectorAll('.section-title, .section-desc, .check-box-label').forEach(el => {
+            const raw = el.textContent.trim();
+            for (const item of (DOM_MAPPINGS.sections || [])) {
+                if (raw === item.vi || raw === item.en || raw === item.ja) {
+                    el.textContent = item[currentLang] || item.vi;
+                    return;
+                }
+            }
+            for (const item of (DOM_MAPPINGS.labels || [])) {
+                if (raw === item.vi || raw === item.en || raw === item.ja) {
+                    el.textContent = item[currentLang] || item.vi;
+                    return;
+                }
+            }
         });
     }
 
@@ -626,7 +1038,13 @@
                         el.setAttribute('placeholder', translation);
                     }
                 } else {
-                    el.textContent = translation;
+                    const badge = el.querySelector('.badge-pending-count');
+                    if (badge) {
+                        const badgeHtml = badge.outerHTML;
+                        el.innerHTML = translation + ' ' + badgeHtml;
+                    } else {
+                        el.textContent = translation;
+                    }
                 }
             }
         });

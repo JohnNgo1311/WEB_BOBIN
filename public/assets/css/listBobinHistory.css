@@ -218,6 +218,34 @@ h1 {
 }
 .date-sep { color: #7c3aed; font-weight: 800; font-size: 13px; padding: 0 4px; }
 
+.quick-date-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-pill-date {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 0 10px;
+  height: 38px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.btn-pill-date:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+}
+.btn-pill-date:active {
+  transform: translateY(0);
+}
+
 .btn-modern {
   display: inline-flex;
   align-items: center;
@@ -310,21 +338,64 @@ h1 {
   align-items: center;
   padding: 6px 8px;
   border-radius: 6px;
-  text-decoration: none;
   border: 1px solid transparent;
+  cursor: default;
+  user-select: none;
 }
 .kpi-left { display: flex; align-items: center; gap: 6px; }
 .kpi-icon { font-size: 12px; }
 .kpi-name { font-size: 11.5px; font-weight: 700; color: #1e293b; }
 .kpi-val { font-size: 12.5px; font-weight: 800; }
-.kpi-arrow { font-size: 13px; font-weight: 700; color: #94a3b8; }
+
+.kpi-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kpi-sub-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sub-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.sub-pill.in-period { color: #0284c7; }
+.sub-pill.before { color: #64748b; }
+.sub-pill strong { font-weight: 700; }
 
 .kpi-card.empty-bobin { background: #f8fafc; border-color: #e2e8f0; color: #475569; }
+.kpi-card.extruded { background: #f0fdfa; border-color: #ccfbf1; color: #0d9488; }
 .kpi-card.rolled { background: #ecfdf5; border-color: #d1fae5; color: #059669; }
 .kpi-card.unchecked { background: #fffbeb; border-color: #fef3c7; color: #d97706; }
 .kpi-card.checked { background: #f0f9ff; border-color: #e0f2fe; color: #0284c7; }
 .kpi-card.pending { background: #fff7ed; border-color: #ffedd5; color: #c2410c; }
 .kpi-card.cancelled { background: #fef2f2; border-color: #fee2e2; color: #dc2626; }
+
+.conservation-banner {
+  margin-top: 6px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #334155;
+}
+.conservation-banner .banner-icon { font-size: 13px; }
+.conservation-banner .banner-text { line-height: 1.35; }
+.conservation-banner strong { color: #0f172a; font-weight: 700; }
 
 /* ================= 3. BỘ LỌC GRID 4 CỘT ================= */
 .filter-dashboard {
@@ -460,6 +531,17 @@ h1 {
 .qc-note, .winding-note { margin-top: 4px; font-size: 0.76rem; padding: 3px 6px; border-radius: 4px; }
 .qc-note { color: #e11d48; background: #fff1f2; border-left: 2.5px solid #f43f5e; }
 .winding-note { color: #475569; background: #f1f5f9; border-left: 2.5px solid #94a3b8; }
+.empty-pipeline-notice {
+  padding: 10px 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.empty-pipeline-notice.notice-ext { color: #0284c7; }
+.empty-pipeline-notice.notice-qc { color: #d97706; }
+.empty-pipeline-notice.notice-winding { color: #64748b; }
 .card-footer-simple { padding: 4px 12px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; background: #ffffff; }
 .update-time { font-size: 0.72rem; color: #94a3b8; font-style: italic; }
 
@@ -493,6 +575,7 @@ h1 {
   cursor: pointer;
 }
 .export-menu-item:hover { background: #f1f5f9; }
+.select-all-label { font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 
 /* ================= TOAST NOTIFICATION ================= */
 .toast-message {

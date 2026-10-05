@@ -330,7 +330,7 @@ function registerAjaxForm(
     ExtrusionConfirmDialog.show(
       "Kiểm tra lại thông tin Bobin",
       `<div style="background-color: #fff3cd; color: #856404; padding: 8px 12px; border-radius: 6px; font-weight: 700; margin-bottom: 10px; border-left: 4px solid #ffeeba;">
-          ⚠️ Vui lòng rà soát chính xác các thông tin trước khi lưu vào hệ thống:
+          ⚠️ Vui lòng kiểm tra lại các thông tin trước khi lưu vào hệ thống:
        </div>
        ${reviewHTML}`,
       () => submitForm(form, apiUrl, method, fd, onSuccessCallback),
@@ -354,6 +354,13 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
     if (res.success) {
       Toast.show(res.message, "success");
 
+      // Hiển thị các giá trị đã đẩy lên database sau khi lưu thành công
+      const uploadedValues = Object.fromEntries(formData.entries());
+      console.group("✅ Dữ liệu Bobin đã lưu vào database");
+      console.table(uploadedValues);
+      console.log("Phản hồi từ server:", res);
+      console.groupEnd();
+
       // Reset các ô nhập sau khi tạo thành công
       const idCodeInput = form.querySelector('input[name="bobin_identification_code"]');
       if (idCodeInput) idCodeInput.value = "";
@@ -366,6 +373,7 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
 
       const rackInput = form.querySelector('input[name="rack_code"]');
       if (rackInput) rackInput.value = "";
+
 
       onSuccessCallback?.(res, form);
     } else {

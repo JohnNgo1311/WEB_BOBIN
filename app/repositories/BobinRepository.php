@@ -60,12 +60,147 @@ class BobinRepository
         $pdo = $this->db->pdo();
 
         try {
-            $sql = "SELECT * FROM bobin_history
-                    WHERE updated_time BETWEEN :from_date AND :to_date";
-            $params = [
-                ':from_date' => $filters['from_date'],
-                ':to_date'   => $filters['to_date']
-            ];
+            $statusFilter = !empty($filters['status']) ? trim($filters['status']) : 'all';
+            $fromDateStr  = $filters['from_date'];
+            $toDateStr    = $filters['to_date'];
+
+            $params = [];
+
+            // Biểu thức chuyển đổi thời gian từ bobin_key_code (VD: A0001_2026_10_04_18_29_44)
+            $keyTimeExpr = "STR_TO_DATE(SUBSTRING_INDEX(h.bobin_key_code, '_', -6), '%Y_%m_%d_%H_%i_%s')";
+            $keyTimeSubQueryExpr = "STR_TO_DATE(SUBSTRING_INDEX(bobin_key_code, '_', -6), '%Y_%m_%d_%H_%i_%s')";
+
+            if ($statusFilter === 'Extruded') {
+                // 1. Chức năng "ĐÃ ĐÙN":
+                // Bước 1: Lọc danh sách các Bobin có updated_time VÀ giá trị thời gian trong bobin_key_code thuộc thời điểm đầu cuối đã chọn => Danh sách (1)
+                // Bước 2: Nhóm theo bobin_key_code lấy version có updated_time mới nhất (MAX(id)).
+                // Đảm bảo độc nhất bobin_key_code, bobin_identification_code có thể trùng nhau => Danh sách (2)
+                $sql = "SELECT h.* FROM bobin_history h
+                        INNER JOIN (
+                            SELECT bobin_key_code, MAX(id) AS max_id
+                            FROM bobin_history
+                            WHERE updated_time BETWEEN :from_date AND :to_date
+                              AND $keyTimeSubQueryExpr BETWEEN :from_date_key AND :to_date_key
+                            GROUP BY bobin_key_code
+                        ) latest_key ON h.id = latest_key.max_id";
+
+                $params[':from_date']     = $fromDateStr;
+                $params[':to_date']       = $toDateStr;
+                $params[':from_date_key'] = $fromDateStr;
+                $params[':to_date_key']   = $toDateStr;
+            } elseif ($statusFilter === 'Busy_Unchecked') {
+                // 3. Chức năng "CHƯA KT QC":
+                // Tương ứng với số lượng Bobin "ĐÃ ĐÙN" ở trên (có updated_time & key_time trong [from_date, to_date]),
+                // tính đến 23:59:59 của thời điểm cuối đã chọn (to_date), tập hợp những Bobin chỉ ở trạng thái Busy_Unchecked.
+                $sql = "SELECT h.* FROM bobin_history h
+                        INNER JOIN (
+                            SELECT bobin_key_code, MAX(id) AS max_id
+                            FROM bobin_history
+                            WHERE updated_time <= :to_date_scope
+                              AND bobin_key_code IN (
+                                  SELECT DISTINCT bobin_key_code 
+                                  FROM bobin_history 
+                                  WHERE updated_time BETWEEN :from_date_ext AND :to_date_ext
+                                    AND $keyTimeSubQueryExpr BETWEEN :from_date_key AND :to_date_key
+                              )
+                            GROUP BY bobin_key_code
+                        ) latest_key ON h.id = latest_key.max_id
+                        WHERE h.bobin_current_status = 'Busy_Unchecked'";
+
+                $params[':to_date_scope'] = $toDateStr;
+                $params[':from_date_ext'] = $fromDateStr;
+                $params[':to_date_ext']   = $toDateStr;
+                $params[':from_date_key'] = $fromDateStr;
+                $params[':to_date_key']   = $toDateStr;
+            } elseif (in_array($statusFilter, ['Busy_Checked', 'Busy_Checked_InPeriod', 'Busy_Checked_Before'])) {
+                // 2. Chức năng "ĐÃ KT QC":
+                // Có 2 trường hợp: Đùn trong khoảng thời gian hoặc đùn trước đó
+                $sql = "SELECT h.* FROM bobin_history h
+                        INNER JOIN (
+                            SELECT bobin_key_code, MAX(id) AS max_id
+                            FROM bobin_history
+                            WHERE updated_time BETWEEN :from_date AND :to_date
+                              AND bobin_current_status = 'Busy_Checked'
+                            GROUP BY bobin_key_code
+                        ) latest_key ON h.id = latest_key.max_id";
+
+                if ($statusFilter === 'Busy_Checked_InPeriod') {
+                    $sql .= " WHERE $keyTimeExpr BETWEEN :from_key AND :to_key";
+                    $params[':from_key'] = $fromDateStr;
+                    $params[':to_key']   = $toDateStr;
+                } elseif ($statusFilter === 'Busy_Checked_Before') {
+                    $sql .= " WHERE $keyTimeExpr < :from_key";
+                    $params[':from_key'] = $fromDateStr;
+                }
+
+                $params[':from_date'] = $fromDateStr;
+                $params[':to_date']   = $toDateStr;
+            } elseif ($statusFilter === 'Rolled') {
+                // 5. Chức năng "ĐÃ CUỘN":
+                // Lọc ra các Bobin ở trạng thái Rolled trong khoảng thời gian [from, to], độc nhất bobin_key_code
+                $sql = "SELECT h.* FROM bobin_history h
+                        INNER JOIN (
+                            SELECT bobin_key_code, MAX(id) AS max_id
+                            FROM bobin_history
+                            WHERE updated_time BETWEEN :from_date AND :to_date
+                              AND bobin_current_status = 'Rolled'
+                            GROUP BY bobin_key_code
+                        ) latest_key ON h.id = latest_key.max_id";
+
+                $params[':from_date'] = $fromDateStr;
+                $params[':to_date']   = $toDateStr;
+            } elseif (in_array($statusFilter, ['Cancelled', 'Cancelled_InPeriod', 'Cancelled_Before'])) {
+                // 3 & 4. Chức năng "ĐÃ HỦY":
+                $sql = "SELECT h.* FROM bobin_history h
+                        INNER JOIN (
+                            SELECT bobin_key_code, MAX(id) AS max_id
+                            FROM bobin_history
+                            WHERE updated_time BETWEEN :from_date AND :to_date
+                              AND bobin_current_status = 'Cancelled'
+                            GROUP BY bobin_key_code
+                        ) latest_key ON h.id = latest_key.max_id";
+
+                if ($statusFilter === 'Cancelled_InPeriod') {
+                    $sql .= " WHERE $keyTimeExpr BETWEEN :from_key AND :to_key";
+                    $params[':from_key'] = $fromDateStr;
+                    $params[':to_key']   = $toDateStr;
+                } elseif ($statusFilter === 'Cancelled_Before') {
+                    $sql .= " WHERE $keyTimeExpr < :from_key";
+                    $params[':from_key'] = $fromDateStr;
+                }
+
+                $params[':from_date'] = $fromDateStr;
+                $params[':to_date']   = $toDateStr;
+            } elseif (in_array($statusFilter, ['Pending_Cancellation', 'Pending_Cancellation_InPeriod', 'Pending_Cancellation_Before'])) {
+                // 3 & 4. Chức năng "CHỜ HỦY":
+                $sql = "SELECT h.* FROM bobin_history h
+                        INNER JOIN (
+                            SELECT bobin_key_code, MAX(id) AS max_id
+                            FROM bobin_history
+                            WHERE updated_time BETWEEN :from_date AND :to_date
+                              AND bobin_current_status = 'Pending_Cancellation'
+                            GROUP BY bobin_key_code
+                        ) latest_key ON h.id = latest_key.max_id";
+
+                if ($statusFilter === 'Pending_Cancellation_InPeriod') {
+                    $sql .= " WHERE $keyTimeExpr BETWEEN :from_key AND :to_key";
+                    $params[':from_key'] = $fromDateStr;
+                    $params[':to_key']   = $toDateStr;
+                } elseif ($statusFilter === 'Pending_Cancellation_Before') {
+                    $sql .= " WHERE $keyTimeExpr < :from_key";
+                    $params[':from_key'] = $fromDateStr;
+                }
+
+                $params[':from_date'] = $fromDateStr;
+                $params[':to_date']   = $toDateStr;
+            } else {
+                // Mặc định ("all"):
+                $sql = "SELECT h.* FROM bobin_history h
+                        WHERE h.updated_time BETWEEN :from_date AND :to_date";
+
+                $params[':from_date'] = $fromDateStr;
+                $params[':to_date']   = $toDateStr;
+            }
 
             // NẾU CÓ CHỌN CỤ THỂ CÁC BẢN GHI QUA CHECKBOX
             if (!empty($selectedIds)) {
@@ -77,52 +212,52 @@ class BobinRepository
                 }
                 $firstVal = reset($selectedIds);
                 if (is_numeric($firstVal)) {
-                    $sql .= " AND id IN (" . implode(',', $inPlaceholders) . ")";
+                    $sql .= " AND h.id IN (" . implode(',', $inPlaceholders) . ")";
                 } else {
-                    $sql .= " AND bobin_key_code IN (" . implode(',', $inPlaceholders) . ")";
+                    $sql .= " AND h.bobin_key_code IN (" . implode(',', $inPlaceholders) . ")";
                 }
             }
 
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
-                $sql .= " AND bobin_size = :bsize";
+                $sql .= " AND h.bobin_size = :bsize";
                 $params[':bsize'] = $filters['bobin_size'];
             }
 
             if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
-                $sql .= " AND bobin_type = :btype";
+                $sql .= " AND h.bobin_type = :btype";
                 $params[':btype'] = $filters['bobin_type'];
             }
 
             if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
-                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
-                $params[':rack'] = $filters['rack'];
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(h.rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(h.rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(h.rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
             }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
                 $sql .= " AND (
-                    bobin_identification_code LIKE :kw1 OR  
-                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
-                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
-                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
-                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
-                    print_lot LIKE :kw6 OR
-                    winding_machine LIKE :kw7 OR
-                    bobin_type LIKE :kw8
+                    h.bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(h.extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(h.extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(h.products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(h.products, '$.production_order_code') LIKE :kw5 OR 
+                    h.print_lot LIKE :kw6 OR
+                    h.winding_machine LIKE :kw7 OR
+                    h.bobin_type LIKE :kw8
                 )";
                 for ($i = 1; $i <= 8; $i++) {
                     $params[":kw$i"] = $searchStr;
                 }
             }
 
-            if (!empty($filters['status'])) {
-                if ($filters['status'] !== 'all') {
-                    $sql .= " AND bobin_current_status = :status";
-                    $params[':status'] = $filters['status'];
-                }
-            }
-
-            $sql .= " ORDER BY updated_time DESC";
+            $sql .= " ORDER BY h.updated_time DESC";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -131,68 +266,249 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
+
     public function getBobinsHistoryStats(array $filters = []): array
     {
         $pdo = $this->db->pdo();
         try {
-            $sql = "SELECT bobin_current_status, COUNT(*) AS total 
-                    FROM bobin_history 
-                    WHERE updated_time BETWEEN :from_date AND :to_date";
-            $params = [
-                ':from_date' => $filters['from_date'],
-                ':to_date'   => $filters['to_date']
-            ];
+            $fromDateStr = $filters['from_date'];
+            $toDateStr   = $filters['to_date'];
+
+            // Đoạn phụ lọc thêm (bobin_size, bobin_type, rack, keyword)
+            $extraWhere = "";
+            $extraParams = [];
 
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
-                $sql .= " AND bobin_size = :bsize";
-                $params[':bsize'] = $filters['bobin_size'];
+                $extraWhere .= " AND h.bobin_size = :bsize";
+                $extraParams[':bsize'] = $filters['bobin_size'];
             }
-
             if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
-                $sql .= " AND bobin_type = :btype";
-                $params[':btype'] = $filters['bobin_type'];
+                $extraWhere .= " AND h.bobin_type = :btype";
+                $extraParams[':btype'] = $filters['bobin_type'];
             }
-
             if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
-                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
-                $params[':rack'] = $filters['rack'];
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $extraWhere .= " AND JSON_UNQUOTE(JSON_EXTRACT(h.rack, '$.code')) = :rack";
+                    $extraParams[':rack'] = $rackFilterVal;
+                } else {
+                    $extraWhere .= " AND (JSON_UNQUOTE(JSON_EXTRACT(h.rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(h.rack, '$.code')) = :rack_exact)";
+                    $extraParams[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $extraParams[':rack_exact']  = $rackFilterVal;
+                }
             }
-
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
-                $sql .= " AND (
-                    bobin_identification_code LIKE :kw1 OR  
-                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
-                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
-                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
-                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
-                    print_lot LIKE :kw6 OR
-                    winding_machine LIKE :kw7 OR
-                    bobin_type LIKE :kw8
+                $extraWhere .= " AND (
+                    h.bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(h.extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(h.extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(h.products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(h.products, '$.production_order_code') LIKE :kw5 OR 
+                    h.print_lot LIKE :kw6 OR
+                    h.winding_machine LIKE :kw7 OR
+                    h.bobin_type LIKE :kw8
                 )";
                 for ($i = 1; $i <= 8; $i++) {
-                    $params[":kw$i"] = $searchStr;
+                    $extraParams[":kw$i"] = $searchStr;
                 }
             }
 
-            $sql .= " GROUP BY bobin_current_status";
+            $keyTimeExpr = "STR_TO_DATE(SUBSTRING_INDEX(h.bobin_key_code, '_', -6), '%Y_%m_%d_%H_%i_%s')";
+            $keyTimeSubQueryExpr = "STR_TO_DATE(SUBSTRING_INDEX(bobin_key_code, '_', -6), '%Y_%m_%d_%H_%i_%s')";
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            // 1. ĐÃ ĐÙN: Các Bobin có updated_time VÀ key_time trong [from, to], nhóm theo bobin_key_code lấy bản ghi mới nhất
+            $sqlExt = "SELECT COUNT(*) FROM bobin_history h
+                       INNER JOIN (
+                           SELECT bobin_key_code, MAX(id) AS max_id
+                           FROM bobin_history
+                           WHERE updated_time BETWEEN :from_date AND :to_date
+                             AND $keyTimeSubQueryExpr BETWEEN :from_date_key AND :to_date_key
+                           GROUP BY bobin_key_code
+                       ) latest_key ON h.id = latest_key.max_id
+                       WHERE 1=1" . $extraWhere;
+            $paramsExt = array_merge([
+                ':from_date'     => $fromDateStr,
+                ':to_date'       => $toDateStr,
+                ':from_date_key' => $fromDateStr,
+                ':to_date_key'   => $toDateStr
+            ], $extraParams);
+            $stmtExt = $pdo->prepare($sqlExt);
+            $stmtExt->execute($paramsExt);
+            $extruded = (int)$stmtExt->fetchColumn();
 
-            $rolled        = (int)($rows['Rolled'] ?? 0);
-            $busyUnchecked = (int)($rows['Busy_Unchecked'] ?? 0);
-            $busyChecked   = (int)($rows['Busy_Checked'] ?? 0);
-            $pendingCancel = (int)($rows['Pending_Cancellation'] ?? 0);
-            $cancelled     = (int)($rows['Cancelled'] ?? 0);
+            // 2. CHƯA KT QC: Trong số các Bobin ĐÃ ĐÙN ở trên, tính đến to_date vẫn đang ở Busy_Unchecked
+            $sqlUnchecked = "SELECT COUNT(*) FROM bobin_history h
+                             INNER JOIN (
+                                 SELECT bobin_key_code, MAX(id) AS max_id
+                                 FROM bobin_history
+                                 WHERE updated_time <= :to_date_scope
+                                   AND bobin_key_code IN (
+                                       SELECT DISTINCT bobin_key_code 
+                                       FROM bobin_history 
+                                       WHERE updated_time BETWEEN :from_date_ext AND :to_date_ext
+                                         AND $keyTimeSubQueryExpr BETWEEN :from_date_key AND :to_date_key
+                                   )
+                                 GROUP BY bobin_key_code
+                             ) latest_key ON h.id = latest_key.max_id
+                             WHERE h.bobin_current_status = 'Busy_Unchecked'" . $extraWhere;
+            $paramsUnchecked = array_merge([
+                ':to_date_scope' => $toDateStr,
+                ':from_date_ext' => $fromDateStr,
+                ':to_date_ext'   => $toDateStr,
+                ':from_date_key' => $fromDateStr,
+                ':to_date_key'   => $toDateStr
+            ], $extraParams);
+            $stmtUnchecked = $pdo->prepare($sqlUnchecked);
+            $stmtUnchecked->execute($paramsUnchecked);
+            $busyUnchecked = (int)$stmtUnchecked->fetchColumn();
+
+            // 3. ĐÃ KT QC: Busy_Checked trong [from, to], độc nhất theo bobin_key_code
+            $sqlChecked = "SELECT 
+                              COUNT(*) as total,
+                              SUM(CASE WHEN $keyTimeExpr BETWEEN :from_key AND :to_key THEN 1 ELSE 0 END) as in_period,
+                              SUM(CASE WHEN $keyTimeExpr < :from_key_before THEN 1 ELSE 0 END) as before_period
+                           FROM bobin_history h
+                           INNER JOIN (
+                               SELECT bobin_key_code, MAX(id) AS max_id
+                               FROM bobin_history
+                               WHERE updated_time BETWEEN :from_date AND :to_date
+                                 AND bobin_current_status = 'Busy_Checked'
+                               GROUP BY bobin_key_code
+                           ) latest_key ON h.id = latest_key.max_id
+                           WHERE 1=1" . $extraWhere;
+            $paramsChecked = array_merge([
+                ':from_date'        => $fromDateStr,
+                ':to_date'          => $toDateStr,
+                ':from_key'         => $fromDateStr,
+                ':to_key'           => $toDateStr,
+                ':from_key_before'  => $fromDateStr
+            ], $extraParams);
+            $stmtChecked = $pdo->prepare($sqlChecked);
+            $stmtChecked->execute($paramsChecked);
+            $rowChecked = $stmtChecked->fetch(PDO::FETCH_ASSOC);
+            $busyChecked = (int)($rowChecked['total'] ?? 0);
+            $busyCheckedInPeriod = (int)($rowChecked['in_period'] ?? 0);
+            $busyCheckedBefore = (int)($rowChecked['before_period'] ?? 0);
+
+            // 4. ĐÃ CUỘN: Rolled trong [from, to], độc nhất theo bobin_key_code
+            $sqlRolled = "SELECT COUNT(*) FROM bobin_history h
+                          INNER JOIN (
+                              SELECT bobin_key_code, MAX(id) AS max_id
+                              FROM bobin_history
+                              WHERE updated_time BETWEEN :from_date AND :to_date
+                                AND bobin_current_status = 'Rolled'
+                              GROUP BY bobin_key_code
+                          ) latest_key ON h.id = latest_key.max_id
+                          WHERE 1=1" . $extraWhere;
+            $paramsRolled = array_merge([':from_date' => $fromDateStr, ':to_date' => $toDateStr], $extraParams);
+            $stmtRolled = $pdo->prepare($sqlRolled);
+            $stmtRolled->execute($paramsRolled);
+            $rolled = (int)$stmtRolled->fetchColumn();
+
+            // 5. ĐÃ HỦY: Cancelled trong [from, to], độc nhất theo bobin_key_code
+            $sqlCancelled = "SELECT 
+                               COUNT(*) as total,
+                               SUM(CASE WHEN $keyTimeExpr BETWEEN :from_key AND :to_key THEN 1 ELSE 0 END) as in_period,
+                               SUM(CASE WHEN $keyTimeExpr < :from_key_before THEN 1 ELSE 0 END) as before_period
+                            FROM bobin_history h
+                            INNER JOIN (
+                                SELECT bobin_key_code, MAX(id) AS max_id
+                                FROM bobin_history
+                                WHERE updated_time BETWEEN :from_date AND :to_date
+                                  AND bobin_current_status = 'Cancelled'
+                                GROUP BY bobin_key_code
+                            ) latest_key ON h.id = latest_key.max_id
+                            WHERE 1=1" . $extraWhere;
+            $paramsCancelled = array_merge([
+                ':from_date'        => $fromDateStr,
+                ':to_date'          => $toDateStr,
+                ':from_key'         => $fromDateStr,
+                ':to_key'           => $toDateStr,
+                ':from_key_before'  => $fromDateStr
+            ], $extraParams);
+            $stmtCancelled = $pdo->prepare($sqlCancelled);
+            $stmtCancelled->execute($paramsCancelled);
+            $rowCancelled = $stmtCancelled->fetch(PDO::FETCH_ASSOC);
+            $cancelled = (int)($rowCancelled['total'] ?? 0);
+            $cancelledInPeriod = (int)($rowCancelled['in_period'] ?? 0);
+            $cancelledBefore = (int)($rowCancelled['before_period'] ?? 0);
+
+            // 6. CHỜ HỦY: Pending_Cancellation trong [from, to], độc nhất theo bobin_key_code
+            $sqlPending = "SELECT 
+                              COUNT(*) as total,
+                              SUM(CASE WHEN $keyTimeExpr BETWEEN :from_key AND :to_key THEN 1 ELSE 0 END) as in_period,
+                              SUM(CASE WHEN $keyTimeExpr < :from_key_before THEN 1 ELSE 0 END) as before_period
+                           FROM bobin_history h
+                           INNER JOIN (
+                               SELECT bobin_key_code, MAX(id) AS max_id
+                               FROM bobin_history
+                               WHERE updated_time BETWEEN :from_date AND :to_date
+                                 AND bobin_current_status = 'Pending_Cancellation'
+                               GROUP BY bobin_key_code
+                           ) latest_key ON h.id = latest_key.max_id
+                           WHERE 1=1" . $extraWhere;
+            $paramsPending = array_merge([
+                ':from_date'        => $fromDateStr,
+                ':to_date'          => $toDateStr,
+                ':from_key'         => $fromDateStr,
+                ':to_key'           => $toDateStr,
+                ':from_key_before'  => $fromDateStr
+            ], $extraParams);
+            $stmtPending = $pdo->prepare($sqlPending);
+            $stmtPending->execute($paramsPending);
+            $rowPending = $stmtPending->fetch(PDO::FETCH_ASSOC);
+            $pendingCancel = (int)($rowPending['total'] ?? 0);
+            $pendingCancelInPeriod = (int)($rowPending['in_period'] ?? 0);
+            $pendingCancelBefore = (int)($rowPending['before_period'] ?? 0);
+
+            // 7. SỐ LIỆU BẢO TOÀN (Lấy trạng thái mới nhất tính đến to_date của các Bobin ĐÃ ĐÙN trong khoảng thời gian đã chọn)
+            $sqlConserved = "SELECT h.bobin_current_status, COUNT(*) as cnt
+                             FROM bobin_history h
+                             INNER JOIN (
+                                 SELECT bobin_key_code, MAX(id) AS max_id
+                                 FROM bobin_history
+                                 WHERE updated_time <= :to_date_scope
+                                   AND bobin_key_code IN (
+                                       SELECT DISTINCT bobin_key_code 
+                                       FROM bobin_history 
+                                       WHERE updated_time BETWEEN :from_date_ext AND :to_date_ext
+                                         AND $keyTimeSubQueryExpr BETWEEN :from_date_key AND :to_date_key
+                                   )
+                                 GROUP BY bobin_key_code
+                             ) latest_key ON h.id = latest_key.max_id
+                             WHERE 1=1" . $extraWhere . "
+                             GROUP BY h.bobin_current_status";
+            $paramsConserved = array_merge([
+                ':to_date_scope' => $toDateStr,
+                ':from_date_ext' => $fromDateStr,
+                ':to_date_ext'   => $toDateStr,
+                ':from_date_key' => $fromDateStr,
+                ':to_date_key'   => $toDateStr
+            ], $extraParams);
+            $stmtConserved = $pdo->prepare($sqlConserved);
+            $stmtConserved->execute($paramsConserved);
+            $conservedMap = $stmtConserved->fetchAll(PDO::FETCH_KEY_PAIR);
 
             return [
-                'Rolled'               => $rolled,
-                'Busy_Unchecked'       => $busyUnchecked,
-                'Busy_Checked'         => $busyChecked,
-                'Pending_Cancellation' => $pendingCancel,
-                'Cancelled'            => $cancelled
+                'Extruded'                      => $extruded,
+                'Rolled'                        => $rolled,
+                'Busy_Unchecked'                => $busyUnchecked,
+                'Busy_Checked'                  => $busyChecked,
+                'Busy_Checked_InPeriod'         => $busyCheckedInPeriod,
+                'Busy_Checked_Before'           => $busyCheckedBefore,
+                'Pending_Cancellation'          => $pendingCancel,
+                'Pending_Cancellation_InPeriod' => $pendingCancelInPeriod,
+                'Pending_Cancellation_Before'   => $pendingCancelBefore,
+                'Cancelled'                     => $cancelled,
+                'Cancelled_InPeriod'            => $cancelledInPeriod,
+                'Cancelled_Before'              => $cancelledBefore,
+                // Số liệu trạng thái hiện thời của tập Bobin Đã đùn trong khoảng (Bảo toàn)
+                'Conserved_Busy_Checked'         => (int)($conservedMap['Busy_Checked'] ?? 0),
+                'Conserved_Busy_Unchecked'       => (int)($conservedMap['Busy_Unchecked'] ?? 0),
+                'Conserved_Rolled'               => (int)($conservedMap['Rolled'] ?? 0),
+                'Conserved_Pending_Cancellation' => (int)($conservedMap['Pending_Cancellation'] ?? 0),
+                'Conserved_Cancelled'            => (int)($conservedMap['Cancelled'] ?? 0)
             ];
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
@@ -254,8 +570,15 @@ class BobinRepository
                 $params[':btype'] = $filters['bobin_type'];
             }
             if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
-                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
-                $params[':rack'] = $filters['rack'];
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
             }
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -312,8 +635,15 @@ class BobinRepository
             }
 
             if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
-                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
-                $params[':rack'] = $filters['rack'];
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
             }
 
             if (!empty($filters['keyword'])) {
@@ -379,8 +709,15 @@ class BobinRepository
 
             // 3. Lọc theo Vị trí Rack
             if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
-                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
-                $params[':rack'] = $filters['rack'];
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
             }
 
             // 4. Tìm kiếm từ khóa (Keyword)
@@ -517,6 +854,47 @@ class BobinRepository
             $stmt->execute($params);
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function countDetailBobinsForQC(array $filters = []): int
+    {
+        $pdo = $this->db->pdo();
+
+        try {
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail 
+                WHERE bobin_current_status = 'Busy_Unchecked'";
+
+            $params = [];
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                bobin_identification_code LIKE :kw1 OR  
+                JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                print_lot LIKE :kw6 OR
+                bobin_type LIKE :kw7
+            )";
+
+                $params[':kw1'] = $searchStr;
+                $params[':kw2'] = $searchStr;
+                $params[':kw3'] = $searchStr;
+                $params[':kw4'] = $searchStr;
+                $params[':kw5'] = $searchStr;
+                $params[':kw6'] = $searchStr;
+                $params[':kw7'] = $searchStr;
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+
+            return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
             throw new Exception("Database error: " . $e->getMessage());
@@ -848,7 +1226,8 @@ class BobinRepository
 
             $this->extUpdateBobinDetail($pdo, $entity);
             $this->extUpdateBobinGeneral($pdo, $entity);
-            $this->extInsertBobinHistoryAfterUpdate($pdo, $entity);
+            // Cập nhật lại bản ghi trong bobin_history theo bobin_key_code mà không POST dòng mới (Req VI & VII)
+            $this->extUpdateBobinHistory($pdo, $entity);
 
             $pdo->commit();
             return true;
@@ -863,6 +1242,7 @@ class BobinRepository
 
     private function extUpdateBobinDetail(PDO $pdo, BobinEntity $entity): void
     {
+        // Khi nhân viên đùn update, không cập nhật updated_time (Req VII)
         $sql = "UPDATE bobin_list_detail SET
                     bobin_type = :type,
                     extrusion_employee = :extrusionemp,
@@ -875,22 +1255,21 @@ class BobinRepository
                     shift = :shift,
                     extrusion_date = :edate,
                     finish_time = :ftime,
-                    bobin_current_status = :status,
-                    updated_time = :updated
+                    bobin_current_status = :status
                 WHERE bobin_identification_code = :ident";
 
         $stmt = $pdo->prepare($sql);
         $params = $this->getBobinExtUpdateParams($entity);
         $params[':status'] = 'Busy_Unchecked';
-        $params[':updated'] = $entity->updatedTime->format('Y-m-d H:i:s');
         $stmt->execute($params);
     }
+
     private function extUpdateBobinGeneral(PDO $pdo, BobinEntity $entity): void
     {
+        // Khi nhân viên đùn update, không cập nhật updated_time (Req VII)
         $sql = "UPDATE bobin_list_general SET
                     bobin_type = :type,
-                    bobin_current_status = :status,
-                    updated_time = NOW()
+                    bobin_current_status = :status
                 WHERE bobin_identification_code = :ident";
 
         $stmt = $pdo->prepare($sql);
@@ -901,27 +1280,34 @@ class BobinRepository
         ]);
     }
 
-    private function extInsertBobinHistoryAfterUpdate(PDO $pdo, BobinEntity $entity): void
+    private function extUpdateBobinHistory(PDO $pdo, BobinEntity $entity): void
     {
-        $sql = "INSERT INTO bobin_history (
-                    bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
-                    shift, extrusion_date, finish_time, visual_inspection, winding_machine,
-                    winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
-                ) SELECT 
-                    bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
-                    shift, extrusion_date, finish_time, visual_inspection, 
-                    winding_machine, winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
-                FROM bobin_list_detail
-                WHERE bobin_key_code = :key 
-                AND bobin_identification_code = :ident";
+        if (empty($entity->bobinKeyCode)) {
+            return;
+        }
 
-        $stmtHistory = $pdo->prepare($sql);
-        $stmtHistory->execute([
-            ':key'   => $entity->bobinKeyCode,
-            ':ident' => $entity->identificationCode
-        ]);
+        // Tìm đến bobin_key_code tương ứng để update dữ liệu, không cập nhật updated_time (Req VI & VII)
+        $sql = "UPDATE bobin_history SET
+                    bobin_type = :type,
+                    extrusion_employee = :extrusionemp,
+                    extrusion_check = :ext_check,
+                    rack = :rack,
+                    products = :prod,
+                    material_lot = :mat,
+                    print_lot = :plot,
+                    length_m = :len,
+                    shift = :shift,
+                    extrusion_date = :edate,
+                    finish_time = :ftime,
+                    bobin_current_status = :status
+                WHERE bobin_key_code = :key";
+
+        $stmt = $pdo->prepare($sql);
+        $params = $this->getBobinExtUpdateParams($entity);
+        unset($params[':ident']);
+        $params[':key'] = $entity->bobinKeyCode;
+        $params[':status'] = 'Busy_Unchecked';
+        $stmt->execute($params);
     }
 
     private function getBobinExtUpdateParams(BobinEntity $entity): array
@@ -1566,8 +1952,15 @@ class BobinRepository
 
             // Lọc vị trí Rack
             if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
-                $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
-                $params[':rack'] = $filters['rack'];
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
             }
 
             // Lọc từ khóa

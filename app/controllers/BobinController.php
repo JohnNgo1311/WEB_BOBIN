@@ -304,6 +304,73 @@ class BobinController extends Controller
             'bobins'  => $bobins,
         ]);
     }
+
+    public function qcEditBobinView()
+    {
+        // QC và Admin có quyền truy cập
+        $role = strtolower($_SESSION['user']['role'] ?? '');
+        if (!in_array($role, ['qc', 'admin'], true)) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_QC');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        try {
+            $dto = BobinGetListDTO::fromRequest($_GET);
+            $bobins = $this->bobinService->getListDetailBobinsForQCEdit($dto) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForQCEdit($dto);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
+
+        $this->view('qcEditBobinView', data: [
+            'bobins'       => $bobins,
+            'totalRecords' => $totalRecords,
+            'pagination'   => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ]
+        ]);
+    }
+
+    public function windingEditBobinView()
+    {
+        // Chỉ admin mới có quyền truy cập
+        if (strtolower($_SESSION['user']['role'] ?? '') !== 'admin') {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/windingView');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        try {
+            $dto = BobinGetListDTO::fromRequest($_GET);
+            $bobins = $this->bobinService->getListDetailBobinsForWindingEdit($dto) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForWindingEdit($dto);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
+
+        $this->view('windingEditBobinView', data: [
+            'bobins'       => $bobins,
+            'totalRecords' => $totalRecords,
+            'pagination'   => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ]
+        ]);
+    }
     #endregion
 
     public function getSpecificBobin()
@@ -361,9 +428,36 @@ class BobinController extends Controller
         exit;
     }
 
+    private function verifyCurrentUserPassword(string $password): bool
+    {
+        if (empty($password)) {
+            return false;
+        }
+        $userId = $_SESSION['user']['id'] ?? null;
+        if (!$userId) {
+            return false;
+        }
+        try {
+            $pdo = Database::getInstance()->pdo();
+            $stmt = $pdo->prepare("SELECT password FROM employee_list WHERE id = :id AND is_active = 1 LIMIT 1");
+            $stmt->execute([':id' => $userId]);
+            $dbHash = $stmt->fetchColumn();
+            if (!$dbHash) {
+                return false;
+            }
+            if (password_verify($password, $dbHash)) {
+                return true;
+            }
+            return ($password === $dbHash);
+        } catch (Throwable $e) {
+            error_log("Password verification error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function extrusionUpdateBobin(): void
     {
-        //TODO 1. Chỉ chấp nhận POST
+        //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -374,8 +468,28 @@ class BobinController extends Controller
 
             $dto = BobinExtUpdateDTO::fromRequest($input);
             $this->validFormExtrusionEdit($dto);
+
+            // Bắt buộc xác nhận mật khẩu của người đang đăng nhập
+            if (empty($dto->confirm_password) || !$this->verifyCurrentUserPassword($dto->confirm_password)) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Mật khẩu xác nhận không chính xác. Thao tác điều chỉnh bị từ chối.'
+                ], 403);
+                exit;
+            }
+
+            // Ghi nhận vết kiểm toán update_history
+            $updateRecord = [
+                'stage'          => 'extrusion',
+                'action'         => 'edit',
+                'employee_code'  => $_SESSION['user']['employee_code'] ?? 'Unknown',
+                'employee_name'  => $_SESSION['user']['employee_name'] ?? 'Unknown',
+                'updated_at'     => date('Y-m-d H:i:s'),
+                'note'           => 'Điều chỉnh thông tin Đùn'
+            ];
+
             //TODO 3. Gọi Service xử lý
-            $entity = $this->bobinService->extUpdateBobin($dto);
+            $entity = $this->bobinService->extUpdateBobin($dto, $updateRecord);
 
             //TODO 4. Trả về kết quả thành công
             $this->json([
@@ -448,6 +562,89 @@ class BobinController extends Controller
                 'message' =>  "Kiểm tra QC - Cập nhật thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
             ]);
+        } catch (Throwable $e) {
+            $this->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+        exit;
+    }
+
+    public function updateQCEditBobin(): void
+    {
+        // 1. Phân quyền: QC hoặc Admin
+        $role = strtolower($_SESSION['user']['role'] ?? '');
+        if (!in_array($role, ['qc', 'admin'], true)) {
+            $this->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này.'], 403);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+            $dto = BobinQCUpdateDTO::fromRequest($input);
+
+            // Bắt buộc xác nhận mật khẩu
+            if (empty($dto->confirm_password) || !$this->verifyCurrentUserPassword($dto->confirm_password)) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Mật khẩu xác nhận không chính xác. Thao tác điều chỉnh bị từ chối.'
+                ], 403);
+                exit;
+            }
+
+            if (empty($dto->bobin_identification_code)) {
+                throw new Exception("Mã định danh Bobin không được để trống.");
+            }
+
+            // Dữ liệu ngoại quan QC
+            $viData = [
+                'inspector_code'       => $dto->inspector_code,
+                'inspector_name'       => $dto->inspector_name,
+                'defect_gel'           => $dto->defect_gel,
+                'defect_foreign_object'=> $dto->defect_foreign_object,
+                'defect_color_issue'   => $dto->defect_color_issue,
+                'defect_print_quality' => $dto->defect_print_quality,
+                'defect_note'          => $dto->defect_note,
+                'inspected_at'         => date('Y-m-d H:i:s')
+            ];
+
+            // Nếu người dùng chọn đổi loại Bobin (tùy chọn)
+            $newType = !empty($input['bobin_type']) ? trim($input['bobin_type']) : null;
+
+            // Audit record
+            $updateRecord = [
+                'stage'          => 'qc',
+                'action'         => 'edit',
+                'employee_code'  => $_SESSION['user']['employee_code'] ?? 'Unknown',
+                'employee_name'  => $_SESSION['user']['employee_name'] ?? 'Unknown',
+                'updated_at'     => date('Y-m-d H:i:s'),
+                'note'           => 'Điều chỉnh thông tin QC'
+            ];
+
+            $res = $this->bobinService->adminUpdateQCBobin(
+                $dto->bobin_identification_code,
+                $dto->bobin_key_code,
+                $viData,
+                $newType,
+                $updateRecord
+            );
+
+            if ($res) {
+                $this->json([
+                    'success' => true,
+                    'message' => "Điều chỉnh thông tin QC cho Bobin {$dto->bobin_identification_code} thành công!",
+                    'bobin_identification_code' => $dto->bobin_identification_code
+                ]);
+            } else {
+                throw new Exception("Cập nhật thông tin QC thất bại.");
+            }
         } catch (Throwable $e) {
             $this->json([
                 'success' => false,
@@ -542,6 +739,76 @@ class BobinController extends Controller
         }
         exit;
     }
+
+    public function updateWindingEditBobin(): void
+    {
+        // 1. Phân quyền: Chỉ admin
+        if (strtolower($_SESSION['user']['role'] ?? '') !== 'admin') {
+            $this->json(['success' => false, 'message' => 'Chỉ Quản trị viên (Admin) mới có quyền thực hiện thao tác này.'], 403);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+
+            $dto = BobinUpdateWindingDTO::fromRequest($input);
+
+            // Bắt buộc xác nhận mật khẩu
+            if (empty($dto->confirm_password) || !$this->verifyCurrentUserPassword($dto->confirm_password)) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Mật khẩu xác nhận không chính xác. Thao tác điều chỉnh bị từ chối.'
+                ], 403);
+                exit;
+            }
+
+            if (empty($dto->bobin_identification_code)) {
+                throw new Exception("Mã định danh Bobin không được để trống.");
+            }
+
+            // Audit record
+            $updateRecord = [
+                'stage'          => 'winding',
+                'action'         => 'edit',
+                'employee_code'  => $_SESSION['user']['employee_code'] ?? 'Unknown',
+                'employee_name'  => $_SESSION['user']['employee_name'] ?? 'Unknown',
+                'updated_at'     => date('Y-m-d H:i:s'),
+                'note'           => 'Điều chỉnh thông tin Cuộn'
+            ];
+
+            $res = $this->bobinService->adminUpdateWindingBobin(
+                $dto->bobin_identification_code,
+                $dto->bobin_key_code,
+                $dto->winding_machine,
+                $dto->winding_employee_code,
+                $dto->flow_test_result,
+                $dto->winding_note ?? '',
+                $updateRecord
+            );
+
+            if ($res) {
+                $this->json([
+                    'success' => true,
+                    'message' => "Điều chỉnh thông tin Cuộn cho Bobin {$dto->bobin_identification_code} thành công!",
+                    'bobin_identification_code' => $dto->bobin_identification_code
+                ]);
+            } else {
+                throw new Exception("Cập nhật thông tin Cuộn thất bại.");
+            }
+        } catch (Throwable $e) {
+            $this->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+        exit;
+    }
+
     public function windingCancelBobin(): void
     {
         //TODO 1. Chỉ chấp nhận PUT

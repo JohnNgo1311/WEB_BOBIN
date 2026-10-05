@@ -11,8 +11,7 @@ $supportedLangs  = Language::SUPPORTED;
     <div class="lang-dropdown-menu">
         <?php foreach ($supportedLangs as $code => $info): ?>
         <a href="javascript:void(0)" class="lang-menu-item <?= ($code === $currentLangCode) ? 'active' : '' ?>"
-            data-lang="<?= $code ?>"
-            onclick="if(window.setAppLanguage){ window.setAppLanguage('<?= $code ?>', true); } else { location.href='/WEB_BOBIN/public/index.php?url=auth/setLanguage&lang=<?= $code ?>'; }">
+            data-lang="<?= $code ?>">
             <span class="lang-item-content">
                 <span><?= htmlspecialchars($info['name']) ?></span>
             </span>

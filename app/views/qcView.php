@@ -53,6 +53,13 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                 data-i18n="nav_qc">
                 <?= __('nav_qc') ?>
             </a>
+            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView"
+                class="<?= ($currentUrl === 'bobin/qcEditBobinView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_qc_edit">
+                <?= __('nav_qc_edit') ?>
+            </a>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Nhóm Cuộn -->
@@ -62,6 +69,13 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                 data-i18n="nav_winding">
                 <?= __('nav_winding') ?>
             </a>
+            <?php if ($userRole === 'admin'): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingEditBobinView"
+                class="<?= ($currentUrl === 'bobin/windingEditBobinView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_winding_edit">
+                <?= __('nav_winding_edit') ?>
+            </a>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Các trang theo dõi công khai -->
@@ -197,7 +211,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             <button type="button" class="btn-copy" data-copy="<?= htmlspecialchars($mainInfoText) ?>"
                                 onclick="copyToClipboard(this)">📋 Copy</button>
                         </div>
-                        <div class="status-badge">Đang đợi QC check</div>
+                        <div class="status-badge">CHƯA KIỂM TRA QC</div>
                     </div>
 
                     <!-- 12 THÔNG SỐ SẢN XUẤT -->

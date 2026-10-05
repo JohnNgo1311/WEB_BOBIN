@@ -17,6 +17,9 @@ class BobinExtUpdateDTO
     public string $extrusion_date; // YYYY-MM-DD
     public string $finish_time;    // YYYY-MM-DD HH:mm:ss
 
+    // Mật khẩu xác nhận điều chỉnh
+    public string $confirm_password;
+
     // Bổ sung Vị trí Rack & 5 tiêu chí Đùn check
     public string $rack_code;
     public bool $ext_check_diameter;
@@ -40,6 +43,7 @@ class BobinExtUpdateDTO
 
         $dto->extrusion_date = $request['extrusion_date'] ?? date('Y-m-d');
         $dto->finish_time = $request['finish_time'] ?? date('Y-m-d H:i:s');
+        $dto->confirm_password = trim($request['confirm_password'] ?? '');
 
         // Gán Rack và 5 tiêu chí ngoại quan
         $dto->rack_code = trim($request['rack_code'] ?? '');

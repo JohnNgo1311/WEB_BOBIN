@@ -219,9 +219,11 @@ if (!function_exists('viBadge')) {
                                     <?php
 
                                     $displayStatus = match ($rawStatus) {
-                                        'Ready' => 'Đã cuộn',
-                                        'Busy_Unchecked'  => 'Đang đợi QC kiểm tra',
-                                        'Busy_Checked'  => 'Đã kiểm tra QC',
+                                        'Ready', 'Rolled' => 'ĐÃ CUỘN',
+                                        'Busy_Unchecked'  => 'CHƯA KIỂM TRA QC',
+                                        'Busy_Checked'    => 'ĐÃ KIỂM TRA QC',
+                                        'Pending_Cancellation' => 'ĐANG CHỜ HỦY',
+                                        'Cancelled'            => 'ĐÃ HỦY',
                                         default => $rawStatus, // Giữ nguyên nếu không khớp
                                     };
                                     echo htmlspecialchars($displayStatus); ?>

@@ -11,10 +11,26 @@
         vi: {
             lang_name: 'Tiếng Việt', flag: '🇻🇳', short: 'VI',
             nav_extrusion: 'Nhóm đùn', nav_extrusion_edit: 'Điều chỉnh đùn',
-            nav_qc: 'QC', nav_winding: 'Cuộn', nav_bobin_list: 'Danh sách Bobin',
+            nav_qc: 'QC', nav_qc_edit: 'Điều chỉnh QC',
+            nav_winding: 'Cuộn', nav_winding_edit: 'Điều chỉnh Cuộn',
+            nav_bobin_list: 'Danh sách Bobin',
             nav_bobin_history: 'Lịch sử Bobin', nav_pending_cancel: 'Danh sách chờ hủy',
             nav_employee_list: '👥 Danh sách nhân viên', nav_change_pwd: '🔑 Đổi MK',
             nav_logout: 'Đăng xuất', nav_login: 'Đăng nhập',
+            confirm_pwd_label: 'Nhập mật khẩu tài khoản của bạn để xác nhận:',
+            confirm_pwd_ph: 'Nhập mật khẩu đăng nhập...',
+            confirm_pwd_empty: 'Vui lòng nhập mật khẩu xác nhận.',
+            confirm_edit_title: 'Kiểm tra thông tin cập nhật',
+            confirm_edit_sub: 'Xác nhận lưu các thay đổi cho Bobin này:',
+            saving: 'Đang lưu...',
+            saved: 'Đã lưu ✔️',
+            save_failed: 'Lưu thất bại',
+            audit_trail_title: 'Lịch sử điều chỉnh Bobin',
+            audit_stage_extrusion: 'Nhóm đùn',
+            audit_stage_qc: 'Nhóm QC',
+            audit_stage_winding: 'Nhóm Cuộn',
+            audit_updater: 'Người thực hiện:',
+            audit_time: 'Thời điểm:',
             stt: 'STT', ok: 'OK', ng: 'NG', pass: 'Đạt', fail: 'Không đạt',
             save: 'Lưu', cancel: 'Hủy', edit: 'Chỉnh sửa', delete: 'Xóa',
             confirm: 'Xác nhận', back: 'Quay lại', search: 'Tìm kiếm', filter: 'Bộ lọc',
@@ -67,7 +83,9 @@
             page_extrusion: 'Nhóm đùn - Nhập thông tin Bobin',
             page_extrusion_edit: 'Nhóm đùn - Điều chỉnh thông tin Bobin',
             page_qc: 'Nhóm QC - Kiểm tra chất lượng Bobin',
+            page_qc_edit: 'Quản trị - Điều chỉnh thông tin kiểm tra QC',
             page_winding: 'Nhóm Cuộn - Xác nhận hoàn thành Bobin',
+            page_winding_edit: 'Quản trị - Điều chỉnh thông tin công đoạn Cuộn',
             page_bobin_detail: 'Danh sách Bobin hiện tại',
             page_bobin_history: 'Lịch sử Bobin',
             page_pending_cancel: 'Danh sách Bobin chờ hủy',
@@ -205,16 +223,36 @@
             ph_grind_hint: 'Nhập 0, 1 hoặc 2',
             ph_enter_material_lot: 'Nhập Lot vật liệu...',
             ph_auto_printlot: 'Lot in được tạo tự động',
-            ph_select_rack: 'Chọn Rack đặt...'
+            ph_select_rack: 'Chọn Rack đặt...',
+            // Pagination
+            page_prev: '‹ Trước',
+            page_next: 'Sau ›',
+            page_info: 'Trang {current} / {total} (Tổng {records} Bobin)'
         },
 
         en: {
             lang_name: 'English', flag: '🇬🇧', short: 'EN',
             nav_extrusion: 'Extrusion', nav_extrusion_edit: 'Extrusion Edit',
-            nav_qc: 'QC Check', nav_winding: 'Winding', nav_bobin_list: 'Bobin List',
+            nav_qc: 'QC Check', nav_qc_edit: 'QC Edit',
+            nav_winding: 'Winding', nav_winding_edit: 'Winding Edit',
+            nav_bobin_list: 'Bobin List',
             nav_bobin_history: 'Bobin History', nav_pending_cancel: 'Pending Scraps',
             nav_employee_list: '👥 Employee List', nav_change_pwd: '🔑 Password',
             nav_logout: 'Logout', nav_login: 'Login',
+            confirm_pwd_label: 'Enter your account password to confirm:',
+            confirm_pwd_ph: 'Enter login password...',
+            confirm_pwd_empty: 'Please enter confirmation password.',
+            confirm_edit_title: 'Review Update Information',
+            confirm_edit_sub: 'Confirm saving changes for this Bobin:',
+            saving: 'Saving...',
+            saved: 'Saved ✔️',
+            save_failed: 'Save failed',
+            audit_trail_title: 'Bobin Adjustment History',
+            audit_stage_extrusion: 'Extrusion',
+            audit_stage_qc: 'QC',
+            audit_stage_winding: 'Winding',
+            audit_updater: 'Updater:',
+            audit_time: 'Timestamp:',
             stt: 'No.', ok: 'OK', ng: 'NG', pass: 'Pass', fail: 'Fail',
             save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete',
             confirm: 'Confirm', back: 'Back', search: 'Search', filter: 'Filter',
@@ -267,7 +305,9 @@
             page_extrusion: 'Extrusion - Input Bobin Data',
             page_extrusion_edit: 'Extrusion - Edit Bobin Data',
             page_qc: 'QC - Quality Inspection',
+            page_qc_edit: 'Admin - Edit QC Inspection Data',
             page_winding: 'Winding - Finalize Bobin',
+            page_winding_edit: 'Admin - Edit Winding Process Data',
             page_bobin_detail: 'Current Bobin Inventory',
             page_bobin_history: 'Bobin Activity History',
             page_pending_cancel: 'Pending Scrap Bobin List',
@@ -405,16 +445,36 @@
             ph_grind_hint: 'Enter 0, 1 or 2',
             ph_enter_material_lot: 'Enter material lot...',
             ph_auto_printlot: 'Auto merged Print Lot',
-            ph_select_rack: 'Select Rack location...'
+            ph_select_rack: 'Select Rack location...',
+            // Pagination
+            page_prev: '‹ Prev',
+            page_next: 'Next ›',
+            page_info: 'Page {current} / {total} (Total {records} Bobins)'
         },
 
         ja: {
             lang_name: '日本語', flag: '🇯🇵', short: 'JA',
             nav_extrusion: '押出', nav_extrusion_edit: '押出編集',
-            nav_qc: 'QC検査', nav_winding: '巻取', nav_bobin_list: 'ボビン一覧',
+            nav_qc: 'QC検査', nav_qc_edit: 'QC編集',
+            nav_winding: '巻取', nav_winding_edit: '巻取編集',
+            nav_bobin_list: 'ボビン一覧',
             nav_bobin_history: 'ボビン履歴', nav_pending_cancel: '廃棄待ち一覧',
             nav_employee_list: '👥 従業員一覧', nav_change_pwd: '🔑 PW変更',
             nav_logout: 'ログアウト', nav_login: 'ログイン',
+            confirm_pwd_label: '確認のためアカウントのパスワードを入力してください：',
+            confirm_pwd_ph: 'ログインパスワードを入力...',
+            confirm_pwd_empty: '確認パスワードを入力してください。',
+            confirm_edit_title: '更新情報の確認',
+            confirm_edit_sub: 'このボビンの変更を保存しますか：',
+            saving: '保存中...',
+            saved: '保存完了 ✔️',
+            save_failed: '保存失敗',
+            audit_trail_title: 'ボビン調整履歴',
+            audit_stage_extrusion: '押出工程',
+            audit_stage_qc: 'QC工程',
+            audit_stage_winding: '巻取工程',
+            audit_updater: '更新者:',
+            audit_time: '更新日時:',
             stt: 'No.', ok: 'OK', ng: 'NG', pass: '合格', fail: '不合格',
             save: '保存', cancel: 'キャンセル', edit: '編集', delete: '削除',
             confirm: '確認', back: '戻る', search: '検索', filter: '絞り込み',
@@ -467,7 +527,9 @@
             page_extrusion: '押出グループ - ボビン情報入力',
             page_extrusion_edit: '押出グループ - ボビン情報編集',
             page_qc: 'QCグループ - 品質検査',
+            page_qc_edit: '管理者 - QC検査情報編集',
             page_winding: '巻取グループ - ボビン完了確認',
+            page_winding_edit: '管理者 - 巻取工程情報編集',
             page_bobin_detail: '現在ボビン一覧',
             page_bobin_history: 'ボビン履歴一覧',
             page_pending_cancel: '廃棄待ちボビン一覧',
@@ -605,7 +667,11 @@
             ph_grind_hint: '0, 1または2を入力',
             ph_enter_material_lot: '材料ロットを入力...',
             ph_auto_printlot: '印字ロット自動生成',
-            ph_select_rack: 'ラック位置を選択...'
+            ph_select_rack: 'ラック位置を選択...',
+            // Pagination
+            page_prev: '‹ 前へ',
+            page_next: '次へ ›',
+            page_info: 'ページ {current} / {total} (全 {records} ボビン)'
         }
     };
 
@@ -751,11 +817,18 @@
             { vi: 'Bắt đầu nhập dữ liệu', en: 'Start Import', ja: 'インポート開始' },
             { vi: 'Khôi phục về 123', en: 'Reset to 123', ja: '123にリセット' },
             { vi: 'Lưu nhân viên', en: 'Save Employee', ja: '従業員を保存' },
-            { vi: 'Cập nhật thông tin', en: 'Update Info', ja: '情報を更新' }
+            { vi: 'Cập nhật thông tin', en: 'Update Info', ja: '情報を更新' },
+            { vi: 'Trước', en: 'Prev', ja: '前へ' },
+            { vi: 'Sau', en: 'Next', ja: '次へ' }
         ],
 
         // Status badges
         statusBadges: [
+            { vi: 'CHƯA KIỂM TRA QC', en: 'UNCHECKED QC', ja: 'QC未検査' },
+            { vi: 'ĐÃ KIỂM TRA QC', en: 'QC CHECKED', ja: 'QC検査済' },
+            { vi: 'ĐANG CHỜ HỦY', en: 'PENDING CANCELLATION', ja: '廃棄待ち' },
+            { vi: 'ĐÃ HỦY', en: 'CANCELLED', ja: '廃棄済' },
+            { vi: 'ĐÃ CUỘN', en: 'ROLLED', ja: '巻取済' },
             { vi: 'Tất cả', en: 'All', ja: 'すべて' },
             { vi: 'Đã cuộn', en: 'Ready (Finished)', ja: '巻取済' },
             { vi: 'Đã đùn', en: 'Extruded', ja: '押出済' },
@@ -803,23 +876,51 @@
         return currentLang;
     };
 
+    // Biến cờ kiểm soát tránh MutationObserver lặp vô tận (Infinite loop guard)
+    let isTranslating = false;
+    let observerInstance = null;
+    let observerDebounceTimer = null;
+
     // 5. HÀM THIẾT LẬP NGÔN NGỮ
     window.setAppLanguage = function (lang, reload = true) {
         if (!DICT[lang]) return;
         currentLang = lang;
 
+        // Lưu cookie và localStorage ngay lập tức
         document.cookie = `app_lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
         localStorage.setItem('app_lang', lang);
 
-        try {
+        if (reload) {
+            // Đồng bộ sang backend Session qua sendBeacon hoặc fetch trước khi reload
+            try {
+                const syncUrl = `/WEB_BOBIN/public/index.php?url=auth/setLanguage&lang=${lang}`;
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(syncUrl);
+                    window.location.reload();
+                    return;
+                }
+            } catch (e) { }
+
+            // Fallback fetch có timeout ngắn để đảm bảo trang reload mượt mà không bị treo
+            let reloaded = false;
+            const doReload = () => {
+                if (!reloaded) {
+                    reloaded = true;
+                    window.location.reload();
+                }
+            };
+            const timer = setTimeout(doReload, 300);
+
             fetch(`/WEB_BOBIN/public/index.php?url=auth/setLanguage&lang=${lang}`, {
                 method: 'GET',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            }).catch(() => { });
-        } catch (e) { }
-
-        if (reload) {
-            window.location.reload();
+            }).then(() => {
+                clearTimeout(timer);
+                doReload();
+            }).catch(() => {
+                clearTimeout(timer);
+                doReload();
+            });
         } else {
             deepTranslateDOM();
             updateLanguageDropdownUI();
@@ -828,203 +929,277 @@
 
     // 6. DỊCH TRIỆT ĐỂ TOÀN BỘ DOM (DEEP TRANSLATION ENGINE)
     function deepTranslateDOM() {
-        if (currentLang === 'vi') {
-            // Khi ở tiếng Việt, chỉ cần áp dụng thẻ data-i18n rõ ràng
+        if (isTranslating) return;
+        isTranslating = true;
+
+        try {
+            // A. Áp dụng các thẻ có data-i18n trước
             applyDataI18n();
-            return;
-        }
 
-        // A. Áp dụng các thẻ có data-i18n trước
-        applyDataI18n();
-
-        // B. Dịch tất cả Table Headers <th>
-        document.querySelectorAll('th').forEach(th => {
-            const raw = th.textContent.trim();
-            for (const item of DOM_MAPPINGS.headers) {
-                if (raw === item.vi || raw === item.en || raw === item.ja) {
-                    th.textContent = item[currentLang] || item.vi;
-                    break;
+            // B. Dịch tất cả Table Headers <th>
+            document.querySelectorAll('th').forEach(th => {
+                const raw = th.textContent.trim();
+                for (const item of DOM_MAPPINGS.headers) {
+                    if (raw === item.vi || raw === item.en || raw === item.ja) {
+                        const target = item[currentLang] || item.vi;
+                        if (th.textContent !== target) th.textContent = target;
+                        break;
+                    }
                 }
-            }
-        });
+            });
 
-        // C. Dịch tất cả Form Labels <label>
-        document.querySelectorAll('label').forEach(lbl => {
-            const reqSpan = lbl.querySelector('.required, span[style*="red"]');
-            const hintSpan = lbl.querySelector('.label-hint');
-            let raw = lbl.textContent.replace('*', '').trim();
-            let clean = raw.replace(/:/g, '').replace(/\(mét\)/gi, '').replace(/\(m\)/gi, '').replace(/\(0, 1 hoặc 2\)/gi, '').replace(/\(Tự động ghép mã\)/gi, '').trim();
+            // C. Dịch tất cả Form Labels <label>
+            document.querySelectorAll('label').forEach(lbl => {
+                const reqSpan = lbl.querySelector('.required, span[style*="red"]');
+                const hintSpan = lbl.querySelector('.label-hint');
+                let raw = lbl.textContent.replace('*', '').trim();
+                let clean = raw.replace(/:/g, '').replace(/\(mét\)/gi, '').replace(/\(m\)/gi, '').replace(/\(0, 1 hoặc 2\)/gi, '').replace(/\(Tự động ghép mã\)/gi, '').trim();
 
-            for (const item of DOM_MAPPINGS.labels) {
-                const itemCleanVi = item.vi.replace(/:/g, '').trim();
-                const itemCleanEn = item.en.replace(/:/g, '').trim();
-                const itemCleanJa = item.ja.replace(/:/g, '').trim();
+                for (const item of DOM_MAPPINGS.labels) {
+                    const itemCleanVi = item.vi.replace(/:/g, '').trim();
+                    const itemCleanEn = item.en.replace(/:/g, '').trim();
+                    const itemCleanJa = item.ja.replace(/:/g, '').trim();
 
-                if (clean === itemCleanVi || clean === itemCleanEn || clean === itemCleanJa || raw === item.vi || raw === item.en || raw === item.ja) {
-                    const translated = item[currentLang] || item.vi;
-                    let html = translated;
-                    if (raw.includes(':') || reqSpan) {
-                        html += ':';
+                    if (clean === itemCleanVi || clean === itemCleanEn || clean === itemCleanJa || raw === item.vi || raw === item.en || raw === item.ja) {
+                        const translated = item[currentLang] || item.vi;
+                        let html = translated;
+                        if (raw.includes(':') || reqSpan) {
+                            html += ':';
+                        }
+                        if (hintSpan) {
+                            html += ' ' + hintSpan.outerHTML;
+                        }
+                        if (reqSpan) {
+                            html += ' <span class="required" style="color:#ef4444;">*</span>';
+                        }
+                        if (lbl.innerHTML !== html) {
+                            lbl.innerHTML = html;
+                        }
+                        break;
                     }
-                    if (hintSpan) {
-                        html += ' ' + hintSpan.outerHTML;
-                    }
-                    if (reqSpan) {
-                        html += ' <span class="required" style="color:#ef4444;">*</span>';
-                    }
-                    lbl.innerHTML = html;
-                    break;
                 }
-            }
-        });
+            });
 
-        // D. Dịch tất cả Button và Links thao tác
-        document.querySelectorAll('button, a.btn-primary, a.btn-filter, a.btn-secondary, a.btn-back-modern, .btn-submit-pwd, .btn-cancel-pwd, .action-btn, .status-btn').forEach(btn => {
-            const raw = btn.textContent.trim();
-            for (const item of DOM_MAPPINGS.buttons) {
-                if (raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)) {
-                    // Giữ lại icon nếu có SVG
-                    const svg = btn.querySelector('svg');
-                    const target = item[currentLang] || item.vi;
-                    if (svg) {
-                        btn.innerHTML = '';
-                        btn.appendChild(svg);
-                        btn.append(' ' + target);
+            // D. Dịch tất cả Button, Links thao tác và Status Badges
+            document.querySelectorAll('button, a.btn-primary, a.btn-filter, a.btn-secondary, a.btn-back-modern, .btn-submit-pwd, .btn-cancel-pwd, .action-btn, .status-btn, .status-badge').forEach(btn => {
+                const raw = btn.textContent.trim();
+                for (const item of DOM_MAPPINGS.buttons) {
+                    if (raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)) {
+                        // Giữ lại icon nếu có SVG
+                        const svg = btn.querySelector('svg');
+                        const target = item[currentLang] || item.vi;
+                        if (svg) {
+                            // Chỉ cập nhật phần text, không xóa sạch innerHTML làm hỏng listeners
+                            const textNodes = Array.from(btn.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+                            if (textNodes.length > 0) {
+                                textNodes[textNodes.length - 1].textContent = ' ' + target;
+                            } else {
+                                btn.innerHTML = '';
+                                btn.appendChild(svg);
+                                btn.append(' ' + target);
+                            }
+                        } else {
+                            if (btn.textContent !== target) btn.textContent = target;
+                        }
+                        break;
+                    }
+                }
+
+                // Dịch Status Buttons & Badges (CHƯA KIỂM TRA QC, ĐÃ KIỂM TRA QC, ĐANG CHỜ HỦY, ĐÃ HỦY, ĐÃ CUỘN...)
+                for (const item of DOM_MAPPINGS.statusBadges) {
+                    if (raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)) {
+                        const target = item[currentLang] || item.vi;
+                        // Giữ lại icon emoji nếu có
+                        const emojiMatch = raw.match(/^([\p{Emoji}\u200d\uFE0F\uFE0E]+|\u2705|\u23F3|\u274C|\uD83D\uDCE6)\s*/u);
+                        const prefix = emojiMatch ? emojiMatch[0] : '';
+                        const fullText = prefix + target;
+                        if (btn.textContent !== fullText) btn.textContent = fullText;
+                        break;
+                    }
+                }
+            });
+
+            // E. Dịch Input Placeholders
+            document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(input => {
+                const ph = input.getAttribute('placeholder').trim();
+                let newPh = null;
+                if (ph.includes('Nhập thông tin') || ph.includes('Search') || ph.includes('検索')) {
+                    newPh = window.t('keyword_search');
+                } else if (ph.includes('quét mã Bobin') || ph.includes('Bobin code') || ph.includes('ボビン番号')) {
+                    newPh = window.t('ph_scan_bobin');
+                } else if (ph.includes('Tự động theo mã') || ph.includes('Auto by Bobin') || ph.includes('ボビン番号から自動')) {
+                    newPh = window.t('ph_auto_size');
+                } else if (ph.includes('tìm mã sản phẩm') || ph.includes('search product') || ph.includes('製品コードを検索')) {
+                    newPh = window.t('ph_search_product');
+                } else if (ph.includes('máy đùn') || ph.includes('extruder') || ph.includes('押出機')) {
+                    newPh = window.t('ph_select_machine');
+                } else if (ph.includes('loại vật liệu') || ph.includes('material') || ph.includes('材料')) {
+                    newPh = window.t('ph_select_material');
+                } else if (ph.includes('0, 1 hoặc 2') || ph.includes('0, 1 or 2') || ph.includes('0, 1または2')) {
+                    newPh = window.t('ph_grind_hint');
+                } else if (ph.includes('Lot vật liệu') || ph.includes('material lot') || ph.includes('材料ロット')) {
+                    newPh = window.t('ph_enter_material_lot');
+                } else if (ph.includes('Tự động ghép mã') || ph.includes('Auto merged') || ph.includes('印字ロット自動')) {
+                    newPh = window.t('ph_auto_printlot');
+                } else if (ph.includes('Rack đặt') || ph.includes('Rack location') || ph.includes('ラック位置')) {
+                    newPh = window.t('ph_select_rack');
+                } else if (ph.includes('Nhập mã số nhân viên') || ph.includes('employee ID') || ph.includes('社員番号')) {
+                    newPh = window.t('login_username_ph');
+                } else if (ph.includes('Nhập mật khẩu') || ph.includes('password') || ph.includes('パスワード')) {
+                    newPh = window.t('login_password_ph');
+                } else if (ph.includes('Tối thiểu 6 ký tự') || ph.includes('At least 6') || ph.includes('6文字以上')) {
+                    newPh = window.t('cp_new_pwd_ph');
+                } else if (ph.includes('Nhập lại mật khẩu') || ph.includes('Re-enter') || ph.includes('再入力')) {
+                    newPh = window.t('cp_confirm_pwd_ph');
+                }
+                if (newPh && ph !== newPh) {
+                    input.setAttribute('placeholder', newPh);
+                }
+            });
+
+            // F. Dịch Menu-bar Links
+            document.querySelectorAll('.menu-left a, .menu-bar a').forEach(a => {
+                const text = a.textContent.trim();
+                if (text.includes('Nhóm đùn') || text.includes('Extrusion') || text.includes('押出')) {
+                    if (text.includes('Điều chỉnh') || text.includes('Edit') || text.includes('編集')) {
+                        const target = window.t('nav_extrusion_edit');
+                        if (a.textContent !== target) a.textContent = target;
                     } else {
-                        btn.textContent = target;
+                        const target = window.t('nav_extrusion');
+                        if (a.textContent !== target) a.textContent = target;
                     }
-                    break;
+                } else if (text.includes('QC') || text.includes('QC Check') || text.includes('QC検査')) {
+                    if (text.includes('Điều chỉnh') || text.includes('Edit') || text.includes('編集')) {
+                        const target = window.t('nav_qc_edit');
+                        if (a.textContent !== target) a.textContent = target;
+                    } else {
+                        const target = window.t('nav_qc');
+                        if (a.textContent !== target) a.textContent = target;
+                    }
+                } else if (text.includes('Cuộn') || text.includes('Winding') || text.includes('巻取')) {
+                    if (text.includes('Điều chỉnh') || text.includes('Edit') || text.includes('編集')) {
+                        const target = window.t('nav_winding_edit');
+                        if (a.textContent !== target) a.textContent = target;
+                    } else {
+                        const target = window.t('nav_winding');
+                        if (a.textContent !== target) a.textContent = target;
+                    }
+                } else if (text.includes('Danh sách Bobin') || text.includes('Bobin List') || text.includes('ボビン一覧')) {
+                    const target = window.t('nav_bobin_list');
+                    if (a.textContent !== target) a.textContent = target;
+                } else if (text.includes('Lịch sử Bobin') || text.includes('Bobin History') || text.includes('ボビン履歴')) {
+                    const target = window.t('nav_bobin_history');
+                    if (a.textContent !== target) a.textContent = target;
+                } else if (text.includes('chờ hủy') || text.includes('Pending') || text.includes('廃棄待ち')) {
+                    const span = a.querySelector('[data-i18n="nav_pending_cancel"]');
+                    const badge = a.querySelector('.badge-pending-count');
+                    const targetText = window.t('nav_pending_cancel');
+                    if (span) {
+                        if (span.textContent !== targetText) span.textContent = targetText;
+                    } else {
+                        const badgeText = badge ? badge.outerHTML : '';
+                        a.innerHTML = '<span data-i18n="nav_pending_cancel">' + targetText + '</span> ' + badgeText;
+                    }
+                } else if (text.includes('nhân viên') || text.includes('Employee') || text.includes('従業員')) {
+                    const target = window.t('nav_employee_list');
+                    if (a.textContent !== target) a.textContent = target;
                 }
-            }
+            });
 
-            // Dịch Status Buttons (Tất cả, Đã cuộn, Chưa QC...)
-            for (const item of DOM_MAPPINGS.statusBadges) {
-                if (raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)) {
-                    const target = item[currentLang] || item.vi;
-                    // Giữ lại icon emoji nếu có
-                    const emojiMatch = raw.match(/^([\p{Emoji}\u200d\uFE0F\uFE0E]+|\u2705|\u23F3|\u274C|\uD83D\uDCE6)\s*/u);
-                    const prefix = emojiMatch ? emojiMatch[0] : '';
-                    btn.textContent = prefix + target;
-                    break;
+            // Nút Đổi MK & Đăng xuất
+            document.querySelectorAll('.btn-change-pwd').forEach(btn => {
+                const target = window.t('nav_change_pwd');
+                if (btn.textContent !== target) btn.textContent = target;
+            });
+            document.querySelectorAll('.logout-btn, .btn-nav-logout').forEach(btn => {
+                const target = window.t('nav_logout');
+                if (btn.textContent !== target) btn.textContent = target;
+            });
+
+            // G. Dịch các phần tử đặc thù của trang nhân viên
+            document.querySelectorAll('.badge-self').forEach(el => {
+                const target = window.t('emp_self_badge');
+                if (el.textContent !== target) el.textContent = target;
+            });
+            document.querySelectorAll('.profile-label').forEach(el => {
+                if (el.textContent.includes('Mã số') || el.textContent.includes('Employee ID') || el.textContent.includes('社員番号')) {
+                    const target = window.t('emp_profile_label');
+                    if (el.textContent !== target) el.textContent = target;
                 }
-            }
-        });
-
-        // E. Dịch Input Placeholders
-        document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(input => {
-            const ph = input.getAttribute('placeholder').trim();
-            if (ph.includes('Nhập thông tin') || ph.includes('Search') || ph.includes('検索')) {
-                input.setAttribute('placeholder', window.t('keyword_search'));
-            } else if (ph.includes('quét mã Bobin') || ph.includes('Bobin code') || ph.includes('ボビン番号')) {
-                input.setAttribute('placeholder', window.t('ph_scan_bobin'));
-            } else if (ph.includes('Tự động theo mã') || ph.includes('Auto by Bobin') || ph.includes('ボビン番号から自動')) {
-                input.setAttribute('placeholder', window.t('ph_auto_size'));
-            } else if (ph.includes('tìm mã sản phẩm') || ph.includes('search product') || ph.includes('製品コードを検索')) {
-                input.setAttribute('placeholder', window.t('ph_search_product'));
-            } else if (ph.includes('máy đùn') || ph.includes('extruder') || ph.includes('押出機')) {
-                input.setAttribute('placeholder', window.t('ph_select_machine'));
-            } else if (ph.includes('loại vật liệu') || ph.includes('material') || ph.includes('材料')) {
-                input.setAttribute('placeholder', window.t('ph_select_material'));
-            } else if (ph.includes('0, 1 hoặc 2') || ph.includes('0, 1 or 2') || ph.includes('0, 1または2')) {
-                input.setAttribute('placeholder', window.t('ph_grind_hint'));
-            } else if (ph.includes('Lot vật liệu') || ph.includes('material lot') || ph.includes('材料ロット')) {
-                input.setAttribute('placeholder', window.t('ph_enter_material_lot'));
-            } else if (ph.includes('Tự động ghép mã') || ph.includes('Auto merged') || ph.includes('印字ロット自動')) {
-                input.setAttribute('placeholder', window.t('ph_auto_printlot'));
-            } else if (ph.includes('Rack đặt') || ph.includes('Rack location') || ph.includes('ラック位置')) {
-                input.setAttribute('placeholder', window.t('ph_select_rack'));
-            } else if (ph.includes('Nhập mã số nhân viên') || ph.includes('employee ID') || ph.includes('社員番号')) {
-                input.setAttribute('placeholder', window.t('login_username_ph'));
-            } else if (ph.includes('Nhập mật khẩu') || ph.includes('password') || ph.includes('パスワード')) {
-                input.setAttribute('placeholder', window.t('login_password_ph'));
-            } else if (ph.includes('Tối thiểu 6 ký tự') || ph.includes('At least 6') || ph.includes('6文字以上')) {
-                input.setAttribute('placeholder', window.t('cp_new_pwd_ph'));
-            } else if (ph.includes('Nhập lại mật khẩu') || ph.includes('Re-enter') || ph.includes('再入力')) {
-                input.setAttribute('placeholder', window.t('cp_confirm_pwd_ph'));
-            }
-        });
-
-        // F. Dịch Menu-bar Links
-        document.querySelectorAll('.menu-left a, .menu-bar a').forEach(a => {
-            const text = a.textContent.trim();
-            if (text.includes('Nhóm đùn') || text.includes('Extrusion') || text.includes('押出')) {
-                if (text.includes('Điều chỉnh') || text.includes('Edit') || text.includes('編集')) {
-                    a.textContent = window.t('nav_extrusion_edit');
-                } else {
-                    a.textContent = window.t('nav_extrusion');
+            });
+            document.querySelectorAll('.target-sub').forEach(el => {
+                if (el.textContent.includes('cần cấp') || el.textContent.includes('reset') || el.textContent.includes('再発行')) {
+                    const target = window.t('emp_reset_target');
+                    if (el.textContent !== target) el.textContent = target;
                 }
-            } else if (text === 'QC' || text === 'QC Check' || text === 'QC検査') {
-                a.textContent = window.t('nav_qc');
-            } else if (text === 'Cuộn' || text === 'Winding' || text === '巻取') {
-                a.textContent = window.t('nav_winding');
-            } else if (text.includes('Danh sách Bobin') || text.includes('Bobin List') || text.includes('ボビン一覧')) {
-                a.textContent = window.t('nav_bobin_list');
-            } else if (text.includes('Lịch sử Bobin') || text.includes('Bobin History') || text.includes('ボビン履歴')) {
-                a.textContent = window.t('nav_bobin_history');
-            } else if (text.includes('chờ hủy') || text.includes('Pending') || text.includes('廃棄待ち')) {
-                const span = a.querySelector('[data-i18n="nav_pending_cancel"]');
-                const badge = a.querySelector('.badge-pending-count');
-                if (span) {
-                    span.textContent = window.t('nav_pending_cancel');
-                } else {
-                    const badgeText = badge ? badge.outerHTML : '';
-                    a.innerHTML = '<span data-i18n="nav_pending_cancel">' + window.t('nav_pending_cancel') + '</span> ' + badgeText;
+            });
+            // Chart legend labels
+            document.querySelectorAll('[data-chart-role]').forEach(el => {
+                const role = el.getAttribute('data-chart-role');
+                const keyMap = {
+                    extrusion: 'emp_role_extrusion',
+                    qc: 'emp_role_qc',
+                    winding: 'emp_role_winding',
+                    admin: 'emp_role_admin'
+                };
+                if (keyMap[role]) {
+                    const target = window.t(keyMap[role]);
+                    if (el.textContent !== target) el.textContent = target;
                 }
-            } else if (text.includes('nhân viên') || text.includes('Employee') || text.includes('従業員')) {
-                a.textContent = window.t('nav_employee_list');
-            }
-        });
+            });
 
-        // Nút Đổi MK & Đăng xuất
-        document.querySelectorAll('.btn-change-pwd').forEach(btn => {
-            btn.innerHTML = window.t('nav_change_pwd');
-        });
-        document.querySelectorAll('.logout-btn, .btn-nav-logout').forEach(btn => {
-            btn.textContent = window.t('nav_logout');
-        });
-
-        // G. Dịch các phần tử đặc thù của trang nhân viên
-        document.querySelectorAll('.badge-self').forEach(el => {
-            el.textContent = window.t('emp_self_badge');
-        });
-        document.querySelectorAll('.profile-label').forEach(el => {
-            if (el.textContent.includes('Mã số') || el.textContent.includes('Employee ID') || el.textContent.includes('社員番号')) {
-                el.textContent = window.t('emp_profile_label');
-            }
-        });
-        document.querySelectorAll('.target-sub').forEach(el => {
-            if (el.textContent.includes('cần cấp') || el.textContent.includes('reset') || el.textContent.includes('再発行')) {
-                el.textContent = window.t('emp_reset_target');
-            }
-        });
-        // Chart legend labels
-        document.querySelectorAll('[data-chart-role]').forEach(el => {
-            const role = el.getAttribute('data-chart-role');
-            const keyMap = {
-                extrusion: 'emp_role_extrusion',
-                qc: 'emp_role_qc',
-                winding: 'emp_role_winding',
-                admin: 'emp_role_admin'
-            };
-            if (keyMap[role]) el.textContent = window.t(keyMap[role]);
-        });
-
-        // H. Dịch các Section Title, Section Desc và Checkbox Labels
-        document.querySelectorAll('.section-title, .section-desc, .check-box-label').forEach(el => {
-            const raw = el.textContent.trim();
-            for (const item of (DOM_MAPPINGS.sections || [])) {
-                if (raw === item.vi || raw === item.en || raw === item.ja) {
-                    el.textContent = item[currentLang] || item.vi;
-                    return;
+            // H. Dịch các Section Title, Section Desc và Checkbox Labels
+            document.querySelectorAll('.section-title, .section-desc, .check-box-label').forEach(el => {
+                const raw = el.textContent.trim();
+                for (const item of (DOM_MAPPINGS.sections || [])) {
+                    if (raw === item.vi || raw === item.en || raw === item.ja) {
+                        const target = item[currentLang] || item.vi;
+                        if (el.textContent !== target) el.textContent = target;
+                        return;
+                    }
                 }
-            }
-            for (const item of (DOM_MAPPINGS.labels || [])) {
-                if (raw === item.vi || raw === item.en || raw === item.ja) {
-                    el.textContent = item[currentLang] || item.vi;
-                    return;
+                for (const item of (DOM_MAPPINGS.labels || [])) {
+                    if (raw === item.vi || raw === item.en || raw === item.ja) {
+                        const target = item[currentLang] || item.vi;
+                        if (el.textContent !== target) el.textContent = target;
+                        return;
+                    }
                 }
-            }
-        });
+            });
+
+            // I. Dịch phân trang (Pagination .page-btn, .page-info)
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                const text = btn.textContent.trim();
+                if (text.includes('Trước') || text.includes('Prev') || text.includes('前へ')) {
+                    const target = window.t('page_prev', '‹ Trước');
+                    if (btn.textContent.trim() !== target) btn.textContent = target;
+                } else if (text.includes('Sau') || text.includes('Next') || text.includes('次へ')) {
+                    const target = window.t('page_next', 'Sau ›');
+                    if (btn.textContent.trim() !== target) btn.textContent = target;
+                }
+            });
+
+            document.querySelectorAll('.page-info').forEach(info => {
+                const text = info.textContent.trim();
+                // Khớp mẫu: Trang X / Y (Tổng Z Bobin) hoặc Page X / Y (Total Z Bobins) hoặc ページ X / Y (全 Z ボビン)
+                const m = text.match(/(?:Trang|Page|ページ)\s*(\d+)\s*\/\s*(\d+)\s*(?:\([^0-9]*([\d,]+)[^)]*\))?/i);
+                if (m) {
+                    const current = m[1];
+                    const total = m[2];
+                    const records = m[3] || '0';
+                    let tmpl = window.t('page_info', 'Trang {current} / {total} (Tổng {records} Bobin)');
+                    tmpl = tmpl.replace('{current}', current).replace('{total}', total).replace('{records}', records);
+                    if (info.textContent.trim() !== tmpl) {
+                        info.textContent = tmpl;
+                    }
+                }
+            });
+        } finally {
+            // Giải phóng cờ sau microtask để MutationObserver không bị kích hoạt chéo
+            setTimeout(() => {
+                isTranslating = false;
+            }, 50);
+        }
     }
 
     // Áp dụng thuộc tính data-i18n rõ ràng
@@ -1040,10 +1215,21 @@
                 } else {
                     const badge = el.querySelector('.badge-pending-count');
                     if (badge) {
-                        const badgeHtml = badge.outerHTML;
-                        el.innerHTML = translation + ' ' + badgeHtml;
+                        // Bảo vệ không re-render HTML nếu nội dung đã chính xác
+                        const span = el.querySelector('[data-i18n-text]');
+                        if (span) {
+                            if (span.textContent !== translation) span.textContent = translation;
+                        } else {
+                            const badgeHtml = badge.outerHTML;
+                            const newHtml = `<span data-i18n-text="1">${translation}</span> ${badgeHtml}`;
+                            if (el.innerHTML !== newHtml) {
+                                el.innerHTML = newHtml;
+                            }
+                        }
                     } else {
-                        el.textContent = translation;
+                        if (el.textContent !== translation) {
+                            el.textContent = translation;
+                        }
                     }
                 }
             }
@@ -1053,7 +1239,9 @@
             const key = el.getAttribute('data-i18n-ph');
             const translation = window.t(key);
             if (translation) {
-                el.setAttribute('placeholder', translation);
+                if (el.getAttribute('placeholder') !== translation) {
+                    el.setAttribute('placeholder', translation);
+                }
             }
         });
     }
@@ -1062,7 +1250,17 @@
     function updateLanguageDropdownUI() {
         const langConfig = DICT[currentLang] || DICT['vi'];
         document.querySelectorAll('.lang-btn-current').forEach(el => {
-            el.innerHTML = `<span class="lang-flag">${langConfig.flag}</span> <span class="lang-code">${langConfig.short}</span> <span class="lang-arrow">▾</span>`;
+            const codeSpan = el.querySelector('.lang-code');
+            const flagSpan = el.querySelector('.lang-flag');
+            if (codeSpan) {
+                codeSpan.textContent = langConfig.short;
+            }
+            if (flagSpan) {
+                flagSpan.textContent = langConfig.flag;
+            }
+            if (!codeSpan && !flagSpan) {
+                el.innerHTML = `<span class="lang-flag">${langConfig.flag}</span> <span class="lang-code">${langConfig.short}</span> <span class="lang-arrow">▾</span>`;
+            }
         });
         document.querySelectorAll('.lang-menu-item').forEach(item => {
             const itemLang = item.getAttribute('data-lang');
@@ -1106,23 +1304,42 @@
         });
     }
 
-    // Tự động lắng nghe thay đổi DOM (MutationObserver) để dịch nội dung mới
+    // Tự động lắng nghe thay đổi DOM (MutationObserver) để dịch nội dung mới được thêm
     function observeDOMChanges() {
         if (!window.MutationObserver) return;
-        const observer = new MutationObserver(mutations => {
-            let shouldTranslate = false;
+        if (observerInstance) {
+            observerInstance.disconnect();
+        }
+
+        observerInstance = new MutationObserver(mutations => {
+            if (isTranslating) return;
+
+            let hasNewNodes = false;
             for (const m of mutations) {
-                if (m.addedNodes.length > 0) {
-                    shouldTranslate = true;
-                    break;
+                // Chỉ kích hoạt khi có node mới được thêm thực sự từ Ajax/render động
+                if (m.addedNodes && m.addedNodes.length > 0) {
+                    for (const node of m.addedNodes) {
+                        // Bỏ qua các node do chính i18n tạo ra hoặc text node đơn thuần
+                        if (node.nodeType === Node.ELEMENT_NODE && !node.classList?.contains('lang-switcher-dropdown')) {
+                            hasNewNodes = true;
+                            break;
+                        }
+                    }
                 }
+                if (hasNewNodes) break;
             }
-            if (shouldTranslate && currentLang !== 'vi') {
-                deepTranslateDOM();
+
+            if (hasNewNodes) {
+                if (observerDebounceTimer) clearTimeout(observerDebounceTimer);
+                observerDebounceTimer = setTimeout(() => {
+                    if (!isTranslating) {
+                        deepTranslateDOM();
+                    }
+                }, 150);
             }
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        observerInstance.observe(document.body, { childList: true, subtree: true });
     }
 
     if (document.readyState === 'loading') {

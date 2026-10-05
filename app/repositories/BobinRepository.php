@@ -818,6 +818,293 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
+
+    public function getListDetailBobinsForQCEdit(array $filters = [], int $page = 1, int $limit = 50): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            // Task-005: Chỉ lấy những Bobin có status là 'Busy_Checked'
+            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status = 'Busy_Checked'";
+            $params = [];
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    bobin_type LIKE :kw7
+                )";
+                for ($i = 1; $i <= 7; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $sql .= " ORDER BY updated_time DESC, bobin_identification_code ASC";
+            $offset = ($page - 1) * $limit;
+            $sql .= " LIMIT :limit OFFSET :offset";
+
+            $stmt = $pdo->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function countDetailBobinsForQCEdit(array $filters = []): int
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Busy_Checked'";
+            $params = [];
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    bobin_type LIKE :kw7
+                )";
+                for ($i = 1; $i <= 7; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function getListDetailBobinsForWindingEdit(array $filters = [], int $page = 1, int $limit = 50): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            // Task-006: Chỉ lấy những Bobin có status là 'Rolled' và updated_time trong 3 ngày gần nhất
+            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)";
+            $params = [];
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $sql .= " ORDER BY updated_time DESC, bobin_identification_code ASC";
+            $offset = ($page - 1) * $limit;
+            $sql .= " LIMIT :limit OFFSET :offset";
+
+            $stmt = $pdo->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function countDetailBobinsForWindingEdit(array $filters = []): int
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)";
+            $params = [];
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function adminUpdateQCBobin(string $identCode, string $keyCode, array $viData, ?string $newType, ?array $updateRecord): bool
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+
+            $viJson = $this->json_utf8($viData);
+
+            // Cập nhật bobin_list_detail
+            $currStmt = $pdo->prepare("SELECT update_history FROM bobin_list_detail WHERE bobin_identification_code = :ident LIMIT 1");
+            $currStmt->execute([':ident' => $identCode]);
+            $rawHist = $currStmt->fetchColumn();
+            $histArr = (!empty($rawHist)) ? (json_decode($rawHist, true) ?: []) : [];
+            if ($updateRecord !== null) {
+                $histArr[] = $updateRecord;
+            }
+            $histJson = !empty($histArr) ? $this->json_utf8($histArr) : null;
+
+            if (!empty($newType)) {
+                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, bobin_type = :type, update_history = :uhist WHERE bobin_identification_code = :ident";
+                $stmtDetail = $pdo->prepare($sqlDetail);
+                $stmtDetail->execute([':visual' => $viJson, ':type' => $newType, ':uhist' => $histJson, ':ident' => $identCode]);
+
+                $sqlGen = "UPDATE bobin_list_general SET bobin_type = :type WHERE bobin_identification_code = :ident";
+                $stmtGen = $pdo->prepare($sqlGen);
+                $stmtGen->execute([':type' => $newType, ':ident' => $identCode]);
+            } else {
+                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, update_history = :uhist WHERE bobin_identification_code = :ident";
+                $stmtDetail = $pdo->prepare($sqlDetail);
+                $stmtDetail->execute([':visual' => $viJson, ':uhist' => $histJson, ':ident' => $identCode]);
+            }
+
+            // Cập nhật bobin_history
+            $currHistStmt = $pdo->prepare("SELECT update_history FROM bobin_history WHERE bobin_key_code = :key ORDER BY id DESC LIMIT 1");
+            $currHistStmt->execute([':key' => $keyCode]);
+            $rawHistHist = $currHistStmt->fetchColumn();
+            $histArrHist = (!empty($rawHistHist)) ? (json_decode($rawHistHist, true) ?: []) : [];
+            if ($updateRecord !== null) {
+                $histArrHist[] = $updateRecord;
+            }
+            $histHistJson = !empty($histArrHist) ? $this->json_utf8($histArrHist) : null;
+
+            if (!empty($newType)) {
+                $sqlHistory = "UPDATE bobin_history SET visual_inspection = :visual, bobin_type = :type, update_history = :uhist WHERE bobin_key_code = :key";
+                $stmtHistory = $pdo->prepare($sqlHistory);
+                $stmtHistory->execute([':visual' => $viJson, ':type' => $newType, ':uhist' => $histHistJson, ':key' => $keyCode]);
+            } else {
+                $sqlHistory = "UPDATE bobin_history SET visual_inspection = :visual, update_history = :uhist WHERE bobin_key_code = :key";
+                $stmtHistory = $pdo->prepare($sqlHistory);
+                $stmtHistory->execute([':visual' => $viJson, ':uhist' => $histHistJson, ':key' => $keyCode]);
+            }
+
+            $pdo->commit();
+            return true;
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("DB adminUpdateQCBobin Error: " . $e->getMessage());
+            throw new Exception("Lỗi Database: " . $e->getMessage());
+        }
+    }
+
+    public function adminUpdateWindingBobin(string $identCode, string $keyCode, string $machine, ?array $empData, string $flowResult, string $note, ?array $updateRecord): bool
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+
+            $empJson = $empData ? $this->json_utf8($empData) : null;
+
+            // Cập nhật bobin_list_detail
+            $currStmt = $pdo->prepare("SELECT update_history FROM bobin_list_detail WHERE bobin_identification_code = :ident LIMIT 1");
+            $currStmt->execute([':ident' => $identCode]);
+            $rawHist = $currStmt->fetchColumn();
+            $histArr = (!empty($rawHist)) ? (json_decode($rawHist, true) ?: []) : [];
+            if ($updateRecord !== null) {
+                $histArr[] = $updateRecord;
+            }
+            $histJson = !empty($histArr) ? $this->json_utf8($histArr) : null;
+
+            $sqlDetail = "UPDATE bobin_list_detail SET 
+                            winding_machine = :machine, 
+                            winding_employee = :emp, 
+                            flow_test_result = :flow, 
+                            winding_note = :note, 
+                            update_history = :uhist 
+                          WHERE bobin_identification_code = :ident";
+            $stmtDetail = $pdo->prepare($sqlDetail);
+            $stmtDetail->execute([
+                ':machine' => $machine,
+                ':emp'     => $empJson,
+                ':flow'    => $flowResult,
+                ':note'    => $note,
+                ':uhist'   => $histJson,
+                ':ident'   => $identCode
+            ]);
+
+            // Cập nhật bobin_history
+            $currHistStmt = $pdo->prepare("SELECT update_history FROM bobin_history WHERE bobin_key_code = :key ORDER BY id DESC LIMIT 1");
+            $currHistStmt->execute([':key' => $keyCode]);
+            $rawHistHist = $currHistStmt->fetchColumn();
+            $histArrHist = (!empty($rawHistHist)) ? (json_decode($rawHistHist, true) ?: []) : [];
+            if ($updateRecord !== null) {
+                $histArrHist[] = $updateRecord;
+            }
+            $histHistJson = !empty($histArrHist) ? $this->json_utf8($histArrHist) : null;
+
+            $sqlHistory = "UPDATE bobin_history SET 
+                            winding_machine = :machine, 
+                            winding_employee = :emp, 
+                            flow_test_result = :flow, 
+                            winding_note = :note, 
+                            update_history = :uhist 
+                          WHERE bobin_key_code = :key";
+            $stmtHistory = $pdo->prepare($sqlHistory);
+            $stmtHistory->execute([
+                ':machine' => $machine,
+                ':emp'     => $empJson,
+                ':flow'    => $flowResult,
+                ':note'    => $note,
+                ':uhist'   => $histHistJson,
+                ':key'     => $keyCode
+            ]);
+
+            $pdo->commit();
+            return true;
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("DB adminUpdateWindingBobin Error: " . $e->getMessage());
+            throw new Exception("Lỗi Database: " . $e->getMessage());
+        }
+    }
+
     public function getDetailBobinsForQC(array $filters = [])
     {
         $pdo = $this->db->pdo();
@@ -948,8 +1235,9 @@ class BobinRepository
 
         try {
             $baseTable = $this->getActiveBaseTable();
+            // Task-006: Busy_Checked hoặc Rolled trong 3 ngày gần nhất
             $sql = "SELECT * FROM $baseTable AS active_bobins 
-                    WHERE bobin_current_status IN ('Busy_Checked', 'Rolled')";
+                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -999,7 +1287,8 @@ class BobinRepository
         $pdo = $this->db->pdo();
         try {
             $baseTable = $this->getActiveBaseTable();
-            $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins WHERE bobin_current_status IN ('Busy_Checked', 'Rolled')";
+            $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins 
+                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -1216,7 +1505,7 @@ class BobinRepository
         ];
     }
     #region Ext PUT
-    public function extrusionUpdateBobin(BobinEntity $entity): bool
+    public function extrusionUpdateBobin(BobinEntity $entity, ?array $updateRecord = null): bool
     {
         $pdo = $this->db->pdo();
         try {
@@ -1224,10 +1513,10 @@ class BobinRepository
 
             $entity->currentStatus = 'Busy_Unchecked';
 
-            $this->extUpdateBobinDetail($pdo, $entity);
+            $this->extUpdateBobinDetail($pdo, $entity, $updateRecord);
             $this->extUpdateBobinGeneral($pdo, $entity);
             // Cập nhật lại bản ghi trong bobin_history theo bobin_key_code mà không POST dòng mới (Req VI & VII)
-            $this->extUpdateBobinHistory($pdo, $entity);
+            $this->extUpdateBobinHistory($pdo, $entity, $updateRecord);
 
             $pdo->commit();
             return true;
@@ -1240,7 +1529,7 @@ class BobinRepository
         }
     }
 
-    private function extUpdateBobinDetail(PDO $pdo, BobinEntity $entity): void
+    private function extUpdateBobinDetail(PDO $pdo, BobinEntity $entity, ?array $updateRecord = null): void
     {
         // Khi nhân viên đùn update, không cập nhật updated_time (Req VII)
         $sql = "UPDATE bobin_list_detail SET
@@ -1255,12 +1544,23 @@ class BobinRepository
                     shift = :shift,
                     extrusion_date = :edate,
                     finish_time = :ftime,
-                    bobin_current_status = :status
+                    bobin_current_status = :status,
+                    update_history = :uhist
                 WHERE bobin_identification_code = :ident";
+
+        // Lấy lịch sử cập nhật hiện tại và nối thêm bản ghi mới
+        $currStmt = $pdo->prepare("SELECT update_history FROM bobin_list_detail WHERE bobin_identification_code = :ident LIMIT 1");
+        $currStmt->execute([':ident' => $entity->identificationCode]);
+        $rawHist = $currStmt->fetchColumn();
+        $histArr = (!empty($rawHist)) ? (json_decode($rawHist, true) ?: []) : [];
+        if ($updateRecord !== null) {
+            $histArr[] = $updateRecord;
+        }
 
         $stmt = $pdo->prepare($sql);
         $params = $this->getBobinExtUpdateParams($entity);
         $params[':status'] = 'Busy_Unchecked';
+        $params[':uhist']  = !empty($histArr) ? $this->json_utf8($histArr) : null;
         $stmt->execute($params);
     }
 
@@ -1280,7 +1580,7 @@ class BobinRepository
         ]);
     }
 
-    private function extUpdateBobinHistory(PDO $pdo, BobinEntity $entity): void
+    private function extUpdateBobinHistory(PDO $pdo, BobinEntity $entity, ?array $updateRecord = null): void
     {
         if (empty($entity->bobinKeyCode)) {
             return;
@@ -1299,14 +1599,24 @@ class BobinRepository
                     shift = :shift,
                     extrusion_date = :edate,
                     finish_time = :ftime,
-                    bobin_current_status = :status
+                    bobin_current_status = :status,
+                    update_history = :uhist
                 WHERE bobin_key_code = :key";
+
+        $currStmt = $pdo->prepare("SELECT update_history FROM bobin_history WHERE bobin_key_code = :key LIMIT 1");
+        $currStmt->execute([':key' => $entity->bobinKeyCode]);
+        $rawHist = $currStmt->fetchColumn();
+        $histArr = (!empty($rawHist)) ? (json_decode($rawHist, true) ?: []) : [];
+        if ($updateRecord !== null) {
+            $histArr[] = $updateRecord;
+        }
 
         $stmt = $pdo->prepare($sql);
         $params = $this->getBobinExtUpdateParams($entity);
         unset($params[':ident']);
         $params[':key'] = $entity->bobinKeyCode;
         $params[':status'] = 'Busy_Unchecked';
+        $params[':uhist']  = !empty($histArr) ? $this->json_utf8($histArr) : null;
         $stmt->execute($params);
     }
 

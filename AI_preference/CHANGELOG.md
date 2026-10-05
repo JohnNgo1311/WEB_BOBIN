@@ -4,6 +4,194 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 
 ---
 
+## [2026-10-06] - Nâng Cấp UI 3 Trang Điều Chỉnh & Thu Gọn Hiển Thị update_history (TASK-008)
+
+### 1. Nâng cao UI/UX 3 trang Điều chỉnh (Đùn, QC, Cuộn)
+- **Header:**
+  - Thiết kế Dark Hero Gradient hiện đại với viền cong mềm mại và shadow đa lớp.
+  - Tiêu đề kèm icon trực quan (`🏭 Điều chỉnh Đùn`, `🛡️ Điều chỉnh QC`, `📍 Điều chỉnh Cuộn`).
+  - Bổ sung subtitle mô tả chi tiết nhiệm vụ của trang và huy hiệu định danh công đoạn (`⚙️ ĐÙN CHECK`, `🔍 QC CHECK`, `⚡ WINDING CHECK`).
+- **Card Bobin:**
+  - Card-top phân biệt rõ rệt theo từng trạng thái bằng dải gradient màu chuẩn SMC:
+    - `.status_busy_unchecked`: Gradient Cam công đoạn Đùn (`#f97316` đến `#c2410c`).
+    - `.status_busy_checked`: Gradient Xanh dương công đoạn QC (`#3b82f6` đến `#1e40af`).
+    - `.status_rolled`: Gradient Xanh lá công đoạn Cuộn hoàn tất (`#22c55e` đến `#15803d`).
+  - Badge trạng thái nổi bật, có shadow tinh tế và viền bo mềm mại.
+  - Hiệu ứng `.is-editing` nổi bật với viền xanh 2px và shadow sâu khi người dùng bấm "Chỉnh sửa".
+- **Visual Inspection Strips & Nút thao tác:**
+  - Thanh kiểm tra ngoại quan (`.ext-check-strip`) có viền bo tròn, các ô kiểm tra (`.ext-check-box`) có shadow nhẹ và viền nổi bật.
+  - Nút bấm OK/NG (`.ext-toggle-btn`) có kích thước lớn hơn, rõ ràng, hiệu ứng hover phóng to nhẹ.
+  - Các nút hành động (`.btn-edit`, `.btn-confirm`, `.btn-cancel-edit`, `.btn-delete`) có hiệu ứng lift khi hover, bo góc 7px và shadow rõ ràng.
+
+### 2. Chuẩn hóa vị trí hiển thị dữ liệu `update_history`
+- Dữ liệu `update_history` **chỉ được hiển thị duy nhất tại trang Lịch sử Bobin** (`listBobinHistoryView.php`) nhằm tối ưu không gian hiển thị và giữ đúng mục đích tra cứu lịch sử thay đổi.
+- Gỡ bỏ khối hiển thị `update_history` khỏi các trang khác:
+  - `app/views/extrusionEditBobinView.php` (Đã gỡ bỏ)
+  - `app/views/qcEditBobinView.php` (Đã gỡ bỏ)
+  - `app/views/windingEditBobinView.php` (Đã gỡ bỏ)
+  - `app/views/listBobinDetailView.php` (Đã gỡ bỏ)
+- Giữ nguyên hiển thị đầy đủ và chi tiết tại `app/views/listBobinHistoryView.php`.
+
+---
+
+## [2026-10-06] - Phân Quyền Trang Điều Chỉnh, Hiển Thị Lịch Sử Audit Trail & Nâng Cao UI/UX (TASK-007)
+
+### 1. Phân quyền truy cập các trang điều chỉnh (Extrusion, QC, Winding)
+- **Quy tắc phân quyền:**
+  - **Điều chỉnh Đùn (`bobin/extrusionEditBobinView`, `bobin/extrusionUpdateBobin`):** Cho phép vai trò `extrusion` và `admin`.
+  - **Điều chỉnh QC (`bobin/qcEditBobinView`, `bobin/updateQCEditBobin`):** Cho phép vai trò `qc` và `admin`.
+  - **Điều chỉnh Cuộn (`bobin/windingEditBobinView`, `bobin/updateWindingEditBobin`):** Dành riêng cho `admin`.
+- **Cập nhật hệ thống:**
+  - `app/core/Router.php`: Bổ sung route `qceditbobinview` và `updateqceditbobin` vào quyền của vai trò `qc`.
+  - `app/controllers/BobinController.php`: Phương thức `qcEditBobinView()` và `updateQCEditBobin()` kiểm tra quyền `in_array($role, ['qc', 'admin'], true)`.
+  - Cập nhật menu điều hướng trên toàn bộ các view (`qcView.php`, `qcEditBobinView.php`, `windingView.php`, `windingEditBobinView.php`, `listBobinDetailView.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php`, `employeeListView.php`, `extrusionEditBobinView.php`, `extrusionView.php`): Hiển thị link `bobin/qcEditBobinView` cho cả vai trò `qc` và `admin`.
+
+### 2. Trang lịch sử Bobin (`bobin/listBobinHistoryView`)
+- Đã gỡ bỏ toàn bộ khối nút chọn nhanh ngày ("Hôm nay", "Hôm qua", "7 ngày", "1 tháng") theo đúng yêu cầu.
+- Loại bỏ hàm JavaScript `setQuickDate()`.
+
+### 3. Hiển thị vết lịch sử thay đổi `update_history` (Audit Trail)
+- Lưu vết lịch sử chỉnh sửa khi thực hiện cập nhật Bobin qua cả 3 trang điều chỉnh (Đùn, QC, Cuộn):
+  - Ghi nhận `stage` (`extrusion`, `qc`, `winding`), `action`, `employee_code`, `employee_name`, `updated_at`, `note`.
+- Tích hợp khối hiển thị `.audit-history-box` trực quan trên từng card Bobin trong cả 3 trang điều chỉnh:
+  - `app/views/extrusionEditBobinView.php`
+  - `app/views/qcEditBobinView.php`
+  - `app/views/windingEditBobinView.php`
+- Đầy đủ thông tin người thay đổi, thời gian thay đổi, công đoạn và ghi chú; hỗ trợ đa ngôn ngữ (`vi`, `en`, `ja`).
+
+### 4. Nâng cao UI/UX các trang điều chỉnh
+- Cải thiện giao diện đồng bộ trong `public/assets/css/extrusionEditBobin.css`:
+  - Header hiện đại phong cách Dark Hero Gradient (`#1e293b` đến `#0f172a`), badge công đoạn sắc nét.
+  - Card Bobin có viền tinh tế, bóng đổ mềm mại, viền nổi bật khi ở chế độ chỉnh sửa (`.is-editing`).
+  - Nút bấm action (`btn-edit`, `btn-confirm`, `btn-cancel-edit`, `btn-delete`) có hiệu ứng hover lift, bóng đổ và gradient rõ ràng.
+  - Khối lịch sử điều chỉnh (`.audit-history-box`) có màu phân biệt theo từng công đoạn (`stage-extrusion`, `stage-qc`, `stage-winding`), font chữ dễ đọc.
+
+---
+
+## [2026-10-06] - Lọc Bobin 3 Ngày Cho Cuộn/Điều Chỉnh Cuộn, Chuẩn Hóa Status Badge & Tối Ưu Hệ Thống Dịch i18n (TASK-006)
+
+### 1. Giới hạn lọc thời gian 3 ngày gần nhất
+- **Trang Điều chỉnh Cuộn (`bobin/windingEditBobinView`):**
+  - Cập nhật truy vấn SQL trong `BobinRepository::getListDetailBobinsForWindingEdit()` và `countDetailBobinsForWindingEdit()`: Thay đổi từ khoảng 7 ngày sang 3 ngày gần nhất (`bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)`).
+- **Trang Xác nhận thông tin Cuộn (`bobin/windingView`):**
+  - Cập nhật truy vấn SQL trong `BobinRepository::getDetailBobinsForWinding()` và `countDetailBobinsForWinding()`: Chỉ lấy những Bobin có trạng thái `Busy_Checked` (đang chờ cuộn) hoặc Bobin có trạng thái `Rolled` (đã cuộn) được cập nhật trong vòng 3 ngày gần nhất (`(bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)))`).
+
+### 2. Chuẩn hóa hiển thị nhãn trạng thái Bobin (Status Badge)
+- Thống nhất tuyệt đối hiển thị 5 trạng thái chuẩn viết hoa trên toàn bộ các Card Bobin trong tất cả các View:
+  - `"CHƯA KIỂM TRA QC"`
+  - `"ĐÃ KIỂM TRA QC"`
+  - `"ĐANG CHỜ HỦY"`
+  - `"ĐÃ HỦY"`
+  - `"ĐÃ CUỘN"`
+- Các View được chuẩn hóa:
+  - `app/views/listBobinDetailView.php`: Match expression đổi thành 5 trạng thái viết hoa chuẩn.
+  - `app/views/listBobinHistoryView.php`: Match expression đổi thành 5 trạng thái viết hoa chuẩn.
+  - `app/views/listBobinView.php`: Match expression đổi thành 5 trạng thái viết hoa chuẩn.
+  - `app/views/listPendingCancellationView.php`: Thay nhãn `⌛ Đang chờ hủy` thành `ĐANG CHỜ HỦY`.
+  - `app/views/extrusionEditBobinView.php`: Thay nhãn `⏳ Chưa kiểm tra QC` thành `CHƯA KIỂM TRA QC`.
+  - `app/views/qcEditBobinView.php`: Thay nhãn `🛡️ QC Đã kiểm tra` thành `ĐÃ KIỂM TRA QC`.
+  - `app/views/windingEditBobinView.php`: Thay nhãn `📍 Cuộn Hoàn tất` thành `ĐÃ CUỘN`.
+  - `app/views/qcView.php`: Thay nhãn `Đang đợi QC check` thành `CHƯA KIỂM TRA QC`.
+  - `app/views/windingView.php`: Đổi trạng thái hiển thị thành `ĐÃ CUỘN` hoặc `ĐÃ KIỂM TRA QC`.
+
+### 3. Tối ưu hóa hệ thống chuyển đổi ngôn ngữ (i18n)
+- **Frontend (`public/assets/js/i18n.js`):**
+  - Bổ sung 5 trạng thái chuẩn (`CHƯA KIỂM TRA QC`, `ĐÃ KIỂM TRA QC`, `ĐANG CHỜ HỦY`, `ĐÃ HỦY`, `ĐÃ CUỘN`) vào từ điển `DOM_MAPPINGS.statusBadges` cho cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+  - Mở rộng selector xử lý dịch trong `deepTranslateDOM()` để tự động quét cả `.status-badge`.
+  - Gỡ bỏ điều kiện return sớm khi ở ngôn ngữ tiếng Việt (`currentLang === 'vi'`) trong `deepTranslateDOM()`, cho phép engine quét qua toàn bộ DOM (table headers, form labels, buttons, placeholders, status badges) để khôi phục hoặc chuẩn hóa các chuỗi tiếng Anh/Nhật còn sót về tiếng Việt chuẩn 100%.
+  - Cập nhật `MutationObserver` cho phép chuẩn hóa các phần tử DOM được thêm động ngay cả khi đang ở chế độ Tiếng Việt.
+
+---
+
+## [2026-10-06] - Điều Chỉnh Bộ Lọc Danh Sách Bobin QC / Cuộn & Tích Hợp Phân Trang (TASK-005)
+
+### 1. Chuẩn hóa bộ lọc danh sách Bobin theo đúng quy trình phân xưởng
+- **Trang Điều chỉnh QC (`bobin/qcEditBobinView`):**
+  - Chỉ hiển thị các Bobin có trạng thái `bobin_current_status = 'Busy_Checked'` (các Bobin đã qua công đoạn kiểm tra QC nhưng chưa qua cuộn hoàn tất).
+- **Trang Điều chỉnh Cuộn (`bobin/windingEditBobinView`):**
+  - Chỉ hiển thị các Bobin có trạng thái `bobin_current_status = 'Rolled'` và có thời gian cập nhật trong vòng 7 ngày gần nhất (`updated_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)`).
+
+### 2. Tích hợp tính năng phân trang (Pagination) toàn diện
+- **Repository (`app/repositories/BobinRepository.php`):**
+  - Cập nhật `getListDetailBobinsForQCEdit($filters, $page, $limit)`: Phân trang bằng `LIMIT :limit OFFSET :offset`, sắp xếp theo `updated_time DESC, bobin_identification_code ASC`.
+  - Bổ sung `countDetailBobinsForQCEdit($filters)`: Đếm tổng số Bobin đạt chuẩn điều chỉnh QC.
+  - Cập nhật `getListDetailBobinsForWindingEdit($filters, $page, $limit)`: Phân trang bằng `LIMIT :limit OFFSET :offset`, lọc `updated_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)`, sắp xếp theo `updated_time DESC, bobin_identification_code ASC`.
+  - Bổ sung `countDetailBobinsForWindingEdit($filters)`: Đếm tổng số Bobin đạt chuẩn điều chỉnh Cuộn trong 7 ngày gần nhất.
+- **Service (`app/services/BobinServices.php`):**
+  - Truyền `$dto->page, $dto->limit` vào các repository method tương ứng.
+  - Thêm phương thức `countDetailBobinsForQCEdit(BobinGetListDTO $dto)` và `countDetailBobinsForWindingEdit(BobinGetListDTO $dto)`.
+- **Controller (`app/controllers/BobinController.php`):**
+  - Tính toán `$totalRecords`, `$totalPages = (int)ceil($totalRecords / $dto->limit)` và truyền mảng dữ liệu `pagination` cùng `totalRecords` sang view.
+- **Views (`app/views/qcEditBobinView.php`, `app/views/windingEditBobinView.php`):**
+  - Thêm hàm helper `buildFilterUrl()` bảo toàn tham số lọc / từ khóa tìm kiếm khi chuyển trang.
+  - Hiển thị tổng số lượng bản ghi thực tế trên `counter-badge` bằng `number_format($totalRecords)`.
+  - Bổ sung khối UI điều hướng phân trang (`.pagination-wrapper`, nút `‹ Trước`, các số trang liền kề, nút `Sau ›`, cùng nhãn thông tin `.page-info`).
+- **CSS (`public/assets/css/extrusionEditBobin.css`):**
+  - Bổ sung định dạng CSS cho `.pagination-wrapper`, `.page-btn`, `.page-btn.active`, `.page-info`.
+
+### 3. Đa ngôn ngữ (i18n) cho tính năng phân trang
+- **Frontend & Backend (`public/assets/js/i18n.js`, `app/core/Language.php`):**
+  - Bổ sung các translation key: `page_prev`, `page_next`, `page_info` trên cả 3 ngôn ngữ `vi`, `en`, `ja`.
+  - Cập nhật hàm `deepTranslateDOM()` trong `i18n.js` tự động nhận diện và dịch động các nút điều hướng phân trang và thông tin trang sang ngôn ngữ người dùng lựa chọn.
+
+---
+
+## [2026-10-05] - Triển Khai Tính Năng Điều Chỉnh QC & Cuộn (Admin), Xác Nhận Mật Khẩu & Vết Kiểm Toán Update History (TASK-004)
+
+### 1. Phân quyền và tạo 2 tính năng điều chỉnh mới dành riêng cho Quản trị viên (Admin)
+- **Files thay đổi:**
+  - `app/core/Router.php`: Đăng ký `qceditbobinview`, `updateqceditbobin`, `windingeditbobinview`, `updatewindingeditbobin` nằm độc quyền dưới nhóm quyền `admin`.
+  - `app/controllers/BobinController.php`: Bổ sung kiểm tra role Admin nghiêm ngặt cho các view (`qcEditBobinView`, `windingEditBobinView`) và API PUT (`updateQCEditBobin`, `updateWindingEditBobin`).
+  - `app/services/BobinServices.php`: Bổ sung `getListDetailBobinsForQCEdit()`, `getListDetailBobinsForWindingEdit()`, `adminUpdateQCBobin()`, `adminUpdateWindingBobin()`.
+  - `app/repositories/BobinRepository.php`: Bổ sung truy vấn và cập nhật chuyên biệt cho Admin QC & Winding Edit.
+  - `app/views/qcEditBobinView.php` & `public/assets/js/QC/edit_submit.js`: Giao diện và script điều chỉnh QC (visual inspection, ghi chú, loại Bobin).
+  - `app/views/windingEditBobinView.php` & `public/assets/js/Winding/edit_submit.js`: Giao diện và script điều chỉnh Cuộn (máy cuộn, nhân viên, kiểm tra thông khí, ghi chú).
+  - Cập nhật liên kết thanh menu điều hướng (`menu-bar`) trong tất cả các View (`extrusionView`, `extrusionEditBobinView`, `qcView`, `windingView`, `listBobinDetailView`, `listBobinHistoryView`, `listPendingCancellationView`, `employeeListView`): Các liên kết "Điều chỉnh QC" và "Điều chỉnh Cuộn" chỉ hiển thị khi tài khoản có quyền `admin`.
+
+### 2. Xác thực mật khẩu đăng nhập bắt buộc trước khi lưu ở cả 3 trang điều chỉnh
+- **Files thay đổi:**
+  - `app/dtos/Bobin/BobinExtUpdateDTO.php`, `BobinQCUpdateDTO.php`, `BobinUpdateWindingDTO.php`: Bổ sung trường `$confirm_password` và parse từ request payload.
+  - `public/assets/js/Extrusion/edit_submit.js`, `public/assets/js/QC/edit_submit.js`, `public/assets/js/Winding/edit_submit.js`: Hộp thoại `ConfirmDialog` hỗ trợ chế độ `requirePassword = true`, bắt buộc người dùng nhập mật khẩu tài khoản đang đăng nhập trước khi submit PUT request.
+  - `app/controllers/BobinController.php`: Phương thức `verifyCurrentUserPassword()` kiểm tra đối soát mật khẩu với tài khoản đang đăng nhập trong `employee_list` qua `$_SESSION['user']['id']`. Nếu mật khẩu không đúng hoặc để trống, server từ chối cập nhật và trả về HTTP 403.
+
+### 3. Lưu vết kiểm toán `update_history` và hiển thị trên UI Danh sách / Lịch sử Bobin
+- **Files thay đổi:**
+  - `app/repositories/BobinRepository.php`: Cả 3 thao tác điều chỉnh (Đùn, QC, Cuộn) đều tự động nối bản ghi kiểm toán mới vào trường `update_history` JSON ở cả `bobin_list_detail` và `bobin_history` bao gồm: giai đoạn (`stage`), mã và họ tên người sửa (`employee_code`, `employee_name`), thời điểm thực hiện (`updated_at`), ghi chú (`note`).
+  - `app/views/listBobinDetailView.php` & `app/views/listBobinHistoryView.php`: Render hộp thông tin lịch sử điều chỉnh `audit-history-box` ở cuối mỗi thẻ Bobin nếu Bobin đó đã từng được điều chỉnh, hiển thị rõ ràng ai sửa, ở công đoạn nào và vào lúc nào.
+
+### 4. Đa ngôn ngữ i18n toàn diện (100% không hardcode)
+- **Files thay đổi:**
+  - `app/core/Language.php` & `public/assets/js/i18n.js`: Bổ sung đầy đủ translations trên cả 3 ngôn ngữ (`vi`, `en`, `ja`) cho các nhãn menu (`nav_qc_edit`, `nav_winding_edit`), tiêu đề trang (`page_qc_edit`, `page_winding_edit`), nhãn xác nhận mật khẩu (`confirm_pwd_label`, `confirm_pwd_ph`, `confirm_pwd_empty`, `confirm_edit_title`, `confirm_edit_sub`), nhãn tiến trình (`saving`, `saved`, `save_failed`), và nhãn vết kiểm toán (`audit_trail_title`, `audit_stage_extrusion`, `audit_stage_qc`, `audit_stage_winding`, `audit_updater`, `audit_time`).
+
+---
+
+## [2026-10-05] - Khắc Phục Lỗi Treo Web Khi Đổi Ngôn Ngữ & Tối Ưu Event Loop (TASK-003)
+
+### 0. Sửa dứt điểm hiện tượng treo web (freeze) và vô hiệu hóa nút bấm khi đổi ngôn ngữ
+- **Files thay đổi:**
+  - `public/assets/js/i18n.js`
+  - `app/views/components/languageSwitcher.php`
+  - `AI_preference/AI_Task.md`
+  - `AI_preference/CHANGELOG.md`
+- **Nguyên nhân cốt lõi gây lỗi:**
+  1. **Lặp vô tận trong `MutationObserver` (Infinite Recursive Mutation Loop):** `observeDOMChanges()` lắng nghe thay đổi của toàn bộ `document.body` (`childList: true, subtree: true`). Khi đổi ngôn ngữ, hàm `deepTranslateDOM()` ghi đè nội dung các phần tử (qua `innerHTML` trên labels, buttons, links). Thao tác này ngay lập tức sinh ra các `mutation` mới có `addedNodes`, khiến callback observer tự gọi lại `deepTranslateDOM()`. Quá trình này lặp lại vô tận ở tốc độ cực cao, chiếm 100% Main Thread / JS Event Loop khiến trình duyệt bị treo (freeze) hoàn toàn và người dùng không thể thao tác bất kỳ nút hay form nào.
+  2. **Mất Event Listeners do can thiệp DOM thô bạo:** Khi `deepTranslateDOM()` và `applyDataI18n()` gán lại `innerHTML` trên các phần tử (như nút có icon SVG, link có badge), toàn bộ các DOM node con bị hủy và tạo mới, làm đứt toàn bộ event listener đã gắn trước đó (như các hàm click, toggle dropdown, toggle modal, filter,...).
+  3. **Xung đột kép khi kích hoạt chuyển đổi (Double Trigger & Race Condition):** Nút chọn ngôn ngữ vừa có thuộc tính `onclick` vừa được bắt bởi `addEventListener` trong `initLanguageSwitcher()`, đồng thời hàm `fetch` đồng bộ backend gọi song song với `window.location.reload()`, gây race condition trên một số môi trường intranet.
+- **Biện pháp khắc phục và tối ưu:**
+  1. **Cơ chế khóa đa luồng (Infinite Loop Guard & Re-entrancy Lock):** Thêm biến cờ `isTranslating` kiểm soát tiến trình dịch; nếu đang dịch thì `MutationObserver` hoàn toàn bỏ qua mọi thay đổi DOM. Chỉ mở lại cờ sau khi hoàn tất microtask rendering.
+  2. **Lọc Node & Debounce MutationObserver:** Observer chỉ quan tâm các `ELEMENT_NODE` thực sự phát sinh từ DOM ngoài (bỏ qua text node và các phần tử do chính i18n tạo ra); bổ sung debounce timer (150ms) để gom cụm các biến đổi DOM thay vì kích hoạt liên tục.
+  3. **Bảo toàn DOM Tree & Event Listeners:**
+     - Thay vì xóa `innerHTML = ''` trên nút bấm, chỉ cập nhật riêng text node con hoặc so sánh trước khi gán text (`if (btn.textContent !== target)`).
+     - Giữ nguyên các phần tử SVG, badge, icon để không làm mất event listeners của JavaScript.
+     - Kiểm tra điều kiện thay đổi trước khi gán (`if (el.textContent !== target)`) nhằm tránh phát sinh mutation rác.
+  4. **Đồng bộ tải trang an toàn và mượt mà trong `setAppLanguage`:**
+     - Ghi nhận `app_lang` vào cả Cookie và `localStorage` ngay lập tức.
+     - Sử dụng `navigator.sendBeacon` (hoặc `fetch` với timeout fallback 300ms) để đồng bộ session backend an toàn trước khi reload, đảm bảo không bao giờ bị nghẽn mạng hay treo reload.
+     - Tối ưu hóa click handler trong `languageSwitcher.php`, tránh duplicate trigger.
+- **Ảnh hưởng chức năng khác:** Hoàn toàn **KHÔNG** ảnh hưởng logic nghiệp vụ, database schema hay API. Các chức năng form, lọc, quét QR, đổi mật khẩu và xem chi tiết hoạt động mượt mà 100% trên cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+
+---
+
 ## [2026-10-05] - Điều Tra & Đồng Bộ Toàn Diện Đa Ngôn Ngữ (TASK-002), Fallback Pipeline & Logic Đùn
 
 ### 0. Điều tra và đồng bộ toàn diện chức năng chuyển đổi ngôn ngữ (TASK-002)

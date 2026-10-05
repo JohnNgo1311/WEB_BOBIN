@@ -68,6 +68,13 @@ if (!function_exists('decodeJsonObject')) {
                 data-i18n="nav_qc">
                 <?= __('nav_qc') ?>
             </a>
+            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView"
+                class="<?= ($currentUrl === 'bobin/qcEditBobinView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_qc_edit">
+                <?= __('nav_qc_edit') ?>
+            </a>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Nhóm Cuộn -->
@@ -77,6 +84,13 @@ if (!function_exists('decodeJsonObject')) {
                 data-i18n="nav_winding">
                 <?= __('nav_winding') ?>
             </a>
+            <?php if ($userRole === 'admin'): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingEditBobinView"
+                class="<?= ($currentUrl === 'bobin/windingEditBobinView') ? 'active-nav' : '' ?>"
+                data-i18n="nav_winding_edit">
+                <?= __('nav_winding_edit') ?>
+            </a>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Các trang theo dõi công khai -->
@@ -125,8 +139,13 @@ if (!function_exists('decodeJsonObject')) {
         </div>
     </div>
     <div class="page-header">
-        <h1 data-i18n="page_extrusion_edit"><?= __('page_extrusion_edit') ?></h1>
-        <!-- <p class="page-subtitle">Nhấn "Chỉnh sửa" trên từng Bobin để mở khóa nhập liệu thông số</p> -->
+        <div>
+            <h1>🏭 <span data-i18n="page_extrusion_edit"><?= __('page_extrusion_edit') ?></span></h1>
+            <p class="page-header-subtitle">Điều chỉnh thông số sản xuất công đoạn Đùn & cập nhật tình trạng Bobin</p>
+        </div>
+        <div class="page-header-badge">
+            <span>⚙️ ĐÙN CHECK</span>
+        </div>
     </div>
 
     <div class="container">
@@ -227,7 +246,7 @@ if (!function_exists('decodeJsonObject')) {
                             <span class="key-code"><?= $displayKey ?></span>
                         </div>
                         <div class="status-badge">
-                            ⏳ Chưa kiểm tra QC
+                            CHƯA KIỂM TRA QC
                         </div>
                     </div>
 
@@ -375,6 +394,7 @@ if (!function_exists('decodeJsonObject')) {
                         <?php if (!empty($item['updated_time'])): ?>
                         <div class="update-time">🕒 Cập nhật: <?= htmlspecialchars($item['updated_time']) ?></div>
                         <?php endif; ?>
+
                         <div class="button-group">
                             <!-- Nút Sửa ban đầu -->
                             <button type="button" class="btn-edit" onclick="startEdit(this)">

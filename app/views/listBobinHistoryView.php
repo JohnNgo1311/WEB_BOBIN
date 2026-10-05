@@ -200,6 +200,12 @@ if (!function_exists('decodeJsonObject')) {
                 class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>" data-i18n="nav_qc">
                 <?= __('nav_qc') ?>
             </a>
+            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView"
+                class="<?= ($currentUrl === 'bobin/qcEditBobinView') ? 'active-nav' : '' ?>" data-i18n="nav_qc_edit">
+                <?= __('nav_qc_edit') ?>
+            </a>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Nhóm Cuộn -->
@@ -209,6 +215,12 @@ if (!function_exists('decodeJsonObject')) {
                 data-i18n="nav_winding">
                 <?= __('nav_winding') ?>
             </a>
+            <?php if ($userRole === 'admin'): ?>
+            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingEditBobinView"
+                class="<?= ($currentUrl === 'bobin/windingEditBobinView') ? 'active-nav' : '' ?>" data-i18n="nav_winding_edit">
+                <?= __('nav_winding_edit') ?>
+            </a>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Các trang theo dõi công khai -->
@@ -309,18 +321,6 @@ if (!function_exists('decodeJsonObject')) {
                                 value="<?= htmlspecialchars($fromDateVal) ?>">
                             <span class="date-sep">➝</span>
                             <input type="date" name="to_date" id="toDate" value="<?= htmlspecialchars($toDateVal) ?>">
-                        </div>
-
-                        <!-- PHÍM CHỌN NHANH THỜI GIAN -->
-                        <div class="quick-date-pills">
-                            <button type="button" class="btn-pill-date" onclick="setQuickDate('today')"
-                                title="Hôm nay">Hôm nay</button>
-                            <button type="button" class="btn-pill-date" onclick="setQuickDate('yesterday')"
-                                title="Hôm qua">Hôm qua</button>
-                            <button type="button" class="btn-pill-date" onclick="setQuickDate('7days')"
-                                title="7 ngày gần nhất">7 ngày</button>
-                            <button type="button" class="btn-pill-date" onclick="setQuickDate('1month')"
-                                title="1 tháng gần nhất">1 tháng</button>
                         </div>
 
                         <button type="button" id="btnScanQR" class="btn-modern btn-scan">
@@ -804,11 +804,11 @@ if (!function_exists('decodeJsonObject')) {
                         <div class="status-badge">
                             <?php
                                     $displayStatus = match ($rawStatus) {
-                                        'Rolled'               => 'Đã cuộn',
-                                        'Busy_Unchecked'       => 'Đang đợi QC kiểm tra',
-                                        'Busy_Checked'         => 'Đã kiểm tra QC',
-                                        'Pending_Cancellation' => 'Chờ hủy',
-                                        'Cancelled'            => 'Đã hủy',
+                                        'Rolled'               => 'ĐÃ CUỘN',
+                                        'Busy_Unchecked'       => 'CHƯA KIỂM TRA QC',
+                                        'Busy_Checked'         => 'ĐÃ KIỂM TRA QC',
+                                        'Pending_Cancellation' => 'ĐANG CHỜ HỦY',
+                                        'Cancelled'            => 'ĐÃ HỦY',
                                         default                => $rawStatus,
                                     };
                                     echo htmlspecialchars($displayStatus);
@@ -994,6 +994,45 @@ if (!function_exists('decodeJsonObject')) {
                         <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
                             <?= htmlspecialchars($item['updated_time']) ?></div>
                         <?php endif; ?>
+
+                        <?php
+                        $rawAudit = $item['update_history'] ?? '';
+                        $auditList = decodeJsonObject($rawAudit);
+                        if (!empty($auditList) && is_array($auditList)):
+                        ?>
+                        <div class="audit-history-box" style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 12px; width: 100%;">
+                            <div style="font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                <span>📝</span>
+                                <span data-i18n="audit_trail_title"><?= __('audit_trail_title') ?></span>
+                                <span class="badge" style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px; font-size: 11px;"><?= count($auditList) ?></span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <?php foreach ($auditList as $audit): ?>
+                                <?php
+                                $stageName = match($audit['stage'] ?? '') {
+                                    'extrusion' => __('audit_stage_extrusion'),
+                                    'qc'        => __('audit_stage_qc'),
+                                    'winding'   => __('audit_stage_winding'),
+                                    default     => htmlspecialchars($audit['stage'] ?? '')
+                                };
+                                $empDisplay = htmlspecialchars(($audit['employee_code'] ?? '') . ' - ' . ($audit['employee_name'] ?? ''));
+                                $timeDisplay = htmlspecialchars($audit['updated_at'] ?? '');
+                                $noteDisplay = htmlspecialchars($audit['note'] ?? '');
+                                ?>
+                                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                    <div>
+                                        <strong style="color: #2563eb;">[<?= $stageName ?>]</strong>
+                                        <span style="color: #1e293b; font-weight: 600;"><?= $empDisplay ?></span>
+                                        <?php if (!empty($noteDisplay)): ?>
+                                        <span style="color: #64748b; font-style: italic;">(<?= $noteDisplay ?>)</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒 <?= $timeDisplay ?></span>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -1021,53 +1060,6 @@ if (!function_exists('decodeJsonObject')) {
     <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
 
     <script>
-    function setQuickDate(type) {
-        const fromInput = document.getElementById('fromDate');
-        const toInput = document.getElementById('toDate');
-        const filterForm = document.getElementById('filterForm');
-        if (!fromInput || !toInput) return;
-
-        const formatDate = (d) => {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-
-        const today = new Date();
-        let fromDate = new Date();
-        let toDate = new Date();
-
-        switch (type) {
-            case 'today':
-                fromDate = new Date(today);
-                toDate = new Date(today);
-                break;
-            case 'yesterday':
-                fromDate = new Date(today);
-                fromDate.setDate(today.getDate() - 1);
-                toDate = new Date(fromDate);
-                break;
-            case '7days':
-                fromDate = new Date(today);
-                fromDate.setDate(today.getDate() - 7);
-                toDate = new Date(today);
-                break;
-            case '1month':
-                fromDate = new Date(today);
-                fromDate.setMonth(today.getMonth() - 1);
-                toDate = new Date(today);
-                break;
-        }
-
-        fromInput.value = formatDate(fromDate);
-        toInput.value = formatDate(toDate);
-
-        if (filterForm) {
-            filterForm.submit();
-        }
-    }
-
     document.addEventListener("DOMContentLoaded", function() {
         const interactiveElements = document.querySelectorAll(
             ".filter-dashboard select, .filter-dashboard a, .kpi-list a");

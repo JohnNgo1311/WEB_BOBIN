@@ -130,7 +130,9 @@ class Language
                 'nav_extrusion'        => 'Nhóm đùn',
                 'nav_extrusion_edit'   => 'Điều chỉnh đùn',
                 'nav_qc'               => 'QC',
+                'nav_qc_edit'          => 'Điều chỉnh QC',
                 'nav_winding'          => 'Cuộn',
+                'nav_winding_edit'     => 'Điều chỉnh Cuộn',
                 'nav_bobin_list'       => 'Danh sách Bobin',
                 'nav_bobin_history'    => 'Lịch sử Bobin',
                 'nav_pending_cancel'   => 'Danh sách chờ hủy',
@@ -237,7 +239,9 @@ class Language
                 'page_extrusion'       => 'Nhóm đùn - Nhập thông tin Bobin',
                 'page_extrusion_edit'  => 'Nhóm đùn - Điều chỉnh thông tin Bobin',
                 'page_qc'              => 'Nhóm QC - Kiểm tra chất lượng Bobin',
+                'page_qc_edit'         => 'Quản trị - Điều chỉnh thông tin kiểm tra QC',
                 'page_winding'         => 'Nhóm Cuộn - Xác nhận hoàn thành Bobin',
+                'page_winding_edit'    => 'Quản trị - Điều chỉnh thông tin công đoạn Cuộn',
                 'page_bobin_detail'    => 'Danh sách Bobin hiện tại',
                 'page_bobin_history'   => 'Lịch sử Bobin',
                 'page_pending_cancel'  => 'Danh sách Bobin chờ hủy',
@@ -421,7 +425,11 @@ class Language
                 'ph_grind_hint'        => 'Nhập 0, 1 hoặc 2',
                 'ph_enter_material_lot' => 'Nhập Lot vật liệu...',
                 'ph_auto_printlot'     => 'Lot in được tạo tự động',
-                'ph_select_rack'       => 'Chọn Rack đặt...'
+                'ph_select_rack'       => 'Chọn Rack đặt...',
+                // Pagination
+                'page_prev'            => '‹ Trước',
+                'page_next'            => 'Sau ›',
+                'page_info'            => 'Trang :current / :total (Tổng :records Bobin)'
             ],
 
             // ==========================================
@@ -432,7 +440,9 @@ class Language
                 'nav_extrusion'        => 'Extrusion',
                 'nav_extrusion_edit'   => 'Extrusion Edit',
                 'nav_qc'               => 'QC Check',
+                'nav_qc_edit'          => 'QC Edit',
                 'nav_winding'          => 'Winding',
+                'nav_winding_edit'     => 'Winding Edit',
                 'nav_bobin_list'       => 'Bobin List',
                 'nav_bobin_history'    => 'Bobin History',
                 'nav_pending_cancel'   => 'Pending Scraps',
@@ -539,7 +549,9 @@ class Language
                 'page_extrusion'       => 'Extrusion - Input Bobin Data',
                 'page_extrusion_edit'  => 'Extrusion - Edit Bobin Data',
                 'page_qc'              => 'QC - Quality Inspection',
+                'page_qc_edit'         => 'Admin - Edit QC Inspection Data',
                 'page_winding'         => 'Winding - Finalize Bobin',
+                'page_winding_edit'    => 'Admin - Edit Winding Process Data',
                 'page_bobin_detail'    => 'Current Bobin Inventory',
                 'page_bobin_history'   => 'Bobin Activity History',
                 'page_pending_cancel'  => 'Pending Scrap Bobin List',
@@ -723,7 +735,11 @@ class Language
                 'ph_grind_hint'        => 'Enter 0, 1 or 2',
                 'ph_enter_material_lot' => 'Enter material lot...',
                 'ph_auto_printlot'     => 'Auto merged Print Lot',
-                'ph_select_rack'       => 'Select Rack location...'
+                'ph_select_rack'       => 'Select Rack location...',
+                // Pagination
+                'page_prev'            => '‹ Prev',
+                'page_next'            => 'Next ›',
+                'page_info'            => 'Page :current / :total (Total :records Bobins)'
             ],
 
             // ==========================================
@@ -734,7 +750,9 @@ class Language
                 'nav_extrusion'        => '押出',
                 'nav_extrusion_edit'   => '押出編集',
                 'nav_qc'               => 'QC検査',
+                'nav_qc_edit'          => 'QC編集',
                 'nav_winding'          => '巻取',
+                'nav_winding_edit'     => '巻取編集',
                 'nav_bobin_list'       => 'ボビン一覧',
                 'nav_bobin_history'    => 'ボビン履歴',
                 'nav_pending_cancel'   => '廃棄待ち一覧',
@@ -841,7 +859,9 @@ class Language
                 'page_extrusion'       => '押出グループ - ボビン情報入力',
                 'page_extrusion_edit'  => '押出グループ - ボビン情報編集',
                 'page_qc'              => 'QCグループ - 品質検査',
+                'page_qc_edit'         => '管理者 - QC検査情報編集',
                 'page_winding'         => '巻取グループ - ボビン完了確認',
+                'page_winding_edit'    => '管理者 - 巻取工程情報編集',
                 'page_bobin_detail'    => '現在ボビン一覧',
                 'page_bobin_history'   => 'ボビン履歴一覧',
                 'page_pending_cancel'  => '廃棄待ちボビン一覧',
@@ -1025,7 +1045,11 @@ class Language
                 'ph_grind_hint'        => '0, 1または2を入力',
                 'ph_enter_material_lot' => '材料ロットを入力...',
                 'ph_auto_printlot'     => '印字ロット自動生成',
-                'ph_select_rack'       => 'ラック位置を選択...'
+                'ph_select_rack'       => 'ラック位置を選択...',
+                // Pagination
+                'page_prev'            => '‹ 前へ',
+                'page_next'            => '次へ ›',
+                'page_info'            => 'ページ :current / :total (全 :records ボビン)'
             ]
         ];
     }

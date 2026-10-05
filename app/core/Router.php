@@ -68,6 +68,8 @@ class Router
             'qc' => [
                 'index',
                 'listbobinview_qc',
+                'qceditbobinview',
+                'updateqceditbobin',
                 'updateqcbobin',
                 'qccancelbobin',
                 'changebobintype',
@@ -81,7 +83,11 @@ class Router
             ],
             'admin' => [
                 // Admin toàn quyền mọi module, bao gồm xóa hoàn tất Bobin
-                'deletebobin'
+                'deletebobin',
+                'qceditbobinview',
+                'updateqceditbobin',
+                'windingeditbobinview',
+                'updatewindingeditbobin'
             ]
         ];
 

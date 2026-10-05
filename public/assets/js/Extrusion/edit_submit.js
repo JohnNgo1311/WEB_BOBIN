@@ -40,31 +40,64 @@ const ConfirmDialog = (() => {
     };
 
     return {
-        show(title, contentHTML, onConfirm) {
+        show(title, contentHTML, onConfirm, requirePassword = false) {
             injectStyles();
 
             const overlay = document.createElement('div');
             overlay.className = 'confirm-dialog-overlay';
 
+            const pwdInputHTML = requirePassword ? `
+                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                    <label style="display: block; font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
+                        🔐 <span data-i18n="confirm_pwd_label">${window.t ? window.t('confirm_pwd_label') : 'Nhập mật khẩu tài khoản của bạn để xác nhận:'}</span>
+                    </label>
+                    <input type="password" id="confirm_dialog_password" class="form-control" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="${window.t ? window.t('confirm_pwd_ph') : 'Nhập mật khẩu đăng nhập...'}">
+                    <div id="confirm_pwd_error" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: none; font-weight: 600;"></div>
+                </div>
+            ` : '';
+
             const box = document.createElement('div');
             box.className = 'confirm-dialog-box';
             box.innerHTML = `
                 <h3 class="confirm-dialog-title">${title}</h3>
-                <div class="confirm-dialog-content">${contentHTML}</div>
+                <div class="confirm-dialog-content">${contentHTML}${pwdInputHTML}</div>
                 <div class="confirm-dialog-actions">
-                    <button type="button" class="btn btn-secondary cancel-btn" style="padding: 7px 16px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: #e2e8f0; color: #334155; font-weight: 600;">Hủy bỏ</button>
-                    <button type="button" class="btn btn-primary confirm-btn" style="padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; background: #2563eb; color: white; font-weight: 700;">Xác nhận</button>
+                    <button type="button" class="btn btn-secondary cancel-btn" style="padding: 7px 16px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: #e2e8f0; color: #334155; font-weight: 600;" data-i18n="btn_cancel">${window.t ? window.t('btn_cancel') : 'Hủy bỏ'}</button>
+                    <button type="button" class="btn btn-primary confirm-btn" style="padding: 7px 16px; border: none; border-radius: 5px; cursor: pointer; background: #2563eb; color: white; font-weight: 700;" data-i18n="btn_confirm">${window.t ? window.t('btn_confirm') : 'Xác nhận'}</button>
                 </div>
             `;
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);
 
+            if (requirePassword) {
+                setTimeout(() => {
+                    const pwdEl = box.querySelector('#confirm_dialog_password');
+                    if (pwdEl) pwdEl.focus();
+                }, 100);
+            }
+
             const handleClose = () => overlay.remove();
             box.querySelector('.cancel-btn').addEventListener('click', handleClose);
             box.querySelector('.confirm-btn').addEventListener('click', () => {
-                handleClose();
-                if (typeof onConfirm === 'function') onConfirm();
+                if (requirePassword) {
+                    const pwdEl = box.querySelector('#confirm_dialog_password');
+                    const errEl = box.querySelector('#confirm_pwd_error');
+                    const pwdVal = pwdEl ? pwdEl.value.trim() : '';
+                    if (!pwdVal) {
+                        if (errEl) {
+                            errEl.textContent = window.t ? window.t('confirm_pwd_empty') : 'Vui lòng nhập mật khẩu xác nhận.';
+                            errEl.style.display = 'block';
+                        }
+                        if (pwdEl) pwdEl.focus();
+                        return;
+                    }
+                    handleClose();
+                    if (typeof onConfirm === 'function') onConfirm(pwdVal);
+                } else {
+                    handleClose();
+                    if (typeof onConfirm === 'function') onConfirm();
+                }
             });
         }
     };
@@ -381,17 +414,19 @@ async function handleConfirm(buttonElement, bobinCode) {
         `;
 
         ConfirmDialog.show(
-            'Kiểm tra thông tin cập nhật',
+            window.t ? window.t('confirm_edit_title') : 'Kiểm tra thông tin cập nhật',
             `
             <div style="background-color: #e0f2fe; color: #0369a1; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #0284c7;">
-                ℹ️ Xác nhận lưu các thay đổi cho Bobin này:
+                ℹ️ ${window.t ? window.t('confirm_edit_sub') : 'Xác nhận lưu các thay đổi cho Bobin này:'}
             </div>
             ${reviewHTML}
             `,
-            async () => {
+            async (confirmedPassword) => {
                 const originalText = buttonElement.innerText;
-                buttonElement.innerText = 'Đang lưu...';
+                buttonElement.innerText = window.t ? window.t('saving') : 'Đang lưu...';
                 buttonElement.disabled = true;
+
+                payload.confirm_password = confirmedPassword || '';
 
                 try {
                     const apiUrl = `${API_BASE_URL}bobin/extrusionUpdateBobin`;
@@ -404,21 +439,22 @@ async function handleConfirm(buttonElement, bobinCode) {
                     const res = await response.json();
                     if (res.success) {
                         Toast.show(res.message, 'success');
-                        buttonElement.innerText = 'Đã lưu ✔️';
+                        buttonElement.innerText = window.t ? window.t('saved') : 'Đã lưu ✔️';
                         currentEditingContainer = null;
                         originalDataBackup = null;
                         setTimeout(() => window.location.reload(), 1200);
                     } else {
-                        Toast.show(`❌ Lỗi: ${res.message}`, 'error');
+                        Toast.show(`❌ ${res.message || (window.t ? window.t('save_failed') : 'Lưu thất bại')}`, 'error');
                         buttonElement.innerText = originalText;
                         buttonElement.disabled = false;
                     }
                 } catch (err) {
-                    Toast.show(`❌ Đã có lỗi xảy ra: ${err.message}`, 'error');
+                    Toast.show(`❌ ${err.message}`, 'error');
                     buttonElement.innerText = originalText;
                     buttonElement.disabled = false;
                 }
-            }
+            },
+            true // requirePassword = true
         );
     } catch (err) {
         Toast.show(`❌ ${err.message}`, 'error');

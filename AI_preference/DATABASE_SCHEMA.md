@@ -48,6 +48,7 @@ Bảng lưu trữ thông tin trạng thái hoạt động hiện thời của t�
 | `winding_employee` | `TEXT (JSON)` | YES | Thông tin NV cuộn: `{"employee_code": "NVC01", "employee_name": "Lê C"}`. |
 | `flow_test_result` | `ENUM` | YES | Kết quả test thông khí công đoạn cuộn: `'Thành công'`, `'Thất bại'`. |
 | `winding_note` | `VARCHAR(100)` | YES | Ghi chú từ nhóm cuộn. |
+| `update_history` | `LONGTEXT (JSON)` | YES | Mảng JSON lưu vết lịch sử điều chỉnh: `[{"stage": "extrusion|qc|winding", "action": "edit", "employee_code": "...", "employee_name": "...", "updated_at": "YYYY-MM-DD HH:mm:ss", "note": "..."}]`. |
 | `updated_time` | `DATETIME` | YES | Thời điểm cập nhật trạng thái gần nhất. **LƯU Ý:** Không thay đổi khi nhân viên đùn chỉ chỉnh sửa thông tin. |
 
 ---

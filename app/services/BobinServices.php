@@ -102,7 +102,7 @@ class BobinServices
 
         return $entity;
     }
-    public function extUpdateBobin(BobinExtUpdateDTO $dto): BobinEntity
+    public function extUpdateBobin(BobinExtUpdateDTO $dto, ?array $updateRecord = null): BobinEntity
     {
         $this->listRepository->getListData(isFull: true);
 
@@ -110,7 +110,7 @@ class BobinServices
             throw new Exception("Vui lòng nhập Mã định danh Bobin.");
         }
         $entity = $this->buildBaseEntity($dto, 'extUpdate');
-        $this->bobinRepo->extrusionUpdateBobin($entity);
+        $this->bobinRepo->extrusionUpdateBobin($entity, $updateRecord);
         return $entity;
     }
     public function extDeleteBobin(BobinExtDeleteDTO $dto): BobinEntity
@@ -751,6 +751,87 @@ class BobinServices
         } catch (Exception $e) {
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
+    }
+
+    public function getListDetailBobinsForQCEdit(BobinGetListDTO $dto): array
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->getListDetailBobinsForQCEdit($filters, $dto->page, $dto->limit);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobinsForQCEdit(BobinGetListDTO $dto): int
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->countDetailBobinsForQCEdit($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function getListDetailBobinsForWindingEdit(BobinGetListDTO $dto): array
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->getListDetailBobinsForWindingEdit($filters, $dto->page, $dto->limit);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobinsForWindingEdit(BobinGetListDTO $dto): int
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->countDetailBobinsForWindingEdit($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function adminUpdateQCBobin(string $identCode, string $keyCode, array $viData, ?string $newType, ?array $updateRecord): bool
+    {
+        if (empty($identCode)) {
+            throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        return $this->bobinRepo->adminUpdateQCBobin($identCode, $keyCode, $viData, $newType, $updateRecord);
+    }
+
+    public function adminUpdateWindingBobin(string $identCode, string $keyCode, string $machine, ?string $empCode, string $flowResult, string $note, ?array $updateRecord): bool
+    {
+        if (empty($identCode)) {
+            throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        $this->employeeRepo->getListEmployee();
+        $this->windingMachineRepo->getListWindingMachine();
+
+        $foundMachine = $this->windingMachineRepo->findByCode($machine);
+        $machineName = $foundMachine ? $foundMachine->WindingMachineEntity_code : $machine;
+
+        $empData = null;
+        if (!empty($empCode)) {
+            $foundEmp = $this->employeeRepo->findByCode($empCode);
+            if ($foundEmp) {
+                $empData = [
+                    'employee_code' => $foundEmp->employee_code,
+                    'employee_name' => $foundEmp->employee_name
+                ];
+            }
+        }
+
+        return $this->bobinRepo->adminUpdateWindingBobin($identCode, $keyCode, $machineName, $empData, $flowResult, $note, $updateRecord);
     }
     public function getDetailBobinsForWindingPaginated(BobinGetListDTO $dto): array
     {

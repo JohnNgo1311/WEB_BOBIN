@@ -115,7 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
         reversePrintLot(); // Nếu đã có sẵn mã Lot in thì tự động điền ngược thông tin
         console.log(`👂 Bắt đầu theo dõi nhập dữ liệu`);
       } else {
-        console.error("❌ Lỗi từ API: Truy xuất dữ liệu ListData không thành công.");
+        console.error(
+          "❌ Lỗi từ API: Truy xuất dữ liệu ListData không thành công.",
+        );
       }
     })
     .catch(console.error);
@@ -219,7 +221,7 @@ if (bobinCodeInput) {
       (bobin) =>
         bobin.bobin_identification_code &&
         bobin.bobin_identification_code.toLowerCase() === val &&
-        isValidStatus(bobin.bobin_current_status)
+        isValidStatus(bobin.bobin_current_status),
     );
 
     if (exactMatch) {
@@ -230,13 +232,11 @@ if (bobinCodeInput) {
     }
 
     // 2. KIỂM TRA KHỚP TƯƠNG ĐỐI (Hiển thị gợi ý khi đang gõ từng chữ)
-    const matches = listData.list_bobin.filter(
-      (bobin) => {
-        const code = bobin.bobin_identification_code || "";
-        const status = bobin.bobin_current_status || "";
-        return code.toLowerCase().includes(val) && isValidStatus(status);
-      }
-    );
+    const matches = listData.list_bobin.filter((bobin) => {
+      const code = bobin.bobin_identification_code || "";
+      const status = bobin.bobin_current_status || "";
+      return code.toLowerCase().includes(val) && isValidStatus(status);
+    });
 
     if (matches.length > 0) {
       bobinCodeBox.style.display = "block";
@@ -607,7 +607,7 @@ function updatePrintLot() {
       .filter(
         (item) =>
           String(item.brand).trim().toLowerCase() ===
-          String(materialBrand).trim().toLowerCase() &&
+            String(materialBrand).trim().toLowerCase() &&
           item.grinding_time == grindingTime,
       )
       .map((item) => item.code)[0] || "";
@@ -730,5 +730,4 @@ function reversePrintLot() {
       // dateInput.value = `${result.year}-${formattedMonth}-${formattedDay}`;
     }
   }
-
 }

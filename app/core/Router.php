@@ -1,4 +1,5 @@
 <?php
+require_once ROOT_PATH . '/app/core/AuthHelper.php';
 
 class Router
 {
@@ -135,55 +136,32 @@ class Router
             }
         }
 
-        // ================= 5. KIỂM TRA PHÂN QUYỀN VAI TRÒ (ROLE) =================
-        if (isset($_SESSION['user']) && !$isPublic && $controllerLower === 'bobin') {
+        // ================= 5. KIỂM TRA PHÂN QUYỀN (PERMISSIONS & ROLE) =================
+        if (isset($_SESSION['user']) && !$isPublic) {
             $userRole = strtolower($_SESSION['user']['role'] ?? '');
 
-            // Nếu không phải admin thì phải kiểm tra quyền hạn của nhóm
-            if ($userRole !== 'admin') {
-                $allowed = $rolePermissions[$userRole] ?? [];
+            // Kiểm tra phân quyền truy cập chi tiết thông qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+            $isAllowed = AuthHelper::isActionAllowed($controllerLower, $methodLower, $_SESSION['user']);
 
-                if (!in_array($methodLower, $allowed, true)) {
-                    if ($isApi) {
-                        http_response_code(403);
-                        header('Content-Type: application/json; charset=utf-8');
-                        echo json_encode([
-                            'success' => false,
-                            'error'   => 'Bạn không có quyền thực hiện thao tác này.'
-                        ], JSON_UNESCAPED_UNICODE);
-                        exit;
-                    }
-
-                    // Chuyển hướng người dùng về đúng trang chủ của nhóm họ
-                    $redirectUrl = match ($userRole) {
-                        'extrusion' => BASE_URL . '/index.php?url=bobin/index',
-                        'qc'        => BASE_URL . '/index.php?url=bobin/listBobinView_QC',
-                        'winding'   => BASE_URL . '/index.php?url=bobin/listBobinView_Winding',
-                        default     => BASE_URL . '/index.php?url=bobin/listBobinDetailView',
-                    };
-
-                    header("Location: {$redirectUrl}");
-                    exit;
-                }
-            }
-        }
-
-        // Phân quyền cho module Employee: Chỉ Admin mới có quyền truy cập
-        if ($controllerLower === 'employee') {
-            $userRole = strtolower($_SESSION['user']['role'] ?? '');
-            if ($userRole !== 'admin') {
+            if (!$isAllowed) {
                 if ($isApi) {
                     http_response_code(403);
                     header('Content-Type: application/json; charset=utf-8');
-                    echo json_encode(['success' => false, 'error' => 'Chỉ Quản trị viên (Admin) mới có quyền truy cập.'], JSON_UNESCAPED_UNICODE);
+                    echo json_encode([
+                        'success' => false,
+                        'error'   => 'Bạn không có quyền thực hiện thao tác này.'
+                    ], JSON_UNESCAPED_UNICODE);
                     exit;
                 }
+
+                // Chuyển hướng người dùng về trang mặc định phù hợp
                 $redirectUrl = match ($userRole) {
                     'extrusion' => BASE_URL . '/index.php?url=bobin/index',
                     'qc'        => BASE_URL . '/index.php?url=bobin/listBobinView_QC',
-                    'winding'   => BASE_URL . '/index.php?url=bobin/listBobinView_Winding',
+                    'winding'   => BASE_URL . '/index.php?url=bobin/windingView',
                     default     => BASE_URL . '/index.php?url=bobin/listBobinDetailView',
                 };
+
                 header("Location: {$redirectUrl}");
                 exit;
             }

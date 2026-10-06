@@ -4,6 +4,107 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 
 ---
 
+## [2026-10-06] - Thống Nhất Typography Toàn Cục & Hoàn Thiện Mô Hình Phân Quyền Động (TASK-011)
+
+### 1. Thống nhất Font Family toàn bộ các trang và chức năng
+- **Thiết lập Typography toàn cục:**
+  - Định nghĩa bộ biến CSS phông chữ chuẩn hệ thống doanh nghiệp (System Font Stack) tại `:root` trong [`public/assets/css/i18n.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/i18n.css) (tập tin CSS nền tảng được nạp ở `<head>` của 100% trang web trong hệ thống):
+    - Phông chữ văn bản chính: `--font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";`
+    - Phông chữ kỹ thuật (Monospace): `--font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;`
+  - Áp dụng `html, body { font-family: var(--font-family-base) !important; }` cùng tính năng khử răng cưa mượt mà (`-webkit-font-smoothing: antialiased`).
+  - Toàn bộ các thẻ điều khiển biểu mẫu (`input`, `button`, `select`, `textarea`) tự động kế thừa font thống nhất.
+  - Các phần tử hiển thị mã định danh (mã Bobin, mã NV, lot vật tư, JSON) tự động áp dụng `--font-family-mono`.
+- **Đồng bộ hóa các CSS trang chuyên biệt:**
+  - [`sidebar.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/sidebar.css): Áp dụng `var(--font-family-base)` cho toàn bộ thanh Sidebar.
+  - [`employeeList.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/employeeList.css): Chuyển đổi font body riêng lẻ sang `var(--font-family-base)`.
+  - [`employeePermissions.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/employeePermissions.css): Kế thừa đầy đủ bộ font thống nhất.
+
+### 2. Hoàn thiện mô hình Phân quyền Động (Dynamic Permission Access Control)
+- **Thực trạng quyền tài khoản hiện hữu:**
+  - Tổng số 135 tài khoản trong cơ sở dữ liệu (14 admin, 51 extrusion, 5 qc, 65 winding) hiện có trường `permissions = NULL`, kế thừa bộ quyền mặc định tương ứng với vai trò (`role`) ban đầu.
+- **Loại bỏ phụ thuộc cứng vào thiết kế vai trò ban đầu:**
+  - Trước đây, một số controller (`BobinController`, `EmployeeController`) và `Router.php` vẫn còn kiểm tra cứng vai trò (`$role === 'admin'` hoặc `in_array($role, ['qc', 'admin'])`). Điều này khiến việc tùy biến quyền cho các tài khoản không có hiệu lực hoàn toàn (ví dụ: cấp quyền QC cho nhân viên Đùn vẫn bị chặn, hoặc tước quyền Cuộn của Admin bị bypass).
+  - Đã tái cấu trúc toàn diện các vị trí kiểm tra sang sử dụng `AuthHelper::hasPermission()` và `AuthHelper::isActionAllowed()`:
+    - [`Router.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/Router.php): Kiểm tra phân quyền truy cập action 100% qua `AuthHelper::isActionAllowed()`.
+    - [`BobinController.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/controllers/BobinController.php): `index()`, `qcEditBobinView()`, `windingEditBobinView()`, `updateQCEditBobin()`, `updateWindingEditBobin()` chuyển sang kiểm tra quyền cụ thể (`qc_edit`, `winding_edit`, `extrusion_create`, v.v.).
+    - [`EmployeeController.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/controllers/EmployeeController.php): Kiểm tra quyền hạn chuẩn xác qua `employee_manage` và `permission_manage`.
+  - Nhờ đó, hệ thống hiện tại có thể phân quyền độc lập, linh hoạt và chính xác cho từng tài khoản mà không bị ràng buộc bởi thiết kế vai trò ban đầu.
+
+---
+
+## [2026-10-06] - Phân Quyền Chi Tiết Theo Từng Thao Tác & Nâng Cấp Vertical Sidebar Doanh Nghiệp (TASK-010)
+
+### 1. Cơ sở dữ liệu (Database Schema)
+- Bổ sung trường `permissions LONGTEXT DEFAULT NULL` vào bảng `employee_list` (sau trường `is_first_login`).
+- `permissions` lưu trữ mảng JSON chứa danh sách key quyền tùy biến được cấp cho từng nhân viên.
+- Nếu trường này là `NULL`, hệ thống tự động kế thừa bộ quyền mặc định tương ứng với vai trò (`role`) ban đầu của nhân viên, đảm bảo tương thích ngược 100% với tài khoản hiện hữu.
+
+### 2. Kiến trúc & Bộ điều hướng (Auth Architecture & Router)
+- **`app/core/AuthHelper.php`:**
+  - Định nghĩa 11 quyền thao tác chi tiết chia làm 5 nhóm:
+    - **Công đoạn Đùn:** `extrusion_create` (Nhập liệu & tạo Bobin), `extrusion_edit` (Điều chỉnh & xóa Bobin đùn).
+    - **Kiểm tra QC:** `qc_check` (Xác nhận ngoại quan QC), `qc_edit` (Điều chỉnh kết quả QC & báo hủy).
+    - **Công đoạn Cuộn:** `winding_confirm` (Nhập máy cuộn & hoàn tất), `winding_edit` (Điều chỉnh thông số cuộn & báo hủy).
+    - **Theo dõi & Báo cáo:** `bobin_list` (Danh sách chi tiết & xuất Excel), `bobin_history` (Lịch sử Bobin & audit trail), `pending_cancel` (Quản lý duyệt hủy Bobin).
+    - **Quản trị hệ thống:** `employee_manage` (Quản lý tài khoản nhân viên), `permission_manage` (Phân quyền thao tác theo từng account).
+  - Tích hợp cơ chế bảo vệ Admin không bao giờ bị khóa quyền `permission_manage`.
+  - Tích hợp cơ chế đồng bộ ngay quyền trong `$_SESSION` nếu Admin đang thao tác trên tài khoản của chính mình.
+- **`app/core/Router.php`:** Tích hợp `AuthHelper::isActionAllowed()` kiểm tra quyền hạn chi tiết trên từng action trước khi dispatch.
+- **`app/controllers/AuthController.php`:** Nạp trường `permissions` từ database vào `$_SESSION['user']['permissions']` ngay khi đăng nhập.
+- **`app/controllers/EmployeeController.php`:**
+  - `permissionsView()`: Hiển thị giao diện quản lý phân quyền.
+  - `getEmployeePermissions()`: API AJAX GET trả về chi tiết quyền và thông tin nhân viên theo mã số.
+  - `updatePermissions()`: API AJAX POST lưu trữ danh sách quyền tùy biến hoặc reset về quyền vai trò mặc định (`NULL`).
+
+### 3. Giao diện Phân quyền Nhân viên (`employee/permissionsView`)
+- Tra cứu nhân viên thông minh bằng mã nhân viên (hỗ trợ autocomplete datalist) hoặc chọn từ dropdown danh sách.
+- Hiển thị Profile Card trực quan của nhân viên được chọn (Mã số, Tên, Chức vụ, Trạng thái, Chế độ phân quyền Custom/Mặc định).
+- Hệ thống Checkbox dạng thẻ (Card) trực quan theo từng nhóm công đoạn với mô tả chi tiết quyền hạn.
+- Hỗ trợ thao tác nhanh: "Chọn tất cả", "Bỏ chọn tất cả", "Khôi phục quyền mặc định theo vai trò".
+- Thanh lưu trữ dính đáy màn hình (Sticky Save Bar) và Toast thông báo kết quả tức thì không cần tải lại trang.
+
+### 4. Nâng cấp Giao diện Thanh Điều Hướng: Vertical Sidebar Doanh Nghiệp
+- Chuyển đổi thanh menu ngang (`.menu-bar`) sang thanh dọc bên trái (`Vertical Left Sidebar`) chuẩn doanh nghiệp hiện đại SMC Factory:
+  - Header Sidebar: Brand logo SMC Factory, trạng thái vận hành hệ thống.
+  - User Card: Ảnh đại diện, mã nhân viên, tên nhân viên và badge vai trò có màu nhận diện.
+  - Navigation Sections: Nhóm phân cấp rõ ràng (Sản xuất & Vận hành, Theo dõi & Giám sát, Quản trị hệ thống).
+  - Dynamic Rendering: Tự động ẩn/hiện menu link dựa trên quyền hạn thực tế của user qua `AuthHelper::hasPermission()`.
+  - Huy hiệu (Badge) thời gian thực hiển thị số lượng Bobin đang chờ duyệt hủy.
+  - Thu gọn/Mở rộng (`Collapse / Expand`) linh hoạt giúp tối đa hóa không gian làm việc trên máy tính sản xuất.
+  - Tự động phản hồi (Responsive Off-Canvas) trên thiết bị di động/màn hình nhỏ (<992px) với nút Toggle Burger.
+  - Footer Sidebar: Bộ chọn ngôn ngữ 3 chế độ (`vi`, `en`, `ja`), nút Đổi mật khẩu và Đăng xuất an toàn.
+- Áp dụng đồng bộ Sidebar cho tất cả 11 giao diện trong hệ thống:
+  - `app/views/employeePermissionsView.php`
+  - `app/views/employeeListView.php`
+  - `app/views/extrusionView.php`
+  - `app/views/extrusionEditBobinView.php`
+  - `app/views/qcView.php`
+  - `app/views/qcEditBobinView.php`
+  - `app/views/windingView.php`
+  - `app/views/windingEditBobinView.php`
+  - `app/views/listBobinDetailView.php`
+  - `app/views/listBobinHistoryView.php`
+  - `app/views/listPendingCancellationView.php`
+
+### 5. Đa ngôn ngữ (i18n) & Tối ưu hóa UI/UX
+- Bổ sung hơn 35 translation keys mới cho cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+- **Tối ưu hóa & Loại bỏ thông tin/icon trùng lặp:**
+  - Chuẩn hóa các chuỗi bản dịch điều hướng (`nav_employee_list`, `nav_change_pwd`, `nav_permissions`) bằng cách tách biệt icon khỏi chuỗi văn bản, khắc phục triệt để lỗi hiển thị lặp hai lần icon (`👥 👥 Danh sách nhân viên`, `🛡️ 🛡️ Phân quyền tài khoản`, `🔑 🔑 Đổi MK`).
+  - Gán icon định danh trực quan riêng `🔐` cho chức năng Phân quyền tài khoản để phân biệt rõ ràng với biểu tượng `🛡️` của công đoạn QC.
+  - Loại bỏ biểu tượng trang trí trùng lặp `👥` trên header trang Quản lý nhân viên và nút tìm kiếm trang Phân quyền để giao diện tinh gọn, thoáng đãng và chuyên nghiệp.
+
+---
+
+## [2026-10-06] - Khắc Phục Lỗi Deprecated Dynamic Property ListDataEntity (TASK-009)
+
+### 1. Sửa lỗi Deprecated trong ListDataEntity & ListDataRepository
+- **Nguyên nhân:** Trên môi trường PHP 8.2+, việc gán động các thuộc tính chưa được khai báo trước trên class (`$entity->{$key} = $value` trong `ListDataRepository::mapToEntity`) gây ra cảnh báo `E_DEPRECATED: Creation of dynamic property ListDataEntity::$list_rack is deprecated` và `ListDataEntity::$pending_count is deprecated`.
+- **Giải pháp xử lý:**
+  - Khai báo tường minh hai thuộc tính `public array $list_rack = [];` và `public int $pending_count = 0;` trong `app/entities/ListDataEntity.php` kèm khởi tạo giá trị mặc định trong hàm `__construct()`.
+  - Bổ sung attribute `#[AllowDynamicProperties]` cho class `ListDataEntity` để đảm bảo tương thích tuyệt đối và phòng ngừa cảnh báo phát sinh trên PHP 8.2+.
+
+---
+
 ## [2026-10-06] - Nâng Cấp UI 3 Trang Điều Chỉnh & Thu Gọn Hiển Thị update_history (TASK-008)
 
 ### 1. Nâng cao UI/UX 3 trang Điều chỉnh (Đùn, QC, Cuộn)

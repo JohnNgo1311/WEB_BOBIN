@@ -1,56 +1,119 @@
 # AI TASK - WEB_BOBIN
+
 > File này chứa các yêu cầu hiện tại cần Antigravity thực hiện.
 > Luôn đọc file này trước khi bắt đầu một task mới.
 > CURRENT TASK: TASK PHẢI THỰC HIỆN NGAY BÂY GIỜ.
 > TODO: TASK PHẢI THỰC HIỆN, NẾU KHÔNG CÓ TODO THÌ KHÔNG LÀM
 > DONE: TASK ĐÃ HOÀN THÀNH VÀ KHÔNG THỰC HIỆN NỮA
 > Promt:Đọc và thực hiện AI_preference/prompts.md
+
 ---
 
 ## 🔴 CURRENT TASK
+
 ### TASK-001
+
 **Status:** DONE
+
 - Hãy kiểm tra lại toàn bộ project để đảm bảo các chức năng không cần internet vẫn sử dụng được. Lưu ý rằng tôi chỉ sử dụng mạng local, không truy cập được các trang web khác hay đường dẫn khác ngoài project này
+
 ### TASK-002
+
 **Status:** DONE
+
 - Hãy thực hiện điều tra toàn diện chức năng chuyển đổi ngôn ngữ và đồng bộ tất cả, đảm bảo các logic không ảnh hưởng.
+
 ### TASK-003
+
 **Status:** DONE
+
 - Trong quá trình sử dụng web, tôi đổi ngôn ngữ thì web bị đứng và không thể sử dụng được bất kì chức năng, thậm chí nhấn nút, hãy kiểm tra lại, báo cáo tôi nguyên nhân nêu lên cách khắc phục và tối ưu không bị lỗi đó nữa
+
 ---
+
 ### TASK-004
+
 **Status:** DONE
+
 - Tôi muốn thêm 2 chức năng Điều chỉnh QC và Điều chỉnh Cuộn, tuy nhiên các tính năng này chỉ có những người thuộc nhóm admin mới có thể thực hiện được.
 - Ngoài ra, tôi muốn ở cả 3 trang ĐIỀU CHỈNH ĐÙN, ĐIỀU CHỈNH QC và ĐIỀU CHỈNH CUỘN, trước khi điều chỉnh thông tin Bobin, người dùng phải xác nhận lại lần cuối bằng mật khẩu đăng nhập của chính mình. Việc này sẽ tránh đi trường hợp người A cố tình thay đổi thông tin Bobin được nhập bởi người B mà không có sự đồng thuận từ người B.
 - Để chặt chẽ hơn, tôi nghĩ ở database bobin_history nên có thêm trường dữ liệu: Danh sách người cập nhật thông tin Bobin cũng như thời điểm cập nhật thông tin đó để có thể theo dõi được rằng, ai là người đã thay đổi thông tin của Bobin đó theo từng giai đoạn
+
 ---
+
 ### TASK-005
+
 **Status:** DONE
+
 - Có sai lầm ở TASK bạn vừa hoàn thành trước đó, và giờ bạn phải fix như sau:
-+ Danh sách Bobin được hiển thị ở trang Điều chỉnh QC phải là những Bobin có status là "Busy_Checked"
-+ Danh sách Bobin được hiển thị ở trang điều chỉnh Cuộn phải là những Bobin có status là "Rolled", tuy nhiên chỉ hiển thị những Bobin có updated time trong 7 ngày gần nhất 
-Cả 2 trang trên đều phải có thêm tính năng phân trang để tránh quá tải hiển thị và quá tải dữ liệu khi đặt vào cùng 1 trang.
+
+* Danh sách Bobin được hiển thị ở trang Điều chỉnh QC phải là những Bobin có status là "Busy_Checked"
+* Danh sách Bobin được hiển thị ở trang điều chỉnh Cuộn phải là những Bobin có status là "Rolled", tuy nhiên chỉ hiển thị những Bobin có updated time trong 7 ngày gần nhất
+  Cả 2 trang trên đều phải có thêm tính năng phân trang để tránh quá tải hiển thị và quá tải dữ liệu khi đặt vào cùng 1 trang.
 
 ### TASK-006
+
 **Status:** DONE
-+ Danh sách Bobin được hiển thị ở trang điều chỉnh Cuộn phải là những Bobin có status là "Rolled", tuy nhiên chỉ hiển thị những Bobin có updated time trong 3 ngày gần nhất 
-+ Danh sách Bobin được hiển thị ở trang Xác nhận thông tin cuộn phải là những Bobin có status là "Busy_Checked" và "Rolled", tuy nhiên đối với Bobin status là "Rolled" thì chỉ hiển thị những Bobin có updated time trong 3 ngày gần nhất
-+ Kiểm tra là chức năng translation, hiện tại tôi thấy khi đang chế độ tiếng Việt nhưng có rất nhiều từ đang để là tiếng Anh
-+ Các hiển thị trên từng card Bobin đều giữ nguyên là: "CHƯA KIỂM TRA QC", "ĐÃ KIỂM TRA QC", "ĐANG CHỜ HỦY", "ĐÃ HỦY", "ĐÃ CUỘN"
+
+- Danh sách Bobin được hiển thị ở trang điều chỉnh Cuộn phải là những Bobin có status là "Rolled", tuy nhiên chỉ hiển thị những Bobin có updated time trong 3 ngày gần nhất
+- Danh sách Bobin được hiển thị ở trang Xác nhận thông tin cuộn phải là những Bobin có status là "Busy_Checked" và "Rolled", tuy nhiên đối với Bobin status là "Rolled" thì chỉ hiển thị những Bobin có updated time trong 3 ngày gần nhất
+- Kiểm tra là chức năng translation, hiện tại tôi thấy khi đang chế độ tiếng Việt nhưng có rất nhiều từ đang để là tiếng Anh
+- Các hiển thị trên từng card Bobin đều giữ nguyên là: "CHƯA KIỂM TRA QC", "ĐÃ KIỂM TRA QC", "ĐANG CHỜ HỦY", "ĐÃ HỦY", "ĐÃ CUỘN"
 
 ### TASK-007
+
 **Status:** DONE
-+ Nâng cao UI/UX ở các trang điều chỉnh để nổi bật và chuyên nghiệp hơn
-+ Ở trang lịch sử, bỏ đi các nút nhấn "Hôm nay", "Hôm qua", "7 ngày", "1 tháng"
-+ Chỉ có admin mới có thể truy cập vào trang điều chỉnh Cuộn
-+ Nhân viên QC có thể truy cập vào trang điều chỉnh QC
-+ Nhân viên Đùn có thể truy cập vào trang điều chỉnh Đùn
-+ Tôi thấy bạn có thêm trường dữ liệu update_history. Lưu ý rằng, mục đích trường này được tạo ra là: Mỗi lần giá trị các trường dữ liệu Bobin (độc nhất theo bobin_key_code) thay đổi xuất phát từ các trang: Điều chỉnh đùn, điều chỉnh QC, điều chỉnh cuộn thì sẽ hiển thị người thay đổi dữ liệu cũng như thời gian thay đổi.
+
+- Nâng cao UI/UX ở các trang điều chỉnh để nổi bật và chuyên nghiệp hơn
+- Ở trang lịch sử, bỏ đi các nút nhấn "Hôm nay", "Hôm qua", "7 ngày", "1 tháng"
+- Chỉ có admin mới có thể truy cập vào trang điều chỉnh Cuộn
+- Nhân viên QC có thể truy cập vào trang điều chỉnh QC
+- Nhân viên Đùn có thể truy cập vào trang điều chỉnh Đùn
+- Tôi thấy bạn có thêm trường dữ liệu update_history. Lưu ý rằng, mục đích trường này được tạo ra là: Mỗi lần giá trị các trường dữ liệu Bobin (độc nhất theo bobin_key_code) thay đổi xuất phát từ các trang: Điều chỉnh đùn, điều chỉnh QC, điều chỉnh cuộn thì sẽ hiển thị người thay đổi dữ liệu cũng như thời gian thay đổi.
+
 ### TASK-008
+
 **Status:** DONE
+
 - Nâng cao UI cho trang Điều chỉnh đùn, điều chỉnh cuộn, điều chỉnh QC cho đẹp lên, nổi bật lên, chuyên nghiệp lên
 - trường dữ liệu update_history chỉ cần hiển thị ra ở trang lịch sử bobin, các trang khác không cần hiển thị
-## 🟡 RULES 
+
+### TASK-009
+
+**Status:** DONE
+
+Xuất hiện các lỗi dưới đây, hãy fix
+
+- Deprecated: Creation of dynamic property ListDataEntity::$list_rack is deprecated in C:\xampp\htdocs\WEB_BOBIN\app\repositories\ListDataRepository.php on line 99
+- Deprecated: Creation of dynamic property ListDataEntity::$pending_count is deprecated in C:\xampp\htdocs\WEB_BOBIN\app\repositories\ListDataRepository.php on line 99
+
+### TASK-010
+
+**Status:** DONE
+Hãy nâng cấp dự án lên một tầm cao mới, chuyên nghiệp hơn
+
+- Thêm 1 trang phân quyền, tại đây các admin sẽ có thể điều chỉnh các quyền thao tác đối với từng account user.
+- Để triển khai ý trên, bạn có quyền update database cho trường dữ liệu employee_list
+  Cách sử dụng trang này như sau:
+  Admin tra cứu account của nhân viên bằng mã số nhân viên => Hiển thị ra thông tin cơ bản của nhân viên và các hạng mục mà nhân viên đó có quyền thao tác thuộc dạng checkbox, nếu có check thì là có quyền, nếu không thì là không có quyền.
+- Hãy nâng cấp menubar, bạn có thể thay vì thanh ngang ở phía trên, hãy làm cột dọc bên trái
+- Đảm bảo UI/UX phải thật sự đẹp và chuyên nghiệp
+
+### TASK-011
+
+**Status:** DONE
+
+- Hãy thống nhất lại cùng 1 font family chữ cho toàn bộ các trang, các chức năng trong dự án.
+- Bạn có nắm được quyền hiện tại của các account không thông qua thiết kế ban đầu trước đó không?
+
+### TASK-012
+
+**Status:** TODO
+
+- Hãy tạo 1 trang, mà ở đó tôi có thể nhập textfield để quy định chuyển đổi giữa các ngôn ngữ mà không bị fix cững như hiện tại
+
+## 🟡 RULES
+
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:
 
 ## 1. Database
@@ -165,6 +228,7 @@ Sau khi sửa code:
 8. Không tuyên bố một test đã PASS nếu test đó chưa thực sự được thực hiện.
 
 Nếu môi trường hiện tại không cho phép thực hiện một test nào đó:
+
 - Không giả định rằng test đã thành công.
 - Báo rõ test nào đã thực hiện và test nào chưa thể thực hiện.
 
@@ -179,34 +243,41 @@ Nếu môi trường hiện tại không cho phép thực hiện một test nào
 Phải cung cấp báo cáo gồm:
 
 ### Files Changed
+
 Danh sách file đã thêm/sửa/xóa và mục đích của từng file.
 
 ### Functions / Components Changed
+
 Danh sách function, method, class, component hoặc API đã thay đổi.
 
 ### Changes
+
 Tóm tắt những gì đã thực hiện.
 
 ### Impact
+
 Cho biết thay đổi có ảnh hưởng đến chức năng khác hay không.
 
 ### Database
+
 Xác nhận database schema có thay đổi hay không.
 
 ### API
+
 Xác nhận API/interface hiện tại có thay đổi hay không.
 
 ### Translation
+
 Nếu có thay đổi UI, xác nhận `vi`, `en`, `ja` đã được cập nhật và kiểm tra.
 
 ### Testing
+
 Liệt kê:
+
 - Test đã thực hiện.
 - Kết quả.
 - Test chưa thể thực hiện (nếu có).
 
 ### Additional Issues
+
 Liệt kê các vấn đề ngoài phạm vi TASK phát hiện trong quá trình làm việc nhưng chưa sửa.
-
-
-

@@ -1,6 +1,26 @@
 /**
- * i18n.css - Giao diện nút chọn ngôn ngữ (Language Switcher) & Modal Quên mật khẩu Local
+ * i18n.css - Hệ thống Typography toàn cục & Giao diện đa ngôn ngữ
  */
+
+/* ================= 0. HỆ THỐNG PHÔNG CHỮ THỐNG NHẤT TOÀN DỰ ÁN (GLOBAL TYPOGRAPHY) ================= */
+:root {
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html, body {
+  font-family: var(--font-family-base) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, button, select, textarea, optgroup {
+  font-family: inherit;
+}
+
+code, pre, kbd, samp, .id-code, .code-mono, .perm-item-key {
+  font-family: var(--font-family-mono) !important;
+}
 
 /* ================= 1. NÚT CHUYỂN ĐỔI NGÔN NGỮ (LANGUAGE SWITCHER) ================= */
 .lang-switcher-dropdown {

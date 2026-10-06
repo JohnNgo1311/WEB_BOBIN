@@ -17,6 +17,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Phông chữ hệ thống Local Offline -->
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobin_QC.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
@@ -24,105 +25,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 </head>
 
 <body>
-    <!-- MENU BAR ĐỒNG BỘ THEO VAI TRÒ & TỰ SÁNG THEO URL -->
-    <?php
-    $userRole   = $_SESSION['user']['role'] ?? '';
-    $currentUrl = $_GET['url'] ?? '';
-    $pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? 0);
-    ?>
-    <div class="menu-bar">
-        <div class="menu-left">
-            <!-- Nhóm Đùn -->
-            <?php if (in_array($userRole, ['extrusion', 'admin'])): ?>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
-                class="<?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>"
-                data-i18n="nav_extrusion">
-                <?= __('nav_extrusion') ?>
-            </a>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
-                class="<?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_extrusion_edit">
-                <?= __('nav_extrusion_edit') ?>
-            </a>
-            <?php endif; ?>
-
-            <!-- Nhóm QC -->
-            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
-                class="<?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>"
-                data-i18n="nav_qc">
-                <?= __('nav_qc') ?>
-            </a>
-            <?php if (in_array($userRole, ['qc', 'admin'])): ?>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView"
-                class="<?= ($currentUrl === 'bobin/qcEditBobinView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_qc_edit">
-                <?= __('nav_qc_edit') ?>
-            </a>
-            <?php endif; ?>
-            <?php endif; ?>
-
-            <!-- Nhóm Cuộn -->
-            <?php if (in_array($userRole, ['winding', 'admin'])): ?>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
-                class="<?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>"
-                data-i18n="nav_winding">
-                <?= __('nav_winding') ?>
-            </a>
-            <?php if ($userRole === 'admin'): ?>
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingEditBobinView"
-                class="<?= ($currentUrl === 'bobin/windingEditBobinView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_winding_edit">
-                <?= __('nav_winding_edit') ?>
-            </a>
-            <?php endif; ?>
-            <?php endif; ?>
-
-            <!-- Các trang theo dõi công khai -->
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView"
-                class="<?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_bobin_list">
-                <?= __('nav_bobin_list') ?>
-            </a>
-
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView"
-                class="<?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>"
-                data-i18n="nav_bobin_history">
-                <?= __('nav_bobin_history') ?>
-            </a>
-
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
-                class="menu-pending-link <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
-                <span data-i18n="nav_pending_cancel"><?= __('nav_pending_cancel') ?></span>
-                <?php if ($pCount > 0): ?>
-                <span class="badge-pending-count"><?= $pCount ?></span>
-                <?php endif; ?>
-            </a>
-
-            <!-- Quản trị viên: Danh sách nhân viên -->
-            <?php if ($userRole === 'admin'): ?>
-            <a href="/WEB_BOBIN/public/index.php?url=employee/index"
-                class="<?= (strpos($currentUrl, 'employee') === 0) ? 'active-nav' : '' ?>"
-                data-i18n="nav_employee_list">
-                <?= __('nav_employee_list') ?>
-            </a>
-            <?php endif; ?>
-        </div>
-
-        <div class="menu-right">
-            <?php require ROOT_PATH . '/app/views/components/languageSwitcher.php'; ?>
-            <?php if (isset($_SESSION['user'])): ?>
-            <span style="color:#cbd5e1; font-size:13px; font-weight:600; margin-right:8px;">
-                👤 <?= htmlspecialchars($_SESSION['user']['employee_name']) ?> (<?= strtoupper($userRole) ?>)
-            </span>
-            <a href="/WEB_BOBIN/public/index.php?url=auth/changePassword" class="btn-change-pwd" title="Đổi mật khẩu tài khoản" data-i18n="nav_change_pwd"><?= __('nav_change_pwd') ?></a>
-            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="logout-btn" data-i18n="nav_logout"><?= __('nav_logout') ?></a>
-            <?php else: ?>
-            <a href="/WEB_BOBIN/public/index.php?url=auth/login"
-                style="background:#2563eb; color:#fff; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:13px; font-weight:600;" data-i18n="nav_login"><?= __('nav_login') ?></a>
-            <?php endif; ?>
-        </div>
-    </div>
+    <?php require ROOT_PATH . '/app/views/components/sidebar.php'; ?>
 
     <!-- TIÊU ĐỀ TRANG -->
     <div class="page-header">

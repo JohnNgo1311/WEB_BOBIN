@@ -14,6 +14,7 @@ require_once ROOT_PATH . '/app/dtos/Bobin/BobinDeleteDTO.php';
 require_once ROOT_PATH . '/app/dtos/Bobin/BobinGetSpecificDTO.php';
 //! Services
 require_once ROOT_PATH . '/app/services/BobinServices.php';
+require_once ROOT_PATH . '/app/core/AuthHelper.php';
 
 /*==========================================*/
 //! BobinController – CHỈ LÀM 3 VIỆC
@@ -48,22 +49,28 @@ class BobinController extends Controller
     #region VIEW RENDERING
     public function index()
     {
-        $role = $_SESSION['user']['role'] ?? null;
-        switch ($role) {
-            case 'extrusion':
-            case 'admin': // ✅ Admin được phép truy cập giao diện Nhóm đùn
-                $this->extrusion();
-                break;
-            case 'qc':
-                header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_QC');
-                exit;
-            case 'winding':
-                header('Location: ' . BASE_URL . '/index.php?url=bobin/windingView');
-                exit;
-            default:
-                header('Location: ' . BASE_URL . '/index.php?url=auth/login');
-                exit;
+        if (AuthHelper::hasPermission('extrusion_create')) {
+            $this->extrusion();
+            return;
         }
+
+        if (AuthHelper::hasPermission('qc_check')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_QC');
+            exit;
+        }
+
+        if (AuthHelper::hasPermission('winding_confirm')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/windingView');
+            exit;
+        }
+
+        if (AuthHelper::hasPermission('bobin_list')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinDetailView');
+            exit;
+        }
+
+        header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+        exit;
     }
 
     private function extrusion()
@@ -307,9 +314,8 @@ class BobinController extends Controller
 
     public function qcEditBobinView()
     {
-        // QC và Admin có quyền truy cập
-        $role = strtolower($_SESSION['user']['role'] ?? '');
-        if (!in_array($role, ['qc', 'admin'], true)) {
+        // Kiểm tra quyền qc_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+        if (!AuthHelper::hasPermission('qc_edit')) {
             header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinView_QC');
             exit;
         }
@@ -341,8 +347,8 @@ class BobinController extends Controller
 
     public function windingEditBobinView()
     {
-        // Chỉ admin mới có quyền truy cập
-        if (strtolower($_SESSION['user']['role'] ?? '') !== 'admin') {
+        // Kiểm tra quyền winding_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+        if (!AuthHelper::hasPermission('winding_edit')) {
             header('Location: ' . BASE_URL . '/index.php?url=bobin/windingView');
             exit;
         }
@@ -573,9 +579,8 @@ class BobinController extends Controller
 
     public function updateQCEditBobin(): void
     {
-        // 1. Phân quyền: QC hoặc Admin
-        $role = strtolower($_SESSION['user']['role'] ?? '');
-        if (!in_array($role, ['qc', 'admin'], true)) {
+        // 1. Phân quyền: Kiểm tra quyền qc_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+        if (!AuthHelper::hasPermission('qc_edit')) {
             $this->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này.'], 403);
             exit;
         }
@@ -742,9 +747,9 @@ class BobinController extends Controller
 
     public function updateWindingEditBobin(): void
     {
-        // 1. Phân quyền: Chỉ admin
-        if (strtolower($_SESSION['user']['role'] ?? '') !== 'admin') {
-            $this->json(['success' => false, 'message' => 'Chỉ Quản trị viên (Admin) mới có quyền thực hiện thao tác này.'], 403);
+        // 1. Phân quyền: Kiểm tra quyền winding_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+        if (!AuthHelper::hasPermission('winding_edit')) {
+            $this->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này.'], 403);
             exit;
         }
 

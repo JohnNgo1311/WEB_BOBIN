@@ -1,19 +1,23 @@
 <?php
 require_once ROOT_PATH . '/app/core/Controller.php';
 require_once ROOT_PATH . '/app/repositories/ListDataRepository.php';
+require_once ROOT_PATH . '/app/core/AuthHelper.php';
 
 class EmployeeController extends Controller
 {
     public function __construct()
     {
-        if (!isset($_SESSION['user']) || strtolower($_SESSION['user']['role'] ?? '') !== 'admin') {
+        $hasEmpManage = AuthHelper::hasPermission('employee_manage');
+        $hasPermManage = AuthHelper::hasPermission('permission_manage');
+
+        if (!isset($_SESSION['user']) || (!$hasEmpManage && !$hasPermManage)) {
             if ($this->isAjax()) {
                 $this->json([
                     'success' => false,
-                    'error'   => 'Quyền truy cập bị từ chối. Chỉ Quản trị viên (Admin) mới có quyền sử dụng chức năng này.'
+                    'error'   => 'Quyền truy cập bị từ chối. Bạn không có quyền sử dụng chức năng này.'
                 ], 403);
             }
-            header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinDetailView&error=' . urlencode('Bạn không có quyền truy cập trang Quản lý nhân viên.'));
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinDetailView&error=' . urlencode('Bạn không có quyền truy cập trang Quản trị.'));
             exit;
         }
     }
@@ -393,6 +397,193 @@ class EmployeeController extends Controller
         } catch (Throwable $e) {
             if ($this->isAjax()) $this->json(['success' => false, 'error' => $e->getMessage()]);
             $this->redirectIndex($e->getMessage(), 'error');
+        }
+    }
+
+    public function permissionsView(): void
+    {
+        if (!AuthHelper::hasPermission('permission_manage')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/listBobinDetailView&error=' . urlencode('Bạn không có quyền phân quyền tài khoản.'));
+            exit;
+        }
+
+        try {
+            $listRepo = new ListDataRepository();
+            $listRepo->getListData();
+        } catch (Throwable $e) {}
+
+        $pdo = Database::getInstance()->pdo();
+
+        // Lấy danh sách nhân viên để tra cứu / chọn nhanh
+        $stmt = $pdo->query("SELECT id, employee_code, employee_name, role, username, is_active, permissions, updated_time 
+                             FROM employee_list 
+                             ORDER BY employee_code ASC");
+        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $selectedCode = trim($_GET['employee_code'] ?? '');
+        $selectedEmployee = null;
+
+        if ($selectedCode !== '') {
+            foreach ($employees as $emp) {
+                if ($emp['employee_code'] === $selectedCode) {
+                    $selectedEmployee = $emp;
+                    break;
+                }
+            }
+        }
+
+        $allPermissions = AuthHelper::getAllPermissions();
+        $pendingCount   = GlobalData::$pendingBobinCount ?? 0;
+
+        $this->view('employeePermissionsView', [
+            'employees'        => $employees,
+            'selectedCode'     => $selectedCode,
+            'selectedEmployee' => $selectedEmployee,
+            'allPermissions'   => $allPermissions,
+            'pendingCount'     => $pendingCount,
+            'userRole'         => $_SESSION['user']['role'] ?? '',
+            'userName'         => $_SESSION['user']['employee_name'] ?? ''
+        ]);
+    }
+
+    public function getEmployeePermissions(): void
+    {
+        if (!AuthHelper::hasPermission('permission_manage')) {
+            $this->json(['success' => false, 'error' => 'Quyền truy cập bị từ chối.'], 403);
+            return;
+        }
+
+        $code = trim($_GET['employee_code'] ?? '');
+        if ($code === '') {
+            $this->json(['success' => false, 'error' => 'Vui lòng cung cấp mã nhân viên.'], 400);
+            return;
+        }
+
+        try {
+            $pdo = Database::getInstance()->pdo();
+            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role, username, is_active, permissions, updated_time 
+                                   FROM employee_list 
+                                   WHERE employee_code = ? OR username = ? 
+                                   LIMIT 1");
+            $stmt->execute([$code, $code]);
+            $emp = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$emp) {
+                $this->json(['success' => false, 'error' => "Không tìm thấy nhân viên với mã '{$code}'."], 404);
+                return;
+            }
+
+            $hasCustom = !empty($emp['permissions']);
+            $currentPerms = AuthHelper::getUserPermissions($emp);
+            $defaultPerms = AuthHelper::getDefaultPermissionsForRole($emp['role']);
+
+            $this->json([
+                'success' => true,
+                'employee' => [
+                    'id'                     => (int)$emp['id'],
+                    'employee_code'          => $emp['employee_code'],
+                    'employee_name'          => $emp['employee_name'],
+                    'username'               => $emp['username'],
+                    'role'                   => $emp['role'],
+                    'is_active'              => (int)$emp['is_active'],
+                    'has_custom_permissions' => $hasCustom,
+                    'permissions'            => $currentPerms,
+                    'default_permissions'    => $defaultPerms,
+                    'updated_time'           => $emp['updated_time']
+                ]
+            ]);
+        } catch (Throwable $e) {
+            $this->json(['success' => false, 'error' => 'Lỗi máy chủ: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePermissions(): void
+    {
+        if (!AuthHelper::hasPermission('permission_manage')) {
+            $this->json(['success' => false, 'error' => 'Quyền truy cập bị từ chối.'], 403);
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'error' => 'Phương thức không hợp lệ.'], 405);
+            return;
+        }
+
+        $code = trim($_POST['employee_code'] ?? '');
+        if ($code === '') {
+            $this->json(['success' => false, 'error' => 'Mã nhân viên không hợp lệ.'], 400);
+            return;
+        }
+
+        $resetDefault = !empty($_POST['reset_default']);
+        $permsInput   = $_POST['permissions'] ?? [];
+
+        try {
+            $pdo = Database::getInstance()->pdo();
+            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role FROM employee_list WHERE employee_code = ? LIMIT 1");
+            $stmt->execute([$code]);
+            $emp = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$emp) {
+                $this->json(['success' => false, 'error' => "Không tìm thấy nhân viên với mã '{$code}'."], 404);
+                return;
+            }
+
+            if ($resetDefault) {
+                // Khôi phục về quyền mặc định theo role
+                $up = $pdo->prepare("UPDATE employee_list SET permissions = NULL, updated_time = NOW() WHERE employee_code = ?");
+                $up->execute([$code]);
+                AuthHelper::syncCurrentSessionIfMatch($code);
+
+                $this->json([
+                    'success'     => true,
+                    'message'     => "Đã khôi phục quyền mặc định theo vai trò cho nhân viên {$emp['employee_name']}.",
+                    'permissions' => AuthHelper::getDefaultPermissionsForRole($emp['role']),
+                    'has_custom'  => false
+                ]);
+                return;
+            }
+
+            // Xử lý mảng permissions
+            if (is_string($permsInput)) {
+                $decoded = json_decode($permsInput, true);
+                if (is_array($decoded)) {
+                    $permsInput = $decoded;
+                } else {
+                    $permsInput = explode(',', $permsInput);
+                }
+            }
+
+            $allValidKeys = AuthHelper::getAllPermissionKeys();
+            $cleanPerms = [];
+            foreach ($permsInput as $p) {
+                $p = trim((string)$p);
+                if (in_array($p, $allValidKeys, true)) {
+                    $cleanPerms[] = $p;
+                }
+            }
+            $cleanPerms = array_values(array_unique($cleanPerms));
+
+            // Admin luôn giữ quyền quản lý phân quyền để tránh tự khóa mình
+            if (strtolower($emp['role']) === 'admin' && !in_array('permission_manage', $cleanPerms, true)) {
+                $cleanPerms[] = 'permission_manage';
+            }
+
+            $permsJson = json_encode($cleanPerms, JSON_UNESCAPED_UNICODE);
+
+            $up = $pdo->prepare("UPDATE employee_list SET permissions = ?, updated_time = NOW() WHERE employee_code = ?");
+            $up->execute([$permsJson, $code]);
+
+            AuthHelper::syncCurrentSessionIfMatch($code);
+
+            $this->json([
+                'success'     => true,
+                'message'     => "Cập nhật phân quyền cho nhân viên {$emp['employee_name']} thành công!",
+                'permissions' => $cleanPerms,
+                'has_custom'  => true
+            ]);
+        } catch (Throwable $e) {
+            $this->json(['success' => false, 'error' => 'Lỗi máy chủ: ' . $e->getMessage()], 500);
         }
     }
 

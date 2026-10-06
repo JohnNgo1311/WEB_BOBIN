@@ -1,9 +1,10 @@
 <?php
 // File: app/entities/ListDataEntity.php
 
+#[AllowDynamicProperties]
 class ListDataEntity
 {
-
+    public array $list_rack = [];
     public array $list_bobin = [];
     public array $list_employee = [];
     public array $list_material_lot = [];
@@ -14,10 +15,12 @@ class ListDataEntity
     public array $list_year = [];
     public array $list_month = [];
     public array $list_day = [];
+    public int $pending_count = 0;
     public bool $success = false;
 
     public function __construct()
     {
+        $this->list_rack = [];
         $this->list_bobin = [];
         $this->list_employee = [];
         $this->list_material_lot = [];
@@ -28,6 +31,7 @@ class ListDataEntity
         $this->list_year = [];
         $this->list_month = [];
         $this->list_day = [];
+        $this->pending_count = 0;
         $this->success = false;
     }
 }

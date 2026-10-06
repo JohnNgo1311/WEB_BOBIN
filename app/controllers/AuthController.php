@@ -32,7 +32,7 @@ class AuthController extends Controller
         try {
             $pdo = Database::getInstance()->pdo();
 
-            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role, username, password, is_active, is_first_login 
+            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role, username, password, is_active, is_first_login, permissions 
                                    FROM employee_list 
                                    WHERE (employee_code = :emp_code OR username = :uname) AND is_active = 1 
                                    LIMIT 1");
@@ -61,6 +61,7 @@ class AuthController extends Controller
             }
 
             $isFirstLogin = (int)($user['is_first_login'] ?? 1);
+            $perms = !empty($user['permissions']) ? json_decode($user['permissions'], true) : null;
 
             // Lưu phiên làm việc vào Session
             $_SESSION['user'] = [
@@ -69,6 +70,7 @@ class AuthController extends Controller
                 'employee_name' => $user['employee_name'],
                 'username'      => $user['username'],
                 'role'          => strtolower($user['role']),
+                'permissions'   => is_array($perms) ? $perms : null,
                 'is_first_login'=> $isFirstLogin,
                 'logged_at'     => date('Y-m-d H:i:s')
             ];

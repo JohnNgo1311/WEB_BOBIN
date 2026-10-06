@@ -93,6 +93,62 @@ class Language
         return self::SUPPORTED[$code] ?? self::SUPPORTED['vi'];
     }
 
+    public static function getCustomFilePath(): string
+    {
+        $base = defined('ROOT_PATH') ? ROOT_PATH : dirname(__DIR__, 2);
+        return $base . '/config/custom_translations.json';
+    }
+
+    public static function getCustomDictionary(): array
+    {
+        $filePath = self::getCustomFilePath();
+        if (!file_exists($filePath)) {
+            return [];
+        }
+        $content = file_get_contents($filePath);
+        if ($content === false || trim($content) === '') {
+            return [];
+        }
+        $decoded = json_decode($content, true);
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    public static function saveCustomDictionary(array $data): bool
+    {
+        $dir = dirname(self::getCustomFilePath());
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $cleanData = [
+            'vi' => [],
+            'en' => [],
+            'ja' => []
+        ];
+
+        foreach (['vi', 'en', 'ja'] as $lang) {
+            if (isset($data[$lang]) && is_array($data[$lang])) {
+                foreach ($data[$lang] as $k => $v) {
+                    $cleanKey = trim((string)$k);
+                    $cleanVal = trim((string)$v);
+                    if ($cleanKey !== '' && $cleanVal !== '') {
+                        $cleanData[$lang][$cleanKey] = $cleanVal;
+                    }
+                }
+            }
+        }
+
+        $json = json_encode($cleanData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $result = file_put_contents(self::getCustomFilePath(), $json, LOCK_EX);
+
+        if ($result !== false) {
+            self::$dictionary = null; // Reset cache so subsequent calls re-load with overrides
+            return true;
+        }
+
+        return false;
+    }
+
     public static function get(string $key, ?string $default = null): string
     {
         if (self::$dictionary === null) {
@@ -104,8 +160,24 @@ class Language
             return self::$dictionary[$lang][$key];
         }
 
+        // Kiểm tra alias: btn_confirm <-> confirm, btn_cancel <-> cancel
+        $aliasKey = match ($key) {
+            'btn_confirm' => 'confirm',
+            'confirm'     => 'btn_confirm',
+            'btn_cancel'  => 'cancel',
+            'cancel'      => 'btn_cancel',
+            default       => null
+        };
+        if ($aliasKey !== null && isset(self::$dictionary[$lang][$aliasKey])) {
+            return self::$dictionary[$lang][$aliasKey];
+        }
+
         if (isset(self::$dictionary['vi'][$key])) {
             return self::$dictionary['vi'][$key];
+        }
+
+        if ($aliasKey !== null && isset(self::$dictionary['vi'][$aliasKey])) {
+            return self::$dictionary['vi'][$aliasKey];
         }
 
         return $default ?? $key;
@@ -141,6 +213,33 @@ class Language
                 'nav_logout'           => 'Đăng xuất',
                 'nav_login'            => 'Đăng nhập',
                 'nav_permissions'      => 'Phân quyền tài khoản',
+                'nav_translations'     => 'Cấu hình đa ngôn ngữ',
+                'lang_page_title'      => 'Cấu hình Từ điển Đa ngôn ngữ Động',
+                'lang_page_subtitle'   => 'Trực tiếp chỉnh sửa các ô nhập liệu (textfield) để quy định nội dung chuyển đổi giữa các ngôn ngữ mà không bị fix cứng',
+                'lang_badge_custom'    => 'Công cụ I18n Động',
+                'lang_stat_total'      => 'Tổng số mục từ điển',
+                'lang_stat_custom'     => 'Đã tùy chỉnh riêng',
+                'lang_stat_langs'      => 'Ngôn ngữ đồng bộ (VI/EN/JA)',
+                'lang_search_ph'       => 'Tìm theo mã từ khóa (Key) hoặc nội dung bất kỳ...',
+                'lang_filter_all'      => '-- Tất cả từ khóa --',
+                'lang_filter_custom'   => 'Chỉ xem mục đã tùy chỉnh',
+                'lang_filter_default'  => 'Chỉ xem mục mặc định',
+                'lang_btn_add_key'     => 'Thêm từ khóa mới',
+                'lang_btn_save_all'    => 'Lưu toàn bộ thay đổi',
+                'lang_btn_reset_all'   => 'Khôi phục toàn bộ về gốc',
+                'lang_table_title'     => 'Danh sách từ khóa & Bản dịch 3 ngôn ngữ',
+                'lang_col_key'         => 'Mã từ khóa (Key)',
+                'lang_col_vi'          => '🇻🇳 Tiếng Việt (VI)',
+                'lang_col_en'          => '🇬🇧 English (EN)',
+                'lang_col_ja'          => '🇯🇵 日本語 (JA)',
+                'lang_col_action'      => 'Thao tác',
+                'lang_tag_custom'      => 'Tùy chỉnh',
+                'lang_modal_add_title' => 'Thêm từ khóa dịch thuật mới',
+                'lang_modal_key_label' => 'Mã định danh từ khóa (Key):',
+                'lang_modal_vi_label'  => '🇻🇳 Bản dịch Tiếng Việt:',
+                'lang_modal_en_label'  => '🇬🇧 Bản dịch English:',
+                'lang_modal_ja_label'  => '🇯🇵 Bản dịch 日本語:',
+                'lang_btn_confirm_add' => 'Lưu từ khóa vào hệ thống',
                 'perm_page_title'      => 'Quản lý Phân quyền Tài khoản',
                 'perm_page_subtitle'   => 'Tra cứu nhân viên và thiết lập chi tiết các quyền thao tác cho từng tài khoản',
                 'perm_search_placeholder' => 'Nhập mã nhân viên hoặc tên để tìm...',
@@ -185,11 +284,13 @@ class Language
                 'perm_inactive_status' => 'Đã khóa',
                 'perm_role_label'      => 'Vai trò chính',
                 'sidebar_toggle'       => 'Thu gọn / Mở rộng',
-                'sidebar_nav_title_production' => 'SẢN XUẤT',
-                'sidebar_nav_title_qc' => 'KIỂM TRA QC',
-                'sidebar_nav_title_winding' => 'CUỘN HOÀN TẤT',
+                'sidebar_nav_title_extrusion_stage' => 'NHÓM ĐÙN',
+                'sidebar_nav_title_qc_stage' => 'CÔNG ĐOẠN QC',
+                'sidebar_nav_title_winding_stage' => 'CÔNG ĐOẠN CUỘN',
                 'sidebar_nav_title_monitor' => 'GIÁM SÁT & BÁO CÁO',
                 'sidebar_nav_title_system' => 'QUẢN TRỊ HỆ THỐNG',
+                'breadcrumb_home'      => 'Trang chủ',
+                'tree_items_count'     => 'mục',
 
                 // Chung & Thao tác
                 'stt'                  => 'STT',
@@ -199,9 +300,11 @@ class Language
                 'fail'                 => 'Không đạt',
                 'save'                 => 'Lưu',
                 'cancel'               => 'Hủy',
+                'btn_cancel'           => 'Hủy',
                 'edit'                 => 'Chỉnh sửa',
                 'delete'               => 'Xóa',
                 'confirm'              => 'Xác nhận',
+                'btn_confirm'          => 'Xác nhận',
                 'back'                 => 'Quay lại',
                 'search'               => 'Tìm kiếm',
                 'filter'               => 'Bộ lọc',
@@ -501,6 +604,33 @@ class Language
                 'nav_logout'           => 'Logout',
                 'nav_login'            => 'Login',
                 'nav_permissions'      => 'Account Permissions',
+                'nav_translations'     => 'Language Settings',
+                'lang_page_title'      => 'Dynamic Multi-Language Dictionary Settings',
+                'lang_page_subtitle'   => 'Directly edit textfields to customize translation texts across languages without hardcoded restrictions',
+                'lang_badge_custom'    => 'Dynamic I18n Engine',
+                'lang_stat_total'      => 'Total Dictionary Entries',
+                'lang_stat_custom'     => 'Custom Overrides',
+                'lang_stat_langs'      => 'Synchronized Languages (VI/EN/JA)',
+                'lang_search_ph'       => 'Search by keyword key or any translation content...',
+                'lang_filter_all'      => '-- All Keywords --',
+                'lang_filter_custom'   => 'Custom Overrides Only',
+                'lang_filter_default'  => 'Default Built-in Only',
+                'lang_btn_add_key'     => 'Add New Keyword',
+                'lang_btn_save_all'    => 'Save All Changes',
+                'lang_btn_reset_all'   => 'Restore All to Defaults',
+                'lang_table_title'     => 'Keyword List & 3-Language Translations',
+                'lang_col_key'         => 'Keyword (Key)',
+                'lang_col_vi'          => '🇻🇳 Vietnamese (VI)',
+                'lang_col_en'          => '🇬🇧 English (EN)',
+                'lang_col_ja'          => '🇯🇵 Japanese (JA)',
+                'lang_col_action'      => 'Actions',
+                'lang_tag_custom'      => 'Custom',
+                'lang_modal_add_title' => 'Add New Translation Keyword',
+                'lang_modal_key_label' => 'Keyword Identifier (Key):',
+                'lang_modal_vi_label'  => '🇻🇳 Vietnamese Translation:',
+                'lang_modal_en_label'  => '🇬🇧 English Translation:',
+                'lang_modal_ja_label'  => '🇯🇵 Japanese Translation:',
+                'lang_btn_confirm_add' => 'Save Keyword to System',
                 'perm_page_title'      => 'Account Permissions Management',
                 'perm_page_subtitle'   => 'Search employees and configure granular operational permissions for each user',
                 'perm_search_placeholder' => 'Enter employee code or name to search...',
@@ -545,11 +675,13 @@ class Language
                 'perm_inactive_status' => 'Deactivated',
                 'perm_role_label'      => 'Primary Role',
                 'sidebar_toggle'       => 'Collapse / Expand',
-                'sidebar_nav_title_production' => 'PRODUCTION',
-                'sidebar_nav_title_qc' => 'QUALITY CONTROL',
-                'sidebar_nav_title_winding' => 'WINDING STAGE',
+                'sidebar_nav_title_extrusion_stage' => 'EXTRUSION STAGE',
+                'sidebar_nav_title_qc_stage' => 'QC STAGE',
+                'sidebar_nav_title_winding_stage' => 'WINDING STAGE',
                 'sidebar_nav_title_monitor' => 'MONITORING & REPORTS',
                 'sidebar_nav_title_system' => 'SYSTEM ADMIN',
+                'breadcrumb_home'      => 'Home',
+                'tree_items_count'     => 'items',
 
                 // General
                 'stt'                  => 'No.',
@@ -559,9 +691,11 @@ class Language
                 'fail'                 => 'Fail',
                 'save'                 => 'Save',
                 'cancel'               => 'Cancel',
+                'btn_cancel'           => 'Cancel',
                 'edit'                 => 'Edit',
                 'delete'               => 'Delete',
                 'confirm'              => 'Confirm',
+                'btn_confirm'          => 'Confirm',
                 'back'                 => 'Back',
                 'search'               => 'Search',
                 'filter'               => 'Filter',
@@ -861,6 +995,33 @@ class Language
                 'nav_logout'           => 'ログアウト',
                 'nav_login'            => 'ログイン',
                 'nav_permissions'      => 'アカウント権限設定',
+                'nav_translations'     => '多言語設定',
+                'lang_page_title'      => '動的多言語辞書設定',
+                'lang_page_subtitle'   => 'テキストボックスから直接入力して、各言語の翻訳文を動的にカスタマイズできます',
+                'lang_badge_custom'    => '動的I18nエンジン',
+                'lang_stat_total'      => '総辞書登録数',
+                'lang_stat_custom'     => '個別カスタマイズ項目',
+                'lang_stat_langs'      => '同期対応言語 (VI/EN/JA)',
+                'lang_search_ph'       => 'キーワードコードまたは内容で検索...',
+                'lang_filter_all'      => '-- すべてのキーワード --',
+                'lang_filter_custom'   => 'カスタマイズ済みのみ',
+                'lang_filter_default'  => 'デフォルト標準のみ',
+                'lang_btn_add_key'     => '新規キーワード追加',
+                'lang_btn_save_all'    => 'すべての変更を保存',
+                'lang_btn_reset_all'   => 'すべて初期値に戻す',
+                'lang_table_title'     => 'キーワード一覧＆3言語翻訳',
+                'lang_col_key'         => 'キーワードコード (Key)',
+                'lang_col_vi'          => '🇻🇳 ベトナム語 (VI)',
+                'lang_col_en'          => '🇬🇧 英語 (EN)',
+                'lang_col_ja'          => '🇯🇵 日本語 (JA)',
+                'lang_col_action'      => '操作',
+                'lang_tag_custom'      => 'カスタム',
+                'lang_modal_add_title' => '新規翻訳キーワードの追加',
+                'lang_modal_key_label' => 'キーワード識別子 (Key):',
+                'lang_modal_vi_label'  => '🇻🇳 ベトナム語テキスト:',
+                'lang_modal_en_label'  => '🇬🇧 英語テキスト:',
+                'lang_modal_ja_label'  => '🇯🇵 日本語テキスト:',
+                'lang_btn_confirm_add' => 'システムに登録',
                 'perm_page_title'      => 'アカウント権限管理',
                 'perm_page_subtitle'   => '社員コードで検索し、各ユーザーの詳細な操作権限を設定',
                 'perm_search_placeholder' => '社員コードまたは名前を入力...',
@@ -905,11 +1066,13 @@ class Language
                 'perm_inactive_status' => '停止中',
                 'perm_role_label'      => '基本役職',
                 'sidebar_toggle'       => '折りたたみ / 展開',
-                'sidebar_nav_title_production' => '製造 (押出)',
-                'sidebar_nav_title_qc' => '品質管理 (QC)',
-                'sidebar_nav_title_winding' => '巻取完了',
+                'sidebar_nav_title_extrusion_stage' => '押出工程',
+                'sidebar_nav_title_qc_stage' => '品質管理 (QC)',
+                'sidebar_nav_title_winding_stage' => '巻取完了',
                 'sidebar_nav_title_monitor' => '監視・レポート',
                 'sidebar_nav_title_system' => 'システム管理',
+                'breadcrumb_home'      => 'ホーム',
+                'tree_items_count'     => '項目',
 
                 // General
                 'stt'                  => 'No.',
@@ -919,9 +1082,11 @@ class Language
                 'fail'                 => '不合格',
                 'save'                 => '保存',
                 'cancel'               => 'キャンセル',
+                'btn_cancel'           => 'キャンセル',
                 'edit'                 => '編集',
                 'delete'               => '削除',
                 'confirm'              => '確認',
+                'btn_confirm'          => '確認',
                 'back'                 => '戻る',
                 'search'               => '検索',
                 'filter'               => '絞り込み',
@@ -1202,6 +1367,30 @@ class Language
                 'page_info'            => 'ページ :current / :total (全 :records ボビン)'
             ]
         ];
+
+        // Gộp bản dịch tùy chỉnh nếu có cấu hình custom_translations.json
+        $custom = self::getCustomDictionary();
+        if (!empty($custom)) {
+            foreach (['vi', 'en', 'ja'] as $lang) {
+                if (!empty($custom[$lang]) && is_array($custom[$lang])) {
+                    foreach ($custom[$lang] as $k => $v) {
+                        self::$dictionary[$lang][$k] = (string)$v;
+                        if ($k === 'btn_cancel' && !isset($custom[$lang]['cancel'])) {
+                            self::$dictionary[$lang]['cancel'] = (string)$v;
+                        }
+                        if ($k === 'btn_confirm' && !isset($custom[$lang]['confirm'])) {
+                            self::$dictionary[$lang]['confirm'] = (string)$v;
+                        }
+                        if ($k === 'cancel' && !isset($custom[$lang]['btn_cancel'])) {
+                            self::$dictionary[$lang]['btn_cancel'] = (string)$v;
+                        }
+                        if ($k === 'confirm' && !isset($custom[$lang]['btn_confirm'])) {
+                            self::$dictionary[$lang]['btn_confirm'] = (string)$v;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

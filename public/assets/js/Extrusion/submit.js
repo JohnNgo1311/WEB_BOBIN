@@ -212,7 +212,7 @@ function buildReviewHTML(form, fd) {
     { key: "extrusion_employee_name", label: "Họ tên NV đùn" },
 
     // Phân khu 2
-    { group: "2. Thông tin sản xuất & Vận hành" },
+    { group: "2. Thông tin sản xuất" },
     { key: "product_code", label: "Mã sản phẩm", highlight: true },
     { key: "production_order_code", label: "Mã chỉ thị SX" },
     { key: "machine", label: "Số máy đùn" },

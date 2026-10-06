@@ -1,0 +1,14 @@
+{
+    "vi": {
+        "btn_confirm": "Xác nhận",
+        "btn_cancel": "Trở lại"
+    },
+    "en": {
+        "btn_confirm": "Confirm",
+        "btn_cancel": "Back"
+    },
+    "ja": {
+        "btn_confirm": "確認",
+        "btn_cancel": "戻る"
+    }
+}

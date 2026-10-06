@@ -56,6 +56,7 @@ if (!function_exists('decodeJsonObject')) {
 <body>
 
     <?php require ROOT_PATH . '/app/views/components/sidebar.php'; ?>
+    <?php require ROOT_PATH . '/app/views/components/header.php'; ?>
 
     <!-- TIÊU ĐỀ TRANG -->
     <div class="page-header">
@@ -69,7 +70,11 @@ if (!function_exists('decodeJsonObject')) {
 
         <!-- CONTROL BAR GỌN GÀNG -->
         <div class="control-bar-modern">
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/index" class="btn-back-modern" title="Quay lại">
+            <?php 
+                $canExtrusion = AuthHelper::hasPermission('extrusion_create');
+                $pendingBackUrl = $canExtrusion ? '/WEB_BOBIN/public/index.php?url=bobin/index' : ($userHomeUrl ?? '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView');
+            ?>
+            <a href="<?= $pendingBackUrl ?>" class="btn-back-modern" title="Quay lại">
                 <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
                     stroke-linecap="round" stroke-linejoin="round">
                     <line x1="19" y1="12" x2="5" y2="12"></line>

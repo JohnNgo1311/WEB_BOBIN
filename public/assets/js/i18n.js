@@ -18,6 +18,33 @@
             nav_employee_list: 'Danh sách nhân viên', nav_change_pwd: 'Đổi mật khẩu',
             nav_logout: 'Đăng xuất', nav_login: 'Đăng nhập',
             nav_permissions: 'Phân quyền tài khoản',
+            nav_translations: 'Cấu hình đa ngôn ngữ',
+            lang_page_title: 'Cấu hình Từ điển Đa ngôn ngữ Động',
+            lang_page_subtitle: 'Trực tiếp chỉnh sửa các ô nhập liệu (textfield) để quy định nội dung chuyển đổi giữa các ngôn ngữ mà không bị fix cứng',
+            lang_badge_custom: 'Công cụ I18n Động',
+            lang_stat_total: 'Tổng số mục từ điển',
+            lang_stat_custom: 'Đã tùy chỉnh riêng',
+            lang_stat_langs: 'Ngôn ngữ đồng bộ (VI/EN/JA)',
+            lang_search_ph: 'Tìm theo mã từ khóa (Key) hoặc nội dung bất kỳ...',
+            lang_filter_all: '-- Tất cả từ khóa --',
+            lang_filter_custom: 'Chỉ xem mục đã tùy chỉnh',
+            lang_filter_default: 'Chỉ xem mục mặc định',
+            lang_btn_add_key: 'Thêm từ khóa mới',
+            lang_btn_save_all: 'Lưu toàn bộ thay đổi',
+            lang_btn_reset_all: 'Khôi phục toàn bộ về gốc',
+            lang_table_title: 'Danh sách từ khóa & Bản dịch 3 ngôn ngữ',
+            lang_col_key: 'Mã từ khóa (Key)',
+            lang_col_vi: '🇻🇳 Tiếng Việt (VI)',
+            lang_col_en: '🇬🇧 English (EN)',
+            lang_col_ja: '🇯🇵 日本語 (JA)',
+            lang_col_action: 'Thao tác',
+            lang_tag_custom: 'Tùy chỉnh',
+            lang_modal_add_title: 'Thêm từ khóa dịch thuật mới',
+            lang_modal_key_label: 'Mã định danh từ khóa (Key):',
+            lang_modal_vi_label: '🇻🇳 Bản dịch Tiếng Việt:',
+            lang_modal_en_label: '🇬🇧 Bản dịch English:',
+            lang_modal_ja_label: '🇯🇵 Bản dịch 日本語:',
+            lang_btn_confirm_add: 'Lưu từ khóa vào hệ thống',
             perm_page_title: 'Quản lý Phân quyền Tài khoản',
             perm_page_subtitle: 'Tra cứu nhân viên và thiết lập chi tiết các quyền thao tác cho từng tài khoản',
             perm_search_placeholder: 'Nhập mã nhân viên hoặc tên để tìm...',
@@ -57,9 +84,10 @@
             perm_quick_select: 'Chọn nhanh nhân viên:',
             perm_active_status: 'Đang hoạt động', perm_inactive_status: 'Đã khóa',
             perm_role_label: 'Vai trò chính', sidebar_toggle: 'Thu gọn / Mở rộng',
-            sidebar_nav_title_production: 'SẢN XUẤT', sidebar_nav_title_qc: 'KIỂM TRA QC',
-            sidebar_nav_title_winding: 'CUỘN HOÀN TẤT', sidebar_nav_title_monitor: 'GIÁM SÁT & BÁO CÁO',
+            sidebar_nav_title_extrusion_stage: 'CÔNG ĐOẠN ĐÙN', sidebar_nav_title_qc_stage: 'CÔNG ĐOẠN QC',
+            sidebar_nav_title_winding_stage: 'CÔNG ĐOẠN CUỘN', sidebar_nav_title_monitor: 'GIÁM SÁT & BÁO CÁO',
             sidebar_nav_title_system: 'QUẢN TRỊ HỆ THỐNG',
+            breadcrumb_home: 'Trang chủ', tree_items_count: 'mục',
             confirm_pwd_label: 'Nhập mật khẩu tài khoản của bạn để xác nhận:',
             confirm_pwd_ph: 'Nhập mật khẩu đăng nhập...',
             confirm_pwd_empty: 'Vui lòng nhập mật khẩu xác nhận.',
@@ -75,8 +103,8 @@
             audit_updater: 'Người thực hiện:',
             audit_time: 'Thời điểm:',
             stt: 'STT', ok: 'OK', ng: 'NG', pass: 'Đạt', fail: 'Không đạt',
-            save: 'Lưu', cancel: 'Hủy', edit: 'Chỉnh sửa', delete: 'Xóa',
-            confirm: 'Xác nhận', back: 'Quay lại', search: 'Tìm kiếm', filter: 'Bộ lọc',
+            save: 'Lưu', cancel: 'Hủy', btn_cancel: 'Hủy', edit: 'Chỉnh sửa', delete: 'Xóa',
+            confirm: 'Xác nhận', btn_confirm: 'Xác nhận', back: 'Quay lại', search: 'Tìm kiếm', filter: 'Bộ lọc',
             reset_filter: 'Xóa lọc', export_excel: 'Xuất file Excel', import_excel: 'Nhập file Excel',
             download_template: 'Tải file mẫu', loading: 'Đang xử lý...', status: 'Trạng thái',
             actions: 'Thao tác', success: 'Thành công', error: 'Thất bại', scan_qr: 'Quét mã QR',
@@ -283,6 +311,33 @@
             nav_employee_list: 'Employee List', nav_change_pwd: 'Change Password',
             nav_logout: 'Logout', nav_login: 'Login',
             nav_permissions: 'Account Permissions',
+            nav_translations: 'Language Settings',
+            lang_page_title: 'Dynamic Multi-Language Dictionary Settings',
+            lang_page_subtitle: 'Directly edit textfields to customize translation texts across languages without hardcoded restrictions',
+            lang_badge_custom: 'Dynamic I18n Engine',
+            lang_stat_total: 'Total Dictionary Entries',
+            lang_stat_custom: 'Custom Overrides',
+            lang_stat_langs: 'Synchronized Languages (VI/EN/JA)',
+            lang_search_ph: 'Search by keyword key or any translation content...',
+            lang_filter_all: '-- All Keywords --',
+            lang_filter_custom: 'Custom Overrides Only',
+            lang_filter_default: 'Default Built-in Only',
+            lang_btn_add_key: 'Add New Keyword',
+            lang_btn_save_all: 'Save All Changes',
+            lang_btn_reset_all: 'Restore All to Defaults',
+            lang_table_title: 'Keyword List & 3-Language Translations',
+            lang_col_key: 'Keyword (Key)',
+            lang_col_vi: '🇻🇳 Vietnamese (VI)',
+            lang_col_en: '🇬🇧 English (EN)',
+            lang_col_ja: '🇯🇵 Japanese (JA)',
+            lang_col_action: 'Actions',
+            lang_tag_custom: 'Custom',
+            lang_modal_add_title: 'Add New Translation Keyword',
+            lang_modal_key_label: 'Keyword Identifier (Key):',
+            lang_modal_vi_label: '🇻🇳 Vietnamese Translation:',
+            lang_modal_en_label: '🇬🇧 English Translation:',
+            lang_modal_ja_label: '🇯🇵 Japanese Translation:',
+            lang_btn_confirm_add: 'Save Keyword to System',
             perm_page_title: 'Account Permissions Management',
             perm_page_subtitle: 'Search employees and configure granular operational permissions for each user',
             perm_search_placeholder: 'Enter employee code or name to search...',
@@ -322,9 +377,10 @@
             perm_quick_select: 'Quick Select Employee:',
             perm_active_status: 'Active', perm_inactive_status: 'Deactivated',
             perm_role_label: 'Primary Role', sidebar_toggle: 'Collapse / Expand',
-            sidebar_nav_title_production: 'PRODUCTION', sidebar_nav_title_qc: 'QUALITY CONTROL',
-            sidebar_nav_title_winding: 'WINDING STAGE', sidebar_nav_title_monitor: 'MONITORING & REPORTS',
+            sidebar_nav_title_extrusion_stage: 'PRODUCTION', sidebar_nav_title_qc_stage: 'QUALITY CONTROL',
+            sidebar_nav_title_winding_stage: 'WINDING STAGE', sidebar_nav_title_monitor: 'MONITORING & REPORTS',
             sidebar_nav_title_system: 'SYSTEM ADMIN',
+            breadcrumb_home: 'Home', tree_items_count: 'items',
             confirm_pwd_label: 'Enter your account password to confirm:',
             confirm_pwd_ph: 'Enter login password...',
             confirm_pwd_empty: 'Please enter confirmation password.',
@@ -340,8 +396,8 @@
             audit_updater: 'Updater:',
             audit_time: 'Timestamp:',
             stt: 'No.', ok: 'OK', ng: 'NG', pass: 'Pass', fail: 'Fail',
-            save: 'Save', cancel: 'Cancel', edit: 'Edit', delete: 'Delete',
-            confirm: 'Confirm', back: 'Back', search: 'Search', filter: 'Filter',
+            save: 'Save', cancel: 'Cancel', btn_cancel: 'Cancel', edit: 'Edit', delete: 'Delete',
+            confirm: 'Confirm', btn_confirm: 'Confirm', back: 'Back', search: 'Search', filter: 'Filter',
             reset_filter: 'Reset Filter', export_excel: 'Export Excel', import_excel: 'Import Excel',
             download_template: 'Sample Template', loading: 'Processing...', status: 'Status',
             actions: 'Actions', success: 'Success', error: 'Failed', scan_qr: 'Scan QR',
@@ -548,6 +604,33 @@
             nav_employee_list: '従業員一覧', nav_change_pwd: 'PW変更',
             nav_logout: 'ログアウト', nav_login: 'ログイン',
             nav_permissions: 'アカウント権限設定',
+            nav_translations: '多言語設定',
+            lang_page_title: '動的多言語辞書設定',
+            lang_page_subtitle: 'テキストボックスから直接入力して、各言語の翻訳文を動的にカスタマイズできます',
+            lang_badge_custom: '動的I18nエンジン',
+            lang_stat_total: '総辞書登録数',
+            lang_stat_custom: '個別カスタマイズ項目',
+            lang_stat_langs: '同期対応言語 (VI/EN/JA)',
+            lang_search_ph: 'キーワードコードまたは内容で検索...',
+            lang_filter_all: '-- すべてのキーワード --',
+            lang_filter_custom: 'カスタマイズ済みのみ',
+            lang_filter_default: 'デフォルト標準のみ',
+            lang_btn_add_key: '新規キーワード追加',
+            lang_btn_save_all: 'すべての変更を保存',
+            lang_btn_reset_all: 'すべて初期値に戻す',
+            lang_table_title: 'キーワード一覧＆3言語翻訳',
+            lang_col_key: 'キーワードコード (Key)',
+            lang_col_vi: '🇻🇳 ベトナム語 (VI)',
+            lang_col_en: '🇬🇧 英語 (EN)',
+            lang_col_ja: '🇯🇵 日本語 (JA)',
+            lang_col_action: '操作',
+            lang_tag_custom: 'カスタム',
+            lang_modal_add_title: '新規翻訳キーワードの追加',
+            lang_modal_key_label: 'キーワード識別子 (Key):',
+            lang_modal_vi_label: '🇻🇳 ベトナム語テキスト:',
+            lang_modal_en_label: '🇬🇧 英語テキスト:',
+            lang_modal_ja_label: '🇯🇵 日本語テキスト:',
+            lang_btn_confirm_add: 'システムに登録',
             perm_page_title: 'アカウント権限管理',
             perm_page_subtitle: '社員コードで検索し、各ユーザーの詳細な操作権限を設定',
             perm_search_placeholder: '社員コードまたは名前を入力...',
@@ -587,9 +670,10 @@
             perm_quick_select: '従業員クイック選択:',
             perm_active_status: '有効', perm_inactive_status: '停止中',
             perm_role_label: '基本役職', sidebar_toggle: '折りたたみ / 展開',
-            sidebar_nav_title_production: '製造 (押出)', sidebar_nav_title_qc: '品質管理 (QC)',
-            sidebar_nav_title_winding: '巻取完了', sidebar_nav_title_monitor: '監視・レポート',
+            sidebar_nav_title_extrusion_stage: '製造 (押出)', sidebar_nav_title_qc_stage: '品質管理 (QC)',
+            sidebar_nav_title_winding_stage: '巻取完了', sidebar_nav_title_monitor: '監視・レポート',
             sidebar_nav_title_system: 'システム管理',
+            breadcrumb_home: 'ホーム', tree_items_count: '項目',
             confirm_pwd_label: '確認のためアカウントのパスワードを入力してください：',
             confirm_pwd_ph: 'ログインパスワードを入力...',
             confirm_pwd_empty: '確認パスワードを入力してください。',
@@ -605,8 +689,8 @@
             audit_updater: '更新者:',
             audit_time: '更新日時:',
             stt: 'No.', ok: 'OK', ng: 'NG', pass: '合格', fail: '不合格',
-            save: '保存', cancel: 'キャンセル', edit: '編集', delete: '削除',
-            confirm: '確認', back: '戻る', search: '検索', filter: '絞り込み',
+            save: '保存', cancel: 'キャンセル', btn_cancel: 'キャンセル', edit: '編集', delete: '削除',
+            confirm: '確認', btn_confirm: '確認', back: '戻る', search: '検索', filter: '絞り込み',
             reset_filter: 'リセット', export_excel: 'Excel出力', import_excel: 'Excel取込',
             download_template: 'ひな形DL', loading: '処理中...', status: 'ステータス',
             actions: '操作', success: '成功', error: '失敗', scan_qr: 'QRスキャン',
@@ -804,6 +888,75 @@
         }
     };
 
+    // Gộp từ điển tùy biến từ cấu hình động (hỗ trợ localStorage, window.__CUSTOM_I18N__ và dynamic API)
+    function mergeCustomDictionary(customObj) {
+        if (!customObj || typeof customObj !== 'object') return;
+        ['vi', 'en', 'ja'].forEach(lang => {
+            if (customObj[lang] && typeof customObj[lang] === 'object') {
+                DICT[lang] = Object.assign(DICT[lang] || {}, customObj[lang]);
+                // Đồng bộ alias 2 chiều giữa btn_confirm <-> confirm và btn_cancel <-> cancel
+                if (customObj[lang]['btn_cancel'] && !customObj[lang]['cancel']) {
+                    DICT[lang]['cancel'] = customObj[lang]['btn_cancel'];
+                }
+                if (customObj[lang]['btn_confirm'] && !customObj[lang]['confirm']) {
+                    DICT[lang]['confirm'] = customObj[lang]['btn_confirm'];
+                }
+                if (customObj[lang]['cancel'] && !customObj[lang]['btn_cancel']) {
+                    DICT[lang]['btn_cancel'] = customObj[lang]['cancel'];
+                }
+                if (customObj[lang]['confirm'] && !customObj[lang]['btn_confirm']) {
+                    DICT[lang]['btn_confirm'] = customObj[lang]['confirm'];
+                }
+            }
+        });
+        window.__CUSTOM_I18N__ = Object.assign(window.__CUSTOM_I18N__ || {}, customObj);
+        try {
+            localStorage.setItem('webbobin_custom_i18n', JSON.stringify(window.__CUSTOM_I18N__));
+        } catch (e) { }
+    }
+
+    // 1.1 Khởi tạo đồng bộ ngay từ localStorage cache nếu có (tránh độ trễ khi tải trang)
+    try {
+        const cachedCustom = localStorage.getItem('webbobin_custom_i18n');
+        if (cachedCustom) {
+            const parsed = JSON.parse(cachedCustom);
+            if (parsed && typeof parsed === 'object') {
+                mergeCustomDictionary(parsed);
+            }
+        }
+    } catch (e) { }
+
+    // 1.2 Gộp từ biến toàn cục window.__CUSTOM_I18N__ nếu backend đã nhúng trước
+    if (typeof window !== 'undefined' && window.__CUSTOM_I18N__ && typeof window.__CUSTOM_I18N__ === 'object') {
+        mergeCustomDictionary(window.__CUSTOM_I18N__);
+    }
+
+    // 1.3 Cung cấp API toàn cục để cập nhật từ điển tùy biến từ bất cứ component nào
+    window.loadAndMergeCustomTranslations = function (customObj) {
+        if (customObj) {
+            mergeCustomDictionary(customObj);
+        } else if (window.__CUSTOM_I18N__) {
+            mergeCustomDictionary(window.__CUSTOM_I18N__);
+        }
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            deepTranslateDOM();
+        }
+    };
+
+    // 1.4 Tự động đồng bộ từ điển tùy biến ngầm từ máy chủ nếu chưa có cache
+    if (typeof fetch === 'function' && (!window.__CUSTOM_I18N__ || Object.keys(window.__CUSTOM_I18N__.vi || {}).length === 0)) {
+        fetch('/WEB_BOBIN/public/index.php?url=employee/getCustomTranslations', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success && data.custom_dict) {
+                    window.loadAndMergeCustomTranslations(data.custom_dict);
+                }
+            })
+            .catch(() => { });
+    }
+
     // 2. TỪ ĐIỂN CỤ THỂ DÀNH CHO ÁNH XẠ NỘI DUNG DOM (TABLE HEADERS, FORM LABELS, BUTTONS)
     const DOM_MAPPINGS = {
         // Table Headers (th)
@@ -930,10 +1083,10 @@
             { vi: 'Chỉnh sửa', en: 'Edit', ja: '編集' },
             { vi: 'Sửa', en: 'Edit', ja: '編集' },
             { vi: 'Xóa', en: 'Delete', ja: '削除' },
-            { vi: 'Hủy', en: 'Cancel', ja: 'キャンセル' },
-            { vi: 'Quay lại', en: 'Back', ja: '戻る' },
-            { vi: 'Đóng', en: 'Close', ja: '閉じる' },
-            { vi: 'Xác nhận', en: 'Confirm', ja: '確認' },
+            { key: 'btn_cancel', vi: 'Hủy', en: 'Cancel', ja: 'キャンセル', alias: ['Hủy bỏ', '✕ Hủy', '✕ Hủy sửa', 'Hủy sửa'] },
+            { key: 'btn_cancel', vi: 'Quay lại', en: 'Back', ja: '戻る', alias: ['Trở lại'] },
+            { key: 'close', vi: 'Đóng', en: 'Close', ja: '閉じる' },
+            { key: 'btn_confirm', vi: 'Xác nhận', en: 'Confirm', ja: '確認', alias: ['Xác nhận lưu', 'Xác nhận đổi loại'] },
             { vi: 'Đăng xuất', en: 'Logout', ja: 'ログアウト' },
             { vi: 'Đổi MK', en: 'Change PW', ja: 'PW変更' },
             { vi: 'Cấp lại mật khẩu', en: 'Reset Password', ja: 'PW再発行' },
@@ -992,12 +1145,45 @@
 
     // 4. HÀM DỊCH CHUỖI TOÀN CỤC
     window.t = function (key, defaultVal) {
-        if (DICT[currentLang] && DICT[currentLang][key]) {
+        if (!key) return defaultVal !== undefined ? defaultVal : '';
+
+        // Alias tương đương giữa btn_confirm <-> confirm và btn_cancel <-> cancel
+        let aliasKey = null;
+        if (key === 'btn_confirm') aliasKey = 'confirm';
+        else if (key === 'confirm') aliasKey = 'btn_confirm';
+        else if (key === 'btn_cancel') aliasKey = 'cancel';
+        else if (key === 'cancel') aliasKey = 'btn_cancel';
+
+        // 1. Ưu tiên tra cứu trong từ điển tùy biến động (custom translations)
+        if (window.__CUSTOM_I18N__) {
+            if (window.__CUSTOM_I18N__[currentLang] && window.__CUSTOM_I18N__[currentLang][key] !== undefined) {
+                return window.__CUSTOM_I18N__[currentLang][key];
+            }
+            if (aliasKey && window.__CUSTOM_I18N__[currentLang] && window.__CUSTOM_I18N__[currentLang][aliasKey] !== undefined) {
+                return window.__CUSTOM_I18N__[currentLang][aliasKey];
+            }
+            if (window.__CUSTOM_I18N__['vi'] && window.__CUSTOM_I18N__['vi'][key] !== undefined) {
+                return window.__CUSTOM_I18N__['vi'][key];
+            }
+            if (aliasKey && window.__CUSTOM_I18N__['vi'] && window.__CUSTOM_I18N__['vi'][aliasKey] !== undefined) {
+                return window.__CUSTOM_I18N__['vi'][aliasKey];
+            }
+        }
+
+        // 2. Tra cứu trong từ điển mặc định DICT
+        if (DICT[currentLang] && DICT[currentLang][key] !== undefined) {
             return DICT[currentLang][key];
         }
-        if (DICT['vi'] && DICT['vi'][key]) {
+        if (aliasKey && DICT[currentLang] && DICT[currentLang][aliasKey] !== undefined) {
+            return DICT[currentLang][aliasKey];
+        }
+        if (DICT['vi'] && DICT['vi'][key] !== undefined) {
             return DICT['vi'][key];
         }
+        if (aliasKey && DICT['vi'] && DICT['vi'][aliasKey] !== undefined) {
+            return DICT['vi'][aliasKey];
+        }
+
         return defaultVal !== undefined ? defaultVal : key;
     };
 
@@ -1067,10 +1253,11 @@
 
             // B. Dịch tất cả Table Headers <th>
             document.querySelectorAll('th').forEach(th => {
+                if (th.hasAttribute('data-i18n') || th.querySelector('[data-i18n]')) return;
                 const raw = th.textContent.trim();
                 for (const item of DOM_MAPPINGS.headers) {
                     if (raw === item.vi || raw === item.en || raw === item.ja) {
-                        const target = item[currentLang] || item.vi;
+                        const target = item.key ? window.t(item.key, item[currentLang] || item.vi) : (item[currentLang] || item.vi);
                         if (th.textContent !== target) th.textContent = target;
                         break;
                     }
@@ -1079,6 +1266,7 @@
 
             // C. Dịch tất cả Form Labels <label>
             document.querySelectorAll('label').forEach(lbl => {
+                if (lbl.hasAttribute('data-i18n') || lbl.querySelector('[data-i18n]')) return;
                 const reqSpan = lbl.querySelector('.required, span[style*="red"]');
                 const hintSpan = lbl.querySelector('.label-hint');
                 let raw = lbl.textContent.replace('*', '').trim();
@@ -1090,7 +1278,7 @@
                     const itemCleanJa = item.ja.replace(/:/g, '').trim();
 
                     if (clean === itemCleanVi || clean === itemCleanEn || clean === itemCleanJa || raw === item.vi || raw === item.en || raw === item.ja) {
-                        const translated = item[currentLang] || item.vi;
+                        const translated = item.key ? window.t(item.key, item[currentLang] || item.vi) : (item[currentLang] || item.vi);
                         let html = translated;
                         if (raw.includes(':') || reqSpan) {
                             html += ':';
@@ -1110,13 +1298,21 @@
             });
 
             // D. Dịch tất cả Button, Links thao tác và Status Badges
-            document.querySelectorAll('button, a.btn-primary, a.btn-filter, a.btn-secondary, a.btn-back-modern, .btn-submit-pwd, .btn-cancel-pwd, .action-btn, .status-btn, .status-badge').forEach(btn => {
+            document.querySelectorAll('button, a.btn-primary, a.btn-filter, a.btn-secondary, a.btn-back-modern, .btn-submit-pwd, .btn-cancel-pwd, .action-btn, .status-btn, .status-badge, .btn-cancel, .btn-submit').forEach(btn => {
+                // Nếu bản thân nút hoặc phần tử con đã có data-i18n, applyDataI18n() đã dịch chính xác theo key, không can thiệp ghi đè
+                if (btn.hasAttribute('data-i18n') || btn.querySelector('[data-i18n]')) {
+                    return;
+                }
+
                 const raw = btn.textContent.trim();
                 for (const item of DOM_MAPPINGS.buttons) {
-                    if (raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)) {
+                    const match = raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)
+                        || (item.alias && item.alias.some(al => raw.includes(al)));
+                    if (match) {
+                        // Ưu tiên tra cứu qua window.t nếu item có key liên kết (e.g. btn_confirm, btn_cancel)
+                        const target = item.key ? window.t(item.key, item[currentLang] || item.vi) : (item[currentLang] || item.vi);
                         // Giữ lại icon nếu có SVG
                         const svg = btn.querySelector('svg');
-                        const target = item[currentLang] || item.vi;
                         if (svg) {
                             // Chỉ cập nhật phần text, không xóa sạch innerHTML làm hỏng listeners
                             const textNodes = Array.from(btn.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
@@ -1137,7 +1333,7 @@
                 // Dịch Status Buttons & Badges (CHƯA KIỂM TRA QC, ĐÃ KIỂM TRA QC, ĐANG CHỜ HỦY, ĐÃ HỦY, ĐÃ CUỘN...)
                 for (const item of DOM_MAPPINGS.statusBadges) {
                     if (raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)) {
-                        const target = item[currentLang] || item.vi;
+                        const target = item.key ? window.t(item.key, item[currentLang] || item.vi) : (item[currentLang] || item.vi);
                         // Giữ lại icon emoji nếu có
                         const emojiMatch = raw.match(/^([\p{Emoji}\u200d\uFE0F\uFE0E]+|\u2705|\u23F3|\u274C|\uD83D\uDCE6)\s*/u);
                         const prefix = emojiMatch ? emojiMatch[0] : '';
@@ -1356,8 +1552,20 @@
                             }
                         }
                     } else {
-                        if (el.textContent !== translation) {
-                            el.textContent = translation;
+                        const svg = el.querySelector('svg');
+                        if (svg) {
+                            const textNodes = Array.from(el.childNodes).filter(node => node.nodeType === Node.TEXT_NODE);
+                            if (textNodes.length > 0) {
+                                textNodes[textNodes.length - 1].textContent = ' ' + translation;
+                            } else {
+                                el.innerHTML = '';
+                                el.appendChild(svg);
+                                el.append(' ' + translation);
+                            }
+                        } else {
+                            if (el.textContent !== translation) {
+                                el.textContent = translation;
+                            }
                         }
                     }
                 }

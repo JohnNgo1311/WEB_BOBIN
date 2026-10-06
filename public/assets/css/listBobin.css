@@ -672,6 +672,16 @@ h1 {
 .toast-error { background: #dc2626; }
 
 @media (max-width: 768px) {
+  input[type="text"],
+  input[type="search"],
+  select {
+    font-size: 16px !important;
+  }
+  .menu-bar { padding: 0 10px; }
+  .menu-right span { display: none; }
+  .control-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .search-wrapper { width: 100%; min-width: 100%; }
+  .search-wrapper input { height: 42px; }
   .qc-form-row { grid-template-columns: 1fr; }
   .card-footer-simple { flex-direction: column; gap: 8px; align-items: flex-start; }
   .button-group { margin-left: 0; width: 100%; justify-content: flex-end; flex-wrap: wrap; }

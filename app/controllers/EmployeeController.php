@@ -587,6 +587,170 @@ class EmployeeController extends Controller
         }
     }
 
+    /**
+     * Trang cấu hình từ điển đa ngôn ngữ động (TASK-012)
+     */
+    public function translationsView(): void
+    {
+        try {
+            $listRepo = new ListDataRepository();
+            $listRepo->getListData();
+        } catch (Throwable $e) {}
+
+        $customDict = Language::getCustomDictionary();
+        $fullDictJson = Language::getJsonDictionary();
+        $fullDict = json_decode($fullDictJson, true) ?: [];
+
+        $allKeys = array_unique(array_merge(
+            array_keys($fullDict['vi'] ?? []),
+            array_keys($fullDict['en'] ?? []),
+            array_keys($fullDict['ja'] ?? []),
+            array_keys($customDict['vi'] ?? []),
+            array_keys($customDict['en'] ?? []),
+            array_keys($customDict['ja'] ?? [])
+        ));
+        sort($allKeys);
+
+        $keysData = [];
+        foreach ($allKeys as $key) {
+            $keysData[$key] = [
+                'vi' => $fullDict['vi'][$key] ?? '',
+                'en' => $fullDict['en'][$key] ?? '',
+                'ja' => $fullDict['ja'][$key] ?? '',
+                'is_custom' => (isset($customDict['vi'][$key]) || isset($customDict['en'][$key]) || isset($customDict['ja'][$key]))
+            ];
+        }
+
+        $this->view('languageManageView', [
+            'keysData'     => $keysData,
+            'customDict'   => $customDict,
+            'pendingCount' => GlobalData::$pendingBobinCount ?? 0,
+            'userRole'     => $_SESSION['user']['role'] ?? '',
+            'userName'     => $_SESSION['user']['employee_name'] ?? ''
+        ]);
+    }
+
+    /**
+     * API Lấy từ điển ngôn ngữ tùy chỉnh hiện tại
+     */
+    public function getCustomTranslations(): void
+    {
+        $customData = Language::getCustomDictionary();
+        $this->json([
+            'success'     => true,
+            'custom_dict' => $customData
+        ]);
+    }
+
+    /**
+     * API Lưu từ điển ngôn ngữ tùy chỉnh vào config/custom_translations.json
+     */
+    public function updateTranslations(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'error' => 'Phương thức không được hỗ trợ'], 405);
+            return;
+        }
+
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            if (!is_array($input) && !empty($_POST)) {
+                $input = $_POST;
+            }
+
+            $translations = $input['translations'] ?? [];
+            if (!is_array($translations)) {
+                $this->json(['success' => false, 'error' => 'Dữ liệu không hợp lệ'], 400);
+                return;
+            }
+
+            $isReplaceAll = !empty($input['replace_all']);
+            if ($isReplaceAll) {
+                $customData = [
+                    'vi' => [],
+                    'en' => [],
+                    'ja' => []
+                ];
+            } else {
+                // Giữ lại các key tùy chỉnh cũ nếu chỉ cập nhật hoặc thêm mới 1 số key
+                $customData = Language::getCustomDictionary();
+                if (!isset($customData['vi']) || !is_array($customData['vi'])) $customData['vi'] = [];
+                if (!isset($customData['en']) || !is_array($customData['en'])) $customData['en'] = [];
+                if (!isset($customData['ja']) || !is_array($customData['ja'])) $customData['ja'] = [];
+            }
+
+            foreach ($translations as $row) {
+                $key = trim($row['key'] ?? '');
+                if ($key === '') continue;
+
+                $vi = trim((string)($row['vi'] ?? ''));
+                $en = trim((string)($row['en'] ?? ''));
+                $ja = trim((string)($row['ja'] ?? ''));
+
+                if ($vi !== '') $customData['vi'][$key] = $vi;
+                if ($en !== '') $customData['en'][$key] = $en;
+                if ($ja !== '') $customData['ja'][$key] = $ja;
+            }
+
+            $success = Language::saveCustomDictionary($customData);
+
+            if ($success) {
+                $this->json([
+                    'success'      => true,
+                    'message'      => 'Lưu từ điển dịch thuật thành công!',
+                    'custom_dict'  => $customData,
+                    'custom_count' => count($customData['vi'])
+                ]);
+            } else {
+                $this->json([
+                    'success' => false,
+                    'error' => 'Không thể ghi file cấu hình custom_translations.json. Vui lòng kiểm tra quyền thư mục.'
+                ], 500);
+            }
+        } catch (Throwable $e) {
+            $this->json(['success' => false, 'error' => 'Lỗi máy chủ: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * API Khôi phục bản dịch mặc định của 1 key hoặc tất cả
+     */
+    public function resetTranslations(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->json(['success' => false, 'error' => 'Phương thức không được hỗ trợ'], 405);
+            return;
+        }
+
+        try {
+            $input = json_decode(file_get_contents('php://input'), true);
+            $keyToReset = trim($input['key'] ?? '');
+
+            if ($keyToReset === '') {
+                // Reset toàn bộ
+                Language::saveCustomDictionary(['vi' => [], 'en' => [], 'ja' => []]);
+                $this->json([
+                    'success'     => true,
+                    'message'     => 'Đã khôi phục toàn bộ từ điển gốc mặc định.',
+                    'custom_dict' => ['vi' => [], 'en' => [], 'ja' => []]
+                ]);
+                return;
+            }
+
+            $custom = Language::getCustomDictionary();
+            unset($custom['vi'][$keyToReset], $custom['en'][$keyToReset], $custom['ja'][$keyToReset]);
+            Language::saveCustomDictionary($custom);
+
+            $this->json([
+                'success'     => true,
+                'message'     => "Đã khôi phục key '{$keyToReset}' về từ điển mặc định.",
+                'custom_dict' => $custom
+            ]);
+        } catch (Throwable $e) {
+            $this->json(['success' => false, 'error' => 'Lỗi máy chủ: ' . $e->getMessage()], 500);
+        }
+    }
+
     private function redirectIndex(string $message, string $type = 'info'): void
     {
         header('Location: ' . BASE_URL . '/index.php?url=employee/index&msg=' . urlencode($message) . '&msg_type=' . $type);

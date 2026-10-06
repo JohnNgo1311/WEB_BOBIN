@@ -2,6 +2,212 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [2026-10-06] - Khắc Phục Truy Xuất & Đồng Bộ Từ Điển Đa Ngôn Ngữ Động Từ Trang Cấu Hình (TASK-017)
+
+### 1. Bối cảnh & Yêu cầu:
+- **Hiện tượng người dùng phản ánh:** Tại trang Cấu hình đa ngôn ngữ (`url=employee/languageManageView`), người dùng thêm/tùy biến các từ khóa như `btn_confirm` ("Xác nhận" / "Confirm" / "確認") và `btn_cancel` ("Trở lại" / "Back" / "戻る"). Tuy nhiên, giao diện toàn bộ hệ thống không cập nhật nội dung mới.
+- **Yêu cầu cốt lõi:** Không fix cứng các giá trị dịch trong `i18n.js` mà phải dựa vào trang cấu hình đa ngôn ngữ (`config/custom_translations.json`) để tự động truy xuất và cập nhật thay đổi ngôn ngữ linh hoạt cho toàn bộ UI (modal, dialog, button, label, header).
+
+### 2. Nguyên nhân cốt lõi (Root Cause Analysis):
+1. **Lệch pha thời điểm nạp Script (Execution Order Race Condition):** Thẻ `<script src="i18n.js">` luôn nằm trong thẻ `<head>`, trong khi khối script gán `window.__CUSTOM_I18N__` trước đây chỉ được xuất trong `sidebar.php` nằm sâu trong thẻ `<body>`. Khi `i18n.js` được khởi chạy lần đầu trong `<head>`, `window.__CUSTOM_I18N__` là `undefined`, dẫn đến việc không có dữ liệu tùy chỉnh nào được nạp vào từ điển JavaScript.
+2. **Thiếu cơ chế lưu đệm đồng bộ phía Client (Client-side Synchronous Cache):** Trình duyệt không lưu cache từ điển tùy biến vào `localStorage`, khiến việc tải trang luôn phải phụ thuộc vào biến toàn cục và gây hiện tượng nháy chữ hoặc mất bản dịch tùy biến.
+3. **Cơ chế ghi đè dữ liệu khi thêm mới từ khóa:** API `updateTranslations` trước đây khi nhận một mảng từ khóa mới (ví dụ khi thêm `btn_cancel` từ modal) sẽ khởi tạo lại mảng rỗng và vô tình xóa sạch các từ khóa đã lưu trước đó nếu không có cơ chế gộp (`merge`).
+4. **Hàm `window.t()` và `DOM_MAPPINGS` ghi đè `data-i18n`:**
+   - Trong `i18n.js`, hàm `deepTranslateDOM()` duyệt qua các nút bấm bằng so khớp chuỗi tĩnh trong `DOM_MAPPINGS.buttons` (chứa các chuỗi cứng như `{ vi: 'Hủy', en: 'Cancel', ja: 'キャンセル' }`) mà không kiểm tra xem phần tử đã có thuộc tính `data-i18n` hay chưa, dẫn đến việc đè mất bản dịch động ("Trở lại" / "Back" / "戻る") mà người dùng đã thiết lập.
+   - Hàm `window.t(key)` không có cơ chế fallback alias tương đương giữa `btn_confirm` <-> `confirm` và `btn_cancel` <-> `cancel`.
+
+### 3. Chi tiết Giải pháp & Cải tiến:
+- **Đồng bộ hóa Từ điển Tùy biến Động ([`i18n.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/i18n.js)):**
+  - **Khởi tạo tức thì từ `localStorage`:** Ngay dòng đầu tiên của `i18n.js`, hệ thống đọc đồng bộ `localStorage.getItem('webbobin_custom_i18n')` để nạp ngay từ điển tùy biến vào `DICT` và `window.__CUSTOM_I18N__`, triệt tiêu hoàn toàn độ trễ hiển thị.
+  - **Hàm API toàn cục `window.loadAndMergeCustomTranslations(customObj)`:** Hỗ trợ nạp và gộp tức thì từ điển tùy biến bất cứ khi nào có bản dịch mới từ backend hoặc Ajax, tự động kích hoạt `deepTranslateDOM()` để cập nhật toàn bộ trang.
+  - **Background Fetch an toàn:** Tự động gọi API `/WEB_BOBIN/public/index.php?url=employee/getCustomTranslations` ngầm nếu chưa có cache từ trước.
+  - **Tối ưu hóa `window.t(key)`:** Ưu tiên tra cứu trong `window.__CUSTOM_I18N__` trước `DICT` mặc định, đồng thời hỗ trợ tra cứu tương đương 2 chiều giữa `btn_confirm` <-> `confirm` và `btn_cancel` <-> `cancel`.
+  - **Bảo vệ `data-i18n` và Ánh xạ Động trong `deepTranslateDOM()`:**
+    - Bước B (Headers), Bước C (Labels), Bước D (Buttons), Bước H (Sections) đều kiểm tra nếu phần tử đã có `data-i18n` thì không áp dụng ghi đè tĩnh.
+    - Trong `DOM_MAPPINGS.buttons`, các nút hành động cốt lõi ("Xác nhận", "Hủy", "Quay lại", "Đóng") được liên kết trực tiếp với key tương ứng (`btn_confirm`, `btn_cancel`, `close`) để tự động gọi `window.t(item.key)` thay vì dùng chuỗi fix cứng.
+    - Cải tiến hàm `applyDataI18n()` để bảo toàn thẻ icon SVG của nút bấm khi thay đổi nhãn văn bản.
+
+- **Nâng cấp Backend Phía Server ([`Language.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/Language.php), [`EmployeeController.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/controllers/EmployeeController.php)):**
+  - **Cơ chế Mirror Alias trong `Language::loadDictionary()`:** Khi phát hiện key `btn_cancel` hoặc `btn_confirm` trong `custom_translations.json`, hệ thống tự động gán giá trị tương ứng cho alias `cancel` và `confirm` (nếu chưa được tùy chỉnh riêng), đảm bảo các hàm backend `__('cancel')` và `__('btn_cancel')` đều trả về đúng bản dịch tùy biến.
+  - **Tối ưu hóa `updateTranslations()` và `resetTranslations()`:**
+    - Khi thêm một từ khóa mới từ modal, hệ thống tự động gộp với các từ khóa hiện có trong `custom_translations.json` thay vì xóa ghi đè.
+    - Cả hai API `updateTranslations` và `resetTranslations` đều trả về `custom_dict` đầy đủ để frontend cập nhật ngay vào `localStorage`.
+
+- **Nhúng Từ Điển Động Vào Các Layout & View:**
+  - Cập nhật [`header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php), [`sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php), [`loginView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/loginView.php) và [`changePasswordView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/changePasswordView.php) để nhúng dữ liệu `Language::getCustomDictionary()` và gọi `window.loadAndMergeCustomTranslations`.
+  - Cập nhật JavaScript trong [`languageManageView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/languageManageView.php) để khi bấm "Lưu toàn bộ thay đổi", "Khôi phục", hoặc "Thêm từ khóa mới", dữ liệu mới được lưu tức thì vào `localStorage` trước khi tải lại trang.
+
+---
+
+## [2026-10-06] - Tối Ưu Toàn Diện Giao Diện Đa Thiết Bị Responsive Android, iOS & Tablet (TASK-016)
+
+### 1. Bối cảnh & Mục tiêu:
+- **Khắc phục lỗi hiển thị đa thiết bị:** Người dùng phản ánh trên điện thoại Android, iPhone (iOS) và máy tính bảng (Tablet/iPad) giao diện không đều bố cục, tràn layout (horizontal overflow), chồng lấn thanh điều hướng và khó thao tác chạm.
+- **Tiêu chuẩn kiểm thử:** Đảm bảo trải nghiệm chạm mượt mà (touch target >= 40px), không bị auto-zoom trên iOS Safari, không tràn chiều ngang (zero horizontal blowout) trên các kích thước màn hình phổ biến (360px - 1024px).
+- **Môi trường hoạt động:** 100% Offline Local Intranet trên XAMPP, giữ nguyên typography `var(--font-family-base)` và toàn vẹn bảo mật phân quyền.
+
+### 2. Chi tiết Cải tiến & Triển khai:
+- **Hợp nhất Top Header Bar & Thanh trượt Sidebar ([`header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php), [`sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php), [`sidebar.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/sidebar.css)):**
+  - **Lỗi cũ:** Trên màn hình <= 992px xuất hiện 2 thanh Topbar xếp chồng (`.sb-mobile-topbar` 56px và `.app-top-header` 54px) chiếm tới 110-140px chiều cao màn hình và va chạm cuộn z-index.
+  - **Khắc phục:** Tích hợp nút Hamburger `#headerMobileToggle` trực tiếp vào Top Header; ẩn hoàn toàn `.sb-mobile-topbar` dư thừa; tối ưu Top Header dạng sticky 50-54px hiển thị Breadcrumb rút gọn, cụm cờ ngôn ngữ thu nhỏ, avatar người dùng và icon thao tác nhanh.
+  - Tự động đóng drawer menu khi click vào bất kỳ liên kết trang nào (`.sb-tree-leaf`) hoặc khi nhấn phím ESC.
+
+- **Khắc phục triệt để lỗi tràn Layout trên Điện thoại & Tablet:**
+  - **Trang Phân quyền Nhân viên ([`employeePermissions.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/employeePermissions.css)):** Sửa lỗi `minmax(420px, 1fr)` gây vỡ khung trên mọi màn hình điện thoại (360px - 414px) thành `minmax(280px, 1fr)` (rơi về `1fr` trên mobile). Thêm padding an toàn `env(safe-area-inset-bottom)` cho thanh lưu quyền trên iPhone.
+  - **Trang Quản lý Ngôn ngữ ([`languageManage.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/languageManage.css)):** Bổ sung `min-width: 780px` kèm khung cuộn ngang chuyên biệt `.lang-table-scroll` để tránh bảng từ điển 5 cột bị ép dẹp; cấu hình modal cuộn linh hoạt theo màn hình.
+  - **Trang Quản lý Nhân viên ([`employeeList.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/employeeList.css)):** Tối ưu lưới thống kê 2 cột cân đối trên di động, căn chỉnh nhóm nút thao tác 2x2, làm modal form tự động cuộn khi bàn phím ảo xuất hiện.
+  - **Trang Đăng nhập ([`login.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/login.css)):** Đổi hướng hiển thị sang `flex-direction: column-reverse` trên màn hình <= 1024px giúp form đăng nhập hiển thị ngay trên đầu màn hình điện thoại thay vì bị đẩy xuống dưới các thẻ giới thiệu cổng thông tin.
+  - **Khống chế Camera Quét QR (`#qr-reader`):** Bổ sung ràng buộc kích thước nghiêm ngặt `max-width: 100% !important; object-fit: contain !important;` cho luồng camera video/canvas trên cả 7 file CSS vận hành Bobin, triệt tiêu hoàn toàn lỗi camera phình to quá màn hình.
+
+- **Chống lỗi tự động Phóng to (Auto-Zoom) trên iOS Safari:**
+  - Thiết lập `font-size: 16px !important;` cho toàn bộ thẻ `input`, `select`, `textarea` trên các breakpoint di động (<= 640px / <= 768px), ngăn chặn việc iOS Safari tự động zoom màn hình làm lệch giao diện khi người dùng chạm vào nhập liệu.
+  - Chuẩn hóa chiều cao nút bấm cảm ứng (min-height 40-44px) trên toàn bộ hệ thống.
+
+- **Đồng bộ Hộp thoại Xác nhận Mật khẩu Thao tác (ConfirmDialog):**
+  - Cập nhật định dạng modal box responsive, cuộn linh hoạt (`max-height: calc(100vh - 32px)`), font chữ chuẩn hệ thống đồng bộ trên cả 3 tệp JavaScript: [`Extrusion/edit_submit.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/Extrusion/edit_submit.js), [`QC/edit_submit.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/QC/edit_submit.js) và [`Winding/edit_submit.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/Winding/edit_submit.js).
+
+- **Sửa Triệt Để Lỗi Không Mở Được Menu Bar trên Android (Xiaomi) & Thiết Bị Di Động:**
+  - **Nguyên nhân cốt lõi:** Các trang View luôn nạp `sidebar.php` trước `header.php`. Khi khối script nội tuyến của `sidebar.php` thực thi tại thời điểm parse DOM ban đầu, phần tử `#headerMobileToggle` trong `header.php` chưa hề tồn tại trong cây DOM. Do đó, nút hamburger không được gắn bất kỳ listener sự kiện click nào. Ngoài ra trên các thiết bị Android (Xiaomi), trình duyệt có cử chỉ vuốt mép màn hình và độ trễ tap 300ms gây khó kích hoạt nút bấm.
+  - **Khắc phục toàn diện:**
+    - Khởi tạo hàm toàn cục `window.toggleWebBobinMobileMenu(event)` và gán trực tiếp thuộc tính `onclick` trên thẻ HTML `#headerMobileToggle`.
+    - Sử dụng kỹ thuật Event Delegation tại cấp độ `document.addEventListener('click', ...)` để bắt trọn mọi tương tác chạm/click của người dùng mà không phụ thuộc thứ tự nạp DOM.
+    - Tích hợp debounce chống double-trigger touch + click (< 250ms).
+    - Thêm `touch-action: manipulation` và mở rộng kích thước nút bấm chuẩn (40-42px) cho trải nghiệm chạm tức thì trên Android (Xiaomi).
+    - Bổ sung `height: 100dvh` và khóa cuộn nền `body.sb-drawer-active` giúp thanh menu vừa khít với màn hình điện thoại khi thanh địa chỉ trình duyệt co giãn.
+
+---
+
+## [2026-10-06] - Tái Thiết Kế Top Header Bar Chuyên Nghiệp & Khắc Phục Lỗi Chèn Chữ Sidebar (TASK-015)
+
+### 1. Bối cảnh & Mục tiêu:
+- **Tối ưu Top Header Bar:** Thay vì Header chỉ mang tính hiển thị tĩnh, nâng cấp thành thanh điều khiển trung tâm chuẩn ERP với đầy đủ tính năng: Breadcrumb điều hướng bên trái; Bộ chọn ngôn ngữ (VI/EN/JA), Thẻ người dùng, Đổi mật khẩu và Đăng xuất tập trung tại góc phải Header.
+- **Khắc phục triệt để lỗi chèn chữ ở Sidebar:** Xử lý hiện tượng mở các thư mục phía dưới (Quản trị, Giám sát) làm các thư mục phía trên bị Flexbox co ép chiều cao dẫn đến đè chữ, vỡ layout.
+- **Chuẩn hóa kiến trúc mã nguồn:** Xây dựng component [`app/views/components/header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php) dùng chung, tách bạch rõ ràng giữa thanh Sidebar và Top Header, mã nguồn dễ đọc, dễ mở rộng và bảo trì.
+
+### 2. Chi tiết Cải tiến & Triển khai:
+- **Thiết kế lại Top Header Bar ([`app/views/components/header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php)):**
+  - **Góc trái Header:** Breadcrumb ngữ cảnh 3 cấp độ `🏠 Trang chủ` > `📁 [Thư Mục Phân Xưởng]` > `📄 [Trang Thao Tác Hiện Tại]`.
+  - **Góc phải Header:**
+    - **Bộ chọn ngôn ngữ:** Nhóm nút pill hiện đại 🇻🇳 VI | 🇬🇧 EN | 🇯🇵 JA với highlight xanh khi được chọn.
+    - **Thẻ thông tin người dùng:** Avatar theo màu vai trò (Admin tím, Đùn cam, QC xanh dương, Cuộn xanh lá) + Họ tên + Mã nhân viên & Role badge.
+    - **Nút Đổi mật khẩu (`nav_change_pwd`):** Nút thao tác nhanh với icon 🔑 dẫn đến trang đổi mật khẩu.
+    - **Nút Đăng xuất (`nav_logout`):** Nút đỏ nổi bật với icon 🚪 cho phép thoát an toàn.
+  - Tích hợp lớp tương thích ngược tại [`app/views/components/breadcrumb.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/breadcrumb.php) để đảm bảo toàn bộ hệ thống hoạt động đồng bộ.
+  
+- **Khắc phục lỗi chèn chữ trên Sidebar Slider Bar ([`public/assets/css/sidebar.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/sidebar.css)):**
+  - **Nguyên nhân cốt lõi:** `.sb-nav-scroll` là flex column container nhưng các node thư mục `.sb-tree-folder`, `.sb-tree-folder-head` không có thuộc tính `flex-shrink: 0`. Khi thư mục dưới mở ra làm tăng tổng chiều cao, Flexbox tự động co xẹp chiều cao của các folder bên trên, khiến chữ và icon bị đè nén lên nhau.
+  - **Giải pháp dứt điểm:**
+    - Cấu hình `.sb-nav-scroll`: `flex: 1 1 auto; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important;`.
+    - Thiết lập `flex-shrink: 0 !important;` cho toàn bộ `.sb-tree-folder`, `.sb-tree-folder-head`, `.sb-tree-children`, `.sb-tree-leaf`.
+    - Khóa chiều cao tối thiểu chuẩn cho head (`min-height: 42px; height: 42px;`) và leaf (`min-height: 38px; height: 38px;`).
+    - Bổ sung `min-width: 0; text-overflow: ellipsis; white-space: nowrap;` để đảm bảo văn bản hiển thị nguyên vẹn.
+    - Thêm cơ chế `scrollIntoView({ behavior: 'smooth', block: 'nearest' })` khi click mở thư mục, giúp tự động cuộn đến vùng nhìn thấy trọn vẹn.
+    - Tối giản chân sidebar thành `.sb-footer-minimal` (chỉ hiển thị status SMC và phiên bản), giải phóng hoàn toàn không gian dọc cho Folder Tree.
+
+- **Đồng bộ hóa 12 Trang View:**
+  - Cập nhật [`extrusionView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/extrusionView.php), [`extrusionEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/extrusionEditBobinView.php), [`qcView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/qcView.php), [`qcEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/qcEditBobinView.php), [`windingView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/windingView.php), [`windingEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/windingEditBobinView.php), [`listBobinDetailView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listBobinDetailView.php), [`listBobinHistoryView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listBobinHistoryView.php), [`listPendingCancellationView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listPendingCancellationView.php), [`employeeListView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/employeeListView.php), [`employeePermissionsView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/employeePermissionsView.php), [`languageManageView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/languageManageView.php).
+  - Tất cả các view nạp trực tiếp component chuẩn `require ROOT_PATH . '/app/views/components/header.php';`.
+
+---
+
+## [2026-10-06] - Kiến Trúc Điều Hướng Cây Thư Mục (Folder Tree) & Breadcrumb Thông Minh (TASK-014)
+
+### 1. Bối cảnh & Yêu cầu:
+- Khắc phục tình trạng điều hướng dạng thanh dọc phẳng dồn tất cả các chức năng rời rạc vào một cột đơn điệu, gây khó định hướng và rối mắt cho người dùng.
+- Tái cấu trúc thành điều hướng cây thư mục chuyên nghiệp (**Folder Tree / File Explorer Navigation**) kết hợp thanh điều hướng vị trí thực tế (**Contextual Breadcrumb Bar**) trên từng phân trang.
+
+### 2. Chi tiết Cải tiến & Triển khai:
+- **Kiến trúc Cây Thư mục trong Sidebar ([`app/views/components/sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php)):**
+  - Chuyển đổi các danh mục phân xưởng thành các Node thư mục dạng cây (`sb-tree-folder`):
+    - Đùn (Extrusion) `📁 SẢN XUẤT`
+    - QC (Quality Control) `📁 KIỂM TRA QC`
+    - Cuộn (Winding) `📁 CUỘN HOÀN TẤT`
+    - Giám sát (Monitoring) `📁 GIÁM SÁT & BÁO CÁO`
+    - Quản trị (System) `📁 QUẢN TRỊ HỆ THỐNG`
+  - Tích hợp biểu tượng chevron mở rộng `▸` xoay chuyển mượt mà 90 độ khi mở (`is-open`), biểu tượng thư mục tự động chuyển `📁` (đóng) <-> `📂` (mở), kèm theo badge hiển thị số lượng chức năng khả dụng trong từng thư mục.
+  - Tự động nhận diện và mở rộng thư mục chứa trang active hiện tại (`has-active-child`), đồng thời ghi nhớ trạng thái đóng/mở của người dùng vào `localStorage` (`webbobin_tree_folder_{id}`).
+  - Thiết kế các đường kẻ định vị phân nhánh cây (`sb-tree-children::before`, `sb-tree-leaf::before`) tạo cảm giác cấu trúc thư mục rõ ràng, chuyên nghiệp.
+  - Đảm bảo 100% nguyên tắc bảo mật phân quyền: Thư mục chỉ hiển thị nếu người dùng có ít nhất một quyền hợp lệ bên trong; thư mục trống sẽ bị ẩn hoàn toàn.
+
+- **Thành phần Breadcrumb Header Bar ([`app/views/components/breadcrumb.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/breadcrumb.php)):**
+  - Xây dựng component Breadcrumb tái sử dụng theo cấu trúc 3 cấp độ không gian:
+    `🏠 Trang chủ` > `📁 [Tên Thư Mục Phân Xưởng]` > `📄 [Trang Thao Tác Hiện Tại]`
+  - Tự động ánh xạ route theo URL hiện hành và quyền thực tế của người dùng (`$homeUrl`).
+  - Hỗ trợ đa ngôn ngữ hoàn toàn (`data-i18n`, `vi`, `en`, `ja`) và tương thích responsive trên thiết bị di động.
+
+- **Đồng bộ CSS & Tích hợp vào Tất cả các Trang:**
+  - Bổ sung định dạng CSS cây thư mục và breadcrumb trong [`public/assets/css/sidebar.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/sidebar.css), bảo toàn hệ font stack `var(--font-family-base)`.
+  - Nhúng Breadcrumb vào 10 trang cốt lõi của hệ thống:
+    - [`extrusionView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/extrusionView.php)
+    - [`extrusionEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/extrusionEditBobinView.php)
+    - [`qcView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/qcView.php)
+    - [`qcEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/qcEditBobinView.php)
+    - [`windingView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/windingView.php)
+    - [`windingEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/windingEditBobinView.php)
+    - [`listBobinDetailView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listBobinDetailView.php)
+    - [`listBobinHistoryView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listBobinHistoryView.php)
+    - [`listPendingCancellationView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listPendingCancellationView.php)
+    - [`employeeListView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/employeeListView.php)
+    - [`employeePermissionsView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/employeePermissionsView.php)
+    - [`languageManageView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/languageManageView.php)
+- **Từ điển Đa ngôn ngữ ([`Language.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/Language.php) & [`i18n.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/i18n.js)):**
+  - Bổ sung khóa dịch `breadcrumb_home` và `tree_items_count` đồng bộ trên 3 ngôn ngữ `vi`, `en`, `ja`.
+
+---
+
+## [2026-10-06] - Khắc Phục Lỗi Thiếu Cột Permissions & Đồng Bộ Cấu Trúc Database (production_db)
+
+### 1. Nguyên nhân lỗi đăng nhập:
+- Lỗi xuất hiện tại màn hình đăng nhập: `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'permissions' in 'field list'`
+- **Nguyên nhân gốc rễ:** File [`public/assets/production_db_database.sql`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/production_db_database.sql) và database MySQL `production_db` đang chạy trên máy chủ nội bộ lúc trước chưa được cập nhật cột `permissions` (vốn được quy định trong TASK-010 phục vụ phân quyền tùy biến chi tiết cho tài khoản). Khi [`AuthController.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/controllers/AuthController.php) thực thi truy vấn đăng nhập `SELECT ... permissions FROM employee_list`, MySQL ném ngoại lệ do thiếu trường này.
+
+### 2. Xử lý & Cải tiến:
+- **Cập nhật database MySQL hiện hành:**
+  - Thực thi bổ sung cột `permissions LONGTEXT DEFAULT NULL COMMENT 'Mảng JSON lưu danh sách mã quyền thao tác tùy biến (nếu NULL thì theo Role mặc định)' AFTER is_first_login` vào bảng `employee_list`.
+  - Toàn bộ 135 tài khoản hiện có kế thừa giá trị `NULL` (tự động fallback về quyền mặc định theo vai trò `role` ban đầu), không làm mất mát hoặc gián đoạn bất kỳ dữ liệu nhân sự nào.
+- **Đồng bộ hóa tập tin bản dựng SQL:**
+  - Cập nhật [`public/assets/production_db_database.sql`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/production_db_database.sql) phản ánh chính xác cấu trúc bảng `employee_list` có trường `permissions`.
+  - Cập nhật tài liệu kỹ thuật [`AI_preference/DATABASE_SCHEMA.md`](file:///c:/xampp/htdocs/WEB_BOBIN/AI_preference/DATABASE_SCHEMA.md) để đồng bộ hoàn toàn giữa code, tài liệu và database.
+
+---
+
+## [2026-10-06] - Trang Cấu Hình Đa Ngôn Ngữ Động & Điều Hướng Thông Minh Theo Quyền Hạn (TASK-012 & TASK-013)
+
+### 1. Quản lý Từ điển Đa ngôn ngữ Động qua Textfield (TASK-012)
+- **Kiến trúc Từ điển Linh hoạt (Dynamic I18n Storage):**
+  - Lưu trữ bản dịch tùy biến vào tập tin cấu hình [`config/custom_translations.json`](file:///c:/xampp/htdocs/WEB_BOBIN/config/custom_translations.json) (không làm biến đổi database schema, 100% offline local, an toàn dữ liệu tuyệt đối).
+  - Cập nhật [`Language.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/Language.php):
+    - Phương thức `getCustomFilePath()` và `getCustomDictionary()` nạp các giá trị dịch ghi đè.
+    - Phương thức `saveCustomDictionary()` lưu trữ định dạng UTF-8 JSON có khóa phân tách theo từng ngôn ngữ `vi`, `en`, `ja`.
+    - Trong `loadDictionary()`, tự động hợp nhất các bản dịch tùy chỉnh đè lên từ điển mặc định của hệ thống.
+  - Cập nhật [`public/assets/js/i18n.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/i18n.js):
+    - Đọc đối tượng `window.__CUSTOM_I18N__` được nhúng từ layout máy chủ để đồng bộ tức thời mọi key tùy biến vào frontend `DICT` cho 3 ngôn ngữ `vi`, `en`, `ja`.
+- **Giao diện Quản trị Cấu hình Từ điển ([`app/views/languageManageView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/languageManageView.php)):**
+  - Bố cục Dashboard hiện đại chuẩn doanh nghiệp kế thừa `var(--font-family-base)`: Hero header, 3 thẻ thống kê (Tổng mục từ điển, Đã tùy chỉnh riêng, Số ngôn ngữ đồng bộ).
+  - Thanh công cụ tìm kiếm lọc tức thì theo từ khóa / nội dung dịch và lọc theo phạm vi (Tất cả, Đã tùy biến, Mặc định).
+  - Bảng lưới tương tác trực quan với các ô `input textfield` cho từng ngôn ngữ (`VI`, `EN`, `JA`) đối với từng dòng từ khóa: người dùng có thể gõ chỉnh sửa nội dung bất kỳ lúc nào mà không bị fix cứng.
+  - Hỗ trợ thêm mới từ khóa dịch thuật qua Modal popup và khôi phục (Reset) từng từ khóa hoặc toàn bộ từ điển về trạng thái gốc mặc định.
+- **Bộ điều khiển & Phân quyền:**
+  - Bổ sung 3 action vào [`EmployeeController.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/controllers/EmployeeController.php): `translationsView()`, `updateTranslations()`, `resetTranslations()`.
+  - Cập nhật [`AuthHelper.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/AuthHelper.php) tích hợp các route quản lý ngôn ngữ dưới quyền `permission_manage`.
+
+### 2. Thiết kế Lại Giao Diện Thông Minh Theo Quyền Hạn (TASK-013)
+- **Ẩn hoàn toàn các nút nhấn/liên kết điều hướng đến trang không có quyền:**
+  - **Sidebar Dọc Bên Trái ([`app/views/components/sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php)):**
+    - Nhóm 1 (Đùn): Chỉ hiển thị nếu tài khoản có quyền `extrusion_create` hoặc `extrusion_edit`.
+    - Nhóm 2 (QC): Chỉ hiển thị nếu tài khoản có quyền `qc_check` hoặc `qc_edit`.
+    - Nhóm 3 (Cuộn): Chỉ hiển thị nếu tài khoản có quyền `winding_confirm` hoặc `winding_edit`.
+    - Nhóm 4 (Giám sát & Báo cáo): Bọc toàn bộ khối trong điều kiện `if ($canBobinList || $canBobinHistory || $canPendingCancel)`, nếu tài khoản không có quyền xem giám sát nào thì ẩn hoàn toàn cả tiêu đề nhóm và các liên kết con.
+    - Nhóm 5 (Quản trị): Chỉ hiển thị các mục tương ứng với `canEmployeeManage` và `canPermissionManage` (bao gồm link mới "Cấu hình đa ngôn ngữ").
+  - **Điều hướng Logo Thương hiệu & Mobile Topbar:**
+    - Tính toán động `$userHomeUrl` dựa theo quyền được cấp thực tế cao nhất của tài khoản (ưu tiên Đùn -> QC -> Cuộn -> Giám sát -> Quản trị).
+    - Logo thương hiệu `sb-brand-main` và tiêu đề mobile tự động dẫn về đúng `$userHomeUrl` của user thay vì hardcode cố định dẫn đến lỗi phân quyền.
+  - **Nút "Quay lại" (Back button) tại các trang view:**
+    - [`extrusionEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/extrusionEditBobinView.php): Nút quay lại kiểm tra quyền `extrusion_create`, nếu không có quyền sẽ trỏ an toàn về `$userHomeUrl`.
+    - [`qcEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/qcEditBobinView.php): Nút quay lại kiểm tra quyền `qc_check`, trỏ về trang QC tương ứng hoặc fallback về `$userHomeUrl`.
+    - [`windingEditBobinView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/windingEditBobinView.php): Nút quay lại kiểm tra quyền `winding_confirm`, trỏ về trang Cuộn tương ứng hoặc fallback về `$userHomeUrl`.
+    - [`listBobinDetailView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listBobinDetailView.php), [`listBobinHistoryView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listBobinHistoryView.php), [`listPendingCancellationView.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/listPendingCancellationView.php): Nút quay lại kiểm tra quyền `extrusion_create` trước khi dẫn về `bobin/index`, nếu không có quyền thì dẫn an toàn về `$userHomeUrl` của tài khoản, tránh hoàn toàn tình trạng bị chuyển hướng 403.
+
 ---
 
 ## [2026-10-06] - Thống Nhất Typography Toàn Cục & Hoàn Thiện Mô Hình Phân Quyền Động (TASK-011)

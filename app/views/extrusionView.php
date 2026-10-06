@@ -21,6 +21,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
 <body>
     <?php require ROOT_PATH . '/app/views/components/sidebar.php'; ?>
+    <?php require ROOT_PATH . '/app/views/components/header.php'; ?>
 
     <!-- TIÊU ĐỀ TRANG -->
     <div class="page-header">

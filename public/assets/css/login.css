@@ -410,7 +410,7 @@ html, body {
 /* ================= RESPONSIVE DESIGN ================= */
 @media (max-width: 1024px) {
     .login-split-wrapper {
-        flex-direction: column;
+        flex-direction: column-reverse;
     }
 
     .showcase-section {
@@ -425,6 +425,10 @@ html, body {
     .login-panel {
         flex: none;
         padding: 36px 20px;
+    }
+
+    .input-icon-wrapper input {
+        font-size: 16px !important; /* Chống phóng to tự động trên iOS Safari */
     }
 }
 
@@ -449,5 +453,14 @@ html, body {
 
     .login-panel {
         padding: 24px 16px;
+    }
+
+    .login-header h2 {
+        font-size: 21px;
+    }
+
+    .btn-login-submit {
+        height: 46px;
+        font-size: 15px;
     }
 }

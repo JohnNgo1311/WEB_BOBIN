@@ -63,6 +63,7 @@ if (!function_exists('buildFilterUrl')) {
 
 <body>
     <?php require ROOT_PATH . '/app/views/components/sidebar.php'; ?>
+    <?php require ROOT_PATH . '/app/views/components/header.php'; ?>
 
     <div class="page-header">
         <div>
@@ -79,7 +80,10 @@ if (!function_exists('buildFilterUrl')) {
 
         <!-- CONTROL BAR -->
         <div class="control-bar">
-            <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC" class="back-btn" title="Quay lại QC">
+            <?php 
+                $backUrl = AuthHelper::hasPermission('qc_check') ? '/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC' : ($userHomeUrl ?? '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView');
+            ?>
+            <a href="<?= $backUrl ?>" class="back-btn" title="Quay lại">
                 <svg viewBox="0 0 24 24">
                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
                 </svg>

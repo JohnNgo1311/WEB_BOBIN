@@ -27,6 +27,7 @@ $totalFiltered = count($employees);
 
 <body>
     <?php require ROOT_PATH . '/app/views/components/sidebar.php'; ?>
+    <?php require ROOT_PATH . '/app/views/components/header.php'; ?>
 
     <div class="emp-container">
         <?php if (!empty($msg)): ?>

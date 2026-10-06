@@ -30,6 +30,7 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
 <body>
     <!-- Vertical Left Sidebar -->
     <?php require ROOT_PATH . '/app/views/components/sidebar.php'; ?>
+    <?php require ROOT_PATH . '/app/views/components/header.php'; ?>
 
     <!-- Main Content Wrapper -->
     <main class="perm-page-wrapper">

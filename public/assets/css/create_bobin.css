@@ -173,3 +173,24 @@ button:disabled {
         transform: translateY(0);
     }
 }
+
+/* ================= 8. RESPONSIVE ================= */
+@media (max-width: 480px) {
+    .create-container {
+        padding: 22px 18px 24px;
+        width: 100%;
+        margin: 16px;
+    }
+
+    input[type="text"] {
+        font-size: 16px !important; /* Chống phóng to trên iOS Safari */
+    }
+
+    .toast-message {
+        top: 16px;
+        right: 16px;
+        left: 16px;
+        justify-content: center;
+        text-align: center;
+    }
+}

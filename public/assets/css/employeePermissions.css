@@ -385,8 +385,8 @@
 .perm-items-grid {
   padding: 18px 22px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
 }
 
 /* PERMISSION ITEM BOX */
@@ -619,13 +619,135 @@
 .perm-toast.success { background: #10b981; }
 .perm-toast.error { background: #ef4444; }
 
-/* RESPONSIVE */
+/* ================= RESPONSIVE (TASK-016 PRO) ================= */
+@media (max-width: 992px) {
+  .perm-page-wrapper {
+    padding: 16px 16px 40px;
+  }
+  .perm-hero {
+    padding: 22px 24px;
+  }
+  .perm-hero-content h1 {
+    font-size: 22px;
+  }
+}
+
 @media (max-width: 768px) {
-  .perm-page-wrapper { padding: 16px; }
-  .perm-hero { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .perm-search-grid { grid-template-columns: 1fr; }
-  .perm-items-grid { grid-template-columns: 1fr; }
-  .perm-sticky-bar { flex-direction: column; gap: 12px; text-align: center; }
-  .perm-profile-card { flex-direction: column; align-items: flex-start; }
+  /* Chống iOS Safari phóng to khi chạm input/select */
+  input[type="text"],
+  input[type="search"],
+  select {
+    font-size: 16px !important;
+  }
+
+  .perm-page-wrapper {
+    padding: 12px 10px 48px;
+  }
+  .perm-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px 16px;
+    gap: 14px;
+    border-radius: 12px;
+  }
+  .perm-hero-content h1 {
+    font-size: 20px;
+    gap: 8px;
+  }
+  .perm-hero-badge {
+    align-self: flex-start;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .perm-search-box {
+    padding: 14px 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .perm-search-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .perm-quick-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .perm-quick-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .perm-profile-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 16px;
+    border-radius: 12px;
+  }
+  .perm-profile-left {
+    width: 100%;
+    gap: 12px;
+  }
+  .perm-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 20px;
+  }
+  .perm-info-name {
+    font-size: 17px;
+    gap: 6px;
+  }
+  .perm-profile-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .perm-btn-tool {
+    padding: 8px 6px;
+    font-size: 11.5px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .perm-group-header {
+    padding: 12px 16px;
+  }
+  .perm-group-title {
+    font-size: 14.5px;
+  }
+
+  .perm-items-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 10px;
+  }
+  .perm-item-box {
+    padding: 12px 14px;
+    border-radius: 8px;
+  }
+
+  /* Thanh lưu sticky an toàn với Safe Area trên iPhone */
+  .perm-sticky-bar {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+    border-radius: 12px;
+    padding: 14px 16px;
+    bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  }
+  .perm-sticky-summary {
+    justify-content: center;
+    font-size: 13px;
+  }
+  .perm-btn-save {
+    width: 100%;
+    justify-content: center;
+    height: 44px;
+    font-size: 15px;
+  }
 }
 

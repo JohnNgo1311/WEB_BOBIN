@@ -27,11 +27,12 @@ const ConfirmDialog = (() => {
         const style = document.createElement('style');
         style.id = 'confirm-dialog-style';
         style.textContent = `
-            .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-            .confirm-dialog-box { background: #fff; padding: 20px; border-radius: 8px; width: 90%; max-width: 520px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif; }
-            .confirm-dialog-title { margin-top: 0; font-size: 17px; color: #333; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 8px; font-weight: 700; }
-            .confirm-dialog-content { margin: 12px 0; font-size: 13.5px; color: #333; max-height: 65vh; overflow-y: auto; }
-            .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+            .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px; box-sizing: border-box; }
+            .confirm-dialog-box { background: #fff; padding: 20px; border-radius: 12px; width: 100%; max-width: 520px; max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.25); font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, sans-serif); box-sizing: border-box; }
+            .confirm-dialog-title { margin-top: 0; font-size: 17px; color: #0f172a; text-align: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-weight: 700; flex-shrink: 0; }
+            .confirm-dialog-content { margin: 12px 0; font-size: 13.5px; color: #334155; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; }
+            .confirm-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; flex-shrink: 0; }
+            .confirm-dialog-actions button { min-height: 40px; padding: 8px 18px !important; border-radius: 7px !important; font-size: 13.5px !important; cursor: pointer; }
             .vi-badge-ok { background: #22c55e; color: #fff; padding: 2px 7px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
             .vi-badge-ng { background: #ef4444; color: #fff; padding: 2px 7px; border-radius: 4px; font-weight: 800; font-size: 11.5px; }
         `;

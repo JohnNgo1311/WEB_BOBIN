@@ -23,6 +23,9 @@ $homeUrl = match ($userRole) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/changePassword.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
+    <script>
+        window.__CUSTOM_I18N__ = <?= json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UNICODE) ?: '{}' ?>;
+    </script>
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
 </head>
 

@@ -118,7 +118,7 @@ class AuthHelper
                         'name_default' => 'Phân quyền Tài khoản Người dùng',
                         'desc_key' => 'perm_permission_manage_desc',
                         'desc_default' => 'Tra cứu nhân viên và thiết lập chi tiết các quyền thao tác cho từng user',
-                        'routes' => ['employee/permissionsview', 'employee/getemployeepermissions', 'employee/updatepermissions']
+                        'routes' => ['employee/permissionsview', 'employee/getemployeepermissions', 'employee/updatepermissions', 'employee/translationsview', 'employee/updatetranslations', 'employee/resettranslations']
                     ],
                 ]
             ]

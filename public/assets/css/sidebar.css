@@ -1,6 +1,6 @@
 /* ==========================================================================
-   SIDEBAR NAVIGATION CSS - SMC FACTORY PRO
-   Vertical Left Sidebar with Responsive & Collapsible Support
+   SIDEBAR & TOP HEADER BAR CSS - SMC Extrusion (VN)
+   Vertical Folder Tree Sidebar + Modern Header Bar (TASK-014 & TASK-015)
    ========================================================================== */
 
 :root {
@@ -16,6 +16,7 @@
   --sb-hover-bg: rgba(255, 255, 255, 0.06);
   --sb-active-bg: rgba(56, 189, 248, 0.12);
   --sb-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --header-height: 60px;
 }
 
 /* Tự động căn lề trang web theo Sidebar */
@@ -34,7 +35,9 @@ body.sidebar-collapsed {
   display: none !important;
 }
 
-/* SIDEBAR CONTAINER */
+/* ==========================================================================
+   1. SIDEBAR CONTAINER & BRAND
+   ========================================================================== */
 .app-sidebar {
   font-family: var(--font-family-base);
   position: fixed;
@@ -58,14 +61,15 @@ body.sidebar-collapsed .app-sidebar {
   width: var(--sb-width-collapsed);
 }
 
-/* SIDEBAR BRAND */
+/* BRAND HEADER */
 .sb-brand {
-  padding: 18px 18px 16px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--sb-border);
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .sb-brand-main {
@@ -142,23 +146,24 @@ body.sidebar-collapsed .sb-brand-info {
 
 /* USER PROFILE CARD IN SIDEBAR */
 .sb-user-card {
-  padding: 14px 16px;
+  padding: 12px 16px;
   background: rgba(255, 255, 255, 0.03);
   border-bottom: 1px solid var(--sb-border);
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .sb-user-avatar {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffffff;
   flex-shrink: 0;
@@ -182,7 +187,7 @@ body.sidebar-collapsed .sb-user-info {
 }
 
 .sb-user-name {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   overflow: hidden;
@@ -193,126 +198,234 @@ body.sidebar-collapsed .sb-user-info {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   color: #38bdf8;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-/* SIDEBAR NAVIGATION LIST */
+/* ==========================================================================
+   2. FOLDER TREE NAVIGATION (TỐI ƯU TUYỆT ĐỐI CHỐNG CHÈN CHỮ - TASK-015)
+   ========================================================================== */
 .sb-nav-scroll {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0 !important; /* BẮT BUỘC để Flexbox cho phép cuộn độc lập mà không ép xẹp con */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  box-sizing: border-box;
 }
 
 .sb-nav-scroll::-webkit-scrollbar {
   width: 5px;
 }
 .sb-nav-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
-.sb-group {
+/* Node Thư mục dạng cây (Folder Node) */
+.sb-tree-folder {
+  flex-shrink: 0 !important; /* BẢO VỆ: Không bao giờ bị thu nhỏ / ép xẹp chiều cao */
+  min-height: max-content;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-}
-
-.sb-group-title {
-  padding: 6px 12px 4px;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #64748b;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-body.sidebar-collapsed .sb-group-title {
-  text-align: center;
-  font-size: 9px;
-  padding: 4px 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
   overflow: hidden;
-  text-overflow: clip;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-/* NAV LINKS */
-.sb-link {
+.sb-tree-folder:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.sb-tree-folder.has-active-child {
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.04);
+}
+
+/* Nút Header của Thư mục */
+.sb-tree-folder-head {
+  flex-shrink: 0 !important;
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 9px 12px;
+  gap: 10px;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: left;
+  user-select: none;
+  box-sizing: border-box;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.sb-tree-folder-head:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sb-tree-chevron {
+  font-size: 11px;
+  color: #64748b;
+  width: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.sb-tree-folder.is-open .sb-tree-chevron {
+  transform: rotate(90deg);
+  color: var(--sb-accent);
+}
+
+.sb-tree-folder-icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sb-tree-folder-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.sb-tree-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1.5px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.sb-tree-folder.has-active-child .sb-tree-badge {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+/* Vùng chứa các mục con bên trong Thư mục (Branch) */
+.sb-tree-children {
+  flex-shrink: 0 !important;
+  display: none;
+  flex-direction: column;
+  gap: 3px;
+  padding: 4px 8px 8px 22px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.sb-tree-folder.is-open .sb-tree-children {
+  display: flex;
+}
+
+/* Thước kẻ nhánh cây phân cấp (Tree Guide Line) */
+.sb-tree-children::before {
+  content: '';
+  position: absolute;
+  left: 21px;
+  top: 4px;
+  bottom: 12px;
+  width: 1.5px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
+}
+
+/* Liên kết mục con (Tree Leaf Link) */
+.sb-tree-leaf {
+  flex-shrink: 0 !important;
+  height: 38px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
   color: #cbd5e1;
   text-decoration: none;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.18s ease;
+  border-radius: 7px;
   position: relative;
+  box-sizing: border-box;
+  transition: all 0.18s ease;
   white-space: nowrap;
 }
 
-.sb-link:hover {
+/* Điểm nối ngang nhánh cây */
+.sb-tree-leaf::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 8px;
+  height: 1.5px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sb-tree-leaf:hover {
   background: var(--sb-hover-bg);
   color: #ffffff;
   transform: translateX(2px);
 }
 
-.sb-link.active-nav,
-.sb-link.active {
+.sb-tree-leaf.active-nav,
+.sb-tree-leaf.active {
   background: var(--sb-active-bg);
   color: var(--sb-accent);
   font-weight: 700;
 }
 
-.sb-link.active-nav::before,
-.sb-link.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 3.5px;
+.sb-tree-leaf.active-nav::before,
+.sb-tree-leaf.active::before {
   background: var(--sb-accent);
-  border-radius: 0 4px 4px 0;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
 }
 
-.sb-link-icon {
-  font-size: 16px;
-  width: 22px;
+.sb-tree-leaf-icon {
+  font-size: 14.5px;
+  width: 20px;
   text-align: center;
   flex-shrink: 0;
 }
 
-.sb-link-text {
+.sb-tree-leaf-text {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-body.sidebar-collapsed .sb-link-text {
-  display: none;
-}
-
-body.sidebar-collapsed .sb-link {
-  justify-content: center;
-  padding: 10px 0;
-}
-
-/* BADGE FOR PENDING CANCEL */
+/* Badge Chờ Hủy trong cây thư mục */
 .sb-badge-pending {
   background: #ef4444;
   color: #ffffff;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 12px;
@@ -320,141 +433,431 @@ body.sidebar-collapsed .sb-link {
   flex-shrink: 0;
 }
 
-body.sidebar-collapsed .sb-badge-pending {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  padding: 1px 5px;
-  font-size: 9.5px;
-}
-
-/* SIDEBAR FOOTER */
-.sb-footer {
-  padding: 12px 14px;
+/* ==========================================================================
+   3. SIDEBAR MINIMAL FOOTER
+   ========================================================================== */
+.sb-footer-minimal {
+  padding: 10px 14px;
   border-top: 1px solid var(--sb-border);
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* LANGUAGE SELECTOR IN SIDEBAR */
-.sb-lang-bar {
+  background: rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--sb-text-muted);
+  flex-shrink: 0;
+}
+
+.sb-system-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.sb-status-dot {
+  width: 7px;
+  height: 7px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.sb-version-text {
+  font-size: 10px;
+  color: #64748b;
+}
+
+/* Trạng thái Sidebar Thu Gọn */
+body.sidebar-collapsed .sb-tree-folder-title,
+body.sidebar-collapsed .sb-tree-badge,
+body.sidebar-collapsed .sb-tree-chevron,
+body.sidebar-collapsed .sb-tree-children,
+body.sidebar-collapsed .sb-system-text,
+body.sidebar-collapsed .sb-version-text {
+  display: none !important;
+}
+
+body.sidebar-collapsed .sb-tree-folder-head {
   justify-content: center;
-  gap: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  padding: 0;
+}
+
+body.sidebar-collapsed .sb-tree-folder {
+  border-color: transparent;
+  background: transparent;
+}
+
+body.sidebar-collapsed .sb-footer-minimal {
+  justify-content: center;
+}
+
+/* ==========================================================================
+   4. TOP HEADER BAR (TASK-015: HEADER CHUYÊN NGHIỆP CÓ NỘI DUNG ĐIỀU HƯỚNG)
+   ========================================================================== */
+.app-top-header {
+  font-family: var(--font-family-base);
+  position: sticky;
+  top: 0;
+  z-index: 990;
+  min-height: var(--header-height);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  gap: 16px;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+
+/* GÓC TRÁI: Breadcrumb Trail */
+.header-left {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.header-breadcrumb {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.header-breadcrumb::-webkit-scrollbar { display: none; }
+
+.header-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.header-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.header-breadcrumb-link:hover {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.header-breadcrumb-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #475569;
+  font-weight: 600;
+  padding: 4px 6px;
+}
+
+.header-breadcrumb-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.header-breadcrumb-sep {
+  display: inline-flex;
+  align-items: center;
+  color: #94a3b8;
+  margin: 0 2px;
+}
+
+.bc-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* GÓC PHẢI: Ngôn Ngữ, Profile, Đổi MK & Đăng Xuất */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* 1. Bộ chuyển đổi Ngôn ngữ (Language Switcher) */
+.header-lang-switch {
+  display: flex;
+  align-items: center;
+  background: #f1f5f9;
   padding: 3px;
   border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  gap: 2px;
 }
 
-.sb-lang-btn {
-  flex: 1;
-  display: flex;
+.header-lang-btn {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 4px;
-  padding: 5px 6px;
+  padding: 4px 8px;
   font-size: 11.5px;
   font-weight: 700;
-  color: #94a3b8;
+  color: #64748b;
   text-decoration: none;
   border-radius: 6px;
   transition: all 0.15s ease;
 }
 
-.sb-lang-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.08);
+.header-lang-btn:hover {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.04);
 }
 
-.sb-lang-btn.active-lang {
+.header-lang-btn.active-lang {
   background: #2563eb;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
 }
 
-body.sidebar-collapsed .sb-lang-btn span {
-  display: none;
+.flag-icon {
+  font-size: 13px;
+  line-height: 1;
 }
 
-/* FOOTER ACTION BUTTONS */
-.sb-actions-row {
+/* Đường phân cách dọc */
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+}
+
+/* 2. Thẻ Thông tin Người dùng (User Profile) */
+.header-user-profile {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
-.sb-action-btn {
-  flex: 1;
+.header-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13.5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #cbd5e1;
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.sb-action-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.sb-action-btn.btn-logout:hover {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.sb-action-icon {
-  font-size: 13.5px;
-  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
-.sb-action-text {
+.header-user-avatar.role-admin { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+.header-user-avatar.role-extrusion { background: linear-gradient(135deg, #f97316, #c2410c); }
+.header-user-avatar.role-qc { background: linear-gradient(135deg, #3b82f6, #1e40af); }
+.header-user-avatar.role-winding { background: linear-gradient(135deg, #10b981, #047857); }
+
+.header-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.header-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-body.sidebar-collapsed .sb-action-btn .sb-action-text {
+.header-user-role {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.03em;
+}
+
+/* 3 & 4. Các nút Thao tác Header (Đổi MK, Đăng xuất) */
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.header-btn .btn-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.header-btn-pwd {
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.header-btn-pwd:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.header-btn-logout {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.header-btn-logout:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+}
+
+.header-btn-login {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+}
+
+.header-btn-login:hover {
+  background: #1d4ed8;
+}
+
+/* ==========================================================================
+   5. MOBILE & TABLET RESPONSIVE NAVIGATION (TASK-016 RESPONSIVE PRO)
+   ========================================================================== */
+.header-mobile-toggle {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9px;
+  font-size: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  line-height: 1;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-/* MOBILE RESPONSIVE HAMBURGER */
+.header-mobile-toggle:hover {
+  background: #1e293b;
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.header-mobile-toggle:active {
+  transform: scale(0.92);
+  background: #2563eb;
+  color: #ffffff;
+}
+
 .sb-mobile-topbar {
-  display: none;
+  display: none !important; /* Hợp nhất vào Top Header Bar duy nhất để tránh chiếm dụng chiều cao màn hình */
 }
 
 .sb-overlay {
-  display: none;
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
 }
 
+.sb-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ================= TABLET & MOBILE BREAKPOINTS (<= 992px) ================= */
 @media (max-width: 992px) {
-  body {
-    margin-left: 0 !important;
-    padding-top: 56px;
+  html, body {
+    overflow-x: hidden;
   }
 
+  body {
+    margin-left: 0 !important;
+    padding-top: 0 !important; /* Loại bỏ khoảng đệm dư thừa khi header là sticky */
+  }
+
+  /* Drawer Sidebar trượt từ bên trái */
   .app-sidebar {
     transform: translateX(-100%);
-    width: 270px !important;
+    width: 280px !important;
+    max-width: 85vw !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    height: 100vh;
+    height: 100dvh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
   }
 
   .app-sidebar.mobile-open {
     transform: translateX(0);
   }
 
+  body.sb-drawer-active {
+    overflow: hidden !important;
+  }
+
   body.sidebar-collapsed .app-sidebar {
-    width: 270px !important;
+    width: 280px !important;
     transform: translateX(-100%);
   }
 
@@ -464,67 +867,183 @@ body.sidebar-collapsed .sb-action-btn .sb-action-text {
 
   body.sidebar-collapsed .sb-brand-info,
   body.sidebar-collapsed .sb-user-info,
-  body.sidebar-collapsed .sb-link-text,
-  body.sidebar-collapsed .sb-action-btn span,
-  body.sidebar-collapsed .sb-lang-btn span {
-    display: inline-block !important;
+  body.sidebar-collapsed .sb-tree-folder-title,
+  body.sidebar-collapsed .sb-tree-badge,
+  body.sidebar-collapsed .sb-tree-chevron,
+  body.sidebar-collapsed .sb-tree-children,
+  body.sidebar-collapsed .sb-system-text,
+  body.sidebar-collapsed .sb-version-text {
+    display: flex !important;
   }
 
-  .sb-overlay {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 9998;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
+  /* Nút Hamburger hiện diện trên Header Bar */
+  .header-mobile-toggle {
+    display: inline-flex !important;
+    margin-right: 8px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  .sb-overlay.show {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .sb-mobile-topbar {
-    display: flex;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 56px;
-    background: #0f172a;
-    border-bottom: 1px solid var(--sb-border);
-    z-index: 9990;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  }
-
-  .sb-mobile-toggle-btn {
-    background: transparent;
-    border: none;
-    color: #ffffff;
-    font-size: 22px;
-    cursor: pointer;
-    padding: 6px;
+  /* Khi drawer mở, đổi nút toggle trong sidebar thành nút đóng ✕ trực quan */
+  .app-sidebar.mobile-open .sb-toggle-btn {
+    font-size: 0 !important;
+    width: 32px;
+    height: 32px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+  }
+  .app-sidebar.mobile-open .sb-toggle-btn::after {
+    content: "✕";
+    font-size: 15px;
+    font-weight: 800;
+    color: #f87171;
   }
 
-  .sb-mobile-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
+  /* Top Header Bar Tối Ưu Gọn Gàng Chuẩn Native Mobile */
+  .app-top-header {
+    height: 54px;
+    min-height: 54px;
+    padding: 0 12px;
+    flex-wrap: nowrap;
     gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 9990;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    margin-bottom: 12px;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    gap: 6px;
+  }
+
+  .header-user-meta {
+    display: none; /* Ẩn tên và mã NV trên màn hình nhỏ, giữ lại avatar để tiết kiệm diện tích */
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .header-user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
   }
 }
 
+/* ================= SMARTPHONES (<= 640px: iPhone, Android) ================= */
+@media (max-width: 640px) {
+  .app-top-header {
+    height: 50px;
+    min-height: 50px;
+    padding: 0 8px;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .header-mobile-toggle {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    font-size: 18px;
+    margin-right: 4px;
+    touch-action: manipulation;
+  }
+
+  /* Rút gọn Breadcrumb trên điện thoại: Chỉ hiển thị tên trang hiện tại */
+  .header-breadcrumb-item:not(.active),
+  .header-breadcrumb-sep {
+    display: none !important;
+  }
+
+  .header-breadcrumb-current {
+    padding: 3px 6px;
+    font-size: 12px;
+    background: transparent;
+    border: none;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #0f172a;
+  }
+
+  .header-breadcrumb-current .bc-icon {
+    font-size: 13px;
+  }
+
+  /* Bộ chuyển ngôn ngữ thu gọn dạng nút icon cờ */
+  .header-lang-switch {
+    padding: 2px;
+    gap: 1px;
+    border-radius: 6px;
+  }
+
+  .header-lang-btn {
+    padding: 4px 5px;
+    font-size: 10.5px;
+  }
+
+  .header-lang-btn .lang-text {
+    display: none; /* Ẩn chữ VI/EN/JA, chỉ hiển thị cờ 🇻🇳 🇬🇧 🇯🇵 */
+  }
+
+  .flag-icon {
+    font-size: 14px;
+  }
+
+  .header-divider {
+    height: 18px;
+    margin: 0 1px;
+  }
+
+  .header-user-profile {
+    padding: 0;
+  }
+
+  .header-user-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  /* Các nút Đổi MK và Đăng xuất icon gọn gàng */
+  .header-btn {
+    padding: 5px 7px;
+    min-width: 30px;
+    height: 30px;
+    justify-content: center;
+  }
+
+  .header-btn .btn-text {
+    display: none; /* Ẩn text, giữ lại icon 🔑 và 🚪 */
+  }
+
+  .header-btn .btn-icon {
+    font-size: 14px;
+  }
+}
+
+/* ================= ULTRA-COMPACT SMARTPHONES (<= 380px) ================= */
+@media (max-width: 380px) {
+  .header-breadcrumb-current {
+    max-width: 80px;
+    font-size: 11.5px;
+  }
+
+  .header-btn-pwd {
+    display: none; /* Trên màn hình cực nhỏ, ẩn nút đổi MK trên header (vẫn có trong sidebar) */
+  }
+}

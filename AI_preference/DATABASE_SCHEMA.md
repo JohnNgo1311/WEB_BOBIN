@@ -96,8 +96,8 @@ Bảng rút gọn theo dõi trạng thái nhanh của Bobin.
 | `role` | `ENUM` | NO | `'extrusion'` | Vai trò: `'extrusion'`, `'qc'`, `'winding'`, `'admin'`. |
 | `is_active` | `TINYINT(1)` | NO | `1` | Trạng thái: `1` (Đang làm việc), `0` (Đã nghỉ/Khóa). |
 | `is_first_login` | `TINYINT(1)` | NO | `1` | `1` = Bắt buộc đổi mật khẩu khi đăng nhập lần đầu. |
-| `created_at` | `TIMESTAMP` | NO | `CURRENT_TIMESTAMP` | Thời điểm tạo tài khoản. |
-| `updated_at` | `TIMESTAMP` | NO | `CURRENT_TIMESTAMP ON UPDATE` | Thời điểm cập nhật cuối. |
+| `permissions` | `LONGTEXT` | YES | `NULL` | Mảng JSON lưu danh sách mã quyền thao tác tùy biến (nếu `NULL` thì kế thừa theo `role` mặc định). |
+| `updated_time` | `TIMESTAMP` | NO | `CURRENT_TIMESTAMP ON UPDATE` | Thời điểm cập nhật cuối. |
 
 ---
 

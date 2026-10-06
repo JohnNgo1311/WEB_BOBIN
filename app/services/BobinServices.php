@@ -102,7 +102,7 @@ class BobinServices
 
         return $entity;
     }
-    public function extUpdateBobin(BobinExtUpdateDTO $dto): BobinEntity
+    public function extUpdateBobin(BobinExtUpdateDTO $dto, ?array $updateRecord = null): BobinEntity
     {
         $this->listRepository->getListData(isFull: true);
 
@@ -110,7 +110,7 @@ class BobinServices
             throw new Exception("Vui lòng nhập Mã định danh Bobin.");
         }
         $entity = $this->buildBaseEntity($dto, 'extUpdate');
-        $this->bobinRepo->extrusionUpdateBobin($entity);
+        $this->bobinRepo->extrusionUpdateBobin($entity, $updateRecord);
         return $entity;
     }
     public function extDeleteBobin(BobinExtDeleteDTO $dto): BobinEntity
@@ -142,9 +142,21 @@ class BobinServices
             $entity->bobinKeyCode = $this->resolveKeyCode($dto->bobin_identification_code);
         }
         if ($function === 'extCreate') {
-            $entity->bobinKeyCode = $dto->bobin_identification_code . "_" . date('Y_m_d_H_i_s');
+            $finishDt = $this->parseDate($dto->finish_time ?? null);
+            $entity->bobinKeyCode = $dto->bobin_identification_code . "_" . $finishDt->format('Y_m_d_H_i_s');
         }
         $entity->identificationCode = $dto->bobin_identification_code;
+
+        // Gán qua class ExtrusionCheckEntity đã khai báo
+        $entity->extrusion_check = new ExtrusionCheckEntity(
+            diameter: $dto->ext_check_diameter,
+            gel: $dto->ext_check_gel,
+            foreign_object: $dto->ext_check_foreign_object,
+            color: $dto->ext_check_color,
+            print: $dto->ext_check_print
+        );
+        $entity->rack = $this->resolveRack($dto->rack_code);
+
         $entity->size = $this->resolveSize($dto->bobin_identification_code);
         $entity->type = $dto->bobin_type;
         $entity->printLot = $dto->print_lot;
@@ -167,7 +179,18 @@ class BobinServices
             }
 
             if (!empty($date) && is_string($date)) {
-                return new DateTime($date);
+                $trimmed = trim($date);
+                // Trường hợp định dạng DD/MM/YYYY HH:mm:ss hoặc DD/MM/YYYY HH:mm
+                if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/', $trimmed, $m)) {
+                    $d = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+                    $mo = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+                    $y = $m[3];
+                    $h = isset($m[4]) ? str_pad($m[4], 2, '0', STR_PAD_LEFT) : '00';
+                    $mi = isset($m[5]) ? str_pad($m[5], 2, '0', STR_PAD_LEFT) : '00';
+                    $s = isset($m[6]) ? str_pad($m[6], 2, '0', STR_PAD_LEFT) : '00';
+                    return new DateTime("{$y}-{$mo}-{$d} {$h}:{$mi}:{$s}");
+                }
+                return new DateTime($trimmed);
             }
         } catch (Exception $e) {
         }
@@ -247,6 +270,20 @@ class BobinServices
                 $entity->currentStatus = "Cancelled";
                 break;
         }
+    }
+    private function resolveRack(string $rackCode): ?RackEntity
+    {
+        if (empty($rackCode) || $rackCode === 'Chưa cập nhật') return null;
+        $list = GlobalData::$listRackEntity ?? [];
+        foreach ($list as $rack) {
+            if (($rack['rack_code'] ?? '') === $rackCode) {
+                return new RackEntity(
+                    id: (int)$rack['id'],
+                    code: $rack['rack_code']
+                );
+            }
+        }
+        throw new Exception("Vị trí Rack [{$rackCode}] không tồn tại trong hệ thống.");
     }
     #endregion
 
@@ -347,6 +384,11 @@ class BobinServices
         // Bắt buộc nhập ghi chú ở tầng backend
         if (empty($defectNote)) {
             throw new Exception("Vui lòng nhập ghi chú giải trình lý do trước khi điều chỉnh.");
+        }
+
+        $expectedPrefix = "Phán định chuyển Bobin sang: " . $newType;
+        if (strpos($defectNote, 'Phán định chuyển Bobin sang:') === false) {
+            $defectNote = $expectedPrefix . ' - ' . $defectNote;
         }
 
         $this->employeeRepo->getListEmployee();
@@ -467,7 +509,7 @@ class BobinServices
     }
 
     #region GET LIST & GET SPECIFIC
-    public function getBobinsHistory(BobinGetListDTO $dto): array
+    public function getBobinsHistory(BobinGetListDTO $dto, array $selectedIds = []): array
     {
         $keywordRaw = $dto->keyword;
         $fromRaw    = $dto->fromDate;
@@ -495,6 +537,7 @@ class BobinServices
             'status'     => mb_substr($status, 0, 50),
             'bobin_size' => trim($dto->bobinSize ?? 'all'),
             'bobin_type' => trim($dto->bobinType ?? 'all'),
+            'rack'       => trim($dto->rack ?? 'all'),
         ];
 
         $listBobin = [];
@@ -505,15 +548,15 @@ class BobinServices
                 } else {
                     $filters['from_date'] = "{$filters['from_date']} 00:00:00";
                     $filters['to_date']   = "{$filters['to_date']} 23:59:59";
-                    $listBobin = $this->bobinRepo->getBobinsHistory($filters);
+                    $listBobin = $this->bobinRepo->getBobinsHistory($filters, $selectedIds);
                 }
             } else {
                 $fromDefault = date('Y-m-d', strtotime('-7 days'));
-                $toDefault = date('Y-m-d');
+                $toDefault   = date('Y-m-d');
 
                 $filters['from_date'] = "{$fromDefault} 00:00:00";
                 $filters['to_date']   = "{$toDefault} 23:59:59";
-                $listBobin =  $this->bobinRepo->getBobinsHistory($filters);
+                $listBobin = $this->bobinRepo->getBobinsHistory($filters, $selectedIds);
             }
         } catch (Exception $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
@@ -545,6 +588,7 @@ class BobinServices
                 'to_date'    => $to,
                 'bobin_size' => trim($dto->bobinSize ?? 'all'),
                 'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
             ];
 
             if ($filters['from_date'] !== '' && $filters['to_date'] !== '') {
@@ -584,8 +628,10 @@ class BobinServices
     {
         try {
             $filters = [
+                'keyword'    => trim($dto->keyword ?? ''),
                 'bobin_size' => trim($dto->bobinSize ?? 'all'),
                 'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
             ];
             return $this->bobinRepo->getBobinStatusStats($filters);
         } catch (Exception $e) {
@@ -621,6 +667,11 @@ class BobinServices
     }
 
     #endregion
+    public function getAllRacks(): array
+    {
+        return $this->bobinRepo->getAllRacks();
+    }
+
     public function getDetailBobins(BobinGetListDTO $dto): array
     {
         try {
@@ -629,6 +680,8 @@ class BobinServices
                 'status'     => trim($dto->status ?? 'all'),
                 'bobin_size' => trim($dto->bobinSize ?? 'all'),
                 'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
+                'sort'       => trim($dto->sort ?? 'default'),
             ];
             return $this->bobinRepo->getBobinListDetail($filters, $dto->page, $dto->limit);
         } catch (Exception $e) {
@@ -644,6 +697,7 @@ class BobinServices
                 'status'     => trim($dto->status ?? 'all'),
                 'bobin_size' => trim($dto->bobinSize ?? 'all'),
                 'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
             ];
             return $this->bobinRepo->countBobinListDetail($filters);
         } catch (Exception $e) {
@@ -667,6 +721,22 @@ class BobinServices
         }
     }
 
+    public function countDetailBobinsForQC(BobinGetListDTO $dto): int
+    {
+        try {
+            $keywordRaw = $dto->keyword ?? '';
+            $keyword    = trim($keywordRaw);
+
+            $filters = [
+                'keyword' => mb_substr($keyword, 0, 255),
+            ];
+
+            return $this->bobinRepo->countDetailBobinsForQC($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
     public function getDetailBobinsForPendingCancellation(BobinGetListDTO $dto): array
     {
         try {
@@ -681,6 +751,87 @@ class BobinServices
         } catch (Exception $e) {
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }
+    }
+
+    public function getListDetailBobinsForQCEdit(BobinGetListDTO $dto): array
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->getListDetailBobinsForQCEdit($filters, $dto->page, $dto->limit);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobinsForQCEdit(BobinGetListDTO $dto): int
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->countDetailBobinsForQCEdit($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function getListDetailBobinsForWindingEdit(BobinGetListDTO $dto): array
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->getListDetailBobinsForWindingEdit($filters, $dto->page, $dto->limit);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function countDetailBobinsForWindingEdit(BobinGetListDTO $dto): int
+    {
+        try {
+            $filters = [
+                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+            ];
+            return $this->bobinRepo->countDetailBobinsForWindingEdit($filters);
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function adminUpdateQCBobin(string $identCode, string $keyCode, array $viData, ?string $newType, ?array $updateRecord): bool
+    {
+        if (empty($identCode)) {
+            throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        return $this->bobinRepo->adminUpdateQCBobin($identCode, $keyCode, $viData, $newType, $updateRecord);
+    }
+
+    public function adminUpdateWindingBobin(string $identCode, string $keyCode, string $machine, ?string $empCode, string $flowResult, string $note, ?array $updateRecord): bool
+    {
+        if (empty($identCode)) {
+            throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        $this->employeeRepo->getListEmployee();
+        $this->windingMachineRepo->getListWindingMachine();
+
+        $foundMachine = $this->windingMachineRepo->findByCode($machine);
+        $machineName = $foundMachine ? $foundMachine->WindingMachineEntity_code : $machine;
+
+        $empData = null;
+        if (!empty($empCode)) {
+            $foundEmp = $this->employeeRepo->findByCode($empCode);
+            if ($foundEmp) {
+                $empData = [
+                    'employee_code' => $foundEmp->employee_code,
+                    'employee_name' => $foundEmp->employee_name
+                ];
+            }
+        }
+
+        return $this->bobinRepo->adminUpdateWindingBobin($identCode, $keyCode, $machineName, $empData, $flowResult, $note, $updateRecord);
     }
     public function getDetailBobinsForWindingPaginated(BobinGetListDTO $dto): array
     {
@@ -717,6 +868,22 @@ class BobinServices
             } else {
                 return null;
             }
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+    public function getDetailBobinsForExport(BobinGetListDTO $dto, array $selectedCodes = []): array
+    {
+        try {
+            $filters = [
+                'keyword'    => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'status'     => trim($dto->status ?? 'all'),
+                'bobin_size' => trim($dto->bobinSize ?? 'all'),
+                'bobin_type' => trim($dto->bobinType ?? 'all'),
+                'rack'       => trim($dto->rack ?? 'all'),
+                'sort'       => trim($dto->sort ?? 'default'),
+            ];
+            return $this->bobinRepo->getBobinListDetailForExport($filters, $selectedCodes);
         } catch (Exception $e) {
             throw new Exception($e->getMessage(), (int)$e->getCode(), $e);
         }

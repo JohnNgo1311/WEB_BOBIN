@@ -1,20 +1,60 @@
-const Toast = {
-  show(message, type = "success") {
-    const toast = document.createElement("div");
-    toast.className = `toast-message${type === "error" ? " toast-error" : ""}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
+if (typeof window.Toast === "undefined") {
+  window.Toast = {
+    initStyle() {
+      if (!document.getElementById("toast-style-css")) {
+        const style = document.createElement("style");
+        style.id = "toast-style-css";
+        style.innerHTML = `
+          .toast-message {
+            position: fixed; top: 24px; right: 24px;
+            padding: 12px 20px; border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.2);
+            font-family: var(--font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+            font-size: 13.5px; font-weight: 700;
+            color: #fff; z-index: 99999; opacity: 0;
+            transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 8px;
+            pointer-events: none;
+            max-width: calc(100vw - 48px);
+          }
+          .toast-message.show { opacity: 1; transform: translateY(0); }
+          .toast-success { background-color: #16a34a !important; }
+          .toast-error { background-color: #dc2626 !important; }
+          .toast-warning { background-color: #f59e0b !important; }
+          .toast-info { background-color: #2563eb !important; }
+          @media (max-width: 640px) {
+            .toast-message {
+              top: 16px; right: 16px; left: 16px;
+              justify-content: center; text-align: center; max-width: none;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    },
+    show(message, type = "success") {
+      this.initStyle();
+      document.querySelectorAll(".toast-message").forEach((el) => el.remove());
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => toast.classList.add("show"));
-    });
+      const toast = document.createElement("div");
+      toast.className = `toast-message toast-${type}`;
+      const icon = type === "error" ? "❌" : (type === "warning" ? "⚠️" : "✅");
+      toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+      document.body.appendChild(toast);
 
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 500);
-    }, 3000);
-  },
-};
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add("show"));
+      });
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+      }, 3000);
+    },
+  };
+}
+var Toast = window.Toast;
+
 
 function copyToClipboard(button) {
   const textToCopy = button.getAttribute("data-copy");

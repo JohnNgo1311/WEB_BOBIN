@@ -3,6 +3,16 @@
 
 class BobinCreateDTO
 {
+
+    //! Update thêm field 22/09/2026:
+    public string $rack_code;
+    //! Extrusion Visual inspection
+    public bool $ext_check_diameter;
+    public bool $ext_check_gel;
+    public bool $ext_check_foreign_object;
+    public bool $ext_check_color;
+    public bool $ext_check_print;
+    //!
     // Thông tin cơ bản
     public string $bobin_identification_code;
     public string $bobin_size;
@@ -47,6 +57,16 @@ class BobinCreateDTO
         // if (!str_starts_with($dto->bobin_identification_code, 'BB')) {
         //     $dto->bobin_identification_code = 'BB' . $dto->bobin_identification_code;
         // }
+
+
+        // Thêm vào trong hàm fromRequest():
+        $dto->rack_code = trim($request['rack_code'] ?? '');
+        $dto->ext_check_diameter = filter_var($request['ext_check_diameter'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_gel      = filter_var($request['ext_check_gel'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_foreign_object = filter_var($request['ext_check_foreign_object'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_color    = filter_var($request['ext_check_color'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_print    = filter_var($request['ext_check_print'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
         $dto->bobin_size = trim($request['bobin_size'] ?? '');
         $dto->bobin_type = $request['bobin_type'] ?? '';
         $dto->extrusion_employee_code = trim($request['extrusion_employee_code'] ?? '');

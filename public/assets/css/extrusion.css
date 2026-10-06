@@ -1,620 +1,690 @@
-/* ================= 1. RESET & BASE ================= */
+/* ======================= GLOBAL VARIABLES & PALETTE ======================= */
+:root {
+  --primary: #ea580c;
+  --primary-hover: #c2410c;
+  --primary-light: #fff7ed;
+  --primary-border: #fed7aa;
+
+  --text-dark: #0f172a;
+  --text-gray: #475569;
+  --text-muted: #64748b;
+
+  --bg-page: #f1f5f9;
+  --bg-card: #ffffff;
+  --border: #cbd5e1;
+  --border-light: #e2e8f0;
+
+  --ok-green: #16a34a;
+  --ok-green-dark: #15803d;
+  --ng-red: #dc2626;
+  --ng-red-dark: #b91c1c;
+
+  --accent-blue: #2563eb;
+  --accent-teal: #0d9488;
+  --accent-amber: #d97706;
+
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  
-  html {
-    font-family:
-      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: #eef2f7;
-    color: #2f3640;
-    height: 100%;
-  }
-  
-  body {
-    font-family:
-      "Segoe UI",
-      system-ui,
-      -apple-system,
-      sans-serif;
-    padding: 80px 20px 40px;
-    min-height: 100vh;
-  }
-  
-  /* ================= 2. MENU BAR ================= */
-  .menu-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 56px;
-    background: linear-gradient(135deg, #0984e3, #0652dd);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    z-index: 1000;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .menu-left,
-  .menu-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .menu-bar a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 8px 12px;
-    border-radius: 6px;
-    transition: background 0.2s ease;
-  }
-  
-  .menu-bar a:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  
-  .logout-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  .logout-btn:hover {
-    background: #d63031 !important;
-    border-color: #d63031;
-  }
-  
-  /* ================= 3. TITLE ================= */
-  h1 {
-    color: #fc8b03;
-    max-width: 960px;
-    margin: 10px auto 20px;
-    font-size: 28px;
-    font-weight: 700;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  /* Modal Overlay - Phủ tối toàn màn hình */
-  .modal-overlay {
-    display: none;
-    /* Mặc định ẩn */
-    position: fixed;
-    /* Cố định vị trí so với cửa sổ trình duyệt */
-    z-index: 9999;
-    /* Số lớn để đảm bảo nằm trên cùng */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    /* Nền đen mờ */
-    display: flex;
-    /* Dùng flex để căn giữa */
-    align-items: center;
-    /* Căn giữa dọc */
-    justify-content: center;
-    /* Căn giữa ngang */
-    opacity: 0;
-    visibility: hidden;
-    transition:
-      opacity 0.3s ease,
-      visibility 0.3s ease;
-  }
-  
-  /* Kích hoạt hiển thị modal */
-  .modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  /* Hộp nội dung Modal */
-  .modal-content {
-    background-color: #fff;
-    width: 90%;
-    max-width: 600px;
-    /* Độ rộng tối đa */
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    transform: translateY(-20px);
-    transition: transform 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh;
-    /* Không cao quá màn hình */
-  }
-  
-  .modal-overlay.active .modal-content {
-    transform: translateY(0);
-  }
-  
-  /* Header Modal */
-  .modal-header {
-    background-color: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .modal-header h3 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #333;
-  }
-  
-  .close-modal {
-    font-size: 28px;
-    font-weight: bold;
-    color: #aaa;
-    cursor: pointer;
-  }
-  
-  .close-modal:hover {
-    color: #000;
-  }
-  
-  /* Body Modal */
-  .modal-body {
-    padding: 20px;
-    overflow-y: auto;
-    /* Cuộn nếu nội dung dài */
-  }
-  
-  /* Bảng Review */
-  .review-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .review-table td {
-    padding: 10px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
-  }
-  
-  .review-table td:first-child {
-    font-weight: 600;
-    color: #555;
-    width: 40%;
-    background-color: #fafafa;
-  }
-  
-  .review-table td:nth-child(2) {
-    color: #000;
-    font-weight: 500;
-  }
-  
-  /* Footer Modal */
-  .modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    text-align: right;
-    background-color: #fff;
-  }
-  
-  .modal-footer .btn {
-    margin-left: 10px;
-  }
-  
-  /* ================= 4. FORM CONTAINER ================= */
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: var(--bg-page);
+  color: var(--text-dark);
+  height: 100%;
+}
+
+body, button, input, select, textarea {
+  font-family: var(--font-family-base);
+}
+
+body {
+  background: linear-gradient(180deg, #e6ecf3 0%, #edf2f7 100%);
+  color: var(--text-dark);
+  margin: 0;
+  padding: 0 0 40px 0;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+
+/* ================= 1. MENU BAR ================= */
+.menu-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 8px 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 14px;
+  gap: 8px;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.menu-left::-webkit-scrollbar { display: none; }
+
+.menu-left a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 11px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.menu-left a:hover { background: #334155; color: #ffffff; }
+.menu-left a.active-nav { background: #2563eb; color: #ffffff; }
+
+.menu-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.logout-btn {
+  background: #ef4444;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.btn-change-pwd {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.btn-change-pwd:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.badge-pending-count {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 5px;
+}
+
+/* ================= 2. TIÊU ĐỀ TRANG ================= */
+.page-header {
+  max-width: 960px;
+  margin: 10px auto 14px;
+  text-align: center;
+  padding: 0 10px;
+}
+h1 {
+  color: #ea580c;
+  font-size: 21px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ================= 3. KHUNG CAMERA QUÉT QR ================= */
+#qr-reader {
+  display: none;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 14px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+}
+
+/* ================= 4. FORM CARD CHÍNH ================= */
+form#bobinForm {
+  max-width: 960px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  padding: 24px 28px;
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  border: 1.5px solid var(--border);
+  border-top: 4px solid #ea580c;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ================= 5. KHỐI PHÂN ĐOÀN (SECTIONS) ================= */
+.form-section-card {
+  background: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.2s;
+}
+.form-section-card:hover {
+  border-color: #cbd5e1;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px dashed var(--border-light);
+}
+
+.section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.section-icon.icon-blue { background: #eff6ff; color: #2563eb; border-color: #dbeafe; }
+.section-icon.icon-teal { background: #f0fdfa; color: #0d9488; border-color: #ccfbf1; }
+.section-icon.icon-amber { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
+
+.section-title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.section-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ================= 6. LƯỚI TRƯỜNG NHẬP LIỆU ================= */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  align-items: start;
+}
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px 16px;
+  align-items: start;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.required {
+  color: #dc2626;
+  font-weight: 800;
+}
+.label-hint {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: normal;
+}
+
+/* ================= 7. INPUT, SELECT, DATE ================= */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  font-size: 13.5px;
+  background: #ffffff;
+  color: #1e293b;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+input:hover, select:hover {
+  border-color: #94a3b8;
+}
+
+input:focus, select:focus {
+  background: #ffffff;
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.14);
+}
+
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+
+/* Trường chỉ đọc */
+.input-readonly {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 600;
+  cursor: not-allowed;
+  border-color: #e2e8f0 !important;
+}
+
+/* Các trường đặc biệt cần nổi bật */
+.highlight-printlot {
+  background: #f0fdf4 !important;
+  border-color: #86efac !important;
+  color: #15803d !important;
+  font-weight: 800;
+  font-family: var(--font-family-mono);
+}
+.primary-highlight input[type="text"] {
+  border-color: #93c5fd;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+.length-highlight input {
+  font-weight: 800;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+.rack-highlight input {
+  font-weight: 800;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+/* ================= 8. CỤM NHẬP MÃ BOBIN & NÚT QUÉT QR ================= */
+.qr-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+.qr-input-group .suggestions {
+  flex: 1;
+}
+
+.btn-modern {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+  text-decoration: none;
+}
+.btn-modern:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.btn-modern:active {
+  transform: translateY(0);
+}
+.btn-scan {
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #ffffff !important;
+}
+
+/* ================= 9. KHỐI THỜI GIAN HOÀN THÀNH CUỘN ================= */
+.time-group-wrapper {
+  background: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+}
+.time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.manual-time-label {
+  font-size: 12px;
+  color: #0284c7;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  user-select: none;
+}
+.manual-time-label:hover {
+  color: #0369a1;
+}
+.input-realtime {
+  font-family: var(--font-family-mono);
+  font-size: 14.5px !important;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: 0.5px;
+}
+
+/* ================= 10. PHÂN KHU 4: 5 TIÊU CHÍ NGOẠI QUAN ĐÙN ================= */
+.ext-checks-group {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.ext-check-box {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  padding: 8px 6px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.ext-check-box:hover {
+  border-color: #94a3b8;
+  background: #ffffff;
+}
+
+.check-box-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  text-align: center;
+}
+
+.ext-toggle-btn {
+  width: 100%;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--ng-red);
+  color: #ffffff;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.ext-toggle-btn.active {
+  background: var(--ok-green);
+  box-shadow: 0 2px 5px rgba(22, 163, 74, 0.25);
+}
+.ext-toggle-btn:hover {
+  opacity: 0.92;
+}
+
+/* ================= 11. KHỐI GỢI Ý AUTOCOMPLETE ================= */
+.suggestions {
+  position: relative;
+  width: 100%;
+}
+.suggestion-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid #ea580c;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999;
+  display: none;
+}
+.suggestion-item {
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #1e293b;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s;
+}
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+.suggestion-item:hover {
+  background: #fff7ed;
+  color: #ea580c;
+  font-weight: 700;
+}
+
+/* ================= 12. NÚT BẤM HÀNH ĐỘNG (FOOTER FORM) ================= */
+.btn-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1.5px dashed var(--border-light);
+}
+
+.btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.25);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+}
+.btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* ================= 13. TOAST NOTIFICATION ================= */
+.toast-message {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background-color: #16a34a;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  z-index: 99999;
+  font-weight: 700;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  max-width: calc(100vw - 48px);
+}
+.toast-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.toast-success { background-color: #16a34a !important; }
+.toast-error { background-color: #dc2626 !important; }
+.toast-warning { background-color: #f59e0b !important; }
+.toast-info { background-color: #2563eb !important; }
+
+/* ================= 14. RESPONSIVE ================= */
+/* TABLET (iPad, Android Tablet: <= 860px) */
+@media (max-width: 860px) {
   form#bobinForm {
-    max-width: 830px;
-    margin: 0 auto;
-    background: #ffffff;
-    padding: 32px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    display: grid;
+    padding: 20px 18px;
+  }
+  .form-grid-3 {
     grid-template-columns: 1fr 1fr;
-    gap: 20px 30px;
-    align-items: start;
   }
-  /* --- Giao diện nhóm nhập liệu QR Code --- */
-  .qr-input-group {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 5px;
+  .ext-checks-group {
+    grid-template-columns: repeat(3, 1fr);
   }
-  
-  /* Cho phép vùng suggestions (chứa input) co giãn chiếm hết không gian trống */
-  .qr-input-group .suggestions {
-    flex: 1;
-  }
-  
-  /* Đảm bảo ô input bên trong giãn đầy đủ 100% */
-  .qr-input-group input[type="text"] {
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  /* Khung hiển thị camera */
-  #qr-reader {
-    display: none;
-    width: 100%;
-    max-width: 400px;
-  
-    /* Dòng này giúp căn giữa khung camera */
-    margin: 15px auto;
-  
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    overflow: hidden;
-    background-color: #fff; /* Thêm nền trắng cho sạch sẽ */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Thêm chút viền đổ bóng cho đẹp */
-  }
-  label {
-    font-size: 15px;
-    font-weight: 600;
-    color: #4a4a4a;
-    text-transform: none;
-    letter-spacing: 0.3px;
-    margin-bottom: 6px;
-    display: block;
-  }
-  
+}
+
+/* MOBILE SMARTPHONES (iPhone, Android: <= 640px) */
+@media (max-width: 640px) {
+  /* Chống iOS Safari phóng to khi chạm input/select */
   input[type="text"],
   input[type="number"],
   input[type="date"],
   input[type="datetime-local"],
-  select,
-  textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1.5px solid #dcdde1;
-    font-size: 14px;
-    background: #fff;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    color: #2f3640;
-  }
-  
-  input:focus,
-  select:focus {
-    border-color: #0984e3;
-    box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.15);
-    outline: none;
-  }
-  
-  input[readonly] {
-    background-color: #f5f6fa;
-    color: #636e72;
-    border-color: #e5e5e5;
-    cursor: not-allowed;
+  select {
+    font-size: 16px !important;
   }
 
-  /* Custom Checkbox */
-  input[type="checkbox"]#manual_time_toggle {
-      appearance: none;
-      -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
-      border: 1px solid #0284c7;
-      border-radius: 4px;
-      background-color: white;
-      display: inline-block;
-      position: relative;
-      cursor: pointer;
-      outline: none;
-      margin-top: 0;
-      vertical-align: middle;
+  .menu-bar { padding: 8px 10px; }
+  .menu-right span { display: none; }
+
+  form#bobinForm {
+    padding: 16px 12px;
+    border-radius: 10px;
+    gap: 14px;
   }
-  
-  input[type="checkbox"]#manual_time_toggle:checked {
-      background-color: #0284c7;
-      border-color: #0284c7;
+
+  .form-section-card {
+    padding: 12px 10px;
   }
-  
-  input[type="checkbox"]#manual_time_toggle:checked::after {
-      content: '\2714';
-      font-size: 12px;
-      color: white;
-      position: absolute;
-      top: -1px;
-      left: 2px;
-  }
-  
-  /* ================= 5. BUTTONS ================= */
-  .btn-group {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 10px;
-    padding-top: 20px;
-    border-top: 1px solid #f1f2f6;
-  }
-  
-  .btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    border: none;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  /* --- Class màu Gradient dải xanh dương cho nút Scan QR --- */
-  .btn-scan-default {
-    background: linear-gradient(135deg, #0984e3, #0652dd);
-    color: #ffffff;
-    box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3); /* Bóng xanh xuyệt tông */
-    transition: all 0.3s ease; /* Hiệu ứng chuyển màu mượt */
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  
-  /* Hiệu ứng khi rê chuột vào */
-  .btn-scan-default:hover {
-    background: linear-gradient(135deg, #0652dd, #0984e3);
-    box-shadow: 0 6px 10px rgba(9, 132, 227, 0.4);
-  }
-  
-  /* Các class Bootstrap để đổi màu bằng JS */
-  .btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  
-  .btn-primary {
-    background: linear-gradient(135deg, #0984e3, #0652dd);
-    color: #fff;
-    box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3);
-  }
-  
-  .btn-primary:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 6px 15px rgba(9, 132, 227, 0.4);
-  }
-  
-  .btn-secondary {
-    background: #dfe6e9;
-    color: #2d3436;
-  }
-  
-  .btn-secondary:hover {
-    background: #b2bec3;
-  }
-  
-  /* ================= 6. AUTOCOMPLETE (SUGGESTION BOX) ================= */
-  /* Class bao ngoài input để định vị relative */
-  .suggestions {
-    position: relative;
-  }
-  
-  /* Hộp gợi ý thả xuống */
-  .suggestion-box {
-    position: absolute;
-    top: 100%;
-    /* Nằm ngay dưới input */
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid #0984e3;
-    /* Viền xanh cho nổi bật */
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 9999;
-    /* Đảm bảo đè lên các thành phần khác */
-    display: none;
-    /* Ẩn mặc định */
-  }
-  
-  /* Từng dòng gợi ý */
-  .suggestion-item {
-    padding: 10px 12px;
-    font-size: 14px;
-    color: #2d3436;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f2f6;
-  }
-  
-  .suggestion-item:last-child {
-    border-bottom: none;
-  }
-  
-  .suggestion-item:hover {
-    background-color: #f0f9ff;
-    color: #0984e3;
-    font-weight: 600;
-  }
-  
-  /* ================= 7. MESSAGE ================= */
-  #message {
-    max-width: 600px;
-    margin: 20px auto;
-    text-align: center;
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 6px;
-  }
-  
-  /* ================= 8. RESPONSIVE ================= */
-  @media (max-width: 768px) {
-    form#bobinForm {
-      grid-template-columns: 1fr;
-      padding: 20px;
-    }
-  
-    .menu-bar {
-      padding: 0 10px;
-      flex-wrap: wrap;
-      height: auto;
-    }
-  
-    h1 {
-      font-size: 22px;
-    }
-  }
-  
-  /* Modal Styles */
-  .modal-overlay {
-    display: none;
-    /* Mặc định ẩn */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    /* Màu nền tối mờ */
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .modal-overlay.active {
-    display: flex;
-    /* Hiện lên khi có class active */
-  }
-  
-  .modal-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: slideDown 0.3s ease-out;
-  }
-  
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-  }
-  
-  .modal-header h3 {
-    margin: 0;
-    color: #333;
-  }
-  
-  .close-modal {
-    cursor: pointer;
-    font-size: 24px;
-    font-weight: bold;
-    color: #aaa;
-  }
-  
-  .modal-body table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .modal-body table td {
-    padding: 8px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: top;
-  }
-  
-  .modal-body table td:first-child {
-    font-weight: bold;
-    width: 40%;
-    color: #555;
-  }
-  
-  .modal-footer {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
+
+  .form-grid-2,
+  .form-grid-3 {
+    grid-template-columns: 1fr;
     gap: 10px;
   }
-  
-  @keyframes slideDown {
-    from {
-      transform: translateY(-20px);
-      opacity: 0;
-    }
-  
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  
-  /* ================= 9. TOAST MESSAGE ================= */
-  .toast-message {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: #2ecc71;
-    /* Màu xanh lá */
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 9999;
-    font-weight: bold;
-    opacity: 0;
-    transform: translateY(-20px);
-    transition: all 0.5s ease;
-  }
-  
-  .toast-message.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  
-  .toast-error {
-    background-color: #e74c3c;
-    /* Màu đỏ nếu lỗi */
-  }
-  /* ================= BADGE CHỜ HỦY TRÊN MENU ================= */
-.menu-pending-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
 
-.badge-pending-count {
-  background-color: #ef4444; /* Đỏ tươi nổi bật */
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 12px;
-  min-width: 18px;
-  text-align: center;
-  line-height: 1.4;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  .ext-checks-group {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .qr-input-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .qr-input-group .btn-modern {
+    width: 100%;
+    height: 44px;
+  }
+
+  #qr-reader {
+    max-width: 100% !important;
+    margin: 8px 0 12px;
+  }
+
+  .btn-group {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .btn-group .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .toast-message {
+    top: 16px;
+    right: 16px;
+    left: 16px;
+    justify-content: center;
+    text-align: center;
+    max-width: none;
+  }
 }

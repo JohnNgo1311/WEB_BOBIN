@@ -1,0 +1,366 @@
+/**
+ * i18n.css - Giao diện nút chọn ngôn ngữ (Language Switcher) & Modal Quên mật khẩu Local
+ */
+
+/* ================= 1. NÚT CHUYỂN ĐỔI NGÔN NGỮ (LANGUAGE SWITCHER) ================= */
+.lang-switcher-dropdown {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+  font-family: inherit;
+  z-index: 1000;
+}
+
+.lang-btn-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.lang-btn-current:hover {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+}
+
+.lang-btn-current .lang-flag {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.lang-btn-current .lang-arrow {
+  font-size: 9px;
+  opacity: 0.8;
+  transition: transform 0.2s ease;
+}
+
+.lang-switcher-dropdown.open .lang-arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.lang-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 150px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+  list-style: none;
+  margin: 0;
+  z-index: 99999;
+}
+
+.lang-switcher-dropdown.open .lang-dropdown-menu {
+  display: block;
+  animation: langFadeIn 0.15s ease-out;
+}
+
+@keyframes langFadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.lang-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.lang-menu-item:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.lang-menu-item.active {
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.lang-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-item-check {
+  font-size: 12px;
+  opacity: 0;
+}
+
+.lang-menu-item.active .lang-item-check {
+  opacity: 1;
+}
+
+/* Định dạng đặc biệt khi ở trang Login */
+.login-lang-wrapper {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 100;
+}
+
+.login-lang-wrapper .lang-btn-current {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.login-lang-wrapper .lang-btn-current:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.login-lang-wrapper .lang-dropdown-menu {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.login-lang-wrapper .lang-menu-item {
+  color: #334155;
+}
+
+.login-lang-wrapper .lang-menu-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.login-lang-wrapper .lang-menu-item.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* ================= 2. MODAL QUY TRÌNH QUÊN MẬT KHẨU LOCAL ================= */
+.fp-modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.fp-modal-backdrop.show {
+  display: flex;
+  animation: fpModalFadeIn 0.2s ease-out;
+}
+
+@keyframes fpModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fp-modal-card {
+  background: #ffffff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: fpCardZoom 0.2s ease-out;
+}
+
+@keyframes fpCardZoom {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fp-modal-header {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fp-header-icon {
+  background: #2563eb;
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fp-header-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.fp-btn-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.fp-btn-close:hover {
+  color: #ffffff;
+}
+
+.fp-modal-body {
+  padding: 24px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.fp-notice-banner {
+  background: #eff6ff;
+  border-left: 4px solid #2563eb;
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 13.5px;
+  color: #1e40af;
+}
+
+.fp-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.fp-step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.fp-step-num {
+  background: #e0e7ff;
+  color: #3730a3;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.fp-step-content strong {
+  color: #0f172a;
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.fp-step-content p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.fp-hotline-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.fp-hotline-title {
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fp-hotline-numbers {
+  font-weight: 600;
+  color: #2563eb;
+  font-size: 13px;
+}
+
+.fp-modal-footer {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 14px 24px;
+  text-align: right;
+}
+
+.fp-btn-ack {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.fp-btn-ack:hover {
+  background: #1d4ed8;
+}
+
+/* Link quên mật khẩu trong form login */
+.forgot-pwd-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.forgot-pwd-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}

@@ -82,8 +82,99 @@
             perm_save_success: 'Cập nhật phân quyền thành công!',
             perm_select_employee_prompt: 'Vui lòng chọn hoặc tra cứu một nhân viên từ danh sách để thiết lập quyền thao tác.',
             perm_quick_select: 'Chọn nhanh nhân viên:',
-            perm_active_status: 'Đang hoạt động', perm_inactive_status: 'Đã khóa',
-            perm_role_label: 'Vai trò chính', sidebar_toggle: 'Thu gọn / Mở rộng',
+            perm_role_label: 'Vai trò chính',
+            perm_quick_select_ph: '-- Chọn nhân viên từ danh sách --',
+            perm_empty_subtext: 'Nhập mã nhân viên vào ô tìm kiếm hoặc chọn một nhân viên từ danh mục thả xuống ở trên để bắt đầu cấu hình quyền hạn.',
+            perm_lbl_emp_code: 'Mã NV:',
+            perm_lbl_cost_center: 'Mã bộ phận:',
+            perm_lbl_username: 'Tài khoản:',
+            perm_lbl_updated: 'Cập nhật:',
+            perm_btn_toggle_group: 'Chọn / Bỏ nhóm này',
+            perm_summary_granted: 'Đã cấp:',
+            perm_summary_operations: 'quyền hạn thao tác',
+            perm_badge_dept: 'Bộ phận:',
+            perm_badge_no_dept: 'Chưa gán bộ phận',
+            perm_badge_custom: 'Quyền tùy chỉnh',
+            perm_badge_role_default: 'Mặc định theo Role',
+            perm_msg_input_code: 'Vui lòng nhập hoặc chọn mã nhân viên.',
+            perm_msg_searching: 'Đang tìm...',
+            perm_msg_not_found: 'Không tìm thấy nhân viên.',
+            perm_msg_server_error: 'Lỗi kết nối máy chủ:',
+            perm_msg_reset_confirm: 'Khôi phục quyền về mặc định theo vai trò [{role}] cho nhân viên này?',
+            perm_msg_reset_failed: 'Khôi phục thất bại.',
+            perm_msg_saving: 'Đang lưu...',
+            perm_msg_save_failed: 'Lưu thất bại.',
+            qc_edit_subtitle: 'Điều chỉnh kết quả kiểm tra ngoại quan QC & kiểm soát chất lượng Bobin',
+            qc_kpi_total: 'Tổng Bobin QC',
+            qc_kpi_pass: 'Đạt ngoại quan (OK)',
+            qc_kpi_defect: 'Có lỗi ngoại quan (NG)',
+            qc_kpi_checked: 'Đã kiểm tra QC',
+            qc_criteria_title: 'Tiêu chí ngoại quan QC:',
+            qc_btn_edit: 'Chỉnh sửa QC',
+            qc_btn_cancel: 'Hủy sửa',
+            qc_btn_save: 'Cập nhật QC',
+            qc_empty_list: 'Không có Bobin nào cần điều chỉnh QC.',
+            winding_edit_subtitle: 'Điều chỉnh thông số ca kíp, máy cuộn và kiểm tra thông khí công đoạn Cuộn',
+            winding_kpi_total: 'Tổng Bobin đã cuộn',
+            winding_kpi_flow_ok: 'Thông khí Đạt',
+            winding_kpi_flow_ng: 'Thông khí Không đạt',
+            winding_kpi_recent: 'Cuộn gần đây (3 ngày)',
+            winding_btn_edit: 'Chỉnh sửa Cuộn',
+            winding_btn_cancel: 'Hủy sửa',
+            winding_btn_save: 'Cập nhật Cuộn',
+            winding_empty_list: 'Không có Bobin nào cần điều chỉnh Cuộn.',
+            // Extrusion Edit & Common Bobin Fields (TASK-020)
+            ext_edit_subtitle: 'Điều chỉnh thông số sản xuất công đoạn Đùn & cập nhật tình trạng Bobin',
+            ext_kpi_total: 'Tổng Bobin chờ QC',
+            ext_kpi_check_ok: 'Đùn Check Đạt chuẩn (5/5 OK)',
+            ext_kpi_check_ng: 'Đùn Check Có lỗi (NG)',
+            ext_kpi_unchecked: 'Chưa kiểm tra QC',
+            ext_criteria_title: 'Tiêu chí Đùn Check (5 tiêu chuẩn):',
+            ext_btn_edit: 'Chỉnh sửa Đùn',
+            ext_btn_cancel: 'Hủy sửa',
+            ext_btn_save: 'Cập nhật Đùn',
+            ext_btn_delete: 'Hủy Bobin',
+            ext_empty_list: 'Không có Bobin nào cần điều chỉnh Đùn.',
+            ext_badge_stage: 'EXTRUSION PROCESS EDIT',
+            ext_sec_specs: 'Thông số sản xuất & Quy cách',
+            ext_sec_materials: 'Thiết bị máy đùn & Vật liệu',
+            ext_sec_personnel: 'Nhân sự & Thời gian thực hiện',
+            field_product: 'Mã sản phẩm:',
+            field_print_lot: 'Lot in:',
+            field_length: 'Chiều dài (m):',
+            field_rack: 'Vị trí Rack:',
+            field_bobin_type: 'Loại Bobin:',
+            field_shift: 'Ca sản xuất:',
+            field_machine: 'Số máy đùn:',
+            field_material: 'Vật liệu:',
+            field_grinding: 'Số lần nghiền:',
+            field_material_lot: 'Lot vật liệu:',
+            field_employee_code: 'Mã nhân viên:',
+            field_employee_name: 'Họ tên nhân viên:',
+            field_rack_pos: 'Vị trí đặt (Rack):',
+            field_ext_date: 'Ngày đùn:',
+            field_finish_time: 'Thời điểm hoàn thành:',
+            field_inspector_code: 'Mã nhân viên QC:',
+            field_inspector_name: 'Họ tên nhân viên QC:',
+            field_winding_machine: 'Máy cuộn:',
+            field_flow_test: 'Test thông khí:',
+            field_winding_emp_code: 'Mã nhân viên cuộn:',
+            field_winding_emp_name: 'Họ tên nhân viên cuộn:',
+            field_winding_note: 'Ghi chú công đoạn cuộn:',
+            winding_note_ph: 'Nhập ghi chú hoặc nguyên nhân...',
+            status_busy_unchecked: 'CHƯA KIỂM TRA QC',
+            status_busy_checked: 'ĐÃ KIỂM TRA QC',
+            status_rolled: 'ĐÃ CUỘN',
+            crit_diameter: 'Đường kính',
+            crit_gel: 'Gel',
+            crit_foreign: 'Dị vật',
+            crit_color: 'Màu sắc',
+            crit_print: 'Chữ in',
+            ph_input_machine: 'Nhập số máy...',
+            ph_input_material: 'Nhập vật liệu...',
+            ph_input_grind: '0, 1 hoặc 2',
+            ph_select_rack: 'Chọn mã Rack...',
+            sidebar_toggle: 'Thu gọn / Mở rộng',
             sidebar_nav_title_extrusion_stage: 'CÔNG ĐOẠN ĐÙN', sidebar_nav_title_qc_stage: 'CÔNG ĐOẠN QC',
             sidebar_nav_title_winding_stage: 'CÔNG ĐOẠN CUỘN', sidebar_nav_title_monitor: 'GIÁM SÁT & BÁO CÁO',
             sidebar_nav_title_system: 'QUẢN TRỊ HỆ THỐNG',
@@ -154,9 +245,9 @@
             page_extrusion: 'Nhóm đùn - Nhập thông tin Bobin',
             page_extrusion_edit: 'Nhóm đùn - Điều chỉnh thông tin Bobin',
             page_qc: 'Nhóm QC - Kiểm tra chất lượng Bobin',
-            page_qc_edit: 'Quản trị - Điều chỉnh thông tin kiểm tra QC',
+            page_qc_edit: 'Nhóm QC - Điều chỉnh thông tin kiểm tra QC',
             page_winding: 'Nhóm Cuộn - Xác nhận hoàn thành Bobin',
-            page_winding_edit: 'Quản trị - Điều chỉnh thông tin công đoạn Cuộn',
+            page_winding_edit: 'Nhóm Cuộn - Điều chỉnh thông tin công đoạn Cuộn',
             page_bobin_detail: 'Danh sách Bobin hiện tại',
             page_bobin_history: 'Lịch sử Bobin',
             page_pending_cancel: 'Danh sách Bobin chờ hủy',
@@ -174,7 +265,7 @@
             total_bobin: 'Tổng số Bobin',
             btn_save_bobin: '💾 Lưu Bobin', btn_update_bobin: 'Cập nhật Bobin',
             btn_confirm_qc: 'Xác nhận kiểm tra QC', btn_confirm_winding: 'Xác nhận hoàn thành cuộn',
-            btn_cancel_bobin: 'Báo hủy Bobin', btn_restore_bobin: 'Khôi phục Bobin',
+            btn_cancel_bobin: 'Hủy Bobin', btn_restore_bobin: 'Khôi phục Bobin',
             status_ready: 'Đã cuộn', status_unchecked: 'Chưa QC',
             status_checked: 'Đang QC', status_pending_cancel: 'Chờ hủy',
             status_cancelled: 'Đã hủy', status_extruded: 'Đã đùn',
@@ -225,15 +316,19 @@
             emp_reset_custom_label: '⚙️ Đặt mật khẩu tùy chỉnh khác (Nếu cần)',
             emp_reset_custom_ph: 'Để trống = Mặc định 123',
             emp_reset_btn: '⚡ Khôi phục về 123',
+            emp_cost_center: 'Mã bộ phận',
+            emp_all_cost_centers: '-- Tất cả bộ phận --',
+            emp_cost_center_ph: 'VD: A00330, A00340...',
+            emp_cost_center_hint: 'Mã bộ phận hoặc trung tâm chi phí của nhân viên.',
             emp_import_title: 'Chọn file Excel / CSV nhân viên',
             emp_import_sub: 'Hệ thống hỗ trợ file .CSV (UTF-8) xuất trực tiếp từ Microsoft Excel',
             emp_import_update: 'Cập nhật thông tin nếu Mã nhân viên đã có trên hệ thống',
             emp_import_col_title: '📌 Cấu trúc các cột chuẩn trong file:',
             emp_import_col1: 'Cột 1: Mã NV (Bắt buộc)',
             emp_import_col2: 'Cột 2: Họ và tên (Bắt buộc)',
-            emp_import_col3: 'Cột 3: Vai trò (extrusion/qc/winding/admin)',
-            emp_import_col4: 'Cột 4: Tên đăng nhập (Có thể để trống)',
-            emp_import_col5: 'Cột 5: Trạng thái (1: Làm việc, 0: Khóa)',
+            emp_import_col3: 'Cột 3: Mã bộ phận (Cost Center, VD: A00330)',
+            emp_import_col4: 'Cột 4: Vai trò (extrusion/qc/winding/admin)',
+            emp_import_col5: 'Cột 5: Tên đăng nhập (Có thể để trống)',
             emp_import_download: 'Tải file mẫu chuẩn (Mau_nhap_nhan_vien_SMC.csv)',
             emp_import_start: '🚀 Bắt đầu nhập dữ liệu',
             emp_import_hint: 'Chọn file định dạng .csv hoặc .xlsx theo cấu trúc file mẫu để nhập hàng loạt.',
@@ -287,6 +382,18 @@
             btn_scan_qr: 'Quét QR',
             // Placeholders
             ph_scan_bobin: 'Nhập hoặc quét mã Bobin...',
+            search_keyword_ph: 'Nhập hoặc quét mã Bobin...',
+            qc_note_ph: 'Ghi chú ngoại quan...',
+            qc_note_explain_ph: 'Nhập ghi chú giải trình lý do (nếu có)...',
+            ph_winding_machine_input: 'Nhập hoặc chọn máy cuộn...',
+            ph_winding_note_explain: 'Nhập ghi chú máy cuộn, tình trạng bất thường (nếu có)...',
+            ph_length_hint: 'VD: 1500',
+            ph_bobin_id_example: 'VD: BB29099',
+            ph_qr_scan_result: 'Mã QR sẽ hiển thị ở đây...',
+            lang_ph_key_name: 'vd: my_custom_label',
+            lang_ph_vi_content: 'Nội dung Tiếng Việt...',
+            lang_ph_en_content: 'English text...',
+            lang_ph_ja_content: '日本語テキスト...',
             ph_auto_size: 'Tự động theo mã Bobin',
             ph_search_product: 'Gõ để tìm mã sản phẩm...',
             ph_select_machine: 'Chọn số máy đùn...',
@@ -298,7 +405,27 @@
             // Pagination
             page_prev: '‹ Trước',
             page_next: 'Sau ›',
-            page_info: 'Trang {current} / {total} (Tổng {records} Bobin)'
+            page_info: 'Trang {current} / {total} (Tổng {records} Bobin)',
+            // Thông báo Toast & Hệ thống
+            toast_saved_success: 'Lưu thành công!',
+            toast_updated_success: 'Cập nhật thành công!',
+            toast_deleted_success: 'Xóa thành công!',
+            toast_cancelled_success: 'Đã hủy thành công!',
+            toast_reset_success: 'Khôi phục thành công!',
+            toast_copied_success: 'Đã copy nội dung!',
+            toast_error_system: 'Đã xảy ra lỗi hệ thống / kết nối!',
+            toast_error_network: 'Lỗi kết nối máy chủ!',
+            toast_error_input: 'Vui lòng kiểm tra lại thông tin nhập liệu!',
+            toast_error_pwd: 'Mật khẩu xác nhận không chính xác!',
+            toast_qr_scanned: 'Đã quét mã: ',
+            toast_qr_cam_error: 'Không thể mở máy ảnh hoặc bị từ chối quyền truy cập!',
+            warn_select_history_first: 'Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!',
+            ext_cancel_edit_msg: 'Đã hủy bỏ thay đổi',
+            lang_msg_enter_key_vi: 'Vui lòng nhập Mã từ khóa (Key) và bản dịch Tiếng Việt!',
+            lang_msg_key_exists: 'Từ khóa đã tồn tại trong danh mục!',
+            lang_msg_add_success: 'Thêm từ khóa mới thành công!',
+            lang_msg_save_all_success: 'Lưu toàn bộ thay đổi từ điển thành công!',
+            lang_msg_reset_all_success: 'Đã khôi phục toàn bộ từ điển về mặc định!'
         },
 
         en: {
@@ -375,8 +502,99 @@
             perm_save_success: 'Permissions updated successfully!',
             perm_select_employee_prompt: 'Please select or search for an employee from the list to configure permissions.',
             perm_quick_select: 'Quick Select Employee:',
-            perm_active_status: 'Active', perm_inactive_status: 'Deactivated',
-            perm_role_label: 'Primary Role', sidebar_toggle: 'Collapse / Expand',
+            perm_role_label: 'Primary Role',
+            perm_quick_select_ph: '-- Select employee from list --',
+            perm_empty_subtext: 'Enter employee ID in the search box or select an employee from the dropdown above to start configuring permissions.',
+            perm_lbl_emp_code: 'Employee ID:',
+            perm_lbl_cost_center: 'Cost Center:',
+            perm_lbl_username: 'Username:',
+            perm_lbl_updated: 'Updated:',
+            perm_btn_toggle_group: 'Toggle Group',
+            perm_summary_granted: 'Granted:',
+            perm_summary_operations: 'operational permissions',
+            perm_badge_dept: 'Department:',
+            perm_badge_no_dept: 'Unassigned Department',
+            perm_badge_custom: 'Custom Permissions',
+            perm_badge_role_default: 'Role Default',
+            perm_msg_input_code: 'Please enter or select an employee ID.',
+            perm_msg_searching: 'Searching...',
+            perm_msg_not_found: 'Employee not found.',
+            perm_msg_server_error: 'Server connection error:',
+            perm_msg_reset_confirm: 'Reset permissions to defaults for role [{role}] for this employee?',
+            perm_msg_reset_failed: 'Reset failed.',
+            perm_msg_saving: 'Saving...',
+            perm_msg_save_failed: 'Save failed.',
+            qc_edit_subtitle: 'Adjust QC visual inspection results & monitor bobin quality',
+            qc_kpi_total: 'Total QC Bobins',
+            qc_kpi_pass: 'Visual Pass (OK)',
+            qc_kpi_defect: 'Defect Detected (NG)',
+            qc_kpi_checked: 'QC Checked',
+            qc_criteria_title: 'QC Visual Inspection Criteria:',
+            qc_btn_edit: 'Edit QC',
+            qc_btn_cancel: 'Cancel Edit',
+            qc_btn_save: 'Save QC',
+            qc_empty_list: 'No bobins requiring QC adjustment.',
+            winding_edit_subtitle: 'Adjust shift parameters, winding machine & air flow inspection',
+            winding_kpi_total: 'Total Rolled Bobins',
+            winding_kpi_flow_ok: 'Air Flow Pass',
+            winding_kpi_flow_ng: 'Air Flow Fail',
+            winding_kpi_recent: 'Recent Rolled (3 Days)',
+            winding_btn_edit: 'Edit Winding',
+            winding_btn_cancel: 'Cancel Edit',
+            winding_btn_save: 'Save Winding',
+            winding_empty_list: 'No bobins requiring Winding adjustment.',
+            // Extrusion Edit & Common Bobin Fields (TASK-020)
+            ext_edit_subtitle: 'Adjust Extrusion production parameters & update Bobin status',
+            ext_kpi_total: 'Total Pending QC',
+            ext_kpi_check_ok: 'Extrusion Check Pass (5/5 OK)',
+            ext_kpi_check_ng: 'Extrusion Check Defect (NG)',
+            ext_kpi_unchecked: 'Pending QC Inspection',
+            ext_criteria_title: 'Extrusion 5-Point Inspection Criteria:',
+            ext_btn_edit: 'Edit Extrusion',
+            ext_btn_cancel: 'Cancel Edit',
+            ext_btn_save: 'Update Extrusion',
+            ext_btn_delete: 'Cancel Bobin',
+            ext_empty_list: 'No bobins found requiring extrusion adjustment.',
+            ext_badge_stage: 'EXTRUSION PROCESS EDIT',
+            ext_sec_specs: 'Production Specifications & Dimensions',
+            ext_sec_materials: 'Extrusion Equipment & Raw Material',
+            ext_sec_personnel: 'Personnel & Timestamps',
+            field_product: 'Product Code:',
+            field_print_lot: 'Print Lot:',
+            field_length: 'Length (m):',
+            field_rack: 'Rack Location:',
+            field_bobin_type: 'Bobin Type:',
+            field_shift: 'Production Shift:',
+            field_machine: 'Extruder Machine:',
+            field_material: 'Material:',
+            field_grinding: 'Grinding Times:',
+            field_material_lot: 'Material Lot:',
+            field_employee_code: 'Employee ID:',
+            field_employee_name: 'Employee Name:',
+            field_rack_pos: 'Rack Placement:',
+            field_ext_date: 'Extrusion Date:',
+            field_finish_time: 'Completion Time:',
+            field_inspector_code: 'QC Inspector ID:',
+            field_inspector_name: 'QC Inspector Name:',
+            field_winding_machine: 'Winding Machine:',
+            field_flow_test: 'Airflow Test:',
+            field_winding_emp_code: 'Winding Operator ID:',
+            field_winding_emp_name: 'Winding Operator Name:',
+            field_winding_note: 'Winding Stage Note:',
+            winding_note_ph: 'Enter notes or causes...',
+            status_busy_unchecked: 'UNCHECKED',
+            status_busy_checked: 'QC CHECKED',
+            status_rolled: 'ROLLED',
+            crit_diameter: 'Diameter',
+            crit_gel: 'Gel',
+            crit_foreign: 'Foreign Object',
+            crit_color: 'Color',
+            crit_print: 'Print Quality',
+            ph_input_machine: 'Enter machine no...',
+            ph_input_material: 'Enter material...',
+            ph_input_grind: '0, 1 or 2',
+            ph_select_rack: 'Select Rack code...',
+            sidebar_toggle: 'Collapse / Expand',
             sidebar_nav_title_extrusion_stage: 'PRODUCTION', sidebar_nav_title_qc_stage: 'QUALITY CONTROL',
             sidebar_nav_title_winding_stage: 'WINDING STAGE', sidebar_nav_title_monitor: 'MONITORING & REPORTS',
             sidebar_nav_title_system: 'SYSTEM ADMIN',
@@ -447,9 +665,9 @@
             page_extrusion: 'Extrusion - Input Bobin Data',
             page_extrusion_edit: 'Extrusion - Edit Bobin Data',
             page_qc: 'QC - Quality Inspection',
-            page_qc_edit: 'Admin - Edit QC Inspection Data',
+            page_qc_edit: 'QC - Edit QC Inspection Data',
             page_winding: 'Winding - Finalize Bobin',
-            page_winding_edit: 'Admin - Edit Winding Process Data',
+            page_winding_edit: 'Winding - Edit Winding Process Data',
             page_bobin_detail: 'Current Bobin Inventory',
             page_bobin_history: 'Bobin Activity History',
             page_pending_cancel: 'Pending Scrap Bobin List',
@@ -467,7 +685,7 @@
             total_bobin: 'Total Bobins',
             btn_save_bobin: '💾 Save Bobin', btn_update_bobin: 'Update Bobin',
             btn_confirm_qc: 'Confirm QC Inspection', btn_confirm_winding: 'Confirm Winding Completion',
-            btn_cancel_bobin: 'Report Bobin Scrap', btn_restore_bobin: 'Restore Bobin',
+            btn_cancel_bobin: 'Cancel Bobin', btn_restore_bobin: 'Restore Bobin',
             status_ready: 'Ready', status_unchecked: 'Unchecked',
             status_checked: 'QC Checked', status_pending_cancel: 'Pending Scrap',
             status_cancelled: 'Scrapped', status_extruded: 'Extruded',
@@ -518,15 +736,19 @@
             emp_reset_custom_label: '⚙️ Set custom password (Optional)',
             emp_reset_custom_ph: 'Leave blank = Default 123',
             emp_reset_btn: '⚡ Reset to 123',
+            emp_cost_center: 'Cost Center',
+            emp_all_cost_centers: '-- All Cost Centers --',
+            emp_cost_center_ph: 'e.g. A00330, A00340...',
+            emp_cost_center_hint: 'Department or cost center code of the employee.',
             emp_import_title: 'Select Employee Excel / CSV',
             emp_import_sub: 'Supports .CSV (UTF-8) exported directly from Microsoft Excel',
             emp_import_update: 'Update info if Employee ID already exists',
             emp_import_col_title: '📌 Required CSV Column Structure:',
             emp_import_col1: 'Column 1: Employee ID (Required)',
             emp_import_col2: 'Column 2: Full Name (Required)',
-            emp_import_col3: 'Column 3: Role (extrusion/qc/winding/admin)',
-            emp_import_col4: 'Column 4: Username (Optional)',
-            emp_import_col5: 'Column 5: Status (1: Active, 0: Locked)',
+            emp_import_col3: 'Column 3: Cost Center (e.g. A00330)',
+            emp_import_col4: 'Column 4: Role (extrusion/qc/winding/admin)',
+            emp_import_col5: 'Column 5: Username (Optional)',
             emp_import_download: 'Download sample template (Employee_Import_SMC.csv)',
             emp_import_start: '🚀 Start Import',
             emp_import_hint: 'Select a .csv or .xlsx file structured like the sample template.',
@@ -580,6 +802,18 @@
             btn_scan_qr: 'Scan QR',
             // Placeholders
             ph_scan_bobin: 'Enter or scan Bobin code...',
+            search_keyword_ph: 'Enter or scan Bobin code...',
+            qc_note_ph: 'QC visual inspection note...',
+            qc_note_explain_ph: 'Enter explanatory note (if any)...',
+            ph_winding_machine_input: 'Enter or select winding machine...',
+            ph_winding_note_explain: 'Enter winding notes, abnormal issues (if any)...',
+            ph_length_hint: 'e.g. 1500',
+            ph_bobin_id_example: 'e.g. BB29099',
+            ph_qr_scan_result: 'QR code will appear here...',
+            lang_ph_key_name: 'e.g. my_custom_label',
+            lang_ph_vi_content: 'Vietnamese content...',
+            lang_ph_en_content: 'English content...',
+            lang_ph_ja_content: 'Japanese content...',
             ph_auto_size: 'Auto generated by Bobin code',
             ph_search_product: 'Type to search product code...',
             ph_select_machine: 'Select extruder machine...',
@@ -591,7 +825,27 @@
             // Pagination
             page_prev: '‹ Prev',
             page_next: 'Next ›',
-            page_info: 'Page {current} / {total} (Total {records} Bobins)'
+            page_info: 'Page {current} / {total} (Total {records} Bobins)',
+            // Toast & System Notifications
+            toast_saved_success: 'Saved successfully!',
+            toast_updated_success: 'Updated successfully!',
+            toast_deleted_success: 'Deleted successfully!',
+            toast_cancelled_success: 'Cancelled successfully!',
+            toast_reset_success: 'Reset successfully!',
+            toast_copied_success: 'Copied to clipboard!',
+            toast_error_system: 'System or connection error occurred!',
+            toast_error_network: 'Server connection error!',
+            toast_error_input: 'Please check the input information!',
+            toast_error_pwd: 'Confirmation password is incorrect!',
+            toast_qr_scanned: 'QR scanned: ',
+            toast_qr_cam_error: 'Cannot open camera or permission denied!',
+            warn_select_history_first: 'Please select at least 1 history record before exporting!',
+            ext_cancel_edit_msg: 'Changes cancelled',
+            lang_msg_enter_key_vi: 'Please enter the Key and Vietnamese translation!',
+            lang_msg_key_exists: 'Keyword already exists in the dictionary!',
+            lang_msg_add_success: 'New keyword added successfully!',
+            lang_msg_save_all_success: 'All dictionary changes saved successfully!',
+            lang_msg_reset_all_success: 'All dictionary entries reset to default!'
         },
 
         ja: {
@@ -668,8 +922,99 @@
             perm_save_success: '権限を正常に更新しました！',
             perm_select_employee_prompt: 'リストから従業員を選択または検索して権限を設定してください。',
             perm_quick_select: '従業員クイック選択:',
-            perm_active_status: '有効', perm_inactive_status: '停止中',
-            perm_role_label: '基本役職', sidebar_toggle: '折りたたみ / 展開',
+            perm_role_label: '基本役職',
+            perm_quick_select_ph: '-- リストから従業員を選択 --',
+            perm_empty_subtext: '社員番号を入力するか、上記のドロップダウンから選択して権限設定を開始してください。',
+            perm_lbl_emp_code: '社員番号:',
+            perm_lbl_cost_center: '部門コード:',
+            perm_lbl_username: 'アカウント:',
+            perm_lbl_updated: '更新:',
+            perm_btn_toggle_group: 'このグループを選択/解除',
+            perm_summary_granted: '付与済:',
+            perm_summary_operations: '操作権限',
+            perm_badge_dept: '部門:',
+            perm_badge_no_dept: '部門未設定',
+            perm_badge_custom: 'カスタム権限',
+            perm_badge_role_default: '役職デフォルト',
+            perm_msg_input_code: '社員番号を入力または選択してください。',
+            perm_msg_searching: '検索中...',
+            perm_msg_not_found: '従業員が見つかりません。',
+            perm_msg_server_error: 'サーバー接続エラー:',
+            perm_msg_reset_confirm: 'この従業員の権限を役職【{role}】の初期値にリセットしますか？',
+            perm_msg_reset_failed: 'リセットに失敗しました。',
+            perm_msg_saving: '保存中...',
+            perm_msg_save_failed: '保存に失敗しました。',
+            qc_edit_subtitle: 'QC外観検査結果の調整およびボビン品質管理',
+            qc_kpi_total: '総QCボビン数',
+            qc_kpi_pass: '外観合格 (OK)',
+            qc_kpi_defect: '外観異常 (NG)',
+            qc_kpi_checked: 'QC検査完了',
+            qc_criteria_title: 'QC外観検査項目:',
+            qc_btn_edit: 'QC編集',
+            qc_btn_cancel: '編集キャンセル',
+            qc_btn_save: 'QC更新',
+            qc_empty_list: 'QC調整が必要なボビンはありません。',
+            winding_edit_subtitle: 'シフト情報・巻取機および通気テスト結果の調整',
+            winding_kpi_total: '総巻取完了ボビン数',
+            winding_kpi_flow_ok: '通気テスト合格',
+            winding_kpi_flow_ng: '通気テスト不合格',
+            winding_kpi_recent: '直近3日間の巻取',
+            winding_btn_edit: '巻取編集',
+            winding_btn_cancel: '編集キャンセル',
+            winding_btn_save: '巻取更新',
+            winding_empty_list: '巻取調整が必要なボビンはありません。',
+            // Extrusion Edit & Common Bobin Fields (TASK-020)
+            ext_edit_subtitle: '押出製造パラメータの調整およびボビン状態の更新',
+            ext_kpi_total: 'QC検査待ち総数',
+            ext_kpi_check_ok: '押出検査合格 (5/5 OK)',
+            ext_kpi_check_ng: '押出検査異常 (NG)',
+            ext_kpi_unchecked: '未QC検査',
+            ext_criteria_title: '押出5項目検査基準:',
+            ext_btn_edit: '押出編集',
+            ext_btn_cancel: '編集取消',
+            ext_btn_save: '押出更新',
+            ext_btn_delete: 'ボビン廃棄',
+            ext_empty_list: '押出調整が必要なボビンはありません。',
+            ext_badge_stage: 'EXTRUSION PROCESS EDIT',
+            ext_sec_specs: '製造仕様および寸法規格',
+            ext_sec_materials: '押出設備および原材料情報',
+            ext_sec_personnel: '作業担当者および完了日時',
+            field_product: '製品コード:',
+            field_print_lot: '印字ロット:',
+            field_length: '長さ (m):',
+            field_rack: 'ラック位置:',
+            field_bobin_type: 'ボビン種別:',
+            field_shift: '製造シフト:',
+            field_machine: '押出機番号:',
+            field_material: '材料:',
+            field_grinding: '粉砕回数:',
+            field_material_lot: '材料ロット:',
+            field_employee_code: '社員番号:',
+            field_employee_name: '氏名:',
+            field_rack_pos: 'ラック配置位置:',
+            field_ext_date: '押出日:',
+            field_finish_time: '完了日時:',
+            field_inspector_code: 'QC検査員番号:',
+            field_inspector_name: 'QC検査員氏名:',
+            field_winding_machine: '巻取機:',
+            field_flow_test: '通気テスト:',
+            field_winding_emp_code: '巻取作業者番号:',
+            field_winding_emp_name: '巻取作業者氏名:',
+            field_winding_note: '巻取工程備考:',
+            winding_note_ph: '備考または原因を入力...',
+            status_busy_unchecked: '未QC検査',
+            status_busy_checked: 'QC検査済',
+            status_rolled: '巻取済',
+            crit_diameter: '外径',
+            crit_gel: 'ゲル',
+            crit_foreign: '異物',
+            crit_color: '色調',
+            crit_print: '印字',
+            ph_input_machine: '号機番号を入力...',
+            ph_input_material: '材料を入力...',
+            ph_input_grind: '0、1または2',
+            ph_select_rack: 'ラックを選択...',
+            sidebar_toggle: '折りたたみ / 展開',
             sidebar_nav_title_extrusion_stage: '製造 (押出)', sidebar_nav_title_qc_stage: '品質管理 (QC)',
             sidebar_nav_title_winding_stage: '巻取完了', sidebar_nav_title_monitor: '監視・レポート',
             sidebar_nav_title_system: 'システム管理',
@@ -760,7 +1105,7 @@
             total_bobin: 'ボビン総数',
             btn_save_bobin: '💾 ボビン保存', btn_update_bobin: 'ボビン更新',
             btn_confirm_qc: 'QC検査確定', btn_confirm_winding: '巻取完了確定',
-            btn_cancel_bobin: 'ボビン廃棄登録', btn_restore_bobin: 'ボビン復帰',
+            btn_cancel_bobin: 'ボビン廃棄', btn_restore_bobin: 'ボビン復帰',
             status_ready: '巻取済', status_unchecked: '未検査',
             status_checked: 'QC済', status_pending_cancel: '廃棄待ち',
             status_cancelled: '廃棄済', status_extruded: '押出済',
@@ -811,15 +1156,19 @@
             emp_reset_custom_label: '⚙️ カスタムパスワードの設定（任意）',
             emp_reset_custom_ph: '空白 = デフォルト123',
             emp_reset_btn: '⚡ 123にリセット',
+            emp_cost_center: '部門コード (Cost Center)',
+            emp_all_cost_centers: '-- すべての部門 --',
+            emp_cost_center_ph: '例：A00330、A00340...',
+            emp_cost_center_hint: '従業員の所属部門またはコストセンターコード。',
             emp_import_title: '従業員Excel/CSVファイルを選択',
             emp_import_sub: 'Microsoft ExcelからエクスポートされたCSV（UTF-8）に対応',
             emp_import_update: '社員番号が既に存在する場合は情報を更新',
             emp_import_col_title: '📌 ファイルの標準列構造：',
             emp_import_col1: '列1：社員番号（必須）',
             emp_import_col2: '列2：氏名（必須）',
-            emp_import_col3: '列3：役職（extrusion/qc/winding/admin）',
-            emp_import_col4: '列4：ログインID（省略可）',
-            emp_import_col5: '列5：状態（1：在職中、0：ロック）',
+            emp_import_col3: '列3：部門コード (Cost Center, 例: A00330)',
+            emp_import_col4: '列4：役職 (extrusion/qc/winding/admin)',
+            emp_import_col5: '列5：ログインID (省略可)',
             emp_import_download: 'ひな形ファイルをダウンロード（従業員インポートひな形.csv）',
             emp_import_start: '🚀 インポート開始',
             emp_import_hint: 'ひな形に沿った.csvまたは.xlsxファイルを選択してください。',
@@ -873,6 +1222,18 @@
             btn_scan_qr: 'QRスキャン',
             // Placeholders
             ph_scan_bobin: 'ボビン番号を入力またはスキャン...',
+            search_keyword_ph: 'ボビン番号を入力またはスキャン...',
+            qc_note_ph: 'QC外観検査メモ...',
+            qc_note_explain_ph: '理由の説明を入力（該当する場合）...',
+            ph_winding_machine_input: '巻取機を入力または選択...',
+            ph_winding_note_explain: '巻取備考、異常状況を入力（該当する場合）...',
+            ph_length_hint: '例：1500',
+            ph_bobin_id_example: '例：BB29099',
+            ph_qr_scan_result: 'QRコードがここに表示されます...',
+            lang_ph_key_name: '例：my_custom_label',
+            lang_ph_vi_content: 'ベトナム語の内容...',
+            lang_ph_en_content: '英語の内容...',
+            lang_ph_ja_content: '日本語の内容...',
             ph_auto_size: 'ボビン番号から自動',
             ph_search_product: '製品コードを検索...',
             ph_select_machine: '押出機を選択...',
@@ -884,7 +1245,27 @@
             // Pagination
             page_prev: '‹ 前へ',
             page_next: '次へ ›',
-            page_info: 'ページ {current} / {total} (全 {records} ボビン)'
+            page_info: 'ページ {current} / {total} (全 {records} ボビン)',
+            // トースト＆システム通知
+            toast_saved_success: '保存に成功しました！',
+            toast_updated_success: '更新に成功しました！',
+            toast_deleted_success: '削除に成功しました！',
+            toast_cancelled_success: 'キャンセルに成功しました！',
+            toast_reset_success: 'リセットに成功しました！',
+            toast_copied_success: 'クリップボードにコピーしました！',
+            toast_error_system: 'システムまたは接続エラーが発生しました！',
+            toast_error_network: 'サーバー接続エラー！',
+            toast_error_input: '入力内容をご確認ください！',
+            toast_error_pwd: '確認用パスワードが正しくありません！',
+            toast_qr_scanned: 'QRコードを読み取りました: ',
+            toast_qr_cam_error: 'カメラを開けないか、アクセス権限が拒否されました！',
+            warn_select_history_first: 'エクスポートする前に少なくとも1つの履歴レコードを選択してください！',
+            ext_cancel_edit_msg: '変更を取り消しました',
+            lang_msg_enter_key_vi: 'キー名とベトナム語翻訳を入力してください！',
+            lang_msg_key_exists: 'キーワードは既に辞書に存在します！',
+            lang_msg_add_success: '新しいキーワードが正常に追加されました！',
+            lang_msg_save_all_success: 'すべての辞書の変更が正常に保存されました！',
+            lang_msg_reset_all_success: 'すべての辞書が初期値にリセットされました！'
         }
     };
 
@@ -1000,11 +1381,14 @@
             { vi: 'Lần đầu đăng nhập', en: 'First Login', ja: '初回ログイン' },
             { vi: 'Đổi MK lần đầu', en: 'First Login PW', ja: '初回PW変更' },
             { vi: 'Mã NV / Tài khoản', en: 'Employee ID / Username', ja: '社員番号 / ログインID' },
-            { vi: 'Họ tên', en: 'Full Name', ja: '氏名' }
+            { vi: 'Họ tên', en: 'Full Name', ja: '氏名' },
+            { vi: 'Mã bộ phận', en: 'Cost Center', ja: '部門コード' }
         ],
 
         // Form Labels
         labels: [
+            { vi: 'Mã bộ phận:', en: 'Cost Center:', ja: '部門コード:' },
+            { vi: 'Mã bộ phận', en: 'Cost Center', ja: '部門コード' },
             { vi: 'Mã Bobin', en: 'Bobin Code', ja: 'ボビン番号' },
             { vi: 'Mã sản phẩm', en: 'Product Code', ja: '製品コード' },
             { vi: 'Mã chỉ thị SX (PO)', en: 'Production Order (PO)', ja: '製造指示書 (PO)' },
@@ -1083,6 +1467,7 @@
             { vi: 'Chỉnh sửa', en: 'Edit', ja: '編集' },
             { vi: 'Sửa', en: 'Edit', ja: '編集' },
             { vi: 'Xóa', en: 'Delete', ja: '削除' },
+            { key: 'btn_cancel_bobin', vi: 'Hủy Bobin', en: 'Cancel Bobin', ja: 'ボビン廃棄', alias: ['Báo hủy Bobin', '🗑️ Hủy Bobin', '🗑️ Báo hủy Bobin'] },
             { key: 'btn_cancel', vi: 'Hủy', en: 'Cancel', ja: 'キャンセル', alias: ['Hủy bỏ', '✕ Hủy', '✕ Hủy sửa', 'Hủy sửa'] },
             { key: 'btn_cancel', vi: 'Quay lại', en: 'Back', ja: '戻る', alias: ['Trở lại'] },
             { key: 'close', vi: 'Đóng', en: 'Close', ja: '閉じる' },
@@ -1306,6 +1691,10 @@
 
                 const raw = btn.textContent.trim();
                 for (const item of DOM_MAPPINGS.buttons) {
+                    // Nếu item là btn_cancel (Hủy/Quay lại trong modal) nhưng nút thực tế chứa Bobin/ボビン -> BỎ QUA để không đè nhầm thành "Trở lại"
+                    if (item.key === 'btn_cancel' && (raw.includes('Bobin') || raw.includes('ボビン'))) {
+                        continue;
+                    }
                     const match = raw.includes(item.vi) || raw.includes(item.en) || raw.includes(item.ja)
                         || (item.alias && item.alias.some(al => raw.includes(al)));
                     if (match) {
@@ -1344,15 +1733,19 @@
                 }
             });
 
-            // E. Dịch Input Placeholders
+            // E. Dịch Input Placeholders (Fallback cho các input không gắn thẻ data-i18n-ph)
             document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(input => {
+                if (input.hasAttribute('data-i18n-ph') || input.hasAttribute('data-placeholder-i18n') ||
+                    input.hasAttribute('data-i18n-placeholder') || input.hasAttribute('data-i18n')) {
+                    return;
+                }
                 const ph = input.getAttribute('placeholder').trim();
                 let newPh = null;
-                if (ph.includes('Nhập thông tin') || ph.includes('Search') || ph.includes('検索')) {
+                if (ph.includes('Nhập thông tin') || ph.includes('tra cứu') || ph.includes('Search by') || ph.includes('検索')) {
                     newPh = window.t('keyword_search');
                 } else if (ph.includes('quét mã Bobin') || ph.includes('Bobin code') || ph.includes('ボビン番号')) {
                     newPh = window.t('ph_scan_bobin');
-                } else if (ph.includes('Tự động theo mã') || ph.includes('Auto by Bobin') || ph.includes('ボビン番号から自動')) {
+                } else if (ph.includes('Tự động theo mã') || ph.includes('Auto generated by') || ph.includes('Auto by Bobin') || ph.includes('ボビン番号から自動')) {
                     newPh = window.t('ph_auto_size');
                 } else if (ph.includes('tìm mã sản phẩm') || ph.includes('search product') || ph.includes('製品コードを検索')) {
                     newPh = window.t('ph_search_product');
@@ -1364,9 +1757,9 @@
                     newPh = window.t('ph_grind_hint');
                 } else if (ph.includes('Lot vật liệu') || ph.includes('material lot') || ph.includes('材料ロット')) {
                     newPh = window.t('ph_enter_material_lot');
-                } else if (ph.includes('Tự động ghép mã') || ph.includes('Auto merged') || ph.includes('印字ロット自動')) {
+                } else if (ph.includes('Tự động ghép mã') || ph.includes('Lot in được tạo') || ph.includes('Auto merged') || ph.includes('印字ロット自動')) {
                     newPh = window.t('ph_auto_printlot');
-                } else if (ph.includes('Rack đặt') || ph.includes('Rack location') || ph.includes('ラック位置')) {
+                } else if (ph.includes('Rack đặt') || ph.includes('Rack location') || ph.includes('ラック位置') || ph.includes('mã Rack')) {
                     newPh = window.t('ph_select_rack');
                 } else if (ph.includes('Nhập mã số nhân viên') || ph.includes('employee ID') || ph.includes('社員番号')) {
                     newPh = window.t('login_username_ph');
@@ -1376,6 +1769,34 @@
                     newPh = window.t('cp_new_pwd_ph');
                 } else if (ph.includes('Nhập lại mật khẩu') || ph.includes('Re-enter') || ph.includes('再入力')) {
                     newPh = window.t('cp_confirm_pwd_ph');
+                } else if (ph.includes('Ghi chú ngoại quan') || ph.includes('inspection note') || ph.includes('外観検査メモ')) {
+                    newPh = window.t('qc_note_ph');
+                } else if (ph.includes('giải trình lý do') || ph.includes('explanatory note') || ph.includes('理由の説明')) {
+                    newPh = window.t('qc_note_explain_ph');
+                } else if (ph.includes('máy cuộn') || ph.includes('winding machine') || ph.includes('巻取機')) {
+                    newPh = window.t('ph_winding_machine_input');
+                } else if (ph.includes('Ghi chú cuộn') || ph.includes('bất thường') || ph.includes('abnormal') || ph.includes('巻取備考')) {
+                    newPh = window.t('ph_winding_note_explain');
+                } else if (ph.includes('Mã NV hoặc Họ tên') || ph.includes('ID or Name') || ph.includes('氏名で検索')) {
+                    newPh = window.t('emp_search_ph');
+                } else if (ph.includes('02619486') || ph.includes('NV01') || ph.includes('EMP01')) {
+                    newPh = window.t('emp_code_ph');
+                } else if (ph.includes('Nguyễn Văn A') || ph.includes('John Smith') || ph.includes('田中太郎')) {
+                    newPh = window.t('emp_name_ph');
+                } else if (ph.includes('A00330') || ph.includes('A00340')) {
+                    newPh = window.t('emp_cost_center_ph');
+                } else if (ph.includes('Mặc định 123') || ph.includes('Default 123') || ph.includes('デフォルト123')) {
+                    newPh = window.t('emp_reset_custom_ph');
+                } else if (ph.includes('tên để tìm') || ph.includes('name to search') || ph.includes('名前を入力')) {
+                    newPh = window.t('perm_search_placeholder');
+                } else if (ph.includes('từ khóa') || ph.includes('keyword key') || ph.includes('キーワードコード')) {
+                    newPh = window.t('lang_search_ph');
+                } else if (ph.includes('BB29099')) {
+                    newPh = window.t('ph_bobin_id_example');
+                } else if (ph.includes('QR sẽ hiển thị') || ph.includes('QR code will appear') || ph.includes('QRコードがここに表示')) {
+                    newPh = window.t('ph_qr_scan_result');
+                } else if (ph.includes('1500')) {
+                    newPh = window.t('ph_length_hint');
                 }
                 if (newPh && ph !== newPh) {
                     input.setAttribute('placeholder', newPh);
@@ -1530,12 +1951,30 @@
     // Áp dụng thuộc tính data-i18n rõ ràng
     function applyDataI18n() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
+            let key = el.getAttribute('data-i18n');
+            if (!key) return;
+
+            let targetAttr = null;
+            const attrMatch = key.match(/^\[([a-zA-Z0-9_-]+)\](.*)$/);
+            if (attrMatch) {
+                targetAttr = attrMatch[1];
+                key = attrMatch[2];
+            }
+
             const translation = window.t(key);
-            if (translation) {
+            if (translation !== undefined && translation !== null && translation !== '') {
+                if (targetAttr) {
+                    if (el.getAttribute(targetAttr) !== translation) {
+                        el.setAttribute(targetAttr, translation);
+                    }
+                    return;
+                }
+
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                     if (el.hasAttribute('placeholder')) {
-                        el.setAttribute('placeholder', translation);
+                        if (el.getAttribute('placeholder') !== translation) {
+                            el.setAttribute('placeholder', translation);
+                        }
                     }
                 } else {
                     const badge = el.querySelector('.badge-pending-count');
@@ -1572,10 +2011,12 @@
             }
         });
 
-        document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-            const key = el.getAttribute('data-i18n-ph');
+        // Hỗ trợ thêm các attribute placeholder chuyên dụng: data-i18n-ph, data-placeholder-i18n, data-i18n-placeholder
+        document.querySelectorAll('[data-i18n-ph], [data-placeholder-i18n], [data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-ph') || el.getAttribute('data-placeholder-i18n') || el.getAttribute('data-i18n-placeholder');
+            if (!key) return;
             const translation = window.t(key);
-            if (translation) {
+            if (translation !== undefined && translation !== null && translation !== '') {
                 if (el.getAttribute('placeholder') !== translation) {
                     el.setAttribute('placeholder', translation);
                 }
@@ -1689,6 +2130,25 @@
         initLanguageSwitcher();
         deepTranslateDOM();
         observeDOMChanges();
+    }
+
+    // Dự phòng an toàn nếu toast.js chưa nạp kịp
+    if (typeof window.Toast === 'undefined') {
+        window.Toast = {
+            show(msg, type = 'info', duration = 3500) {
+                console.log(`[Toast ${type}]: ${msg}`);
+            },
+            success(msg, d) { return this.show(msg, 'success', d); },
+            error(msg, d) { return this.show(msg, 'error', d); },
+            warning(msg, d) { return this.show(msg, 'warning', d); },
+            info(msg, d) { return this.show(msg, 'info', d); },
+            flash(msg, type = 'success') {
+                try {
+                    sessionStorage.setItem('bobin_toast_flash', JSON.stringify({ message: msg, type: type, timestamp: Date.now() }));
+                } catch (e) { }
+            }
+        };
+        window.showToast = window.Toast.show;
     }
 
 })(window, document);

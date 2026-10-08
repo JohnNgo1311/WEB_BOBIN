@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/create_bobin.css">
     <link rel="icon" href="data:,">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -21,7 +22,7 @@
         <form id="registBobinForm">
             <div class="form-group">
                 <label>Mã định danh Bobin</label>
-                <input type="text" name="bobin_identification_code" placeholder="VD: BB29099" required>
+                <input type="text" name="bobin_identification_code" placeholder="<?= __('ph_bobin_id_example') ?>" data-i18n-ph="ph_bobin_id_example" required>
             </div>
             <button type="submit">Xác nhận</button>
         </form>

@@ -240,13 +240,24 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
   gap: 6px 10px;
   padding: 8px 12px;
   background: #ffffff;
 }
+.field-item {
+  min-width: 0;
+  overflow: hidden;
+}
 .field-item label { font-size: 0.68rem; text-transform: uppercase; color: var(--fieldItemLabel); font-weight: 700; display: block; margin-bottom: 1px; }
-.val-sub { font-size: 0.8rem; color: #0f172a; font-weight: 600; word-break: break-word; }
+.val-sub {
+  font-size: 0.8rem;
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
+}
 .font-bold-blue { font-weight: 800; color: #1d4ed8; }
 .val-rack { display: inline-block; font-size: 0.8rem; font-weight: 800; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; padding: 1px 6px; border-radius: 4px; }
 .highlight-box { background: #f0fdf4; padding: 2px 6px; border-radius: 4px; border: 1px dashed #86efac; }

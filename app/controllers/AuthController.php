@@ -32,9 +32,9 @@ class AuthController extends Controller
         try {
             $pdo = Database::getInstance()->pdo();
 
-            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role, username, password, is_active, is_first_login, permissions 
+            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, cost_center, role, username, password, is_first_login, permissions 
                                    FROM employee_list 
-                                   WHERE (employee_code = :emp_code OR username = :uname) AND is_active = 1 
+                                   WHERE (employee_code = :emp_code OR username = :uname) 
                                    LIMIT 1");
             $stmt->execute([
                 ':emp_code' => $loginInput,
@@ -196,7 +196,7 @@ class AuthController extends Controller
 
         try {
             $pdo = Database::getInstance()->pdo();
-            $stmt = $pdo->prepare("SELECT id, password, is_first_login FROM employee_list WHERE id = :id AND is_active = 1 LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id, password, is_first_login FROM employee_list WHERE id = :id LIMIT 1");
             $stmt->execute([':id' => $userId]);
             $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
 

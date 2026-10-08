@@ -136,7 +136,96 @@ Hãy nâng cấp dự án lên một tầm cao mới, chuyên nghiệp hơn
 ### TASK-017
 **Status:** DONE
 - Khắc phục cơ chế truy xuất ngôn ngữ động từ trang cấu hình đa ngôn ngữ (custom_translations.json), tự động đồng bộ tức thì các từ khóa tùy biến (như btn_confirm, btn_cancel) lên toàn bộ UI/DOM (nút bấm, modal, form) mà không phụ thuộc vào việc fix cứng trong i18n.js hay load trễ script.
+### TASK-018
+**Status:** DONE
+- Nâng cấp database `employee_list` của danh sách nhân viên để dễ bảo trì và cập nhật dữ liệu bằng excel:
+  - Bỏ đi trường dữ liệu `is_active` vì không cần thiết.
+  - Thêm trường `cost_center` (Mã bộ phận).
+  - Cập nhật database schema chuẩn với PRIMARY KEY AUTO_INCREMENT và UNIQUE KEY.
+- Trong trang danh sách nhân viên:
+  - Xóa filter theo `role`, thay bằng filter theo `cost_center`.
+  - Bỏ cột trạng thái `is_active`, hiển thị cột `cost_center` (Mã bộ phận) rõ ràng.
+  - Cập nhật modal Thêm mới, modal Sửa nhân viên, mẫu Excel/CSV import và chức năng export/import Excel theo cấu trúc mới có `cost_center` và không có `is_active`.
+  - Tối ưu đồng bộ trang Danh sách nhân viên (Stats, Biểu đồ phân bổ bộ phận/vai trò, tìm kiếm, i18n 3 ngôn ngữ).
 
+Cấu trúc bảng `employee_list`:
+```sql
+CREATE TABLE `employee_list` (
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `employee_code` varchar(50) NOT NULL UNIQUE COMMENT 'Mã nhân viên',
+  `employee_name` varchar(100) NOT NULL COMMENT 'Họ và tên nhân viên',
+  `cost_center` varchar(50) DEFAULT NULL COMMENT 'Mã bộ phận',
+  `role` enum('extrusion','qc','winding','admin') NOT NULL DEFAULT 'extrusion' COMMENT 'Vai trò phân quyền',
+  `username` varchar(50) NOT NULL UNIQUE COMMENT 'Tên đăng nhập',
+  `password` varchar(255) NOT NULL COMMENT 'Mật khẩu mã hóa password_hash',
+  `is_first_login` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1: Chưa đổi mật khẩu lần đầu, 0: Đã đổi mật khẩu',
+  `permissions` longtext DEFAULT NULL COMMENT 'Mảng JSON lưu danh sách mã quyền thao tác tùy biến (nếu NULL thì theo Role mặc định)',
+  `updated_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  KEY `idx_role` (`role`),
+  KEY `idx_cost_center` (`cost_center`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+### TASK-019
+**Status:** DONE
+- Update đồng bộ ngôn ngữ lại ở trang phân quyền
+- Đối với thanh Menu, vẫn duy trì bố cục folder tree, tuy nhiên những mục nhỏ cần xê dịch vào trong 1 chút so với từng thư mục lớn tương ứng.
+- Truy cập C:\xampp\htdocs\WEB_BOBIN\public\assets\sql\Updated\production_db_Architect_sql.sql để tiến hành đồng bộ là kiến trúc SQL
+- Nâng cấp giao diện ở trang điều chỉnh cuộn và điều chỉnh QC, hiện đang thiết kế rất tẻ nhạt
+
+### TASK-020
+**Status:** DONE
+- Đồng bộ giao diện Điều chỉnh Đùn (extrusionEditBobinView.php) tương ứng với điều chỉnh QC và điều chỉnh Cuộn:
+  - Thiết kế Hero Header, 4 thẻ thống kê KPI theo chuẩn Dashboard.
+  - Phân vùng cấu trúc thẻ Bobin thành 3 khối chuyên biệt (Quy cách sản phẩm, Thiết bị & Vật liệu, Nhân sự & Thời gian) và thanh kiểm tra 5 tiêu chuẩn Đùn Check.
+  - Bảo toàn 100% các class selector, autocomplete suggestion, quét mã QR và xác thực mật khẩu cá nhân khi cập nhật.
+  - Kiểm tra và đồng bộ hóa đa ngôn ngữ 100% cho cả 3 ngôn ngữ (vi, en, ja) trong Language.php và i18n.js, khắc phục toàn bộ các text hardcode và thiếu key ở cả 3 trang điều chỉnh (Đùn, QC, Cuộn).
+
+### TASK-021
+**Status:** DONE
+- Kiểm tra lại toàn diện các textfield, input placeholder đang không hiển thị đúng ngôn ngữ:
+  - Phân tích và khắc phục triệt để lỗi phân giải tiền tố `[placeholder]` trong `applyDataI18n()` của `public/assets/js/i18n.js`.
+  - Mở rộng cơ chế bắt thuộc tính đa dạng: `[data-i18n-ph]`, `[data-placeholder-i18n]`, `[data-i18n-placeholder]`, cú pháp tiền tố `[attribute]key` của `[data-i18n]`.
+  - Nâng cấp Section E của `deepTranslateDOM()` trong `i18n.js` với đầy đủ pattern nhận diện và dịch dự phòng cho tất cả các input placeholder trên toàn hệ thống.
+  - Bổ sung 12 translation keys chuyên dụng cho placeholder ở cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+  - Đồng bộ hóa 100% tất cả các placeholder và textfield tại 18 file view của dự án: chuyển các placeholder hardcode thành helper PHP `<?= __('key') ?>` và gắn `data-i18n-ph="key"`.
+
+### TASK-TOAST
+**Status:** DONE
+- Kiểm tra toàn diện và khắc phục triệt để hệ thống thông báo Toast (Hiển thị khi lỗi thao tác người dùng hoặc do hệ thống, hiển thị khi thực hiện thành công tác vụ):
+  - Xây dựng module Toast toàn cục độc lập `public/assets/js/toast.js` (100% Vanilla JS & CSS, hoàn toàn Offline Intranet, không dùng CDN).
+  - Khắc phục lỗi thiếu CSS `.toast-message` ở các trang Điều chỉnh (Đùn, QC, Cuộn) khiến Toast trước đây bị ẩn/không hiển thị.
+  - Tích hợp cơ chế Flash Toast qua `sessionStorage` và URL query params, giúp thông báo thành công hiển thị mượt mà xuyên suốt sau khi reload trang mà không bị mất.
+  - Thay thế toàn bộ các hàm `alert()` trình duyệt bằng Toast cảnh báo và lỗi hiện đại, thân thiện.
+  - Bổ sung 19 translation keys cho Toast ở cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `Language.php` và `i18n.js`.
+  - Nạp Toast và đồng bộ hóa trên 100% các file view (18/18) và các module submit, edit, delete, utils, scan QR.
+
+### TASK-022
+**Status:** DONE
+- Làm hiển thị nổi bật 4 thông tin cốt lõi của Bobin trên toàn bộ các trang Danh sách, Lịch sử Bobin, trang QC và trang Cuộn:
+  1. **Mã sản phẩm:** Badge nổi bật xanh dương (`.bobin-highlight-product`), bo góc, viền xanh nhạt, bóng nhẹ, font đậm rõ nét.
+  2. **Vị trí Rack (nếu có):** Badge vị trí xanh ngọc (`.bobin-highlight-rack`), hiển thị icon ghim `📍 [Mã Rack]` khi có dữ liệu, hiển thị placeholder mờ `---` (`.rack-empty`) khi chưa gán Rack.
+  3. **Loại Bobin:** Phân loại màu sắc chuyên biệt theo 3 gam màu chuẩn:
+     - **Sản xuất:** Màu xanh lá đậm (`.type-san-xuat`, text `#14532d`, bg `#dcfce7`, border `#16a34a`).
+     - **Bù:** Màu xanh dương (`.type-bu`, text `#1e40af`, bg `#dbeafe`, border `#3b82f6`).
+     - **Các loại điều chỉnh:** Màu cam đậm (`.type-dieu-chinh`, text `#9a3412`, bg `#ffedd5`, border `#ea580c`), áp dụng cho tất cả các loại ngoại quan: `Điều chỉnh`, `Điều chỉnh (Do CP)`, `Gel`, `Dị vật`, `Trầy`, `Biến dạng`, `Xước`, `Chữ in`, `Vón cục`, `Màu`.
+  4. **Lot in:** Badge mã in nổi bật Monospace tím indigo (`.bobin-highlight-printlot`), phân biệt rõ với trạng thái chưa cập nhật (`.lot-empty`).
+- Khắc phục lỗi giá trị "Điều chỉnh..." của "Loại Bobin" tràn qua cột "Lot vật liệu":
+  - **Nguyên nhân:** Trước đây `.bobin-type-badge` thiết lập `white-space: nowrap` và thiếu `max-width`, trong khi cột `.info-grid` chỉ có chiều rộng tối thiểu 110px. Đối với các tên loại dài như "Điều chỉnh (Do CP)" hoặc "Điều chỉnh...", badge bị tràn ngang 50px đè trực tiếp lên ô "Lot vật liệu" kế bên.
+  - **Giải pháp:**
+    - Cập nhật `.bobin-type-badge`: Cho phép `white-space: normal`, tự động xuống dòng linh hoạt (`word-break: break-word; overflow-wrap: anywhere; line-height: 1.25`), giới hạn `max-width: 100%`, `box-sizing: border-box`, căn giữa và tinh chỉnh padding `2.5px 7px`.
+    - Thêm `min-width: 0; overflow: hidden;` cho `.field-item` và `.val-sub` để ngăn chặn grid item tự ý phình to hoặc tràn ra ngoài track của grid.
+    - Nâng nhẹ chiều rộng tối thiểu cột `.info-grid` lên `minmax(125px, 1fr)` trên cả 5 stylesheet để các thông số có không gian hiển thị rộng rãi, cân đối.
+    - Thêm thuộc tính `title="<?= htmlspecialchars($rawBobinType) ?>"` vào thẻ badge trên cả 5 view để hỗ trợ tooltip khi rê chuột.
+- Điều tra và khắc phục triệt để lỗi nút "Hủy Bobin" bị hiển thị thành "Trở lại" tại trang QC và Cuộn:
+  - **Nguyên nhân gốc rễ:** Người dùng tùy biến từ khóa `btn_cancel` trong `custom_translations.json` thành `"Trở lại"` (cho modal). Trong `i18n.js`, hàm `deepTranslateDOM()` duyệt qua nút bấm có text "🗑️ Hủy Bobin" chứa chữ "Hủy", dẫn tới khớp nhầm vào `btn_cancel` và bị ghi đè thành `"Trở lại"`.
+  - **Giải pháp triệt để:**
+    - Khởi tạo key dịch riêng `btn_cancel_bobin` ("Hủy Bobin" / "Cancel Bobin" / "ボビン廃棄") trong `Language.php` và `i18n.js`.
+    - Đặt rule mapping `btn_cancel_bobin` đứng trước `btn_cancel` trong `DOM_MAPPINGS.buttons`.
+    - Thêm điều kiện chặn khớp nhầm: nếu nút chứa `Bobin` hoặc `ボビン` thì bỏ qua `btn_cancel`.
+    - Gắn `data-i18n="btn_cancel_bobin"` và helper PHP `<?= __('btn_cancel_bobin') ?>` trực tiếp cho nút bấm tại `qcView.php` và `windingView.php`.
+- Tối ưu hóa UI/UX:
+  - Bổ sung hiệu ứng chuyển động mượt mà (`transition: transform 0.15s ease, box-shadow 0.15s ease`) và hover elevation (`transform: translateY(-1px)`) trên cả 5 stylesheet.
+  - Đồng bộ trên 5 Views: `listBobinDetailView.php`, `listBobinView.php`, `listBobinHistoryView.php`, `qcView.php`, `windingView.php`.
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

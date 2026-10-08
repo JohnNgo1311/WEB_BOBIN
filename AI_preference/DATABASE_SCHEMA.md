@@ -88,14 +88,14 @@ Bảng rút gọn theo dõi trạng thái nhanh của Bobin.
 
 | Tên Cột | Kiểu Dữ Liệu | Nullable | Mặc Định | Mô Tả |
 | :--- | :--- | :--- | :--- | :--- |
-| `id` | `INT(11)` | NO | Auto Increment | Khóa chính. |
-| `employee_code` | `VARCHAR(50)` | NO | | Mã định danh nhân viên (Unique cá nhân trong xưởng). |
+| `id` | `INT(11)` | NO | Auto Increment | Khóa chính (`PRIMARY KEY AUTO_INCREMENT`). |
+| `employee_code` | `VARCHAR(50)` | NO | | Mã định danh nhân viên (`UNIQUE KEY` cá nhân trong xưởng). |
 | `employee_name` | `VARCHAR(100)` | NO | | Họ và tên đầy đủ. |
-| `username` | `VARCHAR(50)` | NO | | Tên đăng nhập (mặc định trùng với `employee_code`). |
+| `cost_center` | `VARCHAR(50)` | YES | `NULL` | Mã bộ phận / trung tâm chi phí (`KEY idx_cost_center`, ví dụ `A00330`, `A00430`). |
+| `role` | `ENUM` | NO | `'extrusion'` | Vai trò (`KEY idx_role`): `'extrusion'`, `'qc'`, `'winding'`, `'admin'`. |
+| `username` | `VARCHAR(50)` | NO | | Tên đăng nhập (`UNIQUE KEY`, mặc định trùng với `employee_code`). |
 | `password` | `VARCHAR(255)` | NO | | Mật khẩu đã băm (`PASSWORD_DEFAULT`, mặc định khởi tạo là `123`). |
-| `role` | `ENUM` | NO | `'extrusion'` | Vai trò: `'extrusion'`, `'qc'`, `'winding'`, `'admin'`. |
-| `is_active` | `TINYINT(1)` | NO | `1` | Trạng thái: `1` (Đang làm việc), `0` (Đã nghỉ/Khóa). |
-| `is_first_login` | `TINYINT(1)` | NO | `1` | `1` = Bắt buộc đổi mật khẩu khi đăng nhập lần đầu. |
+| `is_first_login` | `TINYINT(1)` | NO | `1` | `1` = Bắt buộc đổi mật khẩu khi đăng nhập lần đầu, `0` = Đã đổi. |
 | `permissions` | `LONGTEXT` | YES | `NULL` | Mảng JSON lưu danh sách mã quyền thao tác tùy biến (nếu `NULL` thì kế thừa theo `role` mặc định). |
 | `updated_time` | `TIMESTAMP` | NO | `CURRENT_TIMESTAMP ON UPDATE` | Thời điểm cập nhật cuối. |
 

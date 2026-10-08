@@ -94,7 +94,7 @@ if (!function_exists('decodeJsonObject')) {
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                             <input type="text" name="keyword" id="searchKeyword"
-                                placeholder="Nhập hoặc quét mã Bobin..."
+                                placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
                                 value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                         </div>
 

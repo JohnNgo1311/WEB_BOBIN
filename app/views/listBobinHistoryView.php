@@ -225,7 +225,7 @@ if (!function_exists('decodeJsonObject')) {
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                             <input type="text" id="searchKeyword" name="keyword"
-                                placeholder="Nhập hoặc quét mã Bobin..."
+                                placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
                                 value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                         </div>
 
@@ -734,7 +734,9 @@ if (!function_exists('decodeJsonObject')) {
                     <div class="info-grid">
                         <div class="field-item">
                             <label>Mã sản phẩm</label>
-                            <div class="val-sub"><?= htmlspecialchars($productCode) ?></div>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-product"><?= htmlspecialchars($productCode) ?></span>
+                            </div>
                         </div>
                         <div class="field-item">
                             <label>Mã nhân viên</label>
@@ -747,8 +749,8 @@ if (!function_exists('decodeJsonObject')) {
                         <div class="field-item">
                             <label>Vị trí RACK</label>
                             <div class="val-sub">
-                                <span class="val-rack <?= $isRackEmpty ? 'val-empty' : '' ?>">
-                                    <?= htmlspecialchars($rackCode) ?>
+                                <span class="bobin-highlight-rack <?= $isRackEmpty ? 'rack-empty' : '' ?>">
+                                    <?= $isRackEmpty ? '---' : ('📍 ' . htmlspecialchars($rackCode)) ?>
                                 </span>
                             </div>
                         </div>
@@ -762,8 +764,18 @@ if (!function_exists('decodeJsonObject')) {
                         </div>
                         <div class="field-item">
                             <label>Loại Bobin</label>
-                            <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
-                                <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
+                            <?php
+                            $rawBobinType = trim($item['bobin_type'] ?? '');
+                            $typeBadgeClass = match (true) {
+                                $rawBobinType === 'Sản xuất' => 'type-san-xuat',
+                                $rawBobinType === 'Bù'       => 'type-bu',
+                                default                     => 'type-dieu-chinh'
+                            };
+                            ?>
+                            <div class="val-sub">
+                                <span class="bobin-type-badge <?= $typeBadgeClass ?>" data-type="<?= htmlspecialchars($rawBobinType) ?>" title="<?= htmlspecialchars($rawBobinType) ?>">
+                                    <?= htmlspecialchars(!empty($rawBobinType) ? $rawBobinType : 'Chưa cập nhật') ?>
+                                </span>
                             </div>
                         </div>
                         <div class="field-item">
@@ -772,7 +784,11 @@ if (!function_exists('decodeJsonObject')) {
                         </div>
                         <div class="field-item">
                             <label>Lot in</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?></div>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                    <?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?>
+                                </span>
+                            </div>
                         </div>
                         <div class="field-item highlight-box">
                             <label>Chiều dài (m)</label>
@@ -1045,11 +1061,13 @@ if (!function_exists('decodeJsonObject')) {
                     .map(cb => cb.value);
 
                 if (selectedIds.length === 0) {
-                    if (typeof Toast !== 'undefined' && Toast.show) {
-                        Toast.show("Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!",
-                            "warning");
+                    const warnMsg = window.t ? window.t('warn_select_history_first') : "Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!";
+                    if (window.Toast && window.Toast.show) {
+                        window.Toast.show(warnMsg, "warning");
+                    } else if (typeof Toast !== 'undefined' && Toast.show) {
+                        Toast.show(warnMsg, "warning");
                     } else {
-                        alert("⚠️ Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!");
+                        alert(warnMsg);
                     }
                     return;
                 }

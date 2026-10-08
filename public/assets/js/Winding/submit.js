@@ -1,39 +1,14 @@
 /* =========================================
    MODULE TOAST: Hiển thị thông báo
 ========================================= */
-
-if (typeof Toast === "undefined") {
-
-    window.Toast = {
-
-        show: function (message, type = 'success') {
-
-            const toast = document.createElement('div');
-
-            toast.className =
-                `toast-message ${type === 'error' ? 'toast-error' : ''}`;
-
-            toast.innerHTML = message;
-
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-
-            setTimeout(() => {
-
-                toast.classList.remove('show');
-
-                setTimeout(() => {
-                    toast.remove();
-                }, 400);
-
-            }, 2500);
-        }
-
-    };
-}
+var Toast = window.Toast || {
+    show: function (message, type = 'success') {
+        if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
+    },
+    flash: function (message, type = 'success') {
+        if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
+    }
+};
 
 
 /* =========================================
@@ -1047,6 +1022,10 @@ function handleWindingCancel(
 
                 if (data.success) {
 
+                    if (window.Toast && window.Toast.flash) {
+                        window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
+                    }
+
                     Toast.show(
                         data.message,
                         'success'
@@ -1055,7 +1034,7 @@ function handleWindingCancel(
 
                     setTimeout(
                         () => window.location.reload(),
-                        1200
+                        800
                     );
 
                 } else {
@@ -1570,6 +1549,10 @@ function handleWindingConfirm(
 
 
                 if (data.success) {
+
+                    if (window.Toast && window.Toast.flash) {
+                        window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Xác nhận thành công!'), 'success');
+                    }
 
                     Toast.show(
                         data.message,

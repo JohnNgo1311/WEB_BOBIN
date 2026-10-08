@@ -186,6 +186,7 @@ if (!$matchedRoute) {
 }
 $customDictJson = json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UNICODE) ?: '{}';
 ?>
+<script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 <script>
     window.__CUSTOM_I18N__ = <?= $customDictJson ?>;
     if (typeof window.loadAndMergeCustomTranslations === 'function') {

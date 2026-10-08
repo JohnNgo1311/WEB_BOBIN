@@ -16,6 +16,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/extrusion.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
 </head>
 
@@ -50,7 +51,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <div class="qr-input-group">
                             <div class="suggestions">
                                 <input type="text" name="bobin_identification_code" id="bobin_identification_code"
-                                    placeholder="Nhập hoặc quét mã Bobin..." required autocomplete="off">
+                                    placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin" required autocomplete="off">
                                 <div id="bobin_suggestions" class="suggestion-box"></div>
                             </div>
                             <button type="button" id="btnScanQR" class="btn-modern btn-scan">
@@ -69,7 +70,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     <div class="form-group">
                         <label>Kích thước Bobin: <span class="required">*</span></label>
                         <input type="text" name="bobin_size" id="bobin_size" class="input-readonly" readonly required
-                            placeholder="Tự động theo mã Bobin">
+                            placeholder="<?= __('ph_auto_size') ?>" data-i18n-ph="ph_auto_size">
                     </div>
 
                     <div class="form-group">
@@ -101,7 +102,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Mã sản phẩm: <span class="required">*</span></label>
                         <div class="suggestions">
                             <input type="text" name="product_code" id="product_code"
-                                placeholder="Gõ để tìm mã sản phẩm..." autocomplete="off" required>
+                                placeholder="<?= __('ph_search_product') ?>" data-i18n-ph="ph_search_product" autocomplete="off" required>
                             <div id="product_suggestions" class="suggestion-box"></div>
                         </div>
                     </div>
@@ -111,7 +112,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
                     <div class="form-group length-highlight">
                         <label>Chiều dài: <span class="required">*</span> <span class="label-hint">(mét)</span></label>
-                        <input type="number" step="1" name="length_m" id="length_m" placeholder="VD: 1500" required
+                        <input type="number" step="1" name="length_m" id="length_m" placeholder="<?= __('ph_length_hint') ?>" data-i18n-ph="ph_length_hint" required
                             min="1" max="5000" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4)">
                     </div>
 
@@ -146,7 +147,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     <div class="form-group">
                         <label>Số máy đùn: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="machine" id="machine" placeholder="Chọn số máy đùn..." required
+                            <input type="text" name="machine" id="machine" placeholder="<?= __('ph_select_machine') ?>" data-i18n-ph="ph_select_machine" required
                                 autocomplete="off">
                             <div id="machine_suggestions" class="suggestion-box"></div>
                         </div>
@@ -155,7 +156,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     <div class="form-group">
                         <label>Vật liệu: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="material" id="material" placeholder="Chọn loại vật liệu..."
+                            <input type="text" name="material" id="material" placeholder="<?= __('ph_select_material') ?>" data-i18n-ph="ph_select_material"
                                 required autocomplete="off">
                             <div id="material_suggestions" class="suggestion-box"></div>
                         </div>
@@ -165,14 +166,14 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Số lần nghiền: <span class="required">*</span> <span class="label-hint">(0, 1 hoặc
                                 2)</span></label>
                         <input type="number" name="grinding_time" id="grinding_time" list="list_grinding_time"
-                            placeholder="Nhập 0, 1 hoặc 2" required min="0" max="2" step="1"
+                            placeholder="<?= __('ph_grind_hint') ?>" data-i18n-ph="ph_grind_hint" required min="0" max="2" step="1"
                             oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)">
                     </div>
 
                     <div class="form-group">
                         <label>Lot vật liệu: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="material_lot" id="material_lot" placeholder="Nhập Lot vật liệu..."
+                            <input type="text" name="material_lot" id="material_lot" placeholder="<?= __('ph_enter_material_lot') ?>" data-i18n-ph="ph_enter_material_lot"
                                 required autocomplete="off">
                             <div id="material_lot_suggestions" class="suggestion-box"></div>
                         </div>
@@ -182,7 +183,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Lot in (Print Lot): <span class="required">*</span> <span class="label-hint">(Tự động
                                 ghép mã)</span></label>
                         <input type="text" name="print_lot" id="print_lot" class="input-readonly highlight-printlot"
-                            readonly required placeholder="Lot in được tạo tự động">
+                            readonly required placeholder="<?= __('ph_auto_printlot') ?>" data-i18n-ph="ph_auto_printlot">
                     </div>
                 </div>
             </div>
@@ -201,7 +202,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     <div class="form-group rack-highlight">
                         <label>Vị trí Rack: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="rack_code" id="rack_code" placeholder="Chọn Rack đặt..."
+                            <input type="text" name="rack_code" id="rack_code" placeholder="<?= __('ph_select_rack') ?>" data-i18n-ph="ph_select_rack"
                                 autocomplete="off" required>
                             <div id="rack_suggestions" class="suggestion-box"></div>
                         </div>

@@ -2,15 +2,13 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th9 24, 2026 lúc 07:36 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
--- Phiên bản PHP: 8.0.30
+-- Phiên bản PHP: 8.2.12
+-- Kiến trúc Cơ sở dữ liệu Chuẩn: `production_db` (Synchronized Architecture)
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -20,7 +18,7 @@ SET time_zone = "+00:00";
 --
 -- Cơ sở dữ liệu: `production_db`
 --
-CREATE DATABASE IF NOT EXISTS `production_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+CREATE DATABASE IF NOT EXISTS `production_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `production_db`;
 
 -- --------------------------------------------------------
@@ -64,7 +62,8 @@ CREATE TABLE `bobin_history` (
   `winding_employee` text DEFAULT NULL,
   `winding_note` varchar(100) DEFAULT NULL,
   `flow_test_result` enum('Thành công','Thất bại') DEFAULT NULL,
-  `updated_time` datetime DEFAULT NULL
+  `updated_time` datetime DEFAULT NULL,
+  `update_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`update_history`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -96,7 +95,8 @@ CREATE TABLE `bobin_list_detail` (
   `winding_employee` text DEFAULT NULL,
   `flow_test_result` enum('Thành công','Thất bại') DEFAULT NULL,
   `winding_note` varchar(100) DEFAULT NULL,
-  `updated_time` datetime DEFAULT NULL
+  `updated_time` datetime DEFAULT NULL,
+  `update_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`update_history`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -138,9 +138,15 @@ CREATE TABLE `day_list` (
 DROP TABLE IF EXISTS `employee_list`;
 CREATE TABLE `employee_list` (
   `id` int(11) NOT NULL,
-  `employee_code` varchar(50) NOT NULL,
-  `employee_name` varchar(100) NOT NULL,
-  `updated_time` timestamp NOT NULL DEFAULT current_timestamp()
+  `employee_code` varchar(50) NOT NULL COMMENT 'Mã nhân viên',
+  `employee_name` varchar(100) NOT NULL COMMENT 'Họ và tên nhân viên',
+  `cost_center` varchar(50) DEFAULT NULL COMMENT 'Mã bộ phận',
+  `role` enum('extrusion','qc','winding','admin') NOT NULL DEFAULT 'extrusion' COMMENT 'Vai trò phân quyền',
+  `username` varchar(50) NOT NULL COMMENT 'Tên đăng nhập',
+  `password` varchar(255) NOT NULL COMMENT 'Mật khẩu mã hóa password_hash',
+  `is_first_login` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1: Chưa đổi mật khẩu lần đầu, 0: Đã đổi mật khẩu',
+  `permissions` longtext DEFAULT NULL COMMENT 'Mảng JSON lưu danh sách mã quyền thao tác tùy biến (nếu NULL thì theo Role mặc định)',
+  `updated_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -236,7 +242,7 @@ DROP TABLE IF EXISTS `rack_list`;
 CREATE TABLE `rack_list` (
   `id` int(11) NOT NULL,
   `rack_code` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -277,7 +283,12 @@ ALTER TABLE `bobin_capacity`
 -- Chỉ mục cho bảng `bobin_history`
 --
 ALTER TABLE `bobin_history`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_hist_key_code` (`bobin_key_code`),
+  ADD KEY `idx_hist_ident_code` (`bobin_identification_code`),
+  ADD KEY `idx_hist_status` (`bobin_current_status`),
+  ADD KEY `idx_hist_updated_time` (`updated_time`),
+  ADD KEY `idx_hist_finish_time` (`finish_time`);
 
 --
 -- Chỉ mục cho bảng `bobin_list_detail`
@@ -285,7 +296,8 @@ ALTER TABLE `bobin_history`
 ALTER TABLE `bobin_list_detail`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `bobin_key_code` (`bobin_key_code`),
-  ADD UNIQUE KEY `bobin_identification_code` (`bobin_identification_code`);
+  ADD UNIQUE KEY `bobin_identification_code` (`bobin_identification_code`),
+  ADD KEY `idx_detail_status` (`bobin_current_status`);
 
 --
 -- Chỉ mục cho bảng `bobin_list_general`
@@ -293,13 +305,24 @@ ALTER TABLE `bobin_list_detail`
 ALTER TABLE `bobin_list_general`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `bobin_key_code` (`bobin_key_code`),
-  ADD UNIQUE KEY `bobin_identification_code` (`bobin_identification_code`);
+  ADD UNIQUE KEY `bobin_identification_code` (`bobin_identification_code`),
+  ADD KEY `idx_general_status` (`bobin_current_status`);
 
 --
 -- Chỉ mục cho bảng `day_list`
 --
 ALTER TABLE `day_list`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Chỉ mục cho bảng `employee_list`
+--
+ALTER TABLE `employee_list`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_employee_code` (`employee_code`),
+  ADD UNIQUE KEY `uk_username` (`username`),
+  ADD KEY `idx_role` (`role`),
+  ADD KEY `idx_cost_center` (`cost_center`);
 
 --
 -- Chỉ mục cho bảng `extrusion_machine_list`
@@ -335,6 +358,7 @@ ALTER TABLE `month_list`
 -- Chỉ mục cho bảng `product_list`
 --
 ALTER TABLE `product_list`
+  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `production_order_code` (`production_order_code`),
   ADD UNIQUE KEY `product_code` (`product_code`);
 
@@ -358,171 +382,51 @@ ALTER TABLE `year_list`
   ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT cho các bảng đã đổ
+-- AUTO_INCREMENT cho các bảng
 --
 
---
--- AUTO_INCREMENT cho bảng `bobin_history`
---
 ALTER TABLE `bobin_history`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `bobin_list_detail`
---
 ALTER TABLE `bobin_list_detail`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `bobin_list_general`
---
 ALTER TABLE `bobin_list_general`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `day_list`
---
 ALTER TABLE `day_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `extrusion_machine_list`
---
+ALTER TABLE `employee_list`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `extrusion_machine_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `machine_list`
---
 ALTER TABLE `machine_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `material_list`
---
 ALTER TABLE `material_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `material_lot_list`
---
 ALTER TABLE `material_lot_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `month_list`
---
 ALTER TABLE `month_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `rack_list`
---
+ALTER TABLE `product_list`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `rack_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `winding_machine_list`
---
 ALTER TABLE `winding_machine_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
---
--- AUTO_INCREMENT cho bảng `year_list`
---
 ALTER TABLE `year_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
-
---
--- Siêu dữ liệu
---
-USE `phpmyadmin`;
-
---
--- Siêu dữ liệu cho bảng bobin_capacity
---
-
---
--- Siêu dữ liệu cho bảng bobin_history
---
-
---
--- Đang đổ dữ liệu cho bảng `pma__table_uiprefs`
---
-
-INSERT INTO `pma__table_uiprefs` (`username`, `db_name`, `table_name`, `prefs`, `last_update`) VALUES
-('root', 'production_db', 'bobin_history', '{\"sorted_col\":\"`bobin_history`.`updated_time` DESC\"}', '2026-03-07 12:14:36');
-
---
--- Siêu dữ liệu cho bảng bobin_list_detail
---
-
---
--- Đang đổ dữ liệu cho bảng `pma__table_uiprefs`
---
-
-INSERT INTO `pma__table_uiprefs` (`username`, `db_name`, `table_name`, `prefs`, `last_update`) VALUES
-('root', 'production_db', 'bobin_list_detail', '{\"sorted_col\":\"`bobin_list_detail`.`updated_time` DESC\"}', '2026-09-24 14:53:44');
-
---
--- Siêu dữ liệu cho bảng bobin_list_general
---
-
---
--- Siêu dữ liệu cho bảng day_list
---
-
---
--- Siêu dữ liệu cho bảng employee_list
---
-
---
--- Siêu dữ liệu cho bảng extrusion_machine_list
---
-
---
--- Siêu dữ liệu cho bảng machine_list
---
-
---
--- Siêu dữ liệu cho bảng material_list
---
-
---
--- Siêu dữ liệu cho bảng material_lot_list
---
-
---
--- Siêu dữ liệu cho bảng month_list
---
-
---
--- Siêu dữ liệu cho bảng product_list
---
-
---
--- Đang đổ dữ liệu cho bảng `pma__table_uiprefs`
---
-
-INSERT INTO `pma__table_uiprefs` (`username`, `db_name`, `table_name`, `prefs`, `last_update`) VALUES
-('root', 'production_db', 'product_list', '{\"sorted_col\":\"`product_list`.`updated_time` ASC\"}', '2026-02-15 14:43:55');
-
---
--- Siêu dữ liệu cho bảng rack_list
---
-
---
--- Siêu dữ liệu cho bảng winding_machine_list
---
-
---
--- Siêu dữ liệu cho bảng year_list
---
-
---
--- Siêu dữ liệu cho cơ sở dữ liệu production_db
---
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

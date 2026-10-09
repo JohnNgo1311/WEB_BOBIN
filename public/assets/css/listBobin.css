@@ -332,10 +332,15 @@ h1 {
 /* ================= 5. LƯỚI THÔNG SỐ (INFO GRID) ================= */
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
   gap: 5px 10px;
   padding: 8px 14px;
   background: #ffffff;
+}
+
+.field-item {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .field-item label {
@@ -352,6 +357,8 @@ h1 {
   color: #0f172a;
   font-weight: 600;
   word-break: break-word;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .font-bold-blue { font-weight: 800; color: #1d4ed8; }
@@ -686,3 +693,157 @@ h1 {
   .card-footer-simple { flex-direction: column; gap: 8px; align-items: flex-start; }
   .button-group { margin-left: 0; width: 100%; justify-content: flex-end; flex-wrap: wrap; }
 }
+
+/* ==========================================================================
+   TASK-022: CÁC THÔNG SỐ BOBIN NỔI BẬT (MÃ SP, RACK, LOẠI BOBIN, LOT IN)
+========================================================================== */
+
+/* 1. MÃ SẢN PHẨM NỔI BẬT */
+.bobin-highlight-product {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0369a1 !important;
+  background-color: #e0f2fe !important;
+  border: 1.5px solid #7dd3fc !important;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(3, 105, 161, 0.12);
+  word-break: break-all;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 2. VỊ TRÍ RACK NỔI BẬT (NẾU CÓ) */
+.bobin-highlight-rack {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f766e !important;
+  background-color: #ccfbf1 !important;
+  border: 1.5px solid #5eead4 !important;
+  padding: 3px 8px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(15, 118, 110, 0.08);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.bobin-highlight-rack.rack-empty {
+  color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none;
+}
+
+/* 3. LOẠI BOBIN NỔI BẬT THEO QUY ĐỊNH MÀU SẮC */
+.bobin-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+/* 3.1. Sản xuất: Màu xanh lá đậm */
+.bobin-type-badge.type-san-xuat,
+.val-sub[data-type="Sản xuất"],
+[data-type="Sản xuất"].bobin-type-badge {
+  color: #14532d !important;
+  background-color: #dcfce7 !important;
+  border: 1.5px solid #16a34a !important;
+}
+
+/* 3.2. Bù: Màu xanh dương */
+.bobin-type-badge.type-bu,
+.val-sub[data-type="Bù"],
+[data-type="Bù"].bobin-type-badge {
+  color: #1e40af !important;
+  background-color: #dbeafe !important;
+  border: 1.5px solid #3b82f6 !important;
+}
+
+/* 3.3. Các loại điều chỉnh: Màu cam đậm */
+.bobin-type-badge.type-dieu-chinh,
+.val-sub[data-type^="Điều chỉnh"],
+.val-sub[data-type="Gel"],
+.val-sub[data-type="Dị vật"],
+.val-sub[data-type="Trầy"],
+.val-sub[data-type="Biến dạng"],
+.val-sub[data-type="Xước"],
+.val-sub[data-type="Chữ in"],
+.val-sub[data-type="Vón cục"],
+.val-sub[data-type="Màu"],
+[data-type^="Điều chỉnh"].bobin-type-badge,
+[data-type="Gel"].bobin-type-badge,
+[data-type="Dị vật"].bobin-type-badge,
+[data-type="Trầy"].bobin-type-badge,
+[data-type="Biến dạng"].bobin-type-badge,
+[data-type="Xước"].bobin-type-badge,
+[data-type="Chữ in"].bobin-type-badge,
+[data-type="Vón cục"].bobin-type-badge,
+[data-type="Màu"].bobin-type-badge {
+  color: #9a3412 !important;
+  background-color: #ffedd5 !important;
+  border: 1.5px solid #ea580c !important;
+}
+
+/* 4. LOT IN NỔI BẬT */
+.bobin-highlight-printlot {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', Consolas, monospace;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #4338ca !important;
+  background-color: #e0e7ff !important;
+  border: 1.5px solid #818cf8 !important;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 2px rgba(67, 56, 202, 0.08);
+  max-width: 100%;
+  box-sizing: border-box;
+  word-break: break-all;
+}
+.bobin-highlight-printlot.lot-empty {
+  font-family: inherit;
+  color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none;
+}
+
+/* UI/UX Smooth Hover Effects */
+.bobin-highlight-product,
+.bobin-highlight-rack,
+.bobin-type-badge,
+.bobin-highlight-printlot {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.bobin-highlight-product:hover,
+.bobin-highlight-rack:not(.rack-empty):hover,
+.bobin-type-badge:hover,
+.bobin-highlight-printlot:not(.lot-empty):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+

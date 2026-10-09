@@ -1,35 +1,14 @@
 /* =========================================
    MODULE TOAST: Hiển thị thông báo
 ========================================= */
-if (typeof Toast === "undefined") {
-  /* =========================================
-    MODULE TOAST: Hiển thị thông báo chuẩn
-========================================= */
-  window.Toast = window.Toast || {
-    show(message, type = "success") {
-      // Xóa các toast cũ nếu có để tránh chồng chéo
-      document.querySelectorAll(".toast-message").forEach(el => el.remove());
-
-      const toast = document.createElement("div");
-      toast.className = `toast-message ${type === "error" ? "toast-error" : "toast-success"}`;
-
-      // Gắn icon trực quan
-      const icon = type === "error" ? "❌" : "✅";
-      toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-
-      document.body.appendChild(toast);
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => toast.classList.add("show"));
-      });
-
-      setTimeout(() => {
-        toast.classList.remove("show");
-        setTimeout(() => toast.remove(), 400);
-      }, 3000);
-    },
-  };
-}
+var Toast = window.Toast || {
+  show(message, type = "success") {
+    if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
+  },
+  flash(message, type = "success") {
+    if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
+  }
+};
 
 /* =========================================
    MODULE DIALOG: Hộp thoại xác nhận
@@ -163,8 +142,11 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
 
         const data = await response.json();
         if (data.success) {
+          if (window.Toast && window.Toast.flash) {
+            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
+          }
           Toast.show(data.message, "success");
-          setTimeout(() => window.location.reload(), 1200);
+          setTimeout(() => window.location.reload(), 800);
         } else {
           Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
           btnElement.innerHTML = originalBtnText;
@@ -273,8 +255,11 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
         });
         const data = await response.json();
         if (data.success) {
+          if (window.Toast && window.Toast.flash) {
+            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Hủy thành công!'), 'success');
+          }
           Toast.show(data.message, "success");
-          setTimeout(() => window.location.reload(), 1200);
+          setTimeout(() => window.location.reload(), 800);
         } else {
           Toast.show("Lỗi: " + (data.message || "Hủy thất bại"), "error");
           btnElement.innerHTML = originalBtnText;
@@ -435,8 +420,11 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
 
         const data = await response.json();
         if (data.success) {
+          if (window.Toast && window.Toast.flash) {
+            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
+          }
           Toast.show(data.message, "success");
-          setTimeout(() => window.location.reload(), 1200);
+          setTimeout(() => window.location.reload(), 800);
         } else {
           Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
           btnElement.innerHTML = originalBtnText;

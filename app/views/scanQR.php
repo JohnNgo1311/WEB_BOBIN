@@ -8,6 +8,7 @@
     <!-- Phông chữ hệ thống Local Offline -->
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
     <style>
         body, button, input, select, textarea {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -80,8 +81,8 @@
         <form action="/WEB_BOBIN/public/index.php" method="GET" id="searchForm">
             <input type="hidden" name="url" value="bobin/listBobinView_QC">
             <div class="search-box">
-                <input type="text" id="searchInput" name="keyword" placeholder="Mã QR sẽ hiển thị ở đây..." required>
-                <button type="submit" id="btnSubmit">Tìm kiếm</button>
+                <input type="text" id="searchInput" name="keyword" placeholder="<?= __('ph_qr_scan_result') ?>" data-i18n-ph="ph_qr_scan_result" required>
+                <button type="submit" id="btnSubmit" data-i18n="search"><?= __('search') ?></button>
             </div>
         </form>
     </div>

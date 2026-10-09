@@ -51,6 +51,7 @@ if (!function_exists('viBadge')) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobin.css">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -69,8 +70,8 @@ if (!function_exists('viBadge')) {
                         <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5
                     6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
                     </svg>
-                    <input type="text" name="keyword" placeholder="Nhập thông tin Bobin cần tra cứu..."
-                        value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
+                    <input type="text" name="keyword" placeholder="<?= __('keyword_search') ?>"
+                        data-i18n-ph="keyword_search" value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                 </div>
 
                 <div class="date-group">
@@ -129,13 +130,13 @@ if (!function_exists('viBadge')) {
             </div>
 
             <?php if (empty($bobins)): ?>
-                <div class="empty-state">Danh sách trống</div>
+            <div class="empty-state">Danh sách trống</div>
             <?php else: ?>
-                <div class="bobin-list">
+            <div class="bobin-list">
 
-                    <?php foreach ($bobins as $item): ?>
+                <?php foreach ($bobins as $item): ?>
 
-                        <?php
+                <?php
                         $rawStatus = $item['bobin_current_status'] ?? 'Unknown';
                         // Vừa loại bỏ gạch dưới, vừa chuyển về chữ thường để so sánh dễ hơn
                         $status = strtolower($rawStatus);
@@ -191,11 +192,11 @@ if (!function_exists('viBadge')) {
                             }
                         }
                         ?>
-                        <div class="bobin-item <?= $statusClass ?>">
-                            <!-- HEADER -->
-                            <div class="card-top">
-                                <div class="key-info">
-                                    <?php
+                <div class="bobin-item <?= $statusClass ?>">
+                    <!-- HEADER -->
+                    <div class="card-top">
+                        <div class="key-info">
+                            <?php
                                     $rawKey = $item['bobin_key_code'] ?? '';
                                     $displayKey = htmlspecialchars($rawKey);
                                     if (is_string($rawKey) && strpos($rawKey, '_') !== false) {
@@ -212,11 +213,11 @@ if (!function_exists('viBadge')) {
                                         }
                                     }
                                     ?>
-                                    <span class="key-code"><?= $displayKey ?></span>
-                                    <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
-                                </div>
-                                <div class="status-badge">
-                                    <?php
+                            <span class="key-code"><?= $displayKey ?></span>
+                            <span class="id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
+                        </div>
+                        <div class="status-badge">
+                            <?php
 
                                     $displayStatus = match ($rawStatus) {
                                         'Ready', 'Rolled' => 'ĐÃ CUỘN',
@@ -227,39 +228,71 @@ if (!function_exists('viBadge')) {
                                         default => $rawStatus, // Giữ nguyên nếu không khớp
                                     };
                                     echo htmlspecialchars($displayStatus); ?>
-                                </div>
+                        </div>
 
-                            </div>
+                    </div>
 
-                            <!-- INFO GRID -->
-                            <div class="info-grid">
+                    <!-- INFO GRID -->
+                    <div class="info-grid">
 
-                                <!-- SAU NÀY SỬ DỤNG <div class="field-item">
+                        <!-- SAU NÀY SỬ DỤNG <div class="field-item">
                             <label>Mã chỉ thị sản xuất</label>
                             <div class="val-sub">
                                 <?= htmlspecialchars($productionOrderCode ?? '') ?></div>
                         </div> -->
 
-                                <div class="field-item">
-                                    <label>Mã sản phẩm</label>
-                                    <div class="val-sub"><?= htmlspecialchars($productCode ?? '') ?></div>
-                                </div>
+                        <div class="field-item">
+                            <label>Mã sản phẩm</label>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-product"><?= htmlspecialchars($productCode ?? '') ?></span>
+                            </div>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Mã nhân viên</label>
-                                    <div class="val-sub"><?= htmlspecialchars($employeeCode ?? '') ?></div>
-                                </div>
+                        <?php
+                        $rackCode = trim($item['rack'] ?? $item['rack_location'] ?? '');
+                        $isRackEmpty = empty($rackCode) || $rackCode === 'Chưa cập nhật' || $rackCode === '---';
+                        ?>
+                        <div class="field-item">
+                            <label>Vị trí RACK</label>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-rack <?= $isRackEmpty ? 'rack-empty' : '' ?>">
+                                    <?= $isRackEmpty ? '---' : ('📍 ' . htmlspecialchars($rackCode)) ?>
+                                </span>
+                            </div>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Họ tên nhân viên</label>
-                                    <div class="val-sub"><?= htmlspecialchars($employeeName ?? '') ?>
-                                    </div>
+                        <?php
+                        $rawBobinType = trim($item['bobin_type'] ?? '');
+                        $typeBadgeClass = match (true) {
+                            $rawBobinType === 'Sản xuất' => 'type-san-xuat',
+                            $rawBobinType === 'Bù'       => 'type-bu',
+                            default                     => 'type-dieu-chinh'
+                        };
+                        ?>
+                        <div class="field-item">
+                            <label>Loại Bobin</label>
+                            <div class="val-sub">
+                                <span class="bobin-type-badge <?= $typeBadgeClass ?>" data-type="<?= htmlspecialchars($rawBobinType) ?>" title="<?= htmlspecialchars($rawBobinType) ?>">
+                                    <?= htmlspecialchars(!empty($rawBobinType) ? $rawBobinType : 'Chưa cập nhật') ?>
+                                </span>
+                            </div>
+                        </div>
 
-                                </div>
+                        <div class="field-item">
+                            <label>Mã nhân viên</label>
+                            <div class="val-sub"><?= htmlspecialchars($employeeCode ?? '') ?></div>
+                        </div>
 
-                                <div class="field-item">
-                                    <label>Ca làm việc</label>
-                                    <?php
+                        <div class="field-item">
+                            <label>Họ tên nhân viên</label>
+                            <div class="val-sub"><?= htmlspecialchars($employeeName ?? '') ?>
+                            </div>
+
+                        </div>
+
+                        <div class="field-item">
+                            <label>Ca làm việc</label>
+                            <?php
                                     $shiftMap = [
                                         'Ca 1'  => 'Ca 1',
                                         'Ca 2'  => 'Ca 2',
@@ -269,83 +302,87 @@ if (!function_exists('viBadge')) {
                                     $rawShift  = $item['shift'] ?? null;
                                     $shiftText = $shiftMap[$rawShift] ?? 'Hành chính';
                                     ?>
-                                    <div class="val-sub"><?= htmlspecialchars($shiftText) ?></div>
-                                </div>
-
-                                <div class="field-item">
-                                    <label>Lot vật liệu</label>
-                                    <div class="val-sub"><?= htmlspecialchars($materialLot ?? '') ?></div>
-                                </div>
-
-                                <div class="field-item">
-                                    <label>Lot in</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['print_lot']) ?></div>
-                                </div>
-
-                                <div class="field-item highlight-box">
-                                    <label>Chiều dài (m)</label>
-                                    <div class="val-highlight">
-                                        <?= number_format($item['length_m'], 0, decimal_separator: ".", thousands_separator: ",") ?>
-                                        m
-                                    </div>
-                                </div>
-
-                                <div class="field-item">
-                                    <label>Ngày đùn</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['extrusion_date']) ?></div>
-                                </div>
-
-                                <div class="field-item">
-                                    <label>Thời điểm hoàn thành cuộn</label>
-                                    <div class="val-sub"><?= htmlspecialchars($item['finish_time']) ?></div>
-                                </div>
-
-                            </div>
-
-                            <div class="divider"></div>
-
-                            <!-- QC -->
-                            <div class="qc-section">
-                                <div class="qc-title">🛡️ QC Check</div>
-
-                                <div class="qc-header">
-                                    <div class="qc-info-row">
-                                        <div class="qc-meta-item">
-                                            <label class="val-text">Mã số nhân viên:</label>
-                                            <span class="val-sub"><?= htmlspecialchars($vi['inspector_code'] ?? '-') ?></span>
-                                        </div>
-
-                                        <div class="qc-meta-item">
-                                            <label class="val-text">Họ tên nhân viên:</label>
-                                            <span class="val-sub"><?= htmlspecialchars($vi['inspector_name'] ?? '-') ?></span>
-                                        </div>
-
-                                        <div class="qc-meta-item">
-                                            <label class="val-text">Thời điểm kiểm tra:</label>
-                                            <span class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? '-') ?></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="qc-badges">
-                                    <?= viBadge('Gel', $defects['gel'] ?? false) ?>
-                                    <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
-                                    <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
-                                    <?= viBadge('In', $defects['print_quality'] ?? false) ?>
-                                </div>
-
-                                <div class="qc-note">📝 <?= htmlspecialchars($defects['note'] ?? 'Chưa cập nhật') ?></div>
-                            </div>
-                            <div class="card-footer-simple">
-                                <?php if (!empty($item['updated_time'])): ?>
-                                    <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
-                                        <?= htmlspecialchars($item['updated_time']) ?></div>
-                                <?php endif; ?>
-                            </div>
-
+                            <div class="val-sub"><?= htmlspecialchars($shiftText) ?></div>
                         </div>
-                    <?php endforeach; ?>
+
+                        <div class="field-item">
+                            <label>Lot vật liệu</label>
+                            <div class="val-sub"><?= htmlspecialchars($materialLot ?? '') ?></div>
+                        </div>
+
+                        <div class="field-item">
+                            <label>Lot in</label>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                    <?= htmlspecialchars(!empty($item['print_lot']) ? $item['print_lot'] : 'Chưa cập nhật') ?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="field-item highlight-box">
+                            <label>Chiều dài (m)</label>
+                            <div class="val-highlight">
+                                <?= number_format($item['length_m'], 0, decimal_separator: ".", thousands_separator: ",") ?>
+                                m
+                            </div>
+                        </div>
+
+                        <div class="field-item">
+                            <label>Ngày đùn</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['extrusion_date']) ?></div>
+                        </div>
+
+                        <div class="field-item">
+                            <label>Thời điểm hoàn thành cuộn</label>
+                            <div class="val-sub"><?= htmlspecialchars($item['finish_time']) ?></div>
+                        </div>
+
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <!-- QC -->
+                    <div class="qc-section">
+                        <div class="qc-title">🛡️ QC Check</div>
+
+                        <div class="qc-header">
+                            <div class="qc-info-row">
+                                <div class="qc-meta-item">
+                                    <label class="val-text">Mã số nhân viên:</label>
+                                    <span class="val-sub"><?= htmlspecialchars($vi['inspector_code'] ?? '-') ?></span>
+                                </div>
+
+                                <div class="qc-meta-item">
+                                    <label class="val-text">Họ tên nhân viên:</label>
+                                    <span class="val-sub"><?= htmlspecialchars($vi['inspector_name'] ?? '-') ?></span>
+                                </div>
+
+                                <div class="qc-meta-item">
+                                    <label class="val-text">Thời điểm kiểm tra:</label>
+                                    <span class="val-sub"><?= htmlspecialchars($vi['inspection_time'] ?? '-') ?></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qc-badges">
+                            <?= viBadge('Gel', $defects['gel'] ?? false) ?>
+                            <?= viBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
+                            <?= viBadge('Màu', $defects['color_issue'] ?? false) ?>
+                            <?= viBadge('In', $defects['print_quality'] ?? false) ?>
+                        </div>
+
+                        <div class="qc-note">📝 <?= htmlspecialchars($defects['note'] ?? 'Chưa cập nhật') ?></div>
+                    </div>
+                    <div class="card-footer-simple">
+                        <?php if (!empty($item['updated_time'])): ?>
+                        <div class="update-time">🕒 <span class="val-text">Thời điểm cập nhật trạng thái:</span>
+                            <?= htmlspecialchars($item['updated_time']) ?></div>
+                        <?php endif; ?>
+                    </div>
+
                 </div>
+                <?php endforeach; ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>

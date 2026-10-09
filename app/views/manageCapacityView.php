@@ -14,6 +14,7 @@ $capacities = $data['capacities'] ?? [];
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
     <style>
         .capacity-container {
             max-width: 600px;
@@ -147,19 +148,11 @@ $capacities = $data['capacities'] ?? [];
         </div>
     </div>
 
-    <!-- Thanh Toast thông báo -->
-    <div id="toastMessage" class="toast-message" style="display:none;"></div>
-
     <script>
         function showToast(message, isError = false) {
-            const toast = document.getElementById('toastMessage');
-            toast.textContent = message;
-            toast.className = 'toast-message show ' + (isError ? 'toast-error' : '');
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.style.display = 'none', 300);
-            }, 3000);
+            if (window.Toast) {
+                window.Toast.show(message, isError ? 'error' : 'success');
+            }
         }
 
         async function updateCapacity(button) {

@@ -1,0 +1,650 @@
+/* ==========================================================================
+   WINDING EDIT BOBIN VIEW - SMC STYLESHEET (TASK-019)
+   High-end, Professional Glassmorphism Design for Winding Adjustment
+   ========================================================================== */
+
+:root {
+  --wnd-primary: #059669;
+  --wnd-primary-hover: #047857;
+  --wnd-primary-light: #d1fae5;
+  --wnd-accent: #10b981;
+  --wnd-bg-dark: #0f172a;
+  --wnd-bg-surface: #ffffff;
+  --wnd-bg-card: rgba(255, 255, 255, 0.95);
+  --wnd-border: #cbd5e1;
+  --wnd-border-light: #f1f5f9;
+  --wnd-text-main: #0f172a;
+  --wnd-text-muted: #64748b;
+
+  --flow-ok: #10b981;
+  --flow-ok-bg: #ecfdf5;
+  --flow-ng: #ef4444;
+  --flow-ng-bg: #fef2f2;
+  
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-family-base);
+  background: linear-gradient(180deg, #f0f7f4 0%, #e2e8f0 100%);
+  color: var(--wnd-text-main);
+  min-height: 100vh;
+  padding-bottom: 48px;
+}
+
+.wnd-container {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ================= 1. HERO HEADER ================= */
+.wnd-hero {
+  margin: 16px 0 20px;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+  border-radius: 16px;
+  box-shadow: 0 12px 28px -6px rgba(6, 78, 59, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+.wnd-hero::after {
+  content: '';
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.wnd-hero-title-area h1 {
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.01em;
+}
+
+.wnd-hero-subtitle {
+  font-size: 13px;
+  color: #a7f3d0;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.wnd-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ================= 2. KPI STATS ROW ================= */
+.wnd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.wnd-stat-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.wnd-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.wnd-stat-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.wnd-stat-card.stat-total .wnd-stat-icon-wrap { background: #d1fae5; color: #059669; }
+.wnd-stat-card.stat-flow-ok .wnd-stat-icon-wrap { background: #ecfdf5; color: #10b981; }
+.wnd-stat-card.stat-flow-ng .wnd-stat-icon-wrap { background: #fef2f2; color: #ef4444; }
+.wnd-stat-card.stat-recent .wnd-stat-icon-wrap { background: #fef3c7; color: #d97706; }
+
+.wnd-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.wnd-stat-val {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.wnd-stat-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 3px;
+}
+
+/* ================= 3. TOOLBAR & SEARCH ================= */
+.wnd-toolbar {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  flex-wrap: wrap;
+}
+
+.wnd-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.wnd-back-btn:hover {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.wnd-back-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+.wnd-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.wnd-search-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.wnd-search-icon {
+  position: absolute;
+  left: 12px;
+  width: 17px;
+  height: 17px;
+  color: #94a3b8;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.wnd-search-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px 0 38px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 9px;
+  font-size: 13.5px;
+  background: #f8fafc;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.wnd-search-input:focus {
+  border-color: #059669;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.wnd-btn-action {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.wnd-btn-scan {
+  background: #f1f5f9;
+  border: 1.5px solid #cbd5e1;
+  color: #334155;
+}
+
+.wnd-btn-scan:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.wnd-btn-filter {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.wnd-btn-filter:hover {
+  background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
+}
+
+/* ================= 4. BOBIN CARD CONTAINER ================= */
+.wnd-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wnd-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
+  padding: 20px 22px;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.wnd-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+}
+
+.wnd-card.is-editing {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2), 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+  background: #ffffff;
+}
+
+/* Card Header */
+.wnd-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.wnd-id-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.wnd-id-badge {
+  font-family: var(--font-family-mono);
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+}
+
+.wnd-key-code {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  color: #64748b;
+}
+
+.wnd-status-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Card Main Layout (2 Columns) */
+.wnd-card-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 22px;
+}
+
+/* Column 1: Bobin Specifications */
+.wnd-specs-panel {
+  background: #f8fafc;
+  border-radius: 11px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 16px;
+}
+
+.wnd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wnd-field.span-2 {
+  grid-column: span 2;
+}
+
+.wnd-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.wnd-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.wnd-tag-product {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #dbeafe;
+}
+
+.wnd-tag-printlot {
+  display: inline-block;
+  background: #fefce8;
+  color: #a16207;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #fef08a;
+  font-family: var(--font-family-mono);
+}
+
+.wnd-tag-length {
+  display: inline-block;
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+.wnd-tag-rack {
+  display: inline-block;
+  background: #f3e8ff;
+  color: #6b21a8;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e9d5ff;
+  font-family: var(--font-family-mono);
+}
+
+/* Column 2: Winding Parameters Panel */
+.wnd-params-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wnd-params-header {
+  font-size: 12px;
+  font-weight: 800;
+  color: #047857;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wnd-input-control {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #f8fafc;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.wnd-input-control:focus {
+  border-color: #059669;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+}
+
+.wnd-input-control:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.wnd-machine-badge {
+  font-weight: 700;
+  color: #0891b2;
+}
+
+.wnd-flow-select {
+  font-weight: 700;
+}
+
+/* Card Footer */
+.wnd-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.wnd-update-time {
+  font-size: 11.5px;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wnd-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wnd-btn-edit {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  color: #0f172a;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.wnd-btn-edit:hover {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+}
+
+.wnd-btn-cancel {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wnd-btn-cancel:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.wnd-btn-save {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  border: none;
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wnd-btn-save:hover {
+  background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
+}
+
+/* Empty State */
+.wnd-empty-box {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  border: 1.5px dashed #cbd5e1;
+}
+
+.wnd-empty-icon { font-size: 40px; margin-bottom: 12px; }
+.wnd-empty-title { font-size: 16px; font-weight: 700; color: #475569; }
+
+/* Pagination */
+.wnd-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.wnd-page-btn {
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.wnd-page-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.wnd-page-btn.active {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  font-weight: 700;
+}
+
+.wnd-page-info {
+  margin-left: 12px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .wnd-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .wnd-card-body { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .wnd-stats-grid { grid-template-columns: 1fr; }
+  .wnd-specs-panel { grid-template-columns: 1fr; }
+  .wnd-field.span-2 { grid-column: span 1; }
+  .wnd-hero { padding: 18px 20px; }
+}
+

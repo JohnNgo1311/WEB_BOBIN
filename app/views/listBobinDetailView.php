@@ -209,7 +209,7 @@ $typeOptions = [
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                             </svg>
                             <input type="text" name="keyword" id="searchKeyword"
-                                placeholder="Nhập hoặc quét mã Bobin..."
+                                placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
                                 value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                         </div>
 
@@ -709,7 +709,9 @@ $typeOptions = [
                     <div class="info-grid">
                         <div class="field-item">
                             <label>Mã sản phẩm</label>
-                            <div class="val-sub"><?= htmlspecialchars($productCode) ?></div>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-product"><?= htmlspecialchars($productCode) ?></span>
+                            </div>
                         </div>
                         <div class="field-item">
                             <label>Mã nhân viên</label>
@@ -722,8 +724,8 @@ $typeOptions = [
                         <div class="field-item">
                             <label>Vị trí RACK</label>
                             <div class="val-sub">
-                                <span class="val-rack <?= $isRackEmpty ? 'val-empty' : '' ?>">
-                                    <?= htmlspecialchars($rackCode) ?>
+                                <span class="bobin-highlight-rack <?= $isRackEmpty ? 'rack-empty' : '' ?>">
+                                    <?= $isRackEmpty ? '---' : ('📍 ' . htmlspecialchars($rackCode)) ?>
                                 </span>
                             </div>
                         </div>
@@ -737,8 +739,18 @@ $typeOptions = [
                         </div>
                         <div class="field-item">
                             <label>Loại Bobin</label>
-                            <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
-                                <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
+                            <?php
+                            $rawBobinType = trim($item['bobin_type'] ?? '');
+                            $typeBadgeClass = match (true) {
+                                $rawBobinType === 'Sản xuất' => 'type-san-xuat',
+                                $rawBobinType === 'Bù'       => 'type-bu',
+                                default                     => 'type-dieu-chinh'
+                            };
+                            ?>
+                            <div class="val-sub">
+                                <span class="bobin-type-badge <?= $typeBadgeClass ?>" data-type="<?= htmlspecialchars($rawBobinType) ?>" title="<?= htmlspecialchars($rawBobinType) ?>">
+                                    <?= htmlspecialchars(!empty($rawBobinType) ? $rawBobinType : 'Chưa cập nhật') ?>
+                                </span>
                             </div>
                         </div>
                         <div class="field-item">
@@ -747,7 +759,11 @@ $typeOptions = [
                         </div>
                         <div class="field-item">
                             <label>Lot in</label>
-                            <div class="val-sub"><?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?></div>
+                            <div class="val-sub">
+                                <span class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                    <?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?>
+                                </span>
+                            </div>
                         </div>
                         <div class="field-item highlight-box">
                             <label>Chiều dài (m)</label>

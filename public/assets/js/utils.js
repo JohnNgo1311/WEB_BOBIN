@@ -1,20 +1,10 @@
 /*MODULE TOAST: Hiển thị thông báo*/
-const Toast = {
+var Toast = window.Toast || {
     show: function (message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast-message ${type === 'error' ? 'toast-error' : ''}`;
-        toast.innerHTML = message;
-
-        document.body.appendChild(toast);
-
-        // Hiệu ứng
-        setTimeout(() => toast.classList.add('show'), 10);
-
-        // Tự động tắt
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => document.body.removeChild(toast), 500);
-        }, 3000);
+        if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
+    },
+    flash: function (message, type = 'success') {
+        if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
     }
 };
 

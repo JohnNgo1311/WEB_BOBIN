@@ -20,7 +20,7 @@ class ListdataRepository
                 ? "SELECT * FROM bobin_list_general"
                 : "SELECT * FROM bobin_list_general WHERE bobin_current_status = 'Rolled' OR bobin_current_status = 'Cancelled'",
             // Lấy đúng trường theo bảng employee_list mới (loại bỏ cột password để bảo mật)
-            'list_employee'          => "SELECT id, employee_code, employee_name, role, username, is_active, updated_time FROM employee_list WHERE is_active = 1 ORDER BY employee_code ASC",
+            'list_employee'          => "SELECT id, employee_code, employee_name, cost_center, role, username, updated_time FROM employee_list ORDER BY employee_code ASC",
             'list_material_lot'      => "SELECT * FROM material_lot_list",
             'list_product'           => "SELECT * FROM product_list",
             'list_extrusion_machine' => "SELECT * FROM extrusion_machine_list",

@@ -1,14 +1,20 @@
 {
     "vi": {
+        "btn_cancel": "Trở lại",
+        "btn_delete": "Hủy bỏ",
         "btn_confirm": "Xác nhận",
-        "btn_cancel": "Trở lại"
+        "btn_save_bobin": "💾 Lưu"
     },
     "en": {
+        "btn_cancel": "Back",
+        "btn_delete": "Delete",
         "btn_confirm": "Confirm",
-        "btn_cancel": "Back"
+        "btn_save_bobin": "💾 Save"
     },
     "ja": {
+        "btn_cancel": "戻る",
+        "btn_delete": "削除",
         "btn_confirm": "確認",
-        "btn_cancel": "戻る"
+        "btn_save_bobin": "💾 保存"
     }
 }

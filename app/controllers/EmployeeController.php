@@ -32,34 +32,27 @@ class EmployeeController extends Controller
         $pdo = Database::getInstance()->pdo();
 
         $filters = [
-            'keyword' => trim($_GET['keyword'] ?? ''),
-            'role'    => trim($_GET['role'] ?? 'all'),
-            'status'  => trim($_GET['status'] ?? 'all'),
+            'keyword'     => trim($_GET['keyword'] ?? ''),
+            'cost_center' => trim($_GET['cost_center'] ?? 'all'),
         ];
 
+        // Lấy danh sách các mã bộ phận (cost_center) duy nhất để hiển thị bộ lọc
+        $stmtCc = $pdo->query("SELECT DISTINCT cost_center FROM employee_list WHERE cost_center IS NOT NULL AND cost_center != '' ORDER BY cost_center ASC");
+        $costCenters = $stmtCc->fetchAll(PDO::FETCH_COLUMN);
+
         // Query employees
-        $sql = "SELECT * FROM employee_list WHERE 1=1";
+        $sql = "SELECT id, employee_code, employee_name, cost_center, role, username, is_first_login, permissions, updated_time FROM employee_list WHERE 1=1";
         $params = [];
 
         if ($filters['keyword'] !== '') {
-            $sql .= " AND (employee_code LIKE ? OR employee_name LIKE ?)";
+            $sql .= " AND (employee_code LIKE ? OR employee_name LIKE ? OR cost_center LIKE ?)";
+            $params[] = '%' . $filters['keyword'] . '%';
             $params[] = '%' . $filters['keyword'] . '%';
             $params[] = '%' . $filters['keyword'] . '%';
         }
-        if ($filters['role'] !== 'all') {
-            $sql .= " AND role = ?";
-            $params[] = $filters['role'];
-        }
-        if ($filters['status'] !== 'all') {
-            $statusVal = match($filters['status']) {
-                'active' => 1,
-                'inactive' => 0,
-                default => null
-            };
-            if ($statusVal !== null) {
-                $sql .= " AND is_active = ?";
-                $params[] = $statusVal;
-            }
+        if ($filters['cost_center'] !== 'all') {
+            $sql .= " AND cost_center = ?";
+            $params[] = $filters['cost_center'];
         }
         $sql .= " ORDER BY id DESC";
 
@@ -68,14 +61,10 @@ class EmployeeController extends Controller
         $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Stats
-        $stats = ['total' => 0, 'extrusion' => 0, 'qc' => 0, 'winding' => 0, 'admin' => 0, 'active' => 0, 'inactive' => 0];
+        $stats = ['total' => 0, 'extrusion' => 0, 'qc' => 0, 'winding' => 0, 'admin' => 0];
         
         $stmtTotal = $pdo->query("SELECT COUNT(*) FROM employee_list");
         $stats['total'] = (int)$stmtTotal->fetchColumn();
-
-        $stmtActive = $pdo->query("SELECT COUNT(*) FROM employee_list WHERE is_active = 1");
-        $stats['active'] = (int)$stmtActive->fetchColumn();
-        $stats['inactive'] = $stats['total'] - $stats['active'];
 
         $stmtRole = $pdo->query("SELECT role, COUNT(*) as cnt FROM employee_list GROUP BY role");
         $roleCounts = $stmtRole->fetchAll(PDO::FETCH_ASSOC);
@@ -98,6 +87,7 @@ class EmployeeController extends Controller
             'employees'    => $employees,
             'stats'        => $stats,
             'filters'      => $filters,
+            'costCenters'  => $costCenters,
             'pendingCount' => $pendingCount,
             'userRole'     => $_SESSION['user']['role'] ?? '',
             'userName'     => $_SESSION['user']['employee_name'] ?? ''
@@ -114,12 +104,12 @@ class EmployeeController extends Controller
         try {
             $pdo = Database::getInstance()->pdo();
             $data = [
-                'employee_code'  => trim($_POST['employee_code'] ?? ''),
+                'employee_code'  => strtoupper(trim($_POST['employee_code'] ?? '')),
                 'employee_name'  => trim($_POST['employee_name'] ?? ''),
+                'cost_center'    => trim($_POST['cost_center'] ?? ''),
                 'role'           => trim($_POST['role'] ?? 'extrusion'),
                 'username'       => '',
                 'password'       => password_hash('123', PASSWORD_DEFAULT),
-                'is_active'      => 1,
                 'is_first_login' => 1
             ];
 
@@ -135,15 +125,15 @@ class EmployeeController extends Controller
                 throw new Exception('Mã nhân viên đã tồn tại.');
             }
 
-            $sql = "INSERT INTO employee_list (employee_code, employee_name, role, username, password, is_active, is_first_login, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+            $sql = "INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $data['employee_code'],
                 $data['employee_name'],
+                $data['cost_center'] !== '' ? $data['cost_center'] : null,
                 $data['role'],
                 $data['username'],
                 $data['password'],
-                $data['is_active'],
                 $data['is_first_login']
             ]);
             $newId = $pdo->lastInsertId();
@@ -172,15 +162,20 @@ class EmployeeController extends Controller
 
             $data = [
                 'employee_name' => trim($_POST['employee_name'] ?? ''),
+                'cost_center'   => trim($_POST['cost_center'] ?? ''),
                 'role'          => trim($_POST['role'] ?? 'extrusion'),
-                'is_active'     => isset($_POST['is_active']) ? (int)$_POST['is_active'] : 1,
             ];
 
             if ($data['employee_name'] === '') throw new Exception('Họ tên không được để trống.');
 
-            $sql = "UPDATE employee_list SET employee_name = ?, role = ?, is_active = ?, updated_time = NOW() WHERE id = ?";
+            $sql = "UPDATE employee_list SET employee_name = ?, cost_center = ?, role = ?, updated_time = NOW() WHERE id = ?";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$data['employee_name'], $data['role'], $data['is_active'], $id]);
+            $stmt->execute([
+                $data['employee_name'],
+                $data['cost_center'] !== '' ? $data['cost_center'] : null,
+                $data['role'],
+                $id
+            ]);
 
             if ($this->isAjax()) $this->json(['success' => true, 'message' => 'Cập nhật thông tin nhân viên thành công!']);
             $this->redirectIndex('Cập nhật thông tin nhân viên thành công!', 'success');
@@ -243,9 +238,8 @@ class EmployeeController extends Controller
     public function exportExcel(): void
     {
         $filters = [
-            'keyword' => trim($_GET['keyword'] ?? ''),
-            'role'    => trim($_GET['role'] ?? 'all'),
-            'status'  => trim($_GET['status'] ?? 'all'),
+            'keyword'     => trim($_GET['keyword'] ?? ''),
+            'cost_center' => trim($_GET['cost_center'] ?? 'all'),
         ];
 
         $pdo = Database::getInstance()->pdo();
@@ -253,20 +247,14 @@ class EmployeeController extends Controller
         $params = [];
 
         if ($filters['keyword'] !== '') {
-            $sql .= " AND (employee_code LIKE ? OR employee_name LIKE ?)";
+            $sql .= " AND (employee_code LIKE ? OR employee_name LIKE ? OR cost_center LIKE ?)";
+            $params[] = '%' . $filters['keyword'] . '%';
             $params[] = '%' . $filters['keyword'] . '%';
             $params[] = '%' . $filters['keyword'] . '%';
         }
-        if ($filters['role'] !== 'all') {
-            $sql .= " AND role = ?";
-            $params[] = $filters['role'];
-        }
-        if ($filters['status'] !== 'all') {
-            $statusVal = match($filters['status']) { 'active' => 1, 'inactive' => 0, default => null };
-            if ($statusVal !== null) {
-                $sql .= " AND is_active = ?";
-                $params[] = $statusVal;
-            }
+        if ($filters['cost_center'] !== 'all') {
+            $sql .= " AND cost_center = ?";
+            $params[] = $filters['cost_center'];
         }
         $sql .= " ORDER BY id DESC";
 
@@ -281,18 +269,24 @@ class EmployeeController extends Controller
         
         $output = fopen('php://output', 'w');
         fputs($output, "\xEF\xBB\xBF");
-        fputcsv($output, ['STT', 'Mã nhân viên', 'Họ và tên', 'Tên đăng nhập', 'Vai trò / Nhóm', 'Tình trạng làm việc', 'Mật khẩu lần đầu', 'Thời gian cập nhật']);
+        fputcsv($output, ['STT', 'Mã nhân viên', 'Họ và tên', 'Mã bộ phận', 'Vai trò / Nhóm', 'Tên đăng nhập', 'Mật khẩu lần đầu', 'Thời gian cập nhật']);
 
         $stt = 1;
         foreach ($employees as $emp) {
             $roleLabel = match ($emp['role']) {
                 'extrusion' => 'Nhóm Đùn', 'qc' => 'Nhóm QC', 'winding' => 'Nhóm Cuộn', 'admin' => 'Quản trị viên (Admin)', default => $emp['role']
             };
-            $statusLabel = ($emp['is_active'] == 1) ? 'Đang làm việc' : 'Đã nghỉ/Khóa';
             $firstLoginLabel = ($emp['is_first_login'] == 1) ? 'Chưa đổi (123)' : 'Đã đổi riêng';
 
             fputcsv($output, [
-                $stt++, $emp['employee_code'], $emp['employee_name'], $emp['username'], $roleLabel, $statusLabel, $firstLoginLabel, $emp['updated_time']
+                $stt++,
+                $emp['employee_code'],
+                $emp['employee_name'],
+                $emp['cost_center'] ?? '',
+                $roleLabel,
+                $emp['username'],
+                $firstLoginLabel,
+                $emp['updated_time']
             ]);
         }
         fclose($output);
@@ -307,9 +301,10 @@ class EmployeeController extends Controller
         header('Cache-Control: max-age=0');
         $output = fopen('php://output', 'w');
         fputs($output, "\xEF\xBB\xBF");
-        fputcsv($output, ['Mã nhân viên', 'Họ và tên', 'Vai trò (extrusion/qc/winding/admin)', 'Tài khoản (Tùy chọn)', 'Trạng thái (1: Làm việc, 0: Khóa)']);
-        fputcsv($output, ['01910698', 'Nguyễn Thị Hiền', 'admin', '01910698', '1']);
-        fputcsv($output, ['02420111', 'Trần Văn A', 'extrusion', '02420111', '1']);
+        fputcsv($output, ['Mã nhân viên', 'Họ và tên', 'Mã bộ phận', 'Vai trò (extrusion/qc/winding/admin)', 'Tài khoản (Tùy chọn)']);
+        fputcsv($output, ['01910698', 'Nguyễn Thị Hiền', 'A00430', 'admin', '01910698']);
+        fputcsv($output, ['02420111', 'Trần Văn A', 'A00330', 'extrusion', '02420111']);
+        fputcsv($output, ['02619486', 'Lê Văn B', 'A00340', 'winding', '02619486']);
         fclose($output);
         exit;
     }
@@ -345,11 +340,11 @@ class EmployeeController extends Controller
             while (($data = fgetcsv($handle)) !== false) {
                 if (empty($data) || (count($data) === 1 && trim($data[0]) === '')) continue;
                 $rows[] = [
-                    'employee_code' => $data[0] ?? '',
-                    'employee_name' => $data[1] ?? '',
-                    'role'          => $data[2] ?? 'extrusion',
-                    'username'      => $data[3] ?? '',
-                    'is_active'     => $data[4] ?? 1
+                    'employee_code' => strtoupper(trim($data[0] ?? '')),
+                    'employee_name' => trim($data[1] ?? ''),
+                    'cost_center'   => trim($data[2] ?? ''),
+                    'role'          => strtolower(trim($data[3] ?? 'extrusion')),
+                    'username'      => trim($data[4] ?? '')
                 ];
             }
             fclose($handle);
@@ -361,15 +356,19 @@ class EmployeeController extends Controller
             $updated = 0;
             $errors = [];
 
+            $validRoles = ['extrusion', 'qc', 'winding', 'admin'];
+
             $stmtCheck = $pdo->prepare("SELECT id FROM employee_list WHERE employee_code = ?");
-            $stmtInsert = $pdo->prepare("INSERT INTO employee_list (employee_code, employee_name, role, username, password, is_active, is_first_login, updated_time) VALUES (?, ?, ?, ?, ?, ?, 1, NOW())");
-            $stmtUpdate = $pdo->prepare("UPDATE employee_list SET employee_name = ?, role = ?, is_active = ?, updated_time = NOW() WHERE employee_code = ?");
+            $stmtInsert = $pdo->prepare("INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time) VALUES (?, ?, ?, ?, ?, ?, 1, NOW())");
+            $stmtUpdate = $pdo->prepare("UPDATE employee_list SET employee_name = ?, cost_center = ?, role = ?, updated_time = NOW() WHERE employee_code = ?");
 
             $defaultHash = password_hash('123', PASSWORD_DEFAULT);
 
             foreach ($rows as $i => $r) {
                 if (empty($r['employee_code'])) continue;
                 $username = empty($r['username']) ? $r['employee_code'] : $r['username'];
+                $costCenter = $r['cost_center'] !== '' ? $r['cost_center'] : null;
+                $role = in_array($r['role'], $validRoles, true) ? $r['role'] : 'extrusion';
                 
                 $stmtCheck->execute([$r['employee_code']]);
                 $existsId = $stmtCheck->fetchColumn();
@@ -377,11 +376,11 @@ class EmployeeController extends Controller
                 try {
                     if ($existsId) {
                         if ($updateIfExists) {
-                            $stmtUpdate->execute([$r['employee_name'], $r['role'], $r['is_active'], $r['employee_code']]);
+                            $stmtUpdate->execute([$r['employee_name'], $costCenter, $role, $r['employee_code']]);
                             $updated++;
                         }
                     } else {
-                        $stmtInsert->execute([$r['employee_code'], $r['employee_name'], $r['role'], $username, $defaultHash, $r['is_active']]);
+                        $stmtInsert->execute([$r['employee_code'], $r['employee_name'], $costCenter, $role, $username, $defaultHash]);
                         $inserted++;
                     }
                 } catch (PDOException $e) {
@@ -415,7 +414,7 @@ class EmployeeController extends Controller
         $pdo = Database::getInstance()->pdo();
 
         // Lấy danh sách nhân viên để tra cứu / chọn nhanh
-        $stmt = $pdo->query("SELECT id, employee_code, employee_name, role, username, is_active, permissions, updated_time 
+        $stmt = $pdo->query("SELECT id, employee_code, employee_name, cost_center, role, username, permissions, updated_time 
                              FROM employee_list 
                              ORDER BY employee_code ASC");
         $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -461,7 +460,7 @@ class EmployeeController extends Controller
 
         try {
             $pdo = Database::getInstance()->pdo();
-            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, role, username, is_active, permissions, updated_time 
+            $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, cost_center, role, username, permissions, updated_time 
                                    FROM employee_list 
                                    WHERE employee_code = ? OR username = ? 
                                    LIMIT 1");
@@ -483,9 +482,9 @@ class EmployeeController extends Controller
                     'id'                     => (int)$emp['id'],
                     'employee_code'          => $emp['employee_code'],
                     'employee_name'          => $emp['employee_name'],
+                    'cost_center'            => $emp['cost_center'] ?? '',
                     'username'               => $emp['username'],
                     'role'                   => $emp['role'],
-                    'is_active'              => (int)$emp['is_active'],
                     'has_custom_permissions' => $hasCustom,
                     'permissions'            => $currentPerms,
                     'default_permissions'    => $defaultPerms,

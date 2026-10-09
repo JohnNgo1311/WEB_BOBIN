@@ -330,13 +330,13 @@ body.sidebar-collapsed .sb-user-info {
   color: #38bdf8;
 }
 
-/* Vùng chứa các mục con bên trong Thư mục (Branch) */
+/* Vùng chứa các mục con bên trong Thư mục (Branch) - Xê dịch vào trong so với thư mục cha (TASK-019) */
 .sb-tree-children {
   flex-shrink: 0 !important;
   display: none;
   flex-direction: column;
-  gap: 3px;
-  padding: 4px 8px 8px 22px;
+  gap: 4px;
+  padding: 4px 8px 8px 30px;
   position: relative;
   box-sizing: border-box;
 }
@@ -349,11 +349,11 @@ body.sidebar-collapsed .sb-user-info {
 .sb-tree-children::before {
   content: '';
   position: absolute;
-  left: 21px;
+  left: 24px;
   top: 4px;
   bottom: 12px;
   width: 1.5px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border-radius: 1px;
 }
 
@@ -365,7 +365,8 @@ body.sidebar-collapsed .sb-user-info {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 10px;
+  padding: 0 12px;
+  margin-left: 4px;
   color: #cbd5e1;
   text-decoration: none;
   font-size: 12.5px;
@@ -381,11 +382,11 @@ body.sidebar-collapsed .sb-user-info {
 .sb-tree-leaf::before {
   content: '';
   position: absolute;
-  left: -9px;
+  left: -10px;
   top: 50%;
-  width: 8px;
+  width: 9px;
   height: 1.5px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .sb-tree-leaf:hover {

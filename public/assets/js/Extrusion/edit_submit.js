@@ -1,21 +1,12 @@
 /* =========================================
     MODULE TOAST & DIALOG
 ========================================= */
-const Toast = {
+var Toast = window.Toast || {
     show(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast-message${type === 'error' ? ' toast-error' : ''}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => toast.classList.add('show'));
-        });
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
-        }, 3000);
+        if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
+    },
+    flash(message, type = 'success') {
+        if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
     }
 };
 
@@ -52,7 +43,7 @@ const ConfirmDialog = (() => {
                     <label style="display: block; font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
                         🔐 <span data-i18n="confirm_pwd_label">${window.t ? window.t('confirm_pwd_label') : 'Nhập mật khẩu tài khoản của bạn để xác nhận:'}</span>
                     </label>
-                    <input type="password" id="confirm_dialog_password" class="form-control" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="${window.t ? window.t('confirm_pwd_ph') : 'Nhập mật khẩu đăng nhập...'}">
+                    <input type="password" id="confirm_dialog_password" class="form-control" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="${window.t ? window.t('confirm_pwd_ph') : 'Nhập mật khẩu đăng nhập...'}" data-i18n-ph="confirm_pwd_ph">
                     <div id="confirm_pwd_error" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: none; font-weight: 600;"></div>
                 </div>
             ` : '';
@@ -299,15 +290,18 @@ async function handleDelete(btnElement, bobinCode) {
 
                 const data = await response.json();
                 if (data.success) {
+                    if (window.Toast && window.Toast.flash) {
+                        window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Hủy thành công!'), 'success');
+                    }
                     Toast.show(data.message, 'success');
-                    setTimeout(() => window.location.reload(), 1200);
+                    setTimeout(() => window.location.reload(), 800);
                 } else {
                     Toast.show("Lỗi: " + (data.message || "Hủy thất bại"), 'error');
                     btnElement.innerHTML = originalBtnText;
                     btnElement.disabled = false;
                 }
             } catch (error) {
-                Toast.show("Đã xảy ra lỗi kết nối!", 'error');
+                Toast.show(window.t ? window.t('toast_error_network') : "Đã xảy ra lỗi kết nối!", 'error');
                 btnElement.innerHTML = originalBtnText;
                 btnElement.disabled = false;
             }
@@ -379,11 +373,11 @@ async function handleConfirm(buttonElement, bobinCode) {
         };
 
         const extDisplay = [
-            { label: 'Đường kính', ok: payload.ext_check_diameter },
-            { label: 'Gel', ok: payload.ext_check_gel },
-            { label: 'Dị vật', ok: payload.ext_check_foreign_object },
-            { label: 'Màu sắc', ok: payload.ext_check_color },
-            { label: 'Chữ in', ok: payload.ext_check_print }
+            { label: window.t ? (window.t('crit_diameter') || 'Đường kính') : 'Đường kính', ok: payload.ext_check_diameter },
+            { label: window.t ? (window.t('crit_gel') || 'Gel') : 'Gel', ok: payload.ext_check_gel },
+            { label: window.t ? (window.t('crit_foreign') || 'Dị vật') : 'Dị vật', ok: payload.ext_check_foreign_object },
+            { label: window.t ? (window.t('crit_color') || 'Màu sắc') : 'Màu sắc', ok: payload.ext_check_color },
+            { label: window.t ? (window.t('crit_print') || 'Chữ in') : 'Chữ in', ok: payload.ext_check_print }
         ];
 
         let checksHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">';
@@ -397,19 +391,29 @@ async function handleConfirm(buttonElement, bobinCode) {
         });
         checksHTML += '</div>';
 
+        const lblBobinCode = window.t ? (window.t('lbl_bobin_id_code') || 'Mã Bobin') : 'Mã Bobin';
+        const lblProduct = window.t ? (window.t('field_product') || 'Mã sản phẩm') : 'Mã sản phẩm';
+        const lblType = window.t ? (window.t('field_bobin_type') || 'Loại Bobin') : 'Loại Bobin';
+        const lblEmp = window.t ? (window.t('field_employee_code') || 'Nhân viên') : 'Nhân viên';
+        const lblRack = window.t ? (window.t('field_rack') || 'Vị trí Rack') : 'Vị trí Rack';
+        const lblLength = window.t ? (window.t('field_length') || 'Chiều dài') : 'Chiều dài';
+        const lblExtDate = window.t ? (window.t('field_ext_date') || 'Ngày đùn') : 'Ngày đùn';
+        const lblFinishTime = window.t ? (window.t('field_finish_time') || 'Thời gian hoàn thành') : 'Thời gian hoàn thành';
+        const lblChecksHeader = window.t ? (window.t('ext_criteria_title') || '🏭 Ngoại quan Đùn Check:') : '🏭 Ngoại quan Đùn Check:';
+
         const reviewHTML = `
             <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #0056b3; font-weight: bold;">${bobinCode}</span></li>
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Sản phẩm:</strong> <span style="color: #dc2626; font-weight: bold;">${productCode}</span></li>
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Loại Bobin:</strong> <span>${bobinType}</span></li>
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Nhân viên:</strong> <span>${empCode} - ${empName}</span></li>
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Vị trí Rack:</strong> <span style="color: #0284c7; font-weight: 800;">${rackCode || 'Chưa chọn'}</span></li>
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Chiều dài:</strong> <span>${lengthM} m</span></li>
-                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Ngày đùn:</strong> <span>${extrusionDate}</span></li>
-                <li style="display: flex; justify-content: space-between;"><strong>Thời gian hoàn thành:</strong> <span>${finishTime}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblBobinCode}:</strong> <span style="color: #0056b3; font-weight: bold;">${bobinCode}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblProduct}</strong> <span style="color: #dc2626; font-weight: bold;">${productCode}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblType}</strong> <span>${bobinType}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblEmp}</strong> <span>${empCode} - ${empName}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblRack}</strong> <span style="color: #0284c7; font-weight: 800;">${rackCode || '---'}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblLength}</strong> <span>${lengthM} m</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblExtDate}</strong> <span>${extrusionDate}</span></li>
+                <li style="display: flex; justify-content: space-between;"><strong>${lblFinishTime}</strong> <span>${finishTime}</span></li>
             </ul>
             <div style="margin-top:10px;text-align:left;padding:8px 10px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
-                <strong style="font-size:12.5px;color:#0369a1;">🏭 Ngoại quan Đùn Check:</strong>
+                <strong style="font-size:12.5px;color:#0369a1;">${lblChecksHeader}</strong>
                 ${checksHTML}
             </div>
         `;
@@ -439,11 +443,14 @@ async function handleConfirm(buttonElement, bobinCode) {
 
                     const res = await response.json();
                     if (res.success) {
+                        if (window.Toast && window.Toast.flash) {
+                            window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
+                        }
                         Toast.show(res.message, 'success');
                         buttonElement.innerText = window.t ? window.t('saved') : 'Đã lưu ✔️';
                         currentEditingContainer = null;
                         originalDataBackup = null;
-                        setTimeout(() => window.location.reload(), 1200);
+                        setTimeout(() => window.location.reload(), 800);
                     } else {
                         Toast.show(`❌ ${res.message || (window.t ? window.t('save_failed') : 'Lưu thất bại')}`, 'error');
                         buttonElement.innerText = originalText;

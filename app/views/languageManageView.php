@@ -81,7 +81,7 @@ $customKeysCount = count($customDict['vi'] ?? []);
                 <div class="lang-search-wrap">
                     <span class="lang-search-icon">🔍</span>
                     <input type="text" id="langSearchInput" class="lang-search-input"
-                        placeholder="<?= __('lang_search_ph') ?>" data-i18n="[placeholder]lang_search_ph">
+                        placeholder="<?= __('lang_search_ph') ?>" data-i18n-ph="lang_search_ph" data-i18n="[placeholder]lang_search_ph">
                 </div>
 
                 <select id="langFilterScope" class="lang-select-filter">
@@ -192,22 +192,22 @@ $customKeysCount = count($customDict['vi'] ?? []);
                 <div class="lang-form-group">
                     <label data-i18n="lang_modal_key_label"><?= __('lang_modal_key_label') ?> <span
                             style="color:#ef4444;">*</span></label>
-                    <input type="text" id="newKeyName" placeholder="vd: my_custom_label" autocomplete="off">
+                    <input type="text" id="newKeyName" placeholder="<?= __('lang_ph_key_name') ?>" data-i18n-ph="lang_ph_key_name" autocomplete="off">
                 </div>
                 <div class="lang-form-group">
                     <label data-i18n="lang_modal_vi_label">🇻🇳 Bản dịch Tiếng Việt: <span
                             style="color:#ef4444;">*</span></label>
-                    <input type="text" id="newKeyVi" placeholder="Nội dung Tiếng Việt...">
+                    <input type="text" id="newKeyVi" placeholder="<?= __('lang_ph_vi_content') ?>" data-i18n-ph="lang_ph_vi_content">
                 </div>
                 <div class="lang-form-group">
                     <label data-i18n="lang_modal_en_label">🇬🇧 Bản dịch English: <span
                             style="color:#ef4444;">*</span></label>
-                    <input type="text" id="newKeyEn" placeholder="English text...">
+                    <input type="text" id="newKeyEn" placeholder="<?= __('lang_ph_en_content') ?>" data-i18n-ph="lang_ph_en_content">
                 </div>
                 <div class="lang-form-group">
                     <label data-i18n="lang_modal_ja_label">🇯🇵 Bản dịch 日本語: <span
                             style="color:#ef4444;">*</span></label>
-                    <input type="text" id="newKeyJa" placeholder="日本語テキスト...">
+                    <input type="text" id="newKeyJa" placeholder="<?= __('lang_ph_ja_content') ?>" data-i18n-ph="lang_ph_ja_content">
                 </div>
             </div>
             <div class="lang-modal-footer">
@@ -251,12 +251,18 @@ $customKeysCount = count($customDict['vi'] ?? []);
             const newJaInput = document.getElementById('newKeyJa');
 
             function showToast(message, isSuccess = true) {
-                toastMsg.textContent = message;
-                toastIcon.textContent = isSuccess ? '✅' : '❌';
-                toast.className = 'lang-toast show ' + (isSuccess ? 'toast-success' : 'toast-error');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 3500);
+                const type = isSuccess ? 'success' : 'error';
+                if (window.Toast && window.Toast.show) {
+                    window.Toast.show(message, type);
+                }
+                if (toastMsg && toast) {
+                    toastMsg.textContent = message;
+                    toastIcon.textContent = isSuccess ? '✅' : '❌';
+                    toast.className = 'lang-toast show ' + (isSuccess ? 'toast-success' : 'toast-error');
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 3500);
+                }
             }
 
             // 1. Tìm kiếm và lọc
@@ -360,6 +366,9 @@ $customKeysCount = count($customDict['vi'] ?? []);
                                 window.loadAndMergeCustomTranslations(data.custom_dict);
                             }
                         }
+                        if (window.Toast && window.Toast.flash) {
+                            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Lưu thành công!'), 'success');
+                        }
                         showToast(data.message || 'Lưu thành công!', true);
                         setTimeout(() => {
                             window.location.reload();
@@ -408,6 +417,9 @@ $customKeysCount = count($customDict['vi'] ?? []);
                                     window.loadAndMergeCustomTranslations(data.custom_dict);
                                 }
                             }
+                            if (window.Toast && window.Toast.flash) {
+                                window.Toast.flash(data.message || (window.t ? window.t('toast_reset_success') : 'Đã khôi phục mặc định!'), 'success');
+                            }
                             showToast(data.message, true);
                             setTimeout(() => window.location.reload(), 800);
                         } else {
@@ -446,6 +458,9 @@ $customKeysCount = count($customDict['vi'] ?? []);
                         if (typeof window.loadAndMergeCustomTranslations === 'function') {
                             window.loadAndMergeCustomTranslations({ vi: {}, en: {}, ja: {} });
                         }
+                        if (window.Toast && window.Toast.flash) {
+                            window.Toast.flash(data.message || (window.t ? window.t('toast_reset_success') : 'Đã khôi phục toàn bộ từ điển!'), 'success');
+                        }
                         showToast(data.message, true);
                         setTimeout(() => window.location.reload(), 800);
                     } else {
@@ -480,15 +495,22 @@ $customKeysCount = count($customDict['vi'] ?? []);
                 const ja = newJaInput.value.trim();
 
                 if (!k || !vi) {
-                    alert('Vui lòng nhập Mã từ khóa (Key) và bản dịch Tiếng Việt!');
+                    if (window.Toast && window.Toast.warning) {
+                        window.Toast.warning('Vui lòng nhập Mã từ khóa (Key) và bản dịch Tiếng Việt!');
+                    } else {
+                        showToast('Vui lòng nhập Mã từ khóa (Key) và bản dịch Tiếng Việt!', false);
+                    }
                     return;
                 }
 
                 const existingRow = document.querySelector(`.lang-row[data-key="${k}"]`);
                 if (existingRow) {
-                    alert(
-                        `Từ khóa '${k}' đã tồn tại trong danh mục! Bạn có thể tìm kiếm và sửa trực tiếp trên bảng.`
-                    );
+                    const msg = `Từ khóa '${k}' đã tồn tại trong danh mục! Bạn có thể tìm kiếm và sửa trực tiếp trên bảng.`;
+                    if (window.Toast && window.Toast.warning) {
+                        window.Toast.warning(msg);
+                    } else {
+                        showToast(msg, false);
+                    }
                     closeModal();
                     searchInput.value = k;
                     applyFilter();
@@ -524,14 +546,17 @@ $customKeysCount = count($customDict['vi'] ?? []);
                                 window.loadAndMergeCustomTranslations(data.custom_dict);
                             }
                         }
+                        if (window.Toast && window.Toast.flash) {
+                            window.Toast.flash(`Thêm từ khóa '${k}' thành công!`, 'success');
+                        }
                         showToast(`Thêm từ khóa '${k}' thành công!`, true);
                         closeModal();
                         setTimeout(() => window.location.reload(), 800);
                     } else {
-                        alert(data.error || 'Lỗi khi thêm từ khóa');
+                        showToast(data.error || 'Lỗi khi thêm từ khóa', false);
                     }
                 } catch (err) {
-                    alert('Lỗi kết nối máy chủ');
+                    showToast('Lỗi kết nối máy chủ', false);
                 }
             });
         })();

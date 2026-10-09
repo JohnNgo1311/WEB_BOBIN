@@ -50,7 +50,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                         <input type="text" name="keyword" id="searchKeyword"
-                            placeholder="Nhập hoặc quét mã Bobin..."
+                            placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
                             value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                     </div>
 
@@ -132,7 +132,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             <div class="info-grid">
                                 <div class="field-item">
                                     <label>Mã sản phẩm</label>
-                                    <div class="val-sub font-bold-blue"><?= htmlspecialchars($productCode) ?></div>
+                                    <div class="val-sub">
+                                        <span class="bobin-highlight-product"><?= htmlspecialchars($productCode) ?></span>
+                                    </div>
                                 </div>
                                 <div class="field-item">
                                     <label>Mã NV Đùn</label>
@@ -144,7 +146,14 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                 </div>
                                 <div class="field-item">
                                     <label>Vị trí RACK</label>
-                                    <div class="val-sub"><span class="val-rack"><?= htmlspecialchars($rackCode) ?></span></div>
+                                    <?php
+                                    $isRackEmpty = empty($rackCode) || $rackCode === 'Chưa cập nhật' || $rackCode === '---';
+                                    ?>
+                                    <div class="val-sub">
+                                        <span class="bobin-highlight-rack <?= $isRackEmpty ? 'rack-empty' : '' ?>">
+                                            <?= $isRackEmpty ? '---' : ('📍 ' . htmlspecialchars($rackCode)) ?>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="field-item">
                                     <label>Ca sản xuất</label>
@@ -156,8 +165,18 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                 </div>
                                 <div class="field-item">
                                     <label>Loại Bobin</label>
-                                    <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
-                                        <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
+                                    <?php
+                                    $rawBobinType = trim($item['bobin_type'] ?? '');
+                                    $typeBadgeClass = match (true) {
+                                        $rawBobinType === 'Sản xuất' => 'type-san-xuat',
+                                        $rawBobinType === 'Bù'       => 'type-bu',
+                                        default                     => 'type-dieu-chinh'
+                                    };
+                                    ?>
+                                    <div class="val-sub">
+                                        <span class="bobin-type-badge <?= $typeBadgeClass ?>" data-type="<?= htmlspecialchars($rawBobinType) ?>" title="<?= htmlspecialchars($rawBobinType) ?>">
+                                            <?= htmlspecialchars(!empty($rawBobinType) ? $rawBobinType : 'Chưa cập nhật') ?>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="field-item">
@@ -166,7 +185,11 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                 </div>
                                 <div class="field-item">
                                     <label>Lot in</label>
-                                    <div class="val-sub highlight-printlot-text"><?= htmlspecialchars($printLot) ?></div>
+                                    <div class="val-sub">
+                                        <span class="bobin-highlight-printlot <?= empty($printLot) || $printLot === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                            <?= htmlspecialchars($printLot) ?>
+                                        </span>
+                                    </div>
                                 </div>
                                 <div class="field-item highlight-box">
                                     <label>Chiều dài (m)</label>
@@ -246,7 +269,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                         <label>Máy cuộn: <span class="required">*</span></label>
                                         <div class="suggestion-wrapper">
                                             <input type="text" class="winding-input winding-machine-name"
-                                                placeholder="Nhập hoặc chọn máy cuộn..." autocomplete="off">
+                                                placeholder="<?= __('ph_winding_machine_input') ?>" data-i18n-ph="ph_winding_machine_input" autocomplete="off">
                                             <div class="suggestion-box"></div>
                                         </div>
                                     </div>
@@ -268,7 +291,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                 <div class="winding-note">
                                     <label>Ghi chú cuộn (Bắt buộc nếu yêu cầu hủy):</label>
                                     <input type="text" class="note-field winding-note-field"
-                                        placeholder="Nhập ghi chú máy cuộn, tình trạng bất thường (nếu có)...">
+                                        placeholder="<?= __('ph_winding_note_explain') ?>" data-i18n-ph="ph_winding_note_explain">
                                 </div>
                             </div>
 
@@ -276,9 +299,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             <div class="card-footer-simple">
                                 <div class="update-time">🕒 Cập nhật lúc: <?= htmlspecialchars($item['updated_time'] ?? '') ?></div>
                                 <div class="button-group">
-                                    <button type="button" class="btn-cancel"
+                                    <button type="button" class="btn-cancel" data-i18n="btn_cancel_bobin"
                                         onclick="handleWindingCancel(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
-                                        🗑️ Hủy Bobin
+                                        🗑️ <?= __('btn_cancel_bobin') ?>
                                     </button>
                                     <button type="button" class="btn-confirm"
                                         onclick="handleWindingConfirm(

@@ -120,30 +120,43 @@ Hãy nâng cấp dự án lên một tầm cao mới, chuyên nghiệp hơn
 - Nếu những người không có permission truy cập vào trang nào, thì tại giao diện màn hình của account đó sẽ không thấy các nút nhấn điều hướng đến trang không có permission.
 
 ### TASK-014
+
 **Status:** DONE
+
 - Thiết kế lại giao diện thông minh với đẩy đủ SlideBar, Menubar và Header Bar sao cho hợp lý và chuyên nghiệp, vì khi dồn tất cả các chức năng vào trung một bar dạng dọc thì không đúng, vì các chức năng này có vẻ như đang rời rạc
-=> Ý tưởng: Thiết kế theo dạng Folder Tree / Breadcrumb
+  => Ý tưởng: Thiết kế theo dạng Folder Tree / Breadcrumb
+
 ### TASK-015
+
 **Status:** DONE
+
 - Với thiết kế hiện tại, header thật không có ý nghĩa, chỉ mang tính hiển thị
-=> THiết kế lại HEADER, phần ngôn ngữ, đổi mật khẩu và đăng xuất nên để ở góc phải của Header
+  => THiết kế lại HEADER, phần ngôn ngữ, đổi mật khẩu và đăng xuất nên để ở góc phải của Header
 - Thanh slider bar chưa được tối ưu, nếu mở folder dưới thì các folder trên bị chèn chữ gây hỏng giao diện => Chỉnh sửa ngay
 - Cần phải tối ưu source code của dự án lại sao cho dễ dàng bảo trì và dễ hiểu, có cấu trúc rõ ràn
+
 ### TASK-016
+
 **Status:** DONE
+
 - Kiểm tra lại giao diện để WEB đảm bảo responsive trên cả android, ios, tablet,.. Vì hiện tại tôi thấy giao diện hiển thị trên các thiết bị trên không được đều bố cục, tràn layout và khó thao tác
 
 ### TASK-017
+
 **Status:** DONE
+
 - Khắc phục cơ chế truy xuất ngôn ngữ động từ trang cấu hình đa ngôn ngữ (custom_translations.json), tự động đồng bộ tức thì các từ khóa tùy biến (như btn_confirm, btn_cancel) lên toàn bộ UI/DOM (nút bấm, modal, form) mà không phụ thuộc vào việc fix cứng trong i18n.js hay load trễ script.
 
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:
+
 ## 0. Security
+
 - Đảm bảo toàn bộ project của tôi có thể hoạt động trong môi trường local mà không phụ thuộc vào internet
 - Cố gắng hạn chế tối đa phụ thuộc vào source thư viện trên internet
 - Không được phép download thư viện trên internet, chỉ được phép nói ra các thư viện cần download đê tôi thực hiện download thủ công
+
 ## 1. Database
 
 - Không tự ý thay đổi **database schema** nếu TASK hiện tại không thực sự yêu cầu.

@@ -5,10 +5,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Khắc Phục Truy Xuất & Đồng Bộ Từ Điển Đa Ngôn Ngữ Động Từ Trang Cấu Hình (TASK-017)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - **Hiện tượng người dùng phản ánh:** Tại trang Cấu hình đa ngôn ngữ (`url=employee/languageManageView`), người dùng thêm/tùy biến các từ khóa như `btn_confirm` ("Xác nhận" / "Confirm" / "確認") và `btn_cancel` ("Trở lại" / "Back" / "戻る"). Tuy nhiên, giao diện toàn bộ hệ thống không cập nhật nội dung mới.
 - **Yêu cầu cốt lõi:** Không fix cứng các giá trị dịch trong `i18n.js` mà phải dựa vào trang cấu hình đa ngôn ngữ (`config/custom_translations.json`) để tự động truy xuất và cập nhật thay đổi ngôn ngữ linh hoạt cho toàn bộ UI (modal, dialog, button, label, header).
 
 ### 2. Nguyên nhân cốt lõi (Root Cause Analysis):
+
 1. **Lệch pha thời điểm nạp Script (Execution Order Race Condition):** Thẻ `<script src="i18n.js">` luôn nằm trong thẻ `<head>`, trong khi khối script gán `window.__CUSTOM_I18N__` trước đây chỉ được xuất trong `sidebar.php` nằm sâu trong thẻ `<body>`. Khi `i18n.js` được khởi chạy lần đầu trong `<head>`, `window.__CUSTOM_I18N__` là `undefined`, dẫn đến việc không có dữ liệu tùy chỉnh nào được nạp vào từ điển JavaScript.
 2. **Thiếu cơ chế lưu đệm đồng bộ phía Client (Client-side Synchronous Cache):** Trình duyệt không lưu cache từ điển tùy biến vào `localStorage`, khiến việc tải trang luôn phải phụ thuộc vào biến toàn cục và gây hiện tượng nháy chữ hoặc mất bản dịch tùy biến.
 3. **Cơ chế ghi đè dữ liệu khi thêm mới từ khóa:** API `updateTranslations` trước đây khi nhận một mảng từ khóa mới (ví dụ khi thêm `btn_cancel` từ modal) sẽ khởi tạo lại mảng rỗng và vô tình xóa sạch các từ khóa đã lưu trước đó nếu không có cơ chế gộp (`merge`).
@@ -17,6 +19,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
    - Hàm `window.t(key)` không có cơ chế fallback alias tương đương giữa `btn_confirm` <-> `confirm` và `btn_cancel` <-> `cancel`.
 
 ### 3. Chi tiết Giải pháp & Cải tiến:
+
 - **Đồng bộ hóa Từ điển Tùy biến Động ([`i18n.js`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/js/i18n.js)):**
   - **Khởi tạo tức thì từ `localStorage`:** Ngay dòng đầu tiên của `i18n.js`, hệ thống đọc đồng bộ `localStorage.getItem('webbobin_custom_i18n')` để nạp ngay từ điển tùy biến vào `DICT` và `window.__CUSTOM_I18N__`, triệt tiêu hoàn toàn độ trễ hiển thị.
   - **Hàm API toàn cục `window.loadAndMergeCustomTranslations(customObj)`:** Hỗ trợ nạp và gộp tức thì từ điển tùy biến bất cứ khi nào có bản dịch mới từ backend hoặc Ajax, tự động kích hoạt `deepTranslateDOM()` để cập nhật toàn bộ trang.
@@ -42,11 +45,13 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Tối Ưu Toàn Diện Giao Diện Đa Thiết Bị Responsive Android, iOS & Tablet (TASK-016)
 
 ### 1. Bối cảnh & Mục tiêu:
+
 - **Khắc phục lỗi hiển thị đa thiết bị:** Người dùng phản ánh trên điện thoại Android, iPhone (iOS) và máy tính bảng (Tablet/iPad) giao diện không đều bố cục, tràn layout (horizontal overflow), chồng lấn thanh điều hướng và khó thao tác chạm.
 - **Tiêu chuẩn kiểm thử:** Đảm bảo trải nghiệm chạm mượt mà (touch target >= 40px), không bị auto-zoom trên iOS Safari, không tràn chiều ngang (zero horizontal blowout) trên các kích thước màn hình phổ biến (360px - 1024px).
 - **Môi trường hoạt động:** 100% Offline Local Intranet trên XAMPP, giữ nguyên typography `var(--font-family-base)` và toàn vẹn bảo mật phân quyền.
 
 ### 2. Chi tiết Cải tiến & Triển khai:
+
 - **Hợp nhất Top Header Bar & Thanh trượt Sidebar ([`header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php), [`sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php), [`sidebar.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/sidebar.css)):**
   - **Lỗi cũ:** Trên màn hình <= 992px xuất hiện 2 thanh Topbar xếp chồng (`.sb-mobile-topbar` 56px và `.app-top-header` 54px) chiếm tới 110-140px chiều cao màn hình và va chạm cuộn z-index.
   - **Khắc phục:** Tích hợp nút Hamburger `#headerMobileToggle` trực tiếp vào Top Header; ẩn hoàn toàn `.sb-mobile-topbar` dư thừa; tối ưu Top Header dạng sticky 50-54px hiển thị Breadcrumb rút gọn, cụm cờ ngôn ngữ thu nhỏ, avatar người dùng và icon thao tác nhanh.
@@ -80,11 +85,13 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Tái Thiết Kế Top Header Bar Chuyên Nghiệp & Khắc Phục Lỗi Chèn Chữ Sidebar (TASK-015)
 
 ### 1. Bối cảnh & Mục tiêu:
+
 - **Tối ưu Top Header Bar:** Thay vì Header chỉ mang tính hiển thị tĩnh, nâng cấp thành thanh điều khiển trung tâm chuẩn ERP với đầy đủ tính năng: Breadcrumb điều hướng bên trái; Bộ chọn ngôn ngữ (VI/EN/JA), Thẻ người dùng, Đổi mật khẩu và Đăng xuất tập trung tại góc phải Header.
 - **Khắc phục triệt để lỗi chèn chữ ở Sidebar:** Xử lý hiện tượng mở các thư mục phía dưới (Quản trị, Giám sát) làm các thư mục phía trên bị Flexbox co ép chiều cao dẫn đến đè chữ, vỡ layout.
 - **Chuẩn hóa kiến trúc mã nguồn:** Xây dựng component [`app/views/components/header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php) dùng chung, tách bạch rõ ràng giữa thanh Sidebar và Top Header, mã nguồn dễ đọc, dễ mở rộng và bảo trì.
 
 ### 2. Chi tiết Cải tiến & Triển khai:
+
 - **Thiết kế lại Top Header Bar ([`app/views/components/header.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/header.php)):**
   - **Góc trái Header:** Breadcrumb ngữ cảnh 3 cấp độ `🏠 Trang chủ` > `📁 [Thư Mục Phân Xưởng]` > `📄 [Trang Thao Tác Hiện Tại]`.
   - **Góc phải Header:**
@@ -93,7 +100,6 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
     - **Nút Đổi mật khẩu (`nav_change_pwd`):** Nút thao tác nhanh với icon 🔑 dẫn đến trang đổi mật khẩu.
     - **Nút Đăng xuất (`nav_logout`):** Nút đỏ nổi bật với icon 🚪 cho phép thoát an toàn.
   - Tích hợp lớp tương thích ngược tại [`app/views/components/breadcrumb.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/breadcrumb.php) để đảm bảo toàn bộ hệ thống hoạt động đồng bộ.
-  
 - **Khắc phục lỗi chèn chữ trên Sidebar Slider Bar ([`public/assets/css/sidebar.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/sidebar.css)):**
   - **Nguyên nhân cốt lõi:** `.sb-nav-scroll` là flex column container nhưng các node thư mục `.sb-tree-folder`, `.sb-tree-folder-head` không có thuộc tính `flex-shrink: 0`. Khi thư mục dưới mở ra làm tăng tổng chiều cao, Flexbox tự động co xẹp chiều cao của các folder bên trên, khiến chữ và icon bị đè nén lên nhau.
   - **Giải pháp dứt điểm:**
@@ -113,10 +119,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Kiến Trúc Điều Hướng Cây Thư Mục (Folder Tree) & Breadcrumb Thông Minh (TASK-014)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - Khắc phục tình trạng điều hướng dạng thanh dọc phẳng dồn tất cả các chức năng rời rạc vào một cột đơn điệu, gây khó định hướng và rối mắt cho người dùng.
 - Tái cấu trúc thành điều hướng cây thư mục chuyên nghiệp (**Folder Tree / File Explorer Navigation**) kết hợp thanh điều hướng vị trí thực tế (**Contextual Breadcrumb Bar**) trên từng phân trang.
 
 ### 2. Chi tiết Cải tiến & Triển khai:
+
 - **Kiến trúc Cây Thư mục trong Sidebar ([`app/views/components/sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php)):**
   - Chuyển đổi các danh mục phân xưởng thành các Node thư mục dạng cây (`sb-tree-folder`):
     - Đùn (Extrusion) `📁 SẢN XUẤT`
@@ -158,10 +166,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Khắc Phục Lỗi Thiếu Cột Permissions & Đồng Bộ Cấu Trúc Database (production_db)
 
 ### 1. Nguyên nhân lỗi đăng nhập:
+
 - Lỗi xuất hiện tại màn hình đăng nhập: `SQLSTATE[42S22]: Column not found: 1054 Unknown column 'permissions' in 'field list'`
 - **Nguyên nhân gốc rễ:** File [`public/assets/production_db_database.sql`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/production_db_database.sql) và database MySQL `production_db` đang chạy trên máy chủ nội bộ lúc trước chưa được cập nhật cột `permissions` (vốn được quy định trong TASK-010 phục vụ phân quyền tùy biến chi tiết cho tài khoản). Khi [`AuthController.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/controllers/AuthController.php) thực thi truy vấn đăng nhập `SELECT ... permissions FROM employee_list`, MySQL ném ngoại lệ do thiếu trường này.
 
 ### 2. Xử lý & Cải tiến:
+
 - **Cập nhật database MySQL hiện hành:**
   - Thực thi bổ sung cột `permissions LONGTEXT DEFAULT NULL COMMENT 'Mảng JSON lưu danh sách mã quyền thao tác tùy biến (nếu NULL thì theo Role mặc định)' AFTER is_first_login` vào bảng `employee_list`.
   - Toàn bộ 135 tài khoản hiện có kế thừa giá trị `NULL` (tự động fallback về quyền mặc định theo vai trò `role` ban đầu), không làm mất mát hoặc gián đoạn bất kỳ dữ liệu nhân sự nào.
@@ -174,6 +184,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Trang Cấu Hình Đa Ngôn Ngữ Động & Điều Hướng Thông Minh Theo Quyền Hạn (TASK-012 & TASK-013)
 
 ### 1. Quản lý Từ điển Đa ngôn ngữ Động qua Textfield (TASK-012)
+
 - **Kiến trúc Từ điển Linh hoạt (Dynamic I18n Storage):**
   - Lưu trữ bản dịch tùy biến vào tập tin cấu hình [`config/custom_translations.json`](file:///c:/xampp/htdocs/WEB_BOBIN/config/custom_translations.json) (không làm biến đổi database schema, 100% offline local, an toàn dữ liệu tuyệt đối).
   - Cập nhật [`Language.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/Language.php):
@@ -192,6 +203,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Cập nhật [`AuthHelper.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/core/AuthHelper.php) tích hợp các route quản lý ngôn ngữ dưới quyền `permission_manage`.
 
 ### 2. Thiết kế Lại Giao Diện Thông Minh Theo Quyền Hạn (TASK-013)
+
 - **Ẩn hoàn toàn các nút nhấn/liên kết điều hướng đến trang không có quyền:**
   - **Sidebar Dọc Bên Trái ([`app/views/components/sidebar.php`](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/sidebar.php)):**
     - Nhóm 1 (Đùn): Chỉ hiển thị nếu tài khoản có quyền `extrusion_create` hoặc `extrusion_edit`.
@@ -213,6 +225,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Thống Nhất Typography Toàn Cục & Hoàn Thiện Mô Hình Phân Quyền Động (TASK-011)
 
 ### 1. Thống nhất Font Family toàn bộ các trang và chức năng
+
 - **Thiết lập Typography toàn cục:**
   - Định nghĩa bộ biến CSS phông chữ chuẩn hệ thống doanh nghiệp (System Font Stack) tại `:root` trong [`public/assets/css/i18n.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/i18n.css) (tập tin CSS nền tảng được nạp ở `<head>` của 100% trang web trong hệ thống):
     - Phông chữ văn bản chính: `--font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";`
@@ -226,6 +239,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - [`employeePermissions.css`](file:///c:/xampp/htdocs/WEB_BOBIN/public/assets/css/employeePermissions.css): Kế thừa đầy đủ bộ font thống nhất.
 
 ### 2. Hoàn thiện mô hình Phân quyền Động (Dynamic Permission Access Control)
+
 - **Thực trạng quyền tài khoản hiện hữu:**
   - Tổng số 135 tài khoản trong cơ sở dữ liệu (14 admin, 51 extrusion, 5 qc, 65 winding) hiện có trường `permissions = NULL`, kế thừa bộ quyền mặc định tương ứng với vai trò (`role`) ban đầu.
 - **Loại bỏ phụ thuộc cứng vào thiết kế vai trò ban đầu:**
@@ -241,11 +255,13 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Phân Quyền Chi Tiết Theo Từng Thao Tác & Nâng Cấp Vertical Sidebar Doanh Nghiệp (TASK-010)
 
 ### 1. Cơ sở dữ liệu (Database Schema)
+
 - Bổ sung trường `permissions LONGTEXT DEFAULT NULL` vào bảng `employee_list` (sau trường `is_first_login`).
 - `permissions` lưu trữ mảng JSON chứa danh sách key quyền tùy biến được cấp cho từng nhân viên.
 - Nếu trường này là `NULL`, hệ thống tự động kế thừa bộ quyền mặc định tương ứng với vai trò (`role`) ban đầu của nhân viên, đảm bảo tương thích ngược 100% với tài khoản hiện hữu.
 
 ### 2. Kiến trúc & Bộ điều hướng (Auth Architecture & Router)
+
 - **`app/core/AuthHelper.php`:**
   - Định nghĩa 11 quyền thao tác chi tiết chia làm 5 nhóm:
     - **Công đoạn Đùn:** `extrusion_create` (Nhập liệu & tạo Bobin), `extrusion_edit` (Điều chỉnh & xóa Bobin đùn).
@@ -263,6 +279,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `updatePermissions()`: API AJAX POST lưu trữ danh sách quyền tùy biến hoặc reset về quyền vai trò mặc định (`NULL`).
 
 ### 3. Giao diện Phân quyền Nhân viên (`employee/permissionsView`)
+
 - Tra cứu nhân viên thông minh bằng mã nhân viên (hỗ trợ autocomplete datalist) hoặc chọn từ dropdown danh sách.
 - Hiển thị Profile Card trực quan của nhân viên được chọn (Mã số, Tên, Chức vụ, Trạng thái, Chế độ phân quyền Custom/Mặc định).
 - Hệ thống Checkbox dạng thẻ (Card) trực quan theo từng nhóm công đoạn với mô tả chi tiết quyền hạn.
@@ -270,6 +287,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 - Thanh lưu trữ dính đáy màn hình (Sticky Save Bar) và Toast thông báo kết quả tức thì không cần tải lại trang.
 
 ### 4. Nâng cấp Giao diện Thanh Điều Hướng: Vertical Sidebar Doanh Nghiệp
+
 - Chuyển đổi thanh menu ngang (`.menu-bar`) sang thanh dọc bên trái (`Vertical Left Sidebar`) chuẩn doanh nghiệp hiện đại SMC Factory:
   - Header Sidebar: Brand logo SMC Factory, trạng thái vận hành hệ thống.
   - User Card: Ảnh đại diện, mã nhân viên, tên nhân viên và badge vai trò có màu nhận diện.
@@ -293,6 +311,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `app/views/listPendingCancellationView.php`
 
 ### 5. Đa ngôn ngữ (i18n) & Tối ưu hóa UI/UX
+
 - Bổ sung hơn 35 translation keys mới cho cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
 - **Tối ưu hóa & Loại bỏ thông tin/icon trùng lặp:**
   - Chuẩn hóa các chuỗi bản dịch điều hướng (`nav_employee_list`, `nav_change_pwd`, `nav_permissions`) bằng cách tách biệt icon khỏi chuỗi văn bản, khắc phục triệt để lỗi hiển thị lặp hai lần icon (`👥 👥 Danh sách nhân viên`, `🛡️ 🛡️ Phân quyền tài khoản`, `🔑 🔑 Đổi MK`).
@@ -304,6 +323,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Khắc Phục Lỗi Deprecated Dynamic Property ListDataEntity (TASK-009)
 
 ### 1. Sửa lỗi Deprecated trong ListDataEntity & ListDataRepository
+
 - **Nguyên nhân:** Trên môi trường PHP 8.2+, việc gán động các thuộc tính chưa được khai báo trước trên class (`$entity->{$key} = $value` trong `ListDataRepository::mapToEntity`) gây ra cảnh báo `E_DEPRECATED: Creation of dynamic property ListDataEntity::$list_rack is deprecated` và `ListDataEntity::$pending_count is deprecated`.
 - **Giải pháp xử lý:**
   - Khai báo tường minh hai thuộc tính `public array $list_rack = [];` và `public int $pending_count = 0;` trong `app/entities/ListDataEntity.php` kèm khởi tạo giá trị mặc định trong hàm `__construct()`.
@@ -314,6 +334,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Nâng Cấp UI 3 Trang Điều Chỉnh & Thu Gọn Hiển Thị update_history (TASK-008)
 
 ### 1. Nâng cao UI/UX 3 trang Điều chỉnh (Đùn, QC, Cuộn)
+
 - **Header:**
   - Thiết kế Dark Hero Gradient hiện đại với viền cong mềm mại và shadow đa lớp.
   - Tiêu đề kèm icon trực quan (`🏭 Điều chỉnh Đùn`, `🛡️ Điều chỉnh QC`, `📍 Điều chỉnh Cuộn`).
@@ -331,6 +352,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Các nút hành động (`.btn-edit`, `.btn-confirm`, `.btn-cancel-edit`, `.btn-delete`) có hiệu ứng lift khi hover, bo góc 7px và shadow rõ ràng.
 
 ### 2. Chuẩn hóa vị trí hiển thị dữ liệu `update_history`
+
 - Dữ liệu `update_history` **chỉ được hiển thị duy nhất tại trang Lịch sử Bobin** (`listBobinHistoryView.php`) nhằm tối ưu không gian hiển thị và giữ đúng mục đích tra cứu lịch sử thay đổi.
 - Gỡ bỏ khối hiển thị `update_history` khỏi các trang khác:
   - `app/views/extrusionEditBobinView.php` (Đã gỡ bỏ)
@@ -344,6 +366,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Phân Quyền Trang Điều Chỉnh, Hiển Thị Lịch Sử Audit Trail & Nâng Cao UI/UX (TASK-007)
 
 ### 1. Phân quyền truy cập các trang điều chỉnh (Extrusion, QC, Winding)
+
 - **Quy tắc phân quyền:**
   - **Điều chỉnh Đùn (`bobin/extrusionEditBobinView`, `bobin/extrusionUpdateBobin`):** Cho phép vai trò `extrusion` và `admin`.
   - **Điều chỉnh QC (`bobin/qcEditBobinView`, `bobin/updateQCEditBobin`):** Cho phép vai trò `qc` và `admin`.
@@ -354,10 +377,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Cập nhật menu điều hướng trên toàn bộ các view (`qcView.php`, `qcEditBobinView.php`, `windingView.php`, `windingEditBobinView.php`, `listBobinDetailView.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php`, `employeeListView.php`, `extrusionEditBobinView.php`, `extrusionView.php`): Hiển thị link `bobin/qcEditBobinView` cho cả vai trò `qc` và `admin`.
 
 ### 2. Trang lịch sử Bobin (`bobin/listBobinHistoryView`)
+
 - Đã gỡ bỏ toàn bộ khối nút chọn nhanh ngày ("Hôm nay", "Hôm qua", "7 ngày", "1 tháng") theo đúng yêu cầu.
 - Loại bỏ hàm JavaScript `setQuickDate()`.
 
 ### 3. Hiển thị vết lịch sử thay đổi `update_history` (Audit Trail)
+
 - Lưu vết lịch sử chỉnh sửa khi thực hiện cập nhật Bobin qua cả 3 trang điều chỉnh (Đùn, QC, Cuộn):
   - Ghi nhận `stage` (`extrusion`, `qc`, `winding`), `action`, `employee_code`, `employee_name`, `updated_at`, `note`.
 - Tích hợp khối hiển thị `.audit-history-box` trực quan trên từng card Bobin trong cả 3 trang điều chỉnh:
@@ -367,6 +392,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 - Đầy đủ thông tin người thay đổi, thời gian thay đổi, công đoạn và ghi chú; hỗ trợ đa ngôn ngữ (`vi`, `en`, `ja`).
 
 ### 4. Nâng cao UI/UX các trang điều chỉnh
+
 - Cải thiện giao diện đồng bộ trong `public/assets/css/extrusionEditBobin.css`:
   - Header hiện đại phong cách Dark Hero Gradient (`#1e293b` đến `#0f172a`), badge công đoạn sắc nét.
   - Card Bobin có viền tinh tế, bóng đổ mềm mại, viền nổi bật khi ở chế độ chỉnh sửa (`.is-editing`).
@@ -378,12 +404,14 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Lọc Bobin 3 Ngày Cho Cuộn/Điều Chỉnh Cuộn, Chuẩn Hóa Status Badge & Tối Ưu Hệ Thống Dịch i18n (TASK-006)
 
 ### 1. Giới hạn lọc thời gian 3 ngày gần nhất
+
 - **Trang Điều chỉnh Cuộn (`bobin/windingEditBobinView`):**
   - Cập nhật truy vấn SQL trong `BobinRepository::getListDetailBobinsForWindingEdit()` và `countDetailBobinsForWindingEdit()`: Thay đổi từ khoảng 7 ngày sang 3 ngày gần nhất (`bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)`).
 - **Trang Xác nhận thông tin Cuộn (`bobin/windingView`):**
   - Cập nhật truy vấn SQL trong `BobinRepository::getDetailBobinsForWinding()` và `countDetailBobinsForWinding()`: Chỉ lấy những Bobin có trạng thái `Busy_Checked` (đang chờ cuộn) hoặc Bobin có trạng thái `Rolled` (đã cuộn) được cập nhật trong vòng 3 ngày gần nhất (`(bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)))`).
 
 ### 2. Chuẩn hóa hiển thị nhãn trạng thái Bobin (Status Badge)
+
 - Thống nhất tuyệt đối hiển thị 5 trạng thái chuẩn viết hoa trên toàn bộ các Card Bobin trong tất cả các View:
   - `"CHƯA KIỂM TRA QC"`
   - `"ĐÃ KIỂM TRA QC"`
@@ -402,6 +430,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `app/views/windingView.php`: Đổi trạng thái hiển thị thành `ĐÃ CUỘN` hoặc `ĐÃ KIỂM TRA QC`.
 
 ### 3. Tối ưu hóa hệ thống chuyển đổi ngôn ngữ (i18n)
+
 - **Frontend (`public/assets/js/i18n.js`):**
   - Bổ sung 5 trạng thái chuẩn (`CHƯA KIỂM TRA QC`, `ĐÃ KIỂM TRA QC`, `ĐANG CHỜ HỦY`, `ĐÃ HỦY`, `ĐÃ CUỘN`) vào từ điển `DOM_MAPPINGS.statusBadges` cho cả 3 ngôn ngữ (`vi`, `en`, `ja`).
   - Mở rộng selector xử lý dịch trong `deepTranslateDOM()` để tự động quét cả `.status-badge`.
@@ -413,12 +442,14 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Điều Chỉnh Bộ Lọc Danh Sách Bobin QC / Cuộn & Tích Hợp Phân Trang (TASK-005)
 
 ### 1. Chuẩn hóa bộ lọc danh sách Bobin theo đúng quy trình phân xưởng
+
 - **Trang Điều chỉnh QC (`bobin/qcEditBobinView`):**
   - Chỉ hiển thị các Bobin có trạng thái `bobin_current_status = 'Busy_Checked'` (các Bobin đã qua công đoạn kiểm tra QC nhưng chưa qua cuộn hoàn tất).
 - **Trang Điều chỉnh Cuộn (`bobin/windingEditBobinView`):**
   - Chỉ hiển thị các Bobin có trạng thái `bobin_current_status = 'Rolled'` và có thời gian cập nhật trong vòng 7 ngày gần nhất (`updated_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)`).
 
 ### 2. Tích hợp tính năng phân trang (Pagination) toàn diện
+
 - **Repository (`app/repositories/BobinRepository.php`):**
   - Cập nhật `getListDetailBobinsForQCEdit($filters, $page, $limit)`: Phân trang bằng `LIMIT :limit OFFSET :offset`, sắp xếp theo `updated_time DESC, bobin_identification_code ASC`.
   - Bổ sung `countDetailBobinsForQCEdit($filters)`: Đếm tổng số Bobin đạt chuẩn điều chỉnh QC.
@@ -437,6 +468,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Bổ sung định dạng CSS cho `.pagination-wrapper`, `.page-btn`, `.page-btn.active`, `.page-info`.
 
 ### 3. Đa ngôn ngữ (i18n) cho tính năng phân trang
+
 - **Frontend & Backend (`public/assets/js/i18n.js`, `app/core/Language.php`):**
   - Bổ sung các translation key: `page_prev`, `page_next`, `page_info` trên cả 3 ngôn ngữ `vi`, `en`, `ja`.
   - Cập nhật hàm `deepTranslateDOM()` trong `i18n.js` tự động nhận diện và dịch động các nút điều hướng phân trang và thông tin trang sang ngôn ngữ người dùng lựa chọn.
@@ -446,6 +478,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-05] - Triển Khai Tính Năng Điều Chỉnh QC & Cuộn (Admin), Xác Nhận Mật Khẩu & Vết Kiểm Toán Update History (TASK-004)
 
 ### 1. Phân quyền và tạo 2 tính năng điều chỉnh mới dành riêng cho Quản trị viên (Admin)
+
 - **Files thay đổi:**
   - `app/core/Router.php`: Đăng ký `qceditbobinview`, `updateqceditbobin`, `windingeditbobinview`, `updatewindingeditbobin` nằm độc quyền dưới nhóm quyền `admin`.
   - `app/controllers/BobinController.php`: Bổ sung kiểm tra role Admin nghiêm ngặt cho các view (`qcEditBobinView`, `windingEditBobinView`) và API PUT (`updateQCEditBobin`, `updateWindingEditBobin`).
@@ -456,17 +489,20 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Cập nhật liên kết thanh menu điều hướng (`menu-bar`) trong tất cả các View (`extrusionView`, `extrusionEditBobinView`, `qcView`, `windingView`, `listBobinDetailView`, `listBobinHistoryView`, `listPendingCancellationView`, `employeeListView`): Các liên kết "Điều chỉnh QC" và "Điều chỉnh Cuộn" chỉ hiển thị khi tài khoản có quyền `admin`.
 
 ### 2. Xác thực mật khẩu đăng nhập bắt buộc trước khi lưu ở cả 3 trang điều chỉnh
+
 - **Files thay đổi:**
   - `app/dtos/Bobin/BobinExtUpdateDTO.php`, `BobinQCUpdateDTO.php`, `BobinUpdateWindingDTO.php`: Bổ sung trường `$confirm_password` và parse từ request payload.
   - `public/assets/js/Extrusion/edit_submit.js`, `public/assets/js/QC/edit_submit.js`, `public/assets/js/Winding/edit_submit.js`: Hộp thoại `ConfirmDialog` hỗ trợ chế độ `requirePassword = true`, bắt buộc người dùng nhập mật khẩu tài khoản đang đăng nhập trước khi submit PUT request.
   - `app/controllers/BobinController.php`: Phương thức `verifyCurrentUserPassword()` kiểm tra đối soát mật khẩu với tài khoản đang đăng nhập trong `employee_list` qua `$_SESSION['user']['id']`. Nếu mật khẩu không đúng hoặc để trống, server từ chối cập nhật và trả về HTTP 403.
 
 ### 3. Lưu vết kiểm toán `update_history` và hiển thị trên UI Danh sách / Lịch sử Bobin
+
 - **Files thay đổi:**
   - `app/repositories/BobinRepository.php`: Cả 3 thao tác điều chỉnh (Đùn, QC, Cuộn) đều tự động nối bản ghi kiểm toán mới vào trường `update_history` JSON ở cả `bobin_list_detail` và `bobin_history` bao gồm: giai đoạn (`stage`), mã và họ tên người sửa (`employee_code`, `employee_name`), thời điểm thực hiện (`updated_at`), ghi chú (`note`).
   - `app/views/listBobinDetailView.php` & `app/views/listBobinHistoryView.php`: Render hộp thông tin lịch sử điều chỉnh `audit-history-box` ở cuối mỗi thẻ Bobin nếu Bobin đó đã từng được điều chỉnh, hiển thị rõ ràng ai sửa, ở công đoạn nào và vào lúc nào.
 
 ### 4. Đa ngôn ngữ i18n toàn diện (100% không hardcode)
+
 - **Files thay đổi:**
   - `app/core/Language.php` & `public/assets/js/i18n.js`: Bổ sung đầy đủ translations trên cả 3 ngôn ngữ (`vi`, `en`, `ja`) cho các nhãn menu (`nav_qc_edit`, `nav_winding_edit`), tiêu đề trang (`page_qc_edit`, `page_winding_edit`), nhãn xác nhận mật khẩu (`confirm_pwd_label`, `confirm_pwd_ph`, `confirm_pwd_empty`, `confirm_edit_title`, `confirm_edit_sub`), nhãn tiến trình (`saving`, `saved`, `save_failed`), và nhãn vết kiểm toán (`audit_trail_title`, `audit_stage_extrusion`, `audit_stage_qc`, `audit_stage_winding`, `audit_updater`, `audit_time`).
 
@@ -475,6 +511,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-05] - Khắc Phục Lỗi Treo Web Khi Đổi Ngôn Ngữ & Tối Ưu Event Loop (TASK-003)
 
 ### 0. Sửa dứt điểm hiện tượng treo web (freeze) và vô hiệu hóa nút bấm khi đổi ngôn ngữ
+
 - **Files thay đổi:**
   - `public/assets/js/i18n.js`
   - `app/views/components/languageSwitcher.php`
@@ -502,6 +539,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-05] - Điều Tra & Đồng Bộ Toàn Diện Đa Ngôn Ngữ (TASK-002), Fallback Pipeline & Logic Đùn
 
 ### 0. Điều tra và đồng bộ toàn diện chức năng chuyển đổi ngôn ngữ (TASK-002)
+
 - **Files thay đổi:**
   - `public/assets/js/i18n.js`
   - `app/core/Language.php`
@@ -516,6 +554,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Xác nhận cơ chế đồng bộ ngôn ngữ ba lớp (Session $\leftrightarrow$ Cookie `app_lang` $\leftrightarrow$ `localStorage`) hoạt động liền mạch, không ảnh hưởng logic lưu trữ DB hay API nghiệp vụ.
 
 ### 1. Xử lý hiển thị thông báo Fallback tại trang Danh Sách và Lịch Sử Bobin (Yêu cầu V)
+
 - **Files thay đổi:**
   - `app/views/listBobinDetailView.php`
   - `app/views/listBobinHistoryView.php`
@@ -531,6 +570,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Hỗ trợ đa ngôn ngữ đồng bộ 3 thứ tiếng (`vi`, `en`, `ja`).
 
 ### 2. Sửa logic cập nhật Bobin của Nhân viên Đùn (Yêu cầu VI & VII)
+
 - **Files thay đổi:**
   - `app/repositories/BobinRepository.php` (`extrusionUpdateBobin`, `extUpdateBobinDetail`, `extUpdateBobinGeneral`, `extUpdateBobinHistory`)
 - **Nội dung:**
@@ -538,6 +578,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - **Không cập nhật `updated_time` (Req VII):** Bỏ việc gán `updated_time = :updated` trong `bobin_list_detail`, bỏ `updated_time = NOW()` trong `bobin_list_general`, và không cập nhật `updated_time` trong `bobin_history`. Thời điểm cập nhật ban đầu được bảo toàn nguyên vẹn.
 
 ### 3. Tạo 3 file tài liệu ngữ cảnh bảo toàn hệ thống
+
 - Tạo và điền nội dung toàn diện cho:
   - `AI_CONTEXT.md`: Toàn bộ luồng nghiệp vụ, kiến trúc MVC, lifecycle Bobin và quy tắc code.
   - `DATABASE_SCHEMA.md`: Đặc tả chi tiết các bảng, cột, kiểu dữ liệu, quan hệ và JSON schemas.
@@ -548,6 +589,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-04] - Tái Cấu Trúc Toàn Diện Trang Nhân Viên & Bộ Lọc Xưởng/Tầng
 
 ### 1. Refactor Mô-đun Quản Lý Nhân Viên (`EmployeeController` & `employeeListView`)
+
 - **Files thay đổi:**
   - `app/controllers/EmployeeController.php`
   - `app/views/employeeListView.php`
@@ -562,6 +604,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
     - Hỗ trợ Import/Export file CSV theo định dạng chuẩn UTF-8 tương thích Excel.
 
 ### 2. Bộ Lọc Rack Theo Phân Xưởng và Tầng (Yêu cầu IV)
+
 - **Files thay đổi:**
   - `app/repositories/BobinRepository.php`
   - `app/views/listBobinDetailView.php`
@@ -575,6 +618,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Cho phép người dùng vừa có thể chọn cả khu vực lớn, vừa có thể chọn chi tiết từng kệ cụ thể.
 
 ### 3. Khắc phục sự cố Reverse Print Lot (Yêu cầu VIII)
+
 - **Files thay đổi:**
   - `public/assets/js/Extrusion/suggestion.js`
   - `public/assets/js/Extrusion/edit_suggestion.js`
@@ -589,10 +633,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-02 -> 2026-10-03] - Chuẩn Hóa Logic Thống Kê & KPI Báo Cáo Lịch Sử Bobin
 
 ### 1. Chuẩn hóa quy tắc sinh `bobin_key_code`
+
 - Thiết lập quy tắc thống nhất: Thời điểm trong `bobin_key_code` luôn khớp với giá trị `finish_time` (Thời gian hoàn thành).
 - Định dạng chuẩn: `[Mã_định_danh]_[YYYY]_[MM]_[DD]_[HH]_[mm]_[ss]`.
 
 ### 2. Tái cấu trúc bộ lọc và KPI trang Lịch Sử Bobin (`listBobinHistoryView`)
+
 - Mặc định khi vào trang hiển thị nhật ký 7 ngày gần nhất theo `updated_time`.
 - Thiết lập logic lọc chặt chẽ cho từng chế độ:
   - **ĐÃ ĐÙN:** Lọc các bản ghi theo `updated_time` và thời gian trong `bobin_key_code`, lấy phiên bản mới nhất cho mỗi `bobin_key_code`.

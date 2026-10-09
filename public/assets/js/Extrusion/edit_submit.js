@@ -237,12 +237,14 @@ function cancelEdit(btnElement) {
 /* =========================================
     HÀM XỬ LÝ: Hủy Bobin
 ========================================= */
-async function handleDelete(btnElement, bobinCode) {
+async function handleDelete(btnElement, bobinCode, bobinKeyCode) {
     const container = btnElement.closest('.bobin-item');
     if (!bobinCode) {
         Toast.show("Lỗi: Thiếu mã định danh của Bobin!", "error");
         return;
     }
+
+    bobinKeyCode = bobinKeyCode || container?.dataset.bobinKey || '';
 
     const inEmployeeCode = container.querySelector('#extrusion_employee_code')?.value.trim() || '';
     const inEmployeeName = container.querySelector('#extrusion_employee_name')?.value.trim() || '';
@@ -254,6 +256,7 @@ async function handleDelete(btnElement, bobinCode) {
 
     const bodyData = {
         bobin_identification_code: bobinCode,
+        bobin_key_code: bobinKeyCode,
         extrusion_employee_code: inEmployeeCode,
         extrusion_employee_name: inEmployeeName,
     };
@@ -290,11 +293,13 @@ async function handleDelete(btnElement, bobinCode) {
 
                 const data = await response.json();
                 if (data.success) {
+                    const successMsg = data.message || (window.t ? window.t('toast_saved_success') : 'Hủy thành công!');
                     if (window.Toast && window.Toast.flash) {
-                        window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Hủy thành công!'), 'success');
+                        window.Toast.flash(successMsg, 'success');
+                    } else {
+                        Toast.show(successMsg, 'success');
                     }
-                    Toast.show(data.message, 'success');
-                    setTimeout(() => window.location.reload(), 800);
+                    setTimeout(() => window.location.reload(), 450);
                 } else {
                     Toast.show("Lỗi: " + (data.message || "Hủy thất bại"), 'error');
                     btnElement.innerHTML = originalBtnText;
@@ -446,11 +451,10 @@ async function handleConfirm(buttonElement, bobinCode) {
                         if (window.Toast && window.Toast.flash) {
                             window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
                         }
-                        Toast.show(res.message, 'success');
                         buttonElement.innerText = window.t ? window.t('saved') : 'Đã lưu ✔️';
                         currentEditingContainer = null;
                         originalDataBackup = null;
-                        setTimeout(() => window.location.reload(), 800);
+                        setTimeout(() => window.location.reload(), 450);
                     } else {
                         Toast.show(`❌ ${res.message || (window.t ? window.t('save_failed') : 'Lưu thất bại')}`, 'error');
                         buttonElement.innerText = originalText;

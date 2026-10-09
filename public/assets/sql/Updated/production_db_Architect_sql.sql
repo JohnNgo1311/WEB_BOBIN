@@ -166,20 +166,6 @@ CREATE TABLE `extrusion_machine_list` (
 -- --------------------------------------------------------
 
 --
--- Cấu trúc bảng cho bảng `machine_list`
---
-
-DROP TABLE IF EXISTS `machine_list`;
-CREATE TABLE `machine_list` (
-  `id` int(11) NOT NULL,
-  `machine_number` int(11) NOT NULL,
-  `machine_code` varchar(10) NOT NULL,
-  `machine_name` varchar(50) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Cấu trúc bảng cho bảng `material_list`
 --
 
@@ -384,6 +370,10 @@ ALTER TABLE `year_list`
 --
 -- AUTO_INCREMENT cho các bảng
 --
+
+
+ALTER TABLE `bobin_capacity`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `bobin_history`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;

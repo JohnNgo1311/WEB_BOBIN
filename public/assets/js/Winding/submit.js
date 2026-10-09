@@ -703,35 +703,47 @@ function handleWindingCancel(
         || '';
 
 
-    if (!inEmployeeCode) {
-
-        Toast.show(
-            "⚠️ Vui lòng nhập Mã nhân viên cuộn trước khi hủy!",
-            "error"
-        );
-
-
-        const empInput =
-            container.querySelector(
-                '.winding-employee-code'
-            );
-
-
-        if (empInput) {
-
-            empInput.style.border =
-                "2px solid red";
-
-            empInput.focus();
-
-            setTimeout(
-                () => empInput.style.border =
-                    "1px solid #cbd5e1",
-                2000
-            );
-
+    if (!inMachine || inMachine === 'Chưa cập nhật') {
+        Toast.show(window.t ? window.t('toast_err_req_machine') : "⚠️ Vui lòng chọn hoặc nhập Mã máy cuộn trước khi hủy!", "error");
+        const machineInput = container.querySelector('.winding-machine-name');
+        if (machineInput) {
+            machineInput.style.border = "2px solid red";
+            machineInput.focus();
+            setTimeout(() => machineInput.style.border = "1px solid #cbd5e1", 2000);
         }
+        return;
+    }
 
+    if (!inEmployeeCode || inEmployeeCode === 'Chưa cập nhật') {
+        Toast.show(window.t ? window.t('toast_err_req_emp_code') : "⚠️ Vui lòng nhập Mã nhân viên cuộn trước khi hủy!", "error");
+        const empInput = container.querySelector('.winding-employee-code');
+        if (empInput) {
+            empInput.style.border = "2px solid red";
+            empInput.focus();
+            setTimeout(() => empInput.style.border = "1px solid #cbd5e1", 2000);
+        }
+        return;
+    }
+
+    if (!inEmployeeName || inEmployeeName === 'Chưa cập nhật') {
+        Toast.show(window.t ? window.t('toast_err_req_emp_name') : "⚠️ Vui lòng nhập Họ tên nhân viên cuộn trước khi hủy!", "error");
+        const nameInput = container.querySelector('.winding-employee-name');
+        if (nameInput) {
+            nameInput.style.border = "2px solid red";
+            nameInput.focus();
+            setTimeout(() => nameInput.style.border = "1px solid #cbd5e1", 2000);
+        }
+        return;
+    }
+
+    if (!originalNote || originalNote === 'Chưa cập nhật' || originalNote === 'Không có ghi chú') {
+        Toast.show(window.t ? window.t('toast_err_req_cancel_note') : "⚠️ Vui lòng nhập lý do hủy vào phần Ghi chú cuộn!", "error");
+        const noteInput = container.querySelector('.winding-note-field');
+        if (noteInput) {
+            noteInput.style.border = "2px solid red";
+            noteInput.focus();
+            setTimeout(() => noteInput.style.border = "1px solid #cbd5e1", 2000);
+        }
         return;
     }
 
@@ -1026,15 +1038,9 @@ function handleWindingCancel(
                         window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
                     }
 
-                    Toast.show(
-                        data.message,
-                        'success'
-                    );
-
-
                     setTimeout(
                         () => window.location.reload(),
-                        800
+                        450
                     );
 
                 } else {
@@ -1553,12 +1559,6 @@ function handleWindingConfirm(
                     if (window.Toast && window.Toast.flash) {
                         window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Xác nhận thành công!'), 'success');
                     }
-
-                    Toast.show(
-                        data.message,
-                        'success'
-                    );
-
 
                     CopyTextDialog.show(
 

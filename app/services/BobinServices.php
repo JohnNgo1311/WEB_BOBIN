@@ -125,7 +125,9 @@ class BobinServices
 
         $entity->identificationCode = $dto->bobin_identification_code;
 
-        $entity->bobinKeyCode = $this->resolveKeyCode($dto->bobin_identification_code);
+        $entity->bobinKeyCode = !empty($dto->bobin_key_code)
+            ? $dto->bobin_key_code
+            : $this->resolveKeyCode($dto->bobin_identification_code);
 
         $entity->extrusion_employee = $this->resolveEmployee(
             $dto->extrusion_employee_code

@@ -140,17 +140,18 @@ foreach ($bobins as $b) {
 
                 <div class="ext-search-wrap">
                     <svg class="ext-search-icon" viewBox="0 0 24 24">
-                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
+                        <path
+                            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
                     </svg>
                     <input type="text" name="keyword" id="searchKeyword" class="ext-search-input"
-                        placeholder="<?= __('ph_scan_bobin') ?>"
-                        data-i18n-ph="ph_scan_bobin"
-                        data-i18n="[placeholder]ph_scan_bobin"
-                        value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>" autocomplete="off">
+                        placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
+                        data-i18n="[placeholder]ph_scan_bobin" value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>"
+                        autocomplete="off">
                 </div>
 
                 <button type="button" id="btnScanQR" class="ext-btn-action ext-btn-scan">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
                         <rect x="14" y="14" width="7" height="7"></rect>
@@ -168,14 +169,14 @@ foreach ($bobins as $b) {
 
         <!-- 4. BOBIN LIST CARDS -->
         <?php if (empty($bobins)): ?>
-            <div class="ext-empty-box">
-                <div class="ext-empty-icon">📦</div>
-                <div class="ext-empty-title" data-i18n="ext_empty_list"><?= __('ext_empty_list') ?></div>
-            </div>
+        <div class="ext-empty-box">
+            <div class="ext-empty-icon">📦</div>
+            <div class="ext-empty-title" data-i18n="ext_empty_list"><?= __('ext_empty_list') ?></div>
+        </div>
         <?php else: ?>
-            <div class="ext-list-wrapper bobin-list">
-                <?php foreach ($bobins as $item): ?>
-                    <?php
+        <div class="ext-list-wrapper bobin-list">
+            <?php foreach ($bobins as $item): ?>
+            <?php
                     $products = decodeJsonObject($item['products'] ?? '');
                     $productCode = $products['product_code'] ?? '';
                     $productionOrderCode = $products['production_order_code'] ?? '';
@@ -216,167 +217,186 @@ foreach ($bobins as $b) {
                         if ($ts) $finishTimeVal = date('Y-m-d\TH:i:s', $ts);
                     }
                     ?>
-                    <div class="ext-card bobin-item status_busy_unchecked"
-                        data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>">
-                        
-                        <!-- Card Header -->
-                        <div class="ext-card-header card-top">
-                            <div class="ext-id-group key-info">
-                                <span class="ext-id-badge id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
-                                <span class="ext-key-code key-code"><?= $displayKey ?></span>
-                            </div>
-                            <div class="ext-status-badge status-badge">
-                                <span>🏭</span>
-                                <span data-i18n="status_busy_unchecked"><?= __('status_busy_unchecked') ?></span>
-                            </div>
+            <div class="ext-card bobin-item status_busy_unchecked"
+                data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>"
+                data-bobin-key="<?= htmlspecialchars($item['bobin_key_code']) ?>">
+
+                <!-- Card Header -->
+                <div class="ext-card-header card-top">
+                    <div class="ext-id-group key-info">
+                        <span
+                            class="ext-id-badge id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
+                        <span class="ext-key-code key-code"><?= $displayKey ?></span>
+                    </div>
+                    <div class="ext-status-badge status-badge">
+                        <span>🏭</span>
+                        <span data-i18n="status_busy_unchecked"><?= __('status_busy_unchecked') ?></span>
+                    </div>
+                </div>
+
+                <!-- Card Body (3 Columns Section Architecture) -->
+                <div class="ext-card-body info-grid">
+
+                    <!-- Section A: Thông số sản xuất & Quy cách -->
+                    <div class="ext-section-box">
+                        <div class="ext-sec-title">
+                            <span>📦</span>
+                            <span data-i18n="ext_sec_specs"><?= __('ext_sec_specs') ?></span>
                         </div>
 
-                        <!-- Card Body (3 Columns Section Architecture) -->
-                        <div class="ext-card-body info-grid">
-                            
-                            <!-- Section A: Thông số sản xuất & Quy cách -->
-                            <div class="ext-section-box">
-                                <div class="ext-sec-title">
-                                    <span>📦</span>
-                                    <span data-i18n="ext_sec_specs"><?= __('ext_sec_specs') ?></span>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_product"><?= __('field_product') ?></label>
-                                    <input id="product_code" class="ext-input-control input-field font-bold-blue" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($productCode) ?>" placeholder="<?= __('ph_search_product') ?>" data-i18n-ph="ph_search_product" data-i18n="[placeholder]ph_search_product" disabled>
-                                    <input type="hidden" id="production_order_code" value="<?= htmlspecialchars($productionOrderCode) ?>">
-                                    <div id="product_suggestions" class="suggestion-box"></div>
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_length"><?= __('field_length') ?></label>
-                                    <input id="length_m" class="ext-input-control input-field font-bold-green" type="number" step="0.001"
-                                        value="<?= htmlspecialchars($item['length_m'] ?? 0) ?>" disabled>
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_bobin_type"><?= __('field_bobin_type') ?></label>
-                                    <select id="bobin_type" name="bobin_type" class="ext-input-control input-field" disabled required>
-                                        <?php foreach ($typeOptions as $val => $lbl): ?>
-                                            <option value="<?= htmlspecialchars($val) ?>" <?= ($item['bobin_type'] ?? '') === $val ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($lbl) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_print_lot"><?= __('field_print_lot') ?></label>
-                                    <input id="print_lot" class="ext-input-control edit-input highlight-printlot" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($item['print_lot'] ?? '') ?>" readonly tabindex="-1">
-                                    <div id="print_lot_suggestions" class="suggestion-box"></div>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_rack"><?= __('field_rack') ?></label>
-                                    <input id="rack_code" class="ext-input-control input-field font-bold-cyan" type="text" autocomplete="off"
-                                        placeholder="<?= __('ph_select_rack') ?>" data-i18n-ph="ph_select_rack" data-i18n="[placeholder]ph_select_rack"
-                                        value="<?= htmlspecialchars($rackCode) ?>" disabled>
-                                    <div id="rack_suggestions" class="suggestion-box"></div>
-                                </div>
-                            </div>
-
-                            <!-- Section B: Thiết bị máy đùn & Vật liệu -->
-                            <div class="ext-section-box">
-                                <div class="ext-sec-title">
-                                    <span>⚙️</span>
-                                    <span data-i18n="ext_sec_materials"><?= __('ext_sec_materials') ?></span>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_machine"><?= __('field_machine') ?></label>
-                                    <input type="text" id="extrusion_machine" class="ext-input-control input-field"
-                                        placeholder="<?= __('ph_input_machine') ?>" data-i18n-ph="ph_input_machine" data-i18n="[placeholder]ph_input_machine"
-                                        autocomplete="off" disabled>
-                                    <div id="machine_suggestions" class="suggestion-box"></div>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_material"><?= __('field_material') ?></label>
-                                    <input type="text" id="material" class="ext-input-control input-field"
-                                        placeholder="<?= __('ph_input_material') ?>" data-i18n-ph="ph_input_material" data-i18n="[placeholder]ph_input_material"
-                                        autocomplete="off" disabled>
-                                    <div id="material_suggestions" class="suggestion-box"></div>
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_grinding"><?= __('field_grinding') ?></label>
-                                    <input type="number" id="grinding_time" class="ext-input-control input-field" min="0" max="2" step="1"
-                                        placeholder="<?= __('ph_input_grind') ?>" data-i18n-ph="ph_input_grind" data-i18n="[placeholder]ph_input_grind"
-                                        oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)" disabled>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_material_lot"><?= __('field_material_lot') ?></label>
-                                    <input id="material_lot" class="ext-input-control input-field" type="text" autocomplete="off"
-                                        placeholder="<?= __('ph_enter_material_lot') ?>" data-i18n-ph="ph_enter_material_lot" data-i18n="[placeholder]ph_enter_material_lot"
-                                        value="<?= htmlspecialchars($materialLot) ?>" disabled>
-                                    <div id="material_lot_suggestions" class="suggestion-box"></div>
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_shift"><?= __('field_shift') ?></label>
-                                    <select id="shift" name="shift" class="ext-input-control input-field" disabled required>
-                                        <option value="Ca 1" <?= ($item['shift'] ?? '') === 'Ca 1' ? 'selected' : '' ?>>Ca 1</option>
-                                        <option value="Ca 2" <?= ($item['shift'] ?? '') === 'Ca 2' ? 'selected' : '' ?>>Ca 2</option>
-                                        <option value="Ca 3" <?= ($item['shift'] ?? '') === 'Ca 3' ? 'selected' : '' ?>>Ca 3</option>
-                                        <option value="Hành chính" <?= ($item['shift'] ?? '') === 'Hành chính' ? 'selected' : '' ?>>Hành chính</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Section C: Nhân sự & Thời gian hoàn thành -->
-                            <div class="ext-section-box">
-                                <div class="ext-sec-title">
-                                    <span>👤</span>
-                                    <span data-i18n="ext_sec_personnel"><?= __('ext_sec_personnel') ?></span>
-                                </div>
-
-                                <div class="ext-field field-item suggestion-wrapper">
-                                    <label class="ext-label" data-i18n="field_employee_code"><?= __('field_employee_code') ?></label>
-                                    <input id="extrusion_employee_code" class="ext-input-control input-field font-bold-blue" type="text" autocomplete="off"
-                                        value="<?= htmlspecialchars($extEmpCode) ?>" disabled>
-                                    <div id="employee_suggestions" class="suggestion-box"></div>
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_employee_name"><?= __('field_employee_name') ?></label>
-                                    <input id="extrusion_employee_name" class="ext-input-control edit-input input-readonly" type="text"
-                                        value="<?= htmlspecialchars($extEmpName) ?>" readonly tabindex="-1">
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_ext_date"><?= __('field_ext_date') ?></label>
-                                    <input id="extrusion_date" name="extrusion_date" class="ext-input-control input-field" type="date"
-                                        value="<?= htmlspecialchars($item['extrusion_date'] ?? '') ?>" disabled>
-                                </div>
-
-                                <div class="ext-field field-item">
-                                    <label class="ext-label" data-i18n="field_finish_time"><?= __('field_finish_time') ?></label>
-                                    <input id="finish_time" name="finish_time" class="ext-input-control input-field" type="datetime-local"
-                                        step="1" value="<?= htmlspecialchars($finishTimeVal) ?>"
-                                        onclick="try { this.showPicker(); } catch(e) {}"
-                                        onkeydown="return ['Tab', 'Escape'].includes(event.key)" disabled>
-                                </div>
-                            </div>
-
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label" data-i18n="field_product"><?= __('field_product') ?></label>
+                            <input id="product_code" class="ext-input-control input-field font-bold-blue" type="text"
+                                autocomplete="off" value="<?= htmlspecialchars($productCode) ?>"
+                                placeholder="<?= __('ph_search_product') ?>" data-i18n-ph="ph_search_product"
+                                data-i18n="[placeholder]ph_search_product" disabled>
+                            <input type="hidden" id="production_order_code"
+                                value="<?= htmlspecialchars($productionOrderCode) ?>">
+                            <div id="product_suggestions" class="suggestion-box"></div>
                         </div>
 
-                        <!-- 5 Tiêu chuẩn Đùn Check -->
-                        <div class="ext-check-strip">
-                            <div class="ext-criteria-header ext-title">
-                                <span>🏭</span>
-                                <span data-i18n="ext_criteria_title"><?= __('ext_criteria_title') ?></span>
-                            </div>
+                        <div class="ext-field field-item">
+                            <label class="ext-label" data-i18n="field_length"><?= __('field_length') ?></label>
+                            <input id="length_m" class="ext-input-control input-field font-bold-green" type="number"
+                                step="0.001" value="<?= htmlspecialchars($item['length_m'] ?? 0) ?>" disabled>
+                        </div>
 
-                            <div class="ext-checks-group">
-                                <?php
+                        <div class="ext-field field-item">
+                            <label class="ext-label" data-i18n="field_bobin_type"><?= __('field_bobin_type') ?></label>
+                            <select id="bobin_type" name="bobin_type" class="ext-input-control input-field" disabled
+                                required>
+                                <?php foreach ($typeOptions as $val => $lbl): ?>
+                                <option value="<?= htmlspecialchars($val) ?>"
+                                    <?= ($item['bobin_type'] ?? '') === $val ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($lbl) ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label" data-i18n="field_print_lot"><?= __('field_print_lot') ?></label>
+                            <input id="print_lot" class="ext-input-control edit-input highlight-printlot" type="text"
+                                autocomplete="off" value="<?= htmlspecialchars($item['print_lot'] ?? '') ?>" readonly
+                                tabindex="-1">
+                            <div id="print_lot_suggestions" class="suggestion-box"></div>
+                        </div>
+
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label" data-i18n="field_rack"><?= __('field_rack') ?></label>
+                            <input id="rack_code" class="ext-input-control input-field font-bold-cyan" type="text"
+                                autocomplete="off" placeholder="<?= __('ph_select_rack') ?>"
+                                data-i18n-ph="ph_select_rack" data-i18n="[placeholder]ph_select_rack"
+                                value="<?= htmlspecialchars($rackCode) ?>" disabled>
+                            <div id="rack_suggestions" class="suggestion-box"></div>
+                        </div>
+                    </div>
+
+                    <!-- Section B: Thiết bị máy đùn & Vật liệu -->
+                    <div class="ext-section-box">
+                        <div class="ext-sec-title">
+                            <span>⚙️</span>
+                            <span data-i18n="ext_sec_materials"><?= __('ext_sec_materials') ?></span>
+                        </div>
+
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label" data-i18n="field_machine"><?= __('field_machine') ?></label>
+                            <input type="text" id="extrusion_machine" class="ext-input-control input-field"
+                                placeholder="<?= __('ph_input_machine') ?>" data-i18n-ph="ph_input_machine"
+                                data-i18n="[placeholder]ph_input_machine" autocomplete="off" disabled>
+                            <div id="machine_suggestions" class="suggestion-box"></div>
+                        </div>
+
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label" data-i18n="field_material"><?= __('field_material') ?></label>
+                            <input type="text" id="material" class="ext-input-control input-field"
+                                placeholder="<?= __('ph_input_material') ?>" data-i18n-ph="ph_input_material"
+                                data-i18n="[placeholder]ph_input_material" autocomplete="off" disabled>
+                            <div id="material_suggestions" class="suggestion-box"></div>
+                        </div>
+
+                        <div class="ext-field field-item">
+                            <label class="ext-label" data-i18n="field_grinding"><?= __('field_grinding') ?></label>
+                            <input type="number" id="grinding_time" class="ext-input-control input-field" min="0"
+                                max="2" step="1" placeholder="<?= __('ph_input_grind') ?>" data-i18n-ph="ph_input_grind"
+                                data-i18n="[placeholder]ph_input_grind"
+                                oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)" disabled>
+                        </div>
+
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label"
+                                data-i18n="field_material_lot"><?= __('field_material_lot') ?></label>
+                            <input id="material_lot" class="ext-input-control input-field" type="text"
+                                autocomplete="off" placeholder="<?= __('ph_enter_material_lot') ?>"
+                                data-i18n-ph="ph_enter_material_lot" data-i18n="[placeholder]ph_enter_material_lot"
+                                value="<?= htmlspecialchars($materialLot) ?>" disabled>
+                            <div id="material_lot_suggestions" class="suggestion-box"></div>
+                        </div>
+
+                        <div class="ext-field field-item">
+                            <label class="ext-label" data-i18n="field_shift"><?= __('field_shift') ?></label>
+                            <select id="shift" name="shift" class="ext-input-control input-field" disabled required>
+                                <option value="Ca 1" <?= ($item['shift'] ?? '') === 'Ca 1' ? 'selected' : '' ?>>Ca 1
+                                </option>
+                                <option value="Ca 2" <?= ($item['shift'] ?? '') === 'Ca 2' ? 'selected' : '' ?>>Ca 2
+                                </option>
+                                <option value="Ca 3" <?= ($item['shift'] ?? '') === 'Ca 3' ? 'selected' : '' ?>>Ca 3
+                                </option>
+                                <option value="Hành chính"
+                                    <?= ($item['shift'] ?? '') === 'Hành chính' ? 'selected' : '' ?>>Hành chính</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Section C: Nhân sự & Thời gian hoàn thành -->
+                    <div class="ext-section-box">
+                        <div class="ext-sec-title">
+                            <span>👤</span>
+                            <span data-i18n="ext_sec_personnel"><?= __('ext_sec_personnel') ?></span>
+                        </div>
+
+                        <div class="ext-field field-item suggestion-wrapper">
+                            <label class="ext-label"
+                                data-i18n="field_employee_code"><?= __('field_employee_code') ?></label>
+                            <input id="extrusion_employee_code" class="ext-input-control input-field font-bold-blue"
+                                type="text" autocomplete="off" value="<?= htmlspecialchars($extEmpCode) ?>" disabled>
+                            <div id="employee_suggestions" class="suggestion-box"></div>
+                        </div>
+
+                        <div class="ext-field field-item">
+                            <label class="ext-label"
+                                data-i18n="field_employee_name"><?= __('field_employee_name') ?></label>
+                            <input id="extrusion_employee_name" class="ext-input-control edit-input input-readonly"
+                                type="text" value="<?= htmlspecialchars($extEmpName) ?>" readonly tabindex="-1">
+                        </div>
+
+                        <div class="ext-field field-item">
+                            <label class="ext-label" data-i18n="field_ext_date"><?= __('field_ext_date') ?></label>
+                            <input id="extrusion_date" name="extrusion_date" class="ext-input-control input-field"
+                                type="date" value="<?= htmlspecialchars($item['extrusion_date'] ?? '') ?>" disabled>
+                        </div>
+
+                        <div class="ext-field field-item">
+                            <label class="ext-label"
+                                data-i18n="field_finish_time"><?= __('field_finish_time') ?></label>
+                            <input id="finish_time" name="finish_time" class="ext-input-control input-field"
+                                type="datetime-local" step="1" value="<?= htmlspecialchars($finishTimeVal) ?>"
+                                onclick="try { this.showPicker(); } catch(e) {}"
+                                onkeydown="return ['Tab', 'Escape'].includes(event.key)" disabled>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 5 Tiêu chuẩn Đùn Check -->
+                <div class="ext-check-strip">
+                    <div class="ext-criteria-header ext-title">
+                        <span>🏭</span>
+                        <span data-i18n="ext_criteria_title"><?= __('ext_criteria_title') ?></span>
+                    </div>
+
+                    <div class="ext-checks-group">
+                        <?php
                                 $checks = [
                                     'diameter'       => ['label_key' => 'crit_diameter', 'label' => 'Đường kính', 'val' => $chkDiameter],
                                     'gel'            => ['label_key' => 'crit_gel',      'label' => 'Gel',        'val' => $chkGel],
@@ -387,66 +407,68 @@ foreach ($bobins as $b) {
                                 foreach ($checks as $key => $c):
                                     $isOk = (bool)$c['val'];
                                 ?>
-                                    <div class="ext-check-box">
-                                        <span class="ext-criteria-name check-box-label" data-i18n="<?= $c['label_key'] ?>"><?= __($c['label_key']) ?></span>
-                                        <button type="button" class="ext-toggle-btn <?= $isOk ? 'active' : '' ?>"
-                                            data-field="ext_check_<?= $key ?>" data-value="<?= $isOk ? 'true' : 'false' ?>"
-                                            onclick="toggleExtCheck(this)" disabled>
-                                            <?= $isOk ? 'OK' : 'NG' ?>
-                                        </button>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
+                        <div class="ext-check-box">
+                            <span class="ext-criteria-name check-box-label"
+                                data-i18n="<?= $c['label_key'] ?>"><?= __($c['label_key']) ?></span>
+                            <button type="button" class="ext-toggle-btn <?= $isOk ? 'active' : '' ?>"
+                                data-field="ext_check_<?= $key ?>" data-value="<?= $isOk ? 'true' : 'false' ?>"
+                                onclick="toggleExtCheck(this)" disabled>
+                                <?= $isOk ? 'OK' : 'NG' ?>
+                            </button>
                         </div>
-
-                        <!-- Card Footer -->
-                        <div class="ext-card-footer card-footer-simple">
-                            <?php if (!empty($item['updated_time'])): ?>
-                                <div class="ext-update-time update-time">
-                                    <span>🕒</span>
-                                    <span data-i18n="emp_updated_prefix"><?= __('emp_updated_prefix') ?></span>
-                                    <span><?= htmlspecialchars($item['updated_time']) ?></span>
-                                </div>
-                            <?php else: ?>
-                                <div></div>
-                            <?php endif; ?>
-
-                            <div class="ext-btn-group button-group">
-                                <!-- Nút Sửa ban đầu -->
-                                <button type="button" class="ext-btn btn-primary-edit btn-edit" onclick="startEdit(this)">
-                                    <span>✏️</span>
-                                    <span data-i18n="ext_btn_edit"><?= __('ext_btn_edit') ?></span>
-                                </button>
-
-                                <!-- Nút Hủy và Lưu (chỉ hiện khi bấm Chỉnh sửa) -->
-                                <button type="button" class="ext-btn btn-cancel btn-cancel-edit" style="display: none;" onclick="cancelEdit(this)">
-                                    <span>✕</span>
-                                    <span data-i18n="ext_btn_cancel"><?= __('ext_btn_cancel') ?></span>
-                                </button>
-                                <button type="button" class="ext-btn btn-save btn-confirm" style="display: none;"
-                                    onclick="handleConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
-                                    <span>💾</span>
-                                    <span data-i18n="ext_btn_save"><?= __('ext_btn_save') ?></span>
-                                </button>
-
-                                <!-- Nút Hủy Bobin -->
-                                <button type="button" class="ext-btn btn-delete-scrap btn-delete"
-                                    onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
-                                    <span>🗑️</span>
-                                    <span data-i18n="ext_btn_delete"><?= __('ext_btn_delete') ?></span>
-                                </button>
-                            </div>
-                        </div>
-
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                </div>
+
+                <!-- Card Footer -->
+                <div class="ext-card-footer card-footer-simple">
+                    <?php if (!empty($item['updated_time'])): ?>
+                    <div class="ext-update-time update-time">
+                        <span>🕒</span>
+                        <span data-i18n="emp_updated_prefix"><?= __('emp_updated_prefix') ?></span>
+                        <span><?= htmlspecialchars($item['updated_time']) ?></span>
+                    </div>
+                    <?php else: ?>
+                    <div></div>
+                    <?php endif; ?>
+
+                    <div class="ext-btn-group button-group">
+                        <!-- Nút Sửa ban đầu -->
+                        <button type="button" class="ext-btn btn-primary-edit btn-edit" onclick="startEdit(this)">
+                            <span>✏️</span>
+                            <span data-i18n="ext_btn_edit"><?= __('ext_btn_edit') ?></span>
+                        </button>
+
+                        <!-- Nút Hủy và Lưu (chỉ hiện khi bấm Chỉnh sửa) -->
+                        <button type="button" class="ext-btn btn-cancel btn-cancel-edit" style="display: none;"
+                            onclick="cancelEdit(this)">
+                            <span>✕</span>
+                            <span data-i18n="ext_btn_cancel"><?= __('ext_btn_cancel') ?></span>
+                        </button>
+                        <button type="button" class="ext-btn btn-save btn-confirm" style="display: none;"
+                            onclick="handleConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
+                            <span>💾</span>
+                            <span data-i18n="ext_btn_save"><?= __('ext_btn_save') ?></span>
+                        </button>
+
+                        <!-- Nút Hủy Bobin -->
+                        <button type="button" class="ext-btn btn-delete-scrap btn-delete"
+                            onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
+                            <span>🗑️</span>
+                            <span data-i18n="ext_btn_delete"><?= __('ext_btn_delete') ?></span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
+            <?php endforeach; ?>
+        </div>
         <?php endif; ?>
 
     </div>
 
     <script>
-        const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+    const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_suggestion.js?v=<?= time() ?>"></script>

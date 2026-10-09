@@ -261,6 +261,79 @@ CREATE TABLE `employee_list` (
     - Giải pháp: Ẩn triệt để toàn bộ canvas nội bộ (`#qr-reader canvas, #reader canvas, #qr-video-viewport canvas, canvas#qr-canvas { display: none !important; ... }`), ẩn `#qr-shaded-region`, thiết lập `disableFlip: true`, chuẩn hóa video `height: 100% !important; object-fit: cover !important;`, loại bỏ selector canvas thừa tại cả 7 file stylesheet của các trang.
   - **Ràng buộc an toàn:** Tuân thủ 100% không liên quan đến tác vụ Astral (`astral.sh`), 100% Offline Intranet cục bộ, không tải thêm bất kỳ thư viện ngoài nào.
 
+### TASK-025
+**Status:** DONE
+- Rà soát toàn diện dự án để đảm bảo 100% không sử dụng thư viện trên internet và không phụ thuộc bất kỳ tác vụ nào từ Astral (`astral.sh`):
+  - **Rà soát thư viện ngoài qua Internet:**
+    - Quét toàn bộ 18 file View (`app/views/`): 100% thẻ `<script>` và `<link rel="stylesheet">` đều nạp từ thư mục tài nguyên cục bộ nội bộ `/WEB_BOBIN/public/assets/...`, tuyệt đối không có CDN ngoài (như cdnjs, unpkg, jsdelivr, googleapis).
+    - Quét toàn bộ Stylesheet (`public/assets/css/`): 100% sử dụng font chữ hệ thống (`system-ui`, `Segoe UI`), không có `@font-face` hoặc `@import` tải từ internet, icon dạng SVG nội suy data-uri.
+    - Quét toàn bộ JavaScript (`public/assets/js/`): Mọi hàm `fetch()` và AJAX đều chỉ gọi API nội bộ trên cùng máy chủ (`/WEB_BOBIN/public/index.php?url=...`), không có bất kỳ request ra internet.
+    - Đã triệt tiêu các URL tham chiếu tĩnh bên ngoài trong file `html5-qrcode.min.js` (chuyển các link `scanapp.org` và `github` về `#`), dọn dẹp các ghi chú đường dẫn cũ trong `contentLoaded.js`.
+  - **Kiểm tra công cụ & thư viện Astral (`astral.sh`):**
+    - Xác nhận toàn bộ dự án không có file cấu hình, mã nguồn hay thư viện nào liên quan đến Astral (như `uv`, `ruff`, `pyproject.toml`, `.ruff.toml`).
+    - Dự án thuần PHP (Apache XAMPP + MySQL) và Vanilla JavaScript, hoàn toàn độc lập và an toàn 100% trong môi trường mạng LAN nội bộ cô lập.
+
+### TASK-026
+**Status:** DONE
+- Khắc phục triệt để lỗi database: `SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '0' for key 'PRIMARY'` phát sinh khi hủy Bobin từ trang Chỉnh sửa Đùn:
+  - **Nguyên nhân gốc rễ (Root Cause):**
+    - Bảng `bobin_history` có định nghĩa khóa chính `id INT(11) PRIMARY KEY` nhưng bị thiếu thuộc tính `AUTO_INCREMENT`.
+    - Khi các câu lệnh INSERT vào `bobin_history` (bao gồm `extInsertBobinHistoryAfterDelete()` khi hủy Bobin, `createBobin()`, `extrusionUpdateBobin()`,...) không truyền trường `id`, MySQL tự động gán giá trị mặc định là `0`.
+    - Lần ghi lịch sử đầu tiên tạo ra bản ghi có `id = 0`. Các lần hủy hoặc ghi nhận lịch sử tiếp theo tiếp tục cố gắng ghi nhận `id = 0`, dẫn đến xung đột khóa chính `Duplicate entry '0' for key 'PRIMARY'`.
+    - Tình trạng thiếu `AUTO_INCREMENT` tương tự cũng tồn tại ở các bảng danh mục và bảng dữ liệu khác trong schema.
+  - **Giải pháp xử lý:**
+    - Di chuyển/cập nhật bản ghi `id = 0` hiện có trong `bobin_history`, `bobin_list_detail`, `bobin_list_general` lên ID dương hợp lệ.
+    - Cập nhật cấu trúc bảng `bobin_history` và toàn bộ 12 bảng danh mục khác trong cơ sở dữ liệu `production_db` (bao gồm `bobin_list_detail`, `bobin_list_general`, `employee_list`, `day_list`, `extrusion_machine_list`, `material_list`, `material_lot_list`, `month_list`, `product_list`, `rack_list`, `winding_machine_list`, `year_list`) bổ sung thuộc tính `AUTO_INCREMENT` cho cột `id`.
+    - Cập nhật hàm `extInsertBobinHistoryAfterDelete()` tại `app/repositories/BobinRepository.php` để lưu trữ đồng bộ cả hai trường `extrusion_check, rack` vào `bobin_history` khi thực hiện thao tác hủy Bobin.
+    - Đồng bộ hóa định nghĩa schema trong file SQL `public/assets/sql/Updated/production_db_Architect_sql.sql` và dữ liệu mẫu `public/assets/sql/Updated/production_db_Data.sql`.
+### TASK-027
+**Status:** DONE
+- Khắc phục lỗi trùng lặp bản ghi Bobin ở danh sách chờ hủy và hoàn thiện điều kiện kiểm tra ràng buộc khi hủy Bobin tại các công đoạn Đùn, Cuộn và QC:
+  - **Vấn đề 1: Hủy Bobin tại trang Chỉnh sửa Đùn không còn bị duplicate trong danh sách chờ hủy:**
+    - Nguyên nhân gốc rễ: Database trực tiếp thiếu ràng buộc duy nhất `uk_bobin_identification_code` và `uk_bobin_key_code` trên hai bảng `bobin_list_detail` và `bobin_list_general` (dù schema mẫu có khai báo), dẫn đến câu lệnh `INSERT ... ON DUPLICATE KEY UPDATE` khi tạo lại chu kỳ Bobin đã chèn bản ghi mới (`id > 3000`) thay vì ghi đè lên dòng hiện tại. Khi thực hiện hủy Bobin, câu truy vấn chỉ lọc theo `bobin_identification_code` khiến cả 2 bản ghi đều chuyển thành `Pending_Cancellation` và xuất hiện 2 thẻ Bobin ở danh sách chờ hủy.
+    - Xử lý cơ sở dữ liệu: Gộp dữ liệu chu kỳ mới nhất từ các dòng trùng (`id > 3000`) về bản ghi gốc (`id <= 3000`), xóa các dòng trùng lặp, đưa tổng số dòng về chính xác 3000 bản ghi trên cả hai bảng. Thiết lập `UNIQUE KEY uk_bobin_identification_code` và `UNIQUE KEY uk_bobin_key_code` trên cả `bobin_list_detail` và `bobin_list_general`.
+    - Xử lý mã nguồn: Bổ sung `bobin_key_code` vào `BobinExtDeleteDTO`, truyền từ giao diện `extrusionEditBobinView.php` qua `public/assets/js/Extrusion/edit_submit.js` tới `BobinServices.php`, và cập nhật `extDeleteBobinDetail()` / `extDeleteBobinGeneral()` trong `BobinRepository.php` lọc chính xác theo cả mã định danh lẫn `bobin_key_code`.
+  - **Vấn đề 2: Hủy Bobin tại trang Cuộn bắt buộc đầy đủ 4 trường thông tin:**
+    - Bổ sung `winding_employee_name` vào `BobinWindingCancelDTO`.
+    - Cập nhật hàm kiểm tra backend `validFormWinding_Cancel()` trong `BobinController.php` bắt buộc 4 trường: Mã máy cuộn (`winding_machine`), Mã nhân viên (`winding_employee_code`), Họ tên nhân viên (`winding_employee_name`), và Ghi chú lý do hủy (`winding_note`).
+    - Nâng cấp hàm frontend `handleWindingCancel()` tại `public/assets/js/Winding/submit.js` kiểm tra tuần tự 4 trường trước khi hiển thị hộp thoại xác nhận, tự động viền đỏ trường bị thiếu và hiển thị thông báo Toast cảnh báo đa ngôn ngữ tương ứng.
+  - **Vấn đề 3: Hủy Bobin tại trang QC bắt buộc đầy đủ thông tin và có ít nhất 1 trường ngoại quan NG:**
+    - Cập nhật hàm kiểm tra backend `validFormQC_Cancel()` trong `BobinController.php` bắt buộc: Mã nhân viên QC (`inspector_code`), Họ tên nhân viên QC (`inspector_name`), Ghi chú lý do hủy (`defect_note`), và kiểm tra logic ngoại quan: `$hasNG = $dto->defect_gel || $dto->defect_foreign_object || $dto->defect_color_issue || $dto->defect_print_quality` (phải có ít nhất 1 trường NG).
+    - Cập nhật `app/views/qcView.php` bổ sung `data-key` cho switch ngoại quan.
+    - Nâng cấp `public/assets/js/QC/submit.js`: sửa selector `.toggle-switch[data-defect]`, sửa lỗi đảo ngược trạng thái badge trong hộp thoại xác nhận (`hasDefect ? NG : OK`), bổ sung xác thực hợp lệ phía client cho mã nhân viên, tên nhân viên, ghi chú và bắt buộc tối thiểu 1 trường NG trước khi mở dialog xác nhận.
+  - **Đa ngôn ngữ & Kiểm thử:**
+    - Bổ sung 5 translation keys: `toast_err_req_machine`, `toast_err_req_emp_code`, `toast_err_req_emp_name`, `toast_err_req_cancel_note`, `toast_err_qc_require_ng` đầy đủ cho cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+### TASK-028
+**Status:** DONE
+- Tối ưu hóa toàn diện cấu trúc, hiệu năng Bulk Import và đồng bộ dữ liệu cho file `public/assets/sql/Updated/production_db_Data.sql`:
+  - **Khắc phục lỗi cú pháp nghiêm trọng:** Loại bỏ khai báo trùng lặp `PRIMARY KEY` trên bảng `employee_list`, xử lý triệt để lỗi `ERROR 1068 (42000): Multiple primary key defined` khi import.
+  - **Đồng bộ hóa Schema & Dữ liệu chuẩn:**
+    - Cập nhật bảng `employee_list` đầy đủ 10 cột theo `Architect_sql.sql` (bao gồm `cost_center` và `permissions`), nạp đủ 132 nhân viên thực tế có mã bộ phận và phân quyền từ Live DB.
+    - Chuẩn hóa cấu trúc và dữ liệu các bảng danh mục: `material_list` (`brand, code, grinding_time`), `material_lot_list` (`lot, updated_time`), `winding_machine_list` (`machine_name`) khớp 100% với `Architect_sql.sql` và mã nguồn JavaScript (`suggestion.js`).
+  - **Tối ưu hóa hiệu năng Bulk Import:**
+    - Bổ sung các chỉ thị tăng tốc nạp dữ liệu: `SET FOREIGN_KEY_CHECKS = 0;`, `SET UNIQUE_CHECKS = 0;`, `SET AUTOCOMMIT = 0;` ở đầu file và khôi phục an toàn ở cuối file.
+    - Phân đoạn các câu lệnh INSERT (Chunking): Chia bảng `bobin_list_detail` (3,000 dòng) thành các khối 500 dòng/lệnh kèm `COMMIT;` định kỳ; chia `bobin_list_general` (3,000 dòng) và `material_lot_list` (3,869 dòng) thành các khối 1,000 dòng/lệnh, ngăn chặn hoàn toàn nguy cơ tràn bộ đệm gói tin `max_allowed_packet` và quá tải Undo Log.
+  - **Chuẩn hóa Collation:** Đưa toàn bộ cấu hình Database và bảng `rack_list` về thống nhất chuẩn `utf8mb4_unicode_ci`.
+  - **Bổ sung chỉ mục (Indexes) tăng tốc truy vấn:** Bổ sung `uk_employee_code`, `uk_username`, `idx_employee_role` cho `employee_list`; `idx_lot` cho `material_lot_list`; `idx_detail_status` và `idx_general_status` cho `bobin_list_detail` & `bobin_list_general`; đồng bộ trực tiếp lên Live Database thành công 100%.
+  - **Kiểm thử tự động:** Tạo database tạm `test_verify_production_db` và thực hiện import kiểm thử qua MySQL CLI: 100% thành công, 0 lỗi, nạp đủ 14 bảng với 10,960 dòng dữ liệu chuẩn.
+
+### TASK-029
+**Status:** DONE
+- Khắc phục triệt để hiện tượng Toast thông báo xuất hiện 2 lần khi thực hiện hủy Bobin tại trang Danh sách chờ hủy (`listPendingCancellationView.php`) và khi cập nhật/hủy Bobin trên toàn hệ thống:
+  - **Nguyên nhân cốt lõi (Root Cause):**
+    1. **Hiện tượng Show trước reload + Flash sau reload (Show-before-reload Anti-pattern):** Trong `public/assets/js/delete.js`, sau khi API trả về kết quả xóa/hủy thành công, hàm `handleDelete()` gọi ngay lập tức `window.Toast.show(successMsg, 'success')` (khiến Toast #1 hiển thị ngay trên màn hình). Đồng thời, mã nguồn ghi `sessionStorage.setItem('bobin_toast_flash', ...)` và kích hoạt `setTimeout(() => window.location.reload(), 800)`. Khi trình duyệt tải lại trang, file `public/assets/js/toast.js` tự động khởi chạy `checkAutoToasts()`, đọc `bobin_toast_flash` từ `sessionStorage` và kích hoạt hàm `Toast.show()` một lần nữa (Toast #2 hiển thị sau khi reload). Do trang bị reload toàn bộ, biến bộ nhớ JavaScript (`lastToastTime`) bị xóa sạch về 0, vô hiệu hóa cơ chế deduplicate chống lặp trong 1.5s của `toast.js`.
+    2. **Định nghĩa Toast và sự kiện trùng lặp trong `delete.js`:** Trong file `delete.js` trước đây chứa đoạn code cũ định nghĩa lại class `Toast` nội bộ và đăng ký một listener `DOMContentLoaded` riêng biệt để đọc `bobin_toast_flash`, xung đột và chạy song song với `toast.js` toàn cục.
+    3. **Hiện tượng tương tự trên các trang Đùn, Cuộn và QC:** Pattern gọi `Toast.flash(...)` song song với `Toast.show(...)` trước khi reload cũng xuất hiện ở `Extrusion/edit_submit.js`, `QC/submit.js`, `QC/edit_submit.js`, `Winding/submit.js`, và `Winding/edit_submit.js`.
+  - **Giải pháp xử lý:**
+    - Chuẩn hóa `public/assets/js/delete.js`:
+      - Xóa bỏ class `Toast` định nghĩa thừa và listener `DOMContentLoaded` cạnh tranh, sử dụng thống nhất `window.Toast` toàn cục từ `toast.js`.
+      - Trong `handleDelete()`: Tạo hiệu ứng mờ dần (fade out) mượt mà cho card Bobin được hủy (`opacity = 0`, `transform = scale(0.95)`), lưu thông báo duy nhất vào `window.Toast.flash(...)` và gọi `window.location.reload()` sau 450ms. Tuyệt đối không gọi `Toast.show()` trước khi reload. Khi trang tải lại với danh sách mới và badge số lượng cập nhật, Toast chỉ hiển thị DUY NHẤT 1 LẦN.
+    - Chuẩn hóa toàn bộ các file submit/edit trên toàn hệ thống:
+      - `public/assets/js/Extrusion/edit_submit.js` (hủy & cập nhật).
+      - `public/assets/js/QC/submit.js` (lưu kết quả QC, hủy Bobin QC, chuyển trạng thái QC) và `public/assets/js/QC/edit_submit.js`.
+      - `public/assets/js/Winding/submit.js` (lưu cuộn, xác nhận cuộn) và `public/assets/js/Winding/edit_submit.js`.
+      - Loại bỏ toàn bộ các lệnh `Toast.show(...)` dư thừa nằm ngay trước `window.location.reload()`, chuyển giao toàn bộ quyền hiển thị sau tải trang cho cơ chế Flash Toast duy nhất.
+
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

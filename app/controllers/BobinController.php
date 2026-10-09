@@ -1433,6 +1433,11 @@ class BobinController extends Controller
         if (empty($dto->defect_note) || $dto->defect_note === "Chưa cập nhật") {
             throw new Exception('Vui lòng nhập lý do hủy Bobin trong phần ghi chú');
         }
+
+        $hasNG = $dto->defect_gel || $dto->defect_foreign_object || $dto->defect_color_issue || $dto->defect_print_quality;
+        if (!$hasNG) {
+            throw new Exception('Phải có ít nhất 1 trường ngoại quan đánh giá NG mới được hủy Bobin');
+        }
     }
     private function validFormWinding_Cancel(BobinWindingCancelDTO $dto): void
     {
@@ -1440,10 +1445,16 @@ class BobinController extends Controller
             throw new Exception('Mã định danh Bobin không được để trống');
         }
 
-        if (empty($dto->winding_employee_code) || $dto->winding_employee_code === "Chưa cập nhật") {
-            throw new Exception('Vui lòng nhập mã nhân viên cuộn');
+        if (empty($dto->winding_machine) || $dto->winding_machine === "Chưa cập nhật") {
+            throw new Exception('Vui lòng chọn hoặc nhập mã máy cuộn trước khi hủy');
         }
-        if (empty($dto->winding_note) || $dto->winding_note === "Không có ghi chú") {
+        if (empty($dto->winding_employee_code) || $dto->winding_employee_code === "Chưa cập nhật") {
+            throw new Exception('Vui lòng nhập mã nhân viên cuộn trước khi hủy');
+        }
+        if (empty($dto->winding_employee_name) || $dto->winding_employee_name === "Chưa cập nhật") {
+            throw new Exception('Vui lòng nhập họ tên nhân viên cuộn trước khi hủy');
+        }
+        if (empty($dto->winding_note) || $dto->winding_note === "Chưa cập nhật" || $dto->winding_note === "Không có ghi chú") {
             throw new Exception('Vui lòng nhập lý do hủy Bobin trong phần ghi chú');
         }
     }

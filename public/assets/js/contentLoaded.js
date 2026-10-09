@@ -1,7 +1,6 @@
 //TODO 3. LOAD DATA
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 Bắt đầu gọi API...");
-  //API_BASE_URL = 'http://localhost/WEB_BOBIN/';
   fetch(API_BASE_URL + "listdata/getListData")
     .then((res) => res.json())
     .then((response) => {

@@ -1745,10 +1745,16 @@ class BobinRepository
                     updated_time = :updated
                 WHERE bobin_identification_code = :ident";
 
-        $stmt = $pdo->prepare($sql);
         $params = $this->getBobinExtDeleteParams($entity);
         $params[':status'] = 'Pending_Cancellation';
         $params[':updated'] = $entity->updatedTime->format('Y-m-d H:i:s');
+
+        if (!empty($entity->bobinKeyCode)) {
+            $sql .= " AND bobin_key_code = :key";
+            $params[':key'] = $entity->bobinKeyCode;
+        }
+
+        $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
     }
 
@@ -1759,23 +1765,30 @@ class BobinRepository
                     updated_time = NOW()
                 WHERE bobin_identification_code = :ident";
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
+        $params = [
             ':ident' => $entity->identificationCode,
             ':status' => 'Pending_Cancellation'
-        ]);
+        ];
+
+        if (!empty($entity->bobinKeyCode)) {
+            $sql .= " AND bobin_key_code = :key";
+            $params[':key'] = $entity->bobinKeyCode;
+        }
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
     }
 
     private function extInsertBobinHistoryAfterDelete(PDO $pdo, BobinEntity $entity): void
     {
         $sql = "INSERT INTO bobin_history (
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                    extrusion_employee, products, material_lot, print_lot, length_m,
+                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                     winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
                 ) SELECT 
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                    extrusion_employee, products, material_lot, print_lot, length_m, 
+                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                     shift, extrusion_date, finish_time, visual_inspection, 
                     winding_machine, winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
                 FROM bobin_list_detail

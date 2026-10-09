@@ -2,14 +2,207 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [2026-10-09] - Khắc Phục Triệt Để Hiện Tượng Toast Thông Báo Xuất Hiện 2 Lần Sau Khi Thao Tác (TASK-029)
+
+### 1. Bối cảnh & Yêu cầu:
+- Người dùng phản ánh: "Tại sao ở trang danh sách chờ hủy, tôi hủy 1 Bobin nhưng Toast lại hiện 2 lần?"
+- Kiểm tra toàn diện luồng hiển thị thông báo Toast trong `listPendingCancellationView.php`, `delete.js`, `toast.js` và các module thao tác khác (Đùn, Cuộn, QC).
+
+### 2. Nguyên nhân gốc rễ (Root Cause Analysis):
+1. **Hiện tượng "Show-before-reload + Flash-after-reload" (Anti-pattern cốt lõi):**
+   - Trong `public/assets/js/delete.js` (hàm `handleDelete`), sau khi nhận phản hồi API thành công, mã nguồn đồng thời:
+     - Gọi `window.Toast.show(successMsg, 'success')` (Làm Toast thứ nhất lập tức xuất hiện trên màn hình).
+     - Lưu thông báo vào Flash: `sessionStorage.setItem('bobin_toast_flash', JSON.stringify({ message: successMsg, ... }))`.
+     - Gọi hàm reload trang: `setTimeout(() => window.location.reload(), 800)`.
+   - Sau 800ms, trình duyệt tải lại trang HTML mới. File `public/assets/js/toast.js` được nạp lại và hàm `checkAutoToasts()` tự động chạy khi DOM sẵn sàng.
+   - Hàm `checkAutoToasts()` đọc được thông báo còn lưu trong `sessionStorage('bobin_toast_flash')`, xóa item đó và gọi tiếp `Toast.show(...)` lần thứ hai!
+   - Vì toàn bộ trang web bị reload, toàn bộ context bộ nhớ JavaScript (bao gồm biến chống spam trùng lặp `lastToastTime` trong `toast.js`) bị reset hoàn toàn về 0, khiến cơ chế deduplicate trong 1.5 giây bị vô hiệu hóa. Người dùng nhìn thấy Toast xuất hiện trước khi reload, và sau khi reload xong lại xuất hiện Toast y hệt một lần nữa.
+2. **Xung đột mã nguồn & Lắng nghe trùng lặp trong `delete.js`:**
+   - Trong `delete.js` tồn tại đoạn mã cũ định nghĩa lại class `Toast` nội bộ và đăng ký một listener `DOMContentLoaded` riêng biệt cũng lắng nghe `bobin_toast_flash`, chạy song song và xung đột với `toast.js` toàn cục.
+3. **Mã lặp tương tự tại các trang Đùn, Cuộn và QC:**
+   - Cùng một pattern gọi cả `Toast.flash(...)` lẫn `Toast.show(...)` trước khi gọi `window.location.reload()` được sao chép ở các file:
+     - `public/assets/js/Extrusion/edit_submit.js` (cập nhật & hủy Bobin Đùn).
+     - `public/assets/js/QC/submit.js` & `QC/edit_submit.js` (cập nhật kết quả, hủy Bobin QC, chuyển trạng thái QC).
+     - `public/assets/js/Winding/submit.js` & `Winding/edit_submit.js` (cập nhật & lưu cuộn).
+
+### 3. Giải pháp đã triển khai:
+1. **Chuẩn hóa `public/assets/js/delete.js`:**
+   - Xóa bỏ hoàn toàn định nghĩa `Toast` cũ và event listener `DOMContentLoaded` trùng lặp trong `delete.js`.
+   - Trong `handleDelete()`:
+     - Card Bobin được hủy sẽ mờ dần nhẹ nhàng (`opacity = 0; transform = scale(0.95)`).
+     - Chỉ lưu thông báo duy nhất vào `window.Toast.flash(...)`.
+     - Tuyệt đối KHÔNG gọi `Toast.show()` trước khi reload.
+     - Sau 450ms, trang reload và `toast.js` chỉ hiển thị Toast **ĐÚNG 1 LẦN DUY NHẤT** kèm danh sách Bobin mới và badge số lượng chính xác.
+2. **Chuẩn hóa đồng bộ toàn hệ thống:**
+   - Loại bỏ toàn bộ các lệnh `Toast.show(...)` nằm ngay trước `setTimeout(() => window.location.reload(), ...)` trong:
+     - `public/assets/js/Extrusion/edit_submit.js`
+     - `public/assets/js/QC/submit.js`
+     - `public/assets/js/QC/edit_submit.js`
+     - `public/assets/js/Winding/submit.js`
+     - `public/assets/js/Winding/edit_submit.js`
+   - Đảm bảo cơ chế Flash Toast hoạt động nhất quán, mượt mà và không bao giờ xuất hiện Toast kép trên bất kỳ trang nào.
+
+---
+
+## [2026-10-09] - Tối Ưu Hóa Toàn Diện File Dữ Liệu SQL Chuẩn (production_db_Data.sql) (TASK-028)
+
+### 1. Bối cảnh & Yêu cầu:
+- Người dùng yêu cầu kiểm tra và đánh giá file `public/assets/sql/Updated/production_db_Data.sql` xem đã được tối ưu hóa chưa.
+- Sau khi phân tích phát hiện 1 lỗi cú pháp nghiêm trọng gây dừng import (`Multiple primary key defined`) cùng các điểm lệch cấu trúc bảng, thiếu chỉ mục và chưa tối ưu câu lệnh bulk insert, người dùng đã phê duyệt tiến hành tối ưu hóa toàn diện file dữ liệu.
+
+### 2. Các vấn đề cốt lõi đã được xử lý triệt để:
+1. **Lỗi cú pháp Multiple primary key trên `employee_list`:**
+   - Trong file cũ, bảng `employee_list` vừa khai báo `id INT AUTO_INCREMENT PRIMARY KEY` trong `CREATE TABLE`, vừa chạy `ALTER TABLE employee_list ADD PRIMARY KEY (id)` ở cuối file. Khi nạp vào MySQL sẽ báo lỗi dừng `ERROR 1068 (42000): Multiple primary key defined`.
+   - Đã chuẩn hóa: Khởi tạo cột `id INT NOT NULL` trong `CREATE TABLE`, sau đó thêm khóa chính và thuộc tính `AUTO_INCREMENT` đồng bộ ở cuối file theo đúng kiến trúc của toàn bộ dự án.
+2. **Đồng bộ hóa Schema & Dữ liệu 100% khớp với Live DB và `Architect_sql.sql`:**
+   - Cập nhật bảng `employee_list` có đủ 10 cột, bổ sung `cost_center` và `permissions` (phục vụ chức năng phân quyền `AuthHelper`), nạp trọn vẹn 132 nhân viên thực tế từ Live Database.
+   - Sửa các bảng danh mục `material_list` (`brand, code, grinding_time`), `material_lot_list` (`lot, updated_time`), `winding_machine_list` (`machine_name`) khớp 100% với mã nguồn JavaScript (`suggestion.js`).
+3. **Tối ưu hóa hiệu năng nạp dữ liệu lớn (Bulk Import Directives & Chunking):**
+   - Bổ sung `SET FOREIGN_KEY_CHECKS = 0;`, `SET UNIQUE_CHECKS = 0;`, `SET AUTOCOMMIT = 0;` ở đầu file và khôi phục ở cuối file.
+   - Chia nhỏ các khối INSERT: Chia `bobin_list_detail` (3,000 dòng) thành các khối 500 dòng/câu lệnh; chia `bobin_list_general` (3,000 dòng) và `material_lot_list` (3,869 dòng) thành các khối 1,000 dòng/câu lệnh kèm `COMMIT;` định kỳ, triệt tiêu hoàn toàn nguy cơ lỗi `max_allowed_packet` và quá tải bộ đệm InnoDB Undo Log.
+4. **Chuẩn hóa Collation:**
+   - Đưa toàn bộ Database và bảng `rack_list` về thống nhất `utf8mb4_unicode_ci` (thay vì `utf8mb4_general_ci`), tránh xung đột `Illegal mix of collations`.
+5. **Bổ sung chỉ mục (Indexes) tăng tốc truy vấn:**
+   - Bổ sung `uk_employee_code`, `uk_username`, `idx_employee_role` cho `employee_list`.
+   - Bổ sung `idx_lot` cho `material_lot_list`.
+   - Bổ sung `idx_detail_status` và `idx_general_status` cho các bảng Bobin.
+   - Bổ sung `uk_rack_code`, `uk_winding_machine_name`, `uk_extrusion_machine_code`, `uk_production_order_code`, `uk_product_code`.
+   - Đã đồng bộ trực tiếp các chỉ mục này vào Live Database thành công 100%.
+
+### 3. Kết quả kiểm thử:
+- Kiểm thử import toàn trình qua MySQL CLI trên database tạm `test_verify_production_db`: 100% thành công, 0 lỗi, 0 cảnh báo, nạp đầy đủ 14 bảng với 10,960 dòng dữ liệu chuẩn.
+- Kiểm thử hồi quy logic ứng dụng (`test_cancellation_fixes.php`): 21/21 kịch bản Passed 100%.
+
+---
+
+## [2026-10-09] - Ngăn Chặn Duplicate Bobin Chờ Hủy & Hoàn Thiện Ràng Buộc Hủy Bobin Đùn, Cuộn, QC (TASK-027)
+
+### 1. Bối cảnh & Yêu cầu:
+
+1. **Lỗi Duplicate Bobin tại danh sách chờ hủy:** Khi hủy 1 Bobin tại trang điều chỉnh nhóm Đùn, xuất hiện 2 thẻ Bobin ở danh sách chờ hủy (`listPendingCancellationView`).
+2. **Ràng buộc thông tin hủy Bobin tại nhóm Cuộn:** Yêu cầu phải nhập đầy đủ 4 thông tin: Mã máy cuộn, Mã nhân viên, Họ tên nhân viên, và Ghi chú thì mới được phép hủy Bobin.
+3. **Ràng buộc thông tin hủy Bobin tại nhóm QC:** Yêu cầu phải nhập đầy đủ: Mã nhân viên, Họ tên nhân viên, Ghi chú, và phải có ít nhất 1 trường ngoại quan được đánh giá là NG thì mới được phép hủy Bobin.
+
+### 2. Phân tích nguyên nhân gốc rễ (Root Cause Analysis):
+
+1. **Nguyên nhân Duplicate Bobin ở danh sách chờ hủy:**
+   - Trong cơ sở dữ liệu thực tế `production_db`, hai bảng `bobin_list_detail` và `bobin_list_general` bị thiếu ràng buộc `UNIQUE KEY uk_bobin_identification_code` và `UNIQUE KEY uk_bobin_key_code` (mặc dù schema trong file SQL mẫu có khai báo).
+   - Khi tái sử dụng Bobin (chạy lại chu kỳ mới bằng câu lệnh `INSERT ... ON DUPLICATE KEY UPDATE`), do thiếu Unique Key, MySQL không cập nhật dòng hiện có mà chèn thêm một bản ghi mới (`id > 3000`).
+   - Khi người dùng bấm "Hủy Bobin" ở trang Chỉnh sửa Đùn, câu truy vấn `UPDATE bobin_list_detail SET bobin_current_status = 'Pending_Cancellation' WHERE bobin_identification_code = :ident` lọc chỉ theo mã định danh (không lọc theo `bobin_key_code`), dẫn đến cập nhật cả 2 dòng của Bobin đó thành `Pending_Cancellation`. Do đó, trang `listPendingCancellationView` truy vấn ra 2 dòng thẻ cùng 1 mã Bobin.
+2. **Thiếu sót điều kiện xác thực khi hủy tại Cuộn và QC:**
+   - Phía Cuộn: `BobinWindingCancelDTO` trước đây thiếu trường `winding_employee_name`. Hàm kiểm tra backend `validFormWinding_Cancel` và hàm frontend `handleWindingCancel` chỉ kiểm tra mã máy và mã nhân viên, bỏ qua họ tên và ghi chú.
+   - Phía QC: `validFormQC_Cancel` chỉ kiểm tra mã định danh và mã nhân viên, chưa bắt buộc tên nhân viên, chưa bắt buộc lý do ghi chú, và hoàn toàn không kiểm tra xem có bất kỳ tiêu chí ngoại quan nào bị NG hay không. Đồng thời trên frontend `public/assets/js/QC/submit.js`, selector nút switch đang trỏ sai class `.vi-item-switch`, logic hiển thị badge trong modal bị ngược (`hasDefect ? OK : NG`), và chưa có bước kiểm tra chặn hiển thị modal xác nhận.
+
+### 3. Giải pháp đã triển khai:
+
+1. **Cơ sở dữ liệu (MySQL Database `production_db`):**
+   - Hợp nhất dữ liệu chu kỳ mới nhất từ các bản ghi trùng lặp (`id > 3000`) về bản ghi gốc (`id <= 3000`).
+   - Xóa bỏ toàn bộ các bản ghi trùng lặp thừa, chuẩn hóa lại đúng 3000 bản ghi trên cả `bobin_list_detail` và `bobin_list_general`.
+   - Bổ sung `UNIQUE KEY uk_bobin_identification_code (bobin_identification_code)` và `UNIQUE KEY uk_bobin_key_code (bobin_key_code)` trên cả hai bảng.
+2. **Khắc phục triệt để hủy Bobin tại Đùn (`BobinExtDeleteDTO`, `BobinServices`, `BobinRepository`):**
+   - Bổ sung `bobin_key_code` vào `BobinExtDeleteDTO`.
+   - Cập nhật `extrusionEditBobinView.php` truyền `bobin_key_code` qua `data-bobin-key`.
+   - Cập nhật `public/assets/js/Extrusion/edit_submit.js` gửi `bobin_key_code` trong payload DELETE.
+   - Cập nhật `BobinRepository::extDeleteBobinDetail()` và `BobinRepository::extDeleteBobinGeneral()` lọc theo cả `:ident` và `:key`.
+3. **Hoàn thiện ràng buộc hủy Bobin phía Cuộn (`windingView.php`, `BobinWindingCancelDTO`, `BobinController`, `submit.js`):**
+   - Bổ sung trường `winding_employee_name` vào `BobinWindingCancelDTO`.
+   - Cập nhật backend `validFormWinding_Cancel` trong `BobinController.php`: Bắt buộc đủ 4 trường `winding_machine`, `winding_employee_code`, `winding_employee_name`, `winding_note`.
+   - Cập nhật frontend `handleWindingCancel()` trong `public/assets/js/Winding/submit.js`: Kiểm tra tuần tự 4 trường, tự động focus & viền đỏ input bị trống, hiển thị Toast cảnh báo tương ứng.
+4. **Hoàn thiện ràng buộc hủy Bobin phía QC (`qcView.php`, `BobinController`, `submit.js`):**
+   - Cập nhật backend `validFormQC_Cancel` trong `BobinController.php`: Bắt buộc `inspector_code`, `inspector_name`, `defect_note` và có ít nhất 1 lỗi ngoại quan NG (`$hasNG = $dto->defect_gel || $dto->defect_foreign_object || $dto->defect_color_issue || $dto->defect_print_quality`).
+   - Cập nhật `app/views/qcView.php`: Bổ sung `data-key` cho container switch ngoại quan.
+   - Cập nhật `public/assets/js/QC/submit.js`:
+     - Sửa selector đọc switch `.toggle-switch[data-defect]`.
+     - Sửa hiển thị badge: `hasDefect ? '<span class="vi-badge-ng">NG</span>' : '<span class="vi-badge-ok">OK</span>'`.
+     - Kiểm tra bắt buộc họ tên, ghi chú và tối thiểu 1 trường ngoại quan NG trước khi cho phép mở modal xác nhận hủy Bobin.
+5. **Hệ thống đa ngôn ngữ (i18n):**
+   - Bổ sung 5 khóa dịch mới (`toast_err_req_machine`, `toast_err_req_emp_code`, `toast_err_req_emp_name`, `toast_err_req_cancel_note`, `toast_err_qc_require_ng`) đồng bộ trong `app/core/Language.php` và `public/assets/js/i18n.js` cho cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+6. **Kiểm thử tự động:**
+   - Xây dựng và thực thi bộ test kiểm thử tự động với 21/21 kịch bản Passed 100%.
+
+---
+
+## [2026-10-09] - Khắc Phục Lỗi Duplicate Entry '0' Khi Hủy Bobin Từ Trang Chỉnh Sửa Đùn (TASK-026)
+
+### 1. Bối cảnh & Hiện tượng lỗi:
+
+- Khi người dùng thực hiện thao tác hủy Bobin tại trang Chỉnh sửa Đùn (`app/views/extrusionEditBobinView.php`), hệ thống trả về lỗi cơ sở dữ liệu:
+  `Lỗi Database: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '0' for key 'PRIMARY'`
+- Lỗi ngăn cản hoàn toàn việc chuyển trạng thái Bobin sang chờ hủy (`Pending_Cancellation`) và không thể ghi nhận lịch sử vào bảng `bobin_history`.
+
+### 2. Phân tích nguyên nhân gốc rễ (Root Cause Analysis):
+
+1. **Thiếu thuộc tính `AUTO_INCREMENT` tại khóa chính bảng `bobin_history`:**
+   - Cột `id` của bảng `bobin_history` được định nghĩa là `INT(11) NOT NULL PRIMARY KEY`, nhưng lại không có thuộc tính `AUTO_INCREMENT`.
+   - Trong `BobinRepository.php`, hàm `extInsertBobinHistoryAfterDelete()` (cũng như `createBobin()`, `extrusionUpdateBobin()`,...) thực hiện câu lệnh `INSERT INTO bobin_history (...) SELECT ... FROM bobin_list_detail` mà không truyền trường `id`, với kỳ vọng rằng hệ quản trị MySQL sẽ tự động cấp phát ID tuần tự.
+   - Do thiếu `AUTO_INCREMENT`, MySQL tự động gán giá trị mặc định kiểu số là `0` cho cột `id`.
+   - Lần đầu tiên ghi nhận lịch sử cho Bobin trước đây đã tạo ra một dòng có `id = 0`.
+   - Khi người dùng thực hiện hủy Bobin lần tiếp theo, MySQL lại cố gắng gán `id = 0`, gây ra xung đột khóa chính `Duplicate entry '0' for key 'PRIMARY'`.
+2. **Nguy cơ tiềm ẩn trên các bảng khác trong cơ sở dữ liệu:**
+   - Kiểm tra mở rộng toàn bộ cơ sở dữ liệu `production_db` cho thấy các bảng `bobin_list_detail`, `bobin_list_general` và 10 bảng danh mục (`employee_list`, `day_list`, `extrusion_machine_list`, `material_list`, `material_lot_list`, `month_list`, `product_list`, `rack_list`, `winding_machine_list`, `year_list`) cũng đều thiếu thuộc tính `AUTO_INCREMENT` ở cột `id`. Một số bảng đã tồn tại bản ghi với `id = 0`.
+3. **Thiếu sót trường sao lưu dữ liệu trong câu truy vấn:**
+   - Trong hàm `extInsertBobinHistoryAfterDelete()`, danh sách các cột được sao lưu từ `bobin_list_detail` sang `bobin_history` thiếu 2 trường `extrusion_check` và `rack`, khiến thông tin kiểm tra ngoại quan đùn và vị trí rack bị bỏ sót khi chuyển trạng thái sang lịch sử.
+
+### 3. Giải pháp đã triển khai:
+
+1. **Cập nhật dữ liệu & cấu trúc bảng trong MySQL Database (`production_db`):**
+   - Đổi giá trị `id = 0` hiện có trong `bobin_history` thành `id = 1`. Thiết lập thuộc tính:
+     `ALTER TABLE bobin_history MODIFY id INT(11) NOT NULL AUTO_INCREMENT;`
+   - Đổi giá trị `id = 0` trong `bobin_list_detail` và `bobin_list_general` thành `id = 3001`, thêm `PRIMARY KEY (id)` và kích hoạt `AUTO_INCREMENT`.
+   - Đồng bộ hóa toàn bộ 10 bảng danh mục còn lại (`employee_list`, `rack_list`, `product_list`, `material_list`, `material_lot_list`, `extrusion_machine_list`, `winding_machine_list`, `day_list`, `month_list`, `year_list`) với `PRIMARY KEY (id) AUTO_INCREMENT`.
+2. **Cập nhật repository backend (`app/repositories/BobinRepository.php`):**
+   - Bổ sung 2 cột `extrusion_check, rack` vào câu lệnh SQL trong `extInsertBobinHistoryAfterDelete()` để đảm bảo thông tin tiêu chuẩn kiểm tra đùn và vị trí rack được sao lưu trọn vẹn khi hủy Bobin.
+3. **Cập nhật các file kịch bản SQL nguồn (`public/assets/sql/Updated/`):**
+   - Đồng bộ hóa `AUTO_INCREMENT` trên các bảng trong `production_db_Architect_sql.sql` và `production_db_Data.sql`.
+4. **Kiểm thử xác minh (Verification):**
+   - Viết kịch bản kiểm thử toàn trình thao tác `extDeleteBobin` với mã nhân viên và Bobin thực tế. Kết quả ghi nhận lịch sử vào `bobin_history` thành công với ID tự tăng (`id = 4`), trạng thái cả 2 bảng `bobin_list_detail` và `bobin_list_general` đều chuyển sang `Pending_Cancellation` chính xác, không còn bất kỳ lỗi xung đột `Duplicate entry '0'`.
+
+---
+
+## [2026-10-09] - Rà Soát Toàn Diện Mạng Nội Bộ (100% Offline Intranet) & Xác Nhận Không Dùng Astral (TASK-025)
+
+### 1. Bối cảnh & Yêu cầu:
+
+- Người dùng yêu cầu rà soát toàn diện dự án xem có đang nạp thư viện nào qua internet (`http://`, `https://`) hay không.
+- Yêu cầu loại bỏ triệt để mọi truy cập ra bên ngoài internet.
+- Yêu cầu hủy bỏ/loại bỏ nếu có sử dụng bất kỳ thư viện hoặc tác vụ nào từ Astral (`astral.sh`).
+
+### 2. Kết quả rà soát chi tiết:
+
+1. **Kiểm tra công cụ & thư viện Astral (`astral.sh`):**
+   - Xác nhận: Toàn bộ dự án **KHÔNG HỀ sử dụng** bất kỳ công cụ CLI, package, hay dependency nào từ Astral (không có `uv`, `ruff`, không có file cấu hình Python `pyproject.toml`, `ruff.toml`).
+   - Dự án là ứng dụng thuần PHP (chạy trên XAMPP Apache + MySQL cục bộ) và JavaScript thuần (Vanilla JS), hoàn toàn không dính dáng đến Astral.
+2. **Kiểm tra mã nguồn HTML/PHP View (`app/views/`):**
+   - Rà soát toàn bộ 18 file view: 100% các thẻ `<script src="...">` và `<link rel="stylesheet" href="...">` đều chỉ trỏ đến đường dẫn nội bộ cục bộ máy chủ (`/WEB_BOBIN/public/assets/...`).
+   - Tuyệt đối không có bất kỳ thẻ nào nạp từ CDN bên ngoài (như cdnjs, unpkg, jsdelivr, googleapis, fontawesome).
+3. **Kiểm tra Stylesheet & Font chữ (`public/assets/css/`):**
+   - Không có bất kỳ thẻ `@import url(...)` nào tải file CSS từ internet.
+   - Không có khai báo `@font-face` nào tải font từ Google Fonts hay máy chủ bên ngoài. Hệ thống sử dụng 100% phông chữ có sẵn trên hệ điều hành của máy (`system-ui`, `'Segoe UI'`, Roboto, sans-serif).
+   - Toàn bộ icon mũi tên, ký hiệu được nhúng trực tiếp bằng Inline SVG data-uri nội bộ.
+4. **Kiểm tra JavaScript AJAX/Fetch & Network (`public/assets/js/`):**
+   - 100% các lệnh gọi `fetch()` trong JavaScript đều gọi tới backend PHP cục bộ thông qua đường dẫn nội bộ máy chủ `/WEB_BOBIN/public/index.php?url=...`.
+   - Đã loại bỏ các link ngoài (`scanapp.org`, `github`) trong file thư viện `html5-qrcode.min.js`, chuyển về liên kết nội bộ `#`.
+   - Đã dọn dẹp ghi chú URL cũ trong `public/assets/js/contentLoaded.js`.
+5. **Kiểm tra backend PHP (`app/`):**
+   - Không có lệnh gọi mạng ra ngoài (`curl_init`, `file_get_contents` với URL internet, Guzzle HTTP, sockets, v.v.).
+
+### 3. Kết luận:
+
+- Dự án đáp ứng chuẩn **100% Offline Local Intranet**, hoàn toàn độc lập, có thể vận hành trơn tru khi ngắt kết nối internet hoàn toàn.
+- Hoàn toàn **không có bất kỳ thành phần nào của Astral (`astral.sh`)**.
+
+---
+
 ## [2026-10-09] - Khắc Phục Triệt Để Lỗi 3 Toast & Màn Hình Camera Chớp Nháy Khi Quét QR (TASK-024)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - Người dùng phát hiện khi quét 1 mã QR thì xuất hiện cùng lúc **3 thông báo Toast xếp chồng**, đồng thời **màn hình camera chớp chớp nhấp nháy nhanh** trong quá trình quét.
 - Yêu cầu rà soát cẩn thận, khắc phục triệt để.
 - **Ràng buộc an toàn & bản quyền:** Tuyệt đối không liên quan hay sử dụng bất kỳ tác vụ/công cụ nào của Astral (`astral.sh`). Hoàn toàn 100% Offline Local Intranet, không tải thêm thư viện từ internet.
 
 ### 2. Phân tích nguyên nhân gốc rễ (Root Cause Analysis):
+
 1. **Nguyên nhân 3 Toast hiển thị đồng thời:**
    - Thư viện `html5-qrcode` quét camera liên tục theo chu kỳ 15 FPS (mỗi frame cách nhau ~66.6ms).
    - Khi phát hiện mã QR hợp lệ ở frame đầu tiên (t = 0ms), hàm `handleScanSuccess()` được gọi và kích hoạt thông báo Toast thành công. Để tạo hiệu ứng thị giác cho người dùng kịp nhìn thấy khung ngắm nhận diện mã, hàm sử dụng `setTimeout(..., 250)` trước khi dừng máy ảnh bằng `stop()`.
@@ -18,13 +211,18 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
    - Thư viện `html5-qrcode` sử dụng một thẻ `<canvas id="qr-canvas">` nội bộ để trích xuất dữ liệu điểm ảnh (pixel) từ thẻ `<video>` đưa vào thuật toán giải mã QR. Mặc định trong mã nguồn của thư viện, phần tử này được gán `canvasElement.style.display = "none"`.
    - Tuy nhiên, trong file `scanQR.css` và 7 stylesheet của các trang trước đó có chứa selector:
      ```css
-     #qr-reader canvas { max-width: 100% !important; width: 100% !important; display: block !important; }
+     #qr-reader canvas {
+       max-width: 100% !important;
+       width: 100% !important;
+       display: block !important;
+     }
      ```
      Selector này vô tình bắt trúng thẻ `<canvas id="qr-canvas">` bên trong container `#qr-reader` và ép nó hiển thị ra ngoài màn hình (`display: block !important`).
    - Vì container `#qr-video-viewport` là một Flexbox (`display: flex; align-items: center; justify-content: center;`), việc cả thẻ `<video>` lẫn thẻ `<canvas>` cùng bị ép hiển thị với kích thước 100% khiến trình duyệt liên tục phải tính toán lại bố cục (flex layout reflow).
    - Hơn nữa, cấu hình `disableFlip: false` mặc định khiến thư viện liên tục đảo ngược ma trận biến đổi 2D (`context.scale(-1, 1)`) trên canvas 15 lần/giây, dẫn đến hiện tượng khung hình giật cục, chớp nhấp nháy dữ dội.
 
 ### 3. Giải pháp đã triển khai:
+
 1. **Khắc phục dứt điểm lỗi 3 Toast trong `public/assets/js/qrScannerHelper.js`:**
    - Thêm cờ khóa trạng thái `hasScanned: false` vào `QRScannerHelper`. Reset cờ về `false` mỗi khi khởi động hoặc dừng phiên quét.
    - Ngay khi phát hiện mã QR đầu tiên trong `handleScanSuccess()`:
@@ -37,14 +235,18 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 3. **Triệt tiêu hiện tượng camera chớp nháy trong `public/assets/css/scanQR.css`:**
    - Ẩn triệt để toàn bộ canvas nội bộ của thư viện:
      ```css
-     #qr-reader canvas, #reader canvas, #qr-video-viewport canvas, canvas#qr-canvas, .qr-video-region canvas {
-         display: none !important;
-         visibility: hidden !important;
-         position: absolute !important;
-         width: 0 !important;
-         height: 0 !important;
-         opacity: 0 !important;
-         pointer-events: none !important;
+     #qr-reader canvas,
+     #reader canvas,
+     #qr-video-viewport canvas,
+     canvas#qr-canvas,
+     .qr-video-region canvas {
+       display: none !important;
+       visibility: hidden !important;
+       position: absolute !important;
+       width: 0 !important;
+       height: 0 !important;
+       opacity: 0 !important;
+       pointer-events: none !important;
      }
      ```
    - Ẩn `#qr-shaded-region` và mọi phần tử phụ ngoài ý muốn do thư viện tự ý chèn: `#qr-video-viewport > *:not(video) { display: none !important; }`.
@@ -58,10 +260,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-09] - Khắc Phục Triệt Để & Nâng Cấp Toàn Diện Giao Diện Quét Mã QR (TASK-023)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - Người dùng yêu cầu kiểm tra lại chức năng `scanQR`, khắc phục các lỗi và vấn đề ở giao diện quét mã QR.
 - **Ràng buộc nghiêm ngặt:** Tuyệt đối không tải thêm bất kỳ thư viện ngoài nào trên internet (Offline Intranet 100%).
 
 ### 2. Nguyên nhân gốc rễ (Root Cause Analysis):
+
 1. **Lỗi Fatal Error tại `app/views/scanQR.php`:**
    - File `app/views/scanQR.php` gọi trực tiếp helper `__('ph_qr_scan_result')` và `__('search')` mà không nạp `Language.php`. Khi truy cập trực tiếp qua browser, PHP dừng với lỗi: `Fatal error: Uncaught Error: Call to undefined function __() in app/views/scanQR.php:84`.
    - Router chưa đăng ký action `scanQR` trong `publicActions` và `BobinController.php` thiếu method `scanQR()`, khiến route `bobin/scanQR` không hoạt động.
@@ -74,6 +278,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
    - Khi đóng camera, hàm `stopScanner()` cũ chỉ gọi `html5QrcodeScanner.clear()` bất đồng bộ mà không dừng dứt khoát MediaStream tracks, không reset biến instance về `null`, khiến đèn webcam vẫn sáng và gây lỗi khi bấm mở lại lần 2.
 
 ### 3. Các giải pháp đã triển khai:
+
 - **Khắc phục trang `app/views/scanQR.php` & Điều hướng:**
   - Khởi tạo an toàn `ROOT_PATH`, `BASE_URL`, `session_start()` và `Language::init()` ở đầu file `scanQR.php`.
   - Bổ sung method `scanQR()` vào `BobinController.php` và cấp quyền truy cập `scanqr` trong `$publicActions['bobin']` tại `app/core/Router.php`.
@@ -115,6 +320,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-09] - Làm Hiển Thị Nổi Bật 4 Thông Số Bobin & Khắc Phục Triệt Để Lỗi Nút Hủy Bobin (TASK-022)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - **Yêu cầu 1:** Tại trang Danh sách (`listBobinDetailView`, `listBobinView`), Lịch sử Bobin (`listBobinHistoryView`), trang QC (`qcView`) và trang Cuộn (`windingView`), làm hiển thị nổi bật 4 thông tin cốt lõi của Bobin:
   1. **Mã sản phẩm:** Hiển thị nổi bật với badge xanh dương.
   2. **Vị trí Rack (nếu có):** Badge xanh ngọc hiển thị `📍 [Mã Rack]` khi có giá trị, hiển thị placeholder mờ `---` khi chưa có dữ liệu.
@@ -127,11 +333,13 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 - **Yêu cầu 3:** Tối ưu hóa UI/UX với hiệu ứng chuyển động mượt mà và hover elevation tương tác.
 
 ### 2. Nguyên nhân gốc rễ lỗi nút "Hủy Bobin" bị đổi thành "Trở lại" (Root Cause):
+
 - Trong `config/custom_translations.json`, người dùng cấu hình từ khóa `"btn_cancel"` có nghĩa là `"Trở lại"` (dành cho modal quay lại).
 - Trong `public/assets/js/i18n.js`, hàm `deepTranslateDOM()` duyệt qua danh sách `DOM_MAPPINGS.buttons` chứa `{ key: 'btn_cancel', vi: 'Hủy' }`.
 - Nút bấm tại `qcView.php` và `windingView.php` hiển thị chữ `🗑️ Hủy Bobin`. Vòng lặp so sánh `raw.includes('Hủy')` bị khớp nhầm vào `btn_cancel`, gọi `window.t('btn_cancel')` trả về `"Trở lại"` từ tệp cấu hình động và ghi đè toàn bộ chữ của nút.
 
 ### 3. Các giải pháp đã triển khai:
+
 - **Khắc phục triệt để lỗi nút Hủy Bobin:**
   - Khởi tạo key dịch chuyên biệt `btn_cancel_bobin`:
     - `vi`: `"Hủy Bobin"`
@@ -157,6 +365,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Thêm thuộc tính `title="<?= htmlspecialchars($rawBobinType) ?>"` vào thẻ badge trên cả 5 view để hỗ trợ tooltip khi rê chuột.
 
 ### 4. Kết quả kiểm thử & Nghiệm thu:
+
 - PHP Syntax Check (`php -l`): 100% không phát hiện lỗi cú pháp trên toàn bộ các tệp view và core.
 - JS Syntax Check (`node -c`): 100% đạt chuẩn cú pháp trên `i18n.js` và `toast.js`.
 - Cả 4 thông số hiển thị trực quan, đúng màu sắc quy định, chuyển đổi ngôn ngữ trơn tru (Việt - Anh - Nhật), nút "Hủy Bobin" hiển thị chuẩn xác không bị đè thành "Trở lại".
@@ -164,6 +373,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-09] - Chuẩn Hóa Hệ Thống Toast Thông Báo Toàn Cục & Khắc Phục Triệt Để Lỗi Không Hiển Thị
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - **Hiện tượng:** Người dùng phản ánh rất nhiều tính năng hệ thống không hiển thị thông báo Toast khi xảy ra lỗi (lỗi thao tác người dùng, lỗi nhập liệu thiếu trường, nhập sai mật khẩu xác nhận, lỗi kết nối máy chủ, lỗi mở camera quét QR) hoặc khi thực hiện thành công tác vụ (lưu thành công, cập nhật thành công, hủy Bobin, khôi phục từ điển).
 - **Nguyên nhân gốc rễ (Root Cause):**
   1. **Xung đột & Thiếu CSS tại các trang Điều chỉnh (Đùn, QC, Cuộn):** Trong `Extrusion/edit_submit.js`, `QC/edit_submit.js`, và `Winding/edit_submit.js`, mỗi tệp định nghĩa một đối tượng `const Toast` cục bộ tạo ra thẻ `<div class="toast-message">`, nhưng các tệp CSS tương ứng hoàn toàn KHÔNG có quy tắc CSS nào cho `.toast-message`. Thẻ thông báo được chèn vào cuối `<body>` như một đoạn văn bản thô không màu, không định vị fixed và bị che khuất hoàn toàn.
@@ -172,6 +382,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   4. **Thiếu module Toast thống nhất:** Chưa có một module Toast độc lập, nạp toàn cục cho mọi trang của dự án.
 
 ### 2. Các giải pháp đã triển khai:
+
 - **Xây dựng module Toast toàn cục độc lập (`public/assets/js/toast.js`):**
   - 100% Thuần Vanilla JS & CSS, hoạt động hoàn toàn Offline trong mạng nội bộ Intranet, không dùng CDN.
   - Cung cấp `window.Toast` và `window.showToast` với 4 trạng thái chuẩn:
@@ -196,6 +407,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Toàn bộ 5 file máy quét QR (`scanQR.js`): Kết nối đồng bộ với `Toast.show()`.
 
 ### 3. Kết quả kiểm thử:
+
 - PHP Syntax Check (`php -l`): 100% toàn bộ các tệp `.php` trong thư mục `app/` đạt không lỗi.
 - JS Syntax Check (`node -c`): 100% toàn bộ các tệp JavaScript trong `public/assets/js/` đạt chuẩn cú pháp.
 - Toast hiển thị hoàn hảo ở cả 4 trạng thái, duy trì thông báo qua lượt reload trang và hỗ trợ 3 ngôn ngữ mượt mà.
@@ -203,6 +415,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-08] - Kiểm Tra Và Khắc Phục Toàn Diện Ngôn Ngữ Textfield & Placeholder (TASK-021)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - **Hiện tượng:** Người dùng phản ánh một số ô textfield, placeholder của các ô tìm kiếm, nhập ghi chú, mã vật tư, mật khẩu không hiển thị đúng ngôn ngữ khi tải trang hoặc khi chuyển đổi qua lại giữa Tiếng Việt, Tiếng Anh và Tiếng Nhật.
 - **Nguyên nhân gốc rễ (Root Cause):**
   1. **Lỗi phân giải cú pháp tiền tố `[placeholder]` trong `applyDataI18n()` (`public/assets/js/i18n.js`):** Nhiều view sử dụng quy ước `data-i18n="[placeholder]key_name"`, nhưng hàm `applyDataI18n()` truyền nguyên chuỗi `"[placeholder]key_name"` vào `window.t()`, dẫn đến kết quả trả về `undefined` và placeholder bị giữ nguyên chuỗi khởi tạo ban đầu.
@@ -212,6 +425,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   5. **Mục Section E của `deepTranslateDOM()`:** Chưa bao quát hết các cụm từ placeholder mới xuất hiện trong các form điều chỉnh và quản trị.
 
 ### 2. Các giải pháp đã triển khai:
+
 - **Nâng cấp công cụ i18n Frontend (`public/assets/js/i18n.js`):**
   - Cải tiến `applyDataI18n()` sử dụng biểu thức chính quy `/^\[([a-zA-Z0-9_-]+)\](.*)$/` để trích xuất chuẩn xác thuộc tính đích (như `placeholder`, `title`) và mã khóa bản dịch, sau đó gán trực tiếp thuộc tính tương ứng.
   - Tích hợp thêm truy vấn tự động cho toàn bộ các thuộc tính placeholder: `[data-i18n-ph]`, `[data-placeholder-i18n]`, `[data-i18n-placeholder]`.
@@ -234,6 +448,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Các tệp JS modal xác thực (`Extrusion/edit_submit.js`, `QC/edit_submit.js`, `Winding/edit_submit.js`): Bổ sung `data-i18n-ph="confirm_pwd_ph"` vào ô nhập mật khẩu xác nhận.
 
 ### 3. Kết quả kiểm thử:
+
 - Kiểm tra cú pháp PHP Syntax Check (`php -l`): 18/18 views + `Language.php` đạt 100% không lỗi.
 - Kiểm tra cú pháp JavaScript Syntax Check (`node -c`): 4/4 files JS đạt 100% không lỗi.
 - Chạy script kiểm thử Backend PHP: 100% các placeholder keys trả về đúng bản dịch tương ứng ở cả `vi`, `en`, `ja`.
@@ -242,6 +457,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-08] - Đồng Bộ Toàn Diện Giao Diện Điều Chỉnh Đùn & Hệ Thống Đa Ngôn Ngữ (TASK-020)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - **Đồng bộ hóa giao diện Điều chỉnh Đùn (`extrusionEditBobinView.php`):** Nâng cấp trang Điều chỉnh Đùn đồng nhất với phong cách Dashboard hiện đại của Điều chỉnh QC và Điều chỉnh Cuộn:
   - Header Hero ấn tượng với nhận diện công đoạn (`EXTRUSION PROCESS EDIT`).
   - Hàng 4 thẻ KPI thống kê trực quan (Tổng số Bobin chờ QC, Đùn Check Đạt chuẩn 5/5 OK, Đùn Check Có lỗi NG, Trạng thái `BUSY_UNCHECKED`).
@@ -254,6 +470,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 - **Bảo mật phân quyền:** Bổ sung cơ chế kiểm tra quyền hạn `AuthHelper::hasPermission('extrusion_edit')` tại `BobinController::extrusionEditBobinView()` tương tự như QC và Cuộn.
 
 ### 2. Các tệp tin đã thay đổi:
+
 - **Backend & Controller:**
   - `app/controllers/BobinController.php`: Bổ sung kiểm tra quyền `extrusion_edit` và truyền `totalRecords` sang view `extrusionEditBobinView`.
 - **Giao diện & Bố cục:**
@@ -268,6 +485,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `AI_preference/CHANGELOG.md`: Cập nhật chi tiết nội dung thay đổi.
 
 ### 3. Kết quả kiểm thử:
+
 - Kiểm tra cú pháp PHP Syntax Check (`php -l`): 100% tệp tin đạt chuẩn (0 lỗi).
 - Kiểm tra render HTML đa ngôn ngữ: `extrusionEditBobinView` render chuẩn xác cả 3 ngôn ngữ `vi`, `en`, `ja` với dung lượng ~48KB HTML, không có lỗi hay cảnh báo PHP nào.
 - Kiểm tra tính tương thích: Giữ nguyên các class hook JavaScript và hoạt động 100% offline nội bộ.
@@ -275,6 +493,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-08] - Đồng Bộ Kiến Trúc SQL, Tối Ưu Menu Tree & Nâng Cấp Giao Diện QC / Cuộn (TASK-019)
 
 ### 1. Bối cảnh & Yêu cầu:
+
 - **Đồng bộ hóa đa ngôn ngữ tại trang Phân quyền:** Đồng bộ toàn diện các nhãn, placeholder, nút bấm, thông báo trạng thái, popup xác nhận trên trang `employeePermissionsView.php` sang hệ thống i18n động (`vi`, `en`, `ja`) và lắng nghe sự kiện `languageChanged` để cập nhật tức thì trên giao diện mà không cần reload trang.
 - **Tối ưu thanh điều hướng Menu Folder Tree:** Duy trì cấu trúc phân cấp cây thư mục trong `sidebar.css`, xê dịch các mục con (`.sb-tree-children`, `.sb-tree-leaf`) thụt vào trong 1 khoảng so với thư mục cha, đồng thời căn chỉnh đường chỉ dẫn phân cấp (`tree guide line`) và mấu nối ngang (`tree branch connector`) liền mạch, chuyên nghiệp.
 - **Đồng bộ kiến trúc CSDL SQL:** Cập nhật tệp kiến trúc `public/assets/sql/Updated/production_db_Architect_sql.sql` đồng bộ 100% với cấu trúc thực tế của cơ sở dữ liệu `production_db` (bổ sung đầy đủ các cột mới `cost_center`, `permissions`, `update_history`, chuẩn hóa `PRIMARY KEY AUTO_INCREMENT` và các `UNIQUE KEY`, `KEY` cho toàn bộ 15 bảng). Sửa lỗi thiếu khóa chính ở bảng `product_list`.
@@ -287,6 +506,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Bảo toàn 100% các class hook của JavaScript (`QC/edit_submit.js`, `Winding/edit_submit.js`), xác thực mật khẩu cá nhân và cơ chế phân trang 10 Bobin/trang.
 
 ### 2. Các tệp tin đã thay đổi:
+
 - **Cơ sở dữ liệu & Kiến trúc SQL:**
   - `public/assets/sql/Updated/production_db_Architect_sql.sql`: Viết lại chuẩn hóa 15 bảng với đầy đủ ràng buộc khóa chính tự tăng `AUTO_INCREMENT`, khóa duy nhất và chỉ mục tối ưu hiệu năng.
   - `public/assets/production_db_database.sql`: Sửa cú pháp backtick cho cột `cost_center`.
@@ -303,6 +523,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `public/assets/js/i18n.js`: Đồng bộ từ điển JavaScript cho tất cả các khóa dịch thuật mới của Phân quyền, Điều chỉnh QC và Điều chỉnh Cuộn.
 
 ### 3. Kết quả kiểm thử:
+
 - Kiểm tra cú pháp PHP (`php -l`): Đạt chuẩn 100% không phát sinh lỗi cú pháp nào.
 - Render kiểm thử View: Cả 3 view `qcEditBobinView.php`, `windingEditBobinView.php`, `employeePermissionsView.php` render HTML hoàn chỉnh với dữ liệu mẫu, không có ngoại lệ hay cảnh báo PHP nào.
 - Khả năng hoạt động Local: Không sử dụng bất kỳ CDN ngoài nào, 100% tài nguyên CSS/JS cục bộ.
@@ -310,6 +531,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-08] - Nâng Cấp Quản Lý Nhân Viên: Bổ Sung Mã Bộ Phận (Cost Center), Chuẩn Hóa Schema & Tối Ưu UX Danh Sách (TASK-018)
 
 ### 1. Bối cảnh & Mục tiêu:
+
 - Nâng cấp bảng cơ sở dữ liệu `employee_list` để tối ưu cho việc bảo trì, tra cứu và cập nhật dữ liệu hàng loạt từ Excel/CSV theo bộ phận sản xuất:
   - Loại bỏ hoàn toàn cột trạng thái `is_active` (không cần thiết).
   - Thêm trường `cost_center` (`VARCHAR(50) DEFAULT NULL COMMENT 'Mã bộ phận'`).
@@ -321,6 +543,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Hỗ trợ đầy đủ đa ngôn ngữ (`vi`, `en`, `ja`) cho các trường thông tin bộ phận mới.
 
 ### 2. Các tệp tin đã thay đổi:
+
 - **Cơ sở dữ liệu:** `production_db.employee_list` (đã nâng cấp cấu trúc chuẩn và lưu trữ 132 nhân viên với dữ liệu `cost_center` hợp lệ).
 - **Backend & Repositories:**
   - `app/repositories/EmployeeRepository.php`: Bỏ `is_active = 1` trong câu truy vấn dự phòng `findByCode()`. Nạp sẵn `GlobalData.php` để đảm bảo hoạt động độc lập an toàn.
@@ -350,6 +573,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `public/assets/js/i18n.js`: Đồng bộ từ điển JavaScript và ánh xạ `DOM_MAPPINGS` cho `Mã bộ phận`.
 
 ### 3. Kết quả kiểm thử:
+
 - Kiểm tra cú pháp PHP Syntax Check (`php -l`): 100% tệp tin đạt chuẩn (0 lỗi).
 - Kiểm tra truy vấn CSDL: Nạp và tra cứu chính xác 132 nhân viên theo mã bộ phận (ví dụ: `A00330`: 36 nhân viên).
 - Kiểm tra render HTML của `employeeListView` và `employeePermissionsView`: Render thành công, không phát sinh lỗi cảnh báo nào.
@@ -916,7 +1140,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `app/core/Language.php`
 - **Nội dung:**
   - Tại 3 cột kiểm soát luân chuyển (`inspection-pipeline-grid`):
-    - **🏭 Đùn Check:** Kiểm tra nếu dữ liệu `extrusion_check` rỗng hoặc không có bất kỳ tiêu chí nào $\rightarrow$ Hiển thị badge trực quan: `⏳ Chưa có dữ liệu sản xuất Đùn` (`pipeline_no_ext_data`).
+    - **🏭 Đùn Check:** Kiểm tra nếu dữ liệu `extrusion_check` rỗng hoặc không có bất kỳ tiêu chí nào $\rightarrow$ Hiển thị badge trực quan: `⏳ Chưa có dữ liệu kiểm tra Đùn` (`pipeline_no_ext_data`).
     - **🛡️ QC Check:** Kiểm tra nếu chưa có `inspector_code` hoặc chưa kiểm tra QC $\rightarrow$ Hiển thị: `⏳ Chưa có dữ liệu kiểm tra QC` (`pipeline_no_qc_data`).
     - **📍 Thông tin cuộn:** Kiểm tra nếu chưa có thông tin máy cuộn/nhân viên cuộn hoặc trạng thái chưa hoàn thành `Rolled` $\rightarrow$ Hiển thị: `⏳ Chưa có dữ liệu thông tin cuộn` (`pipeline_no_winding_data`).
   - Hỗ trợ đa ngôn ngữ đồng bộ 3 thứ tiếng (`vi`, `en`, `ja`).

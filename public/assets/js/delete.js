@@ -1,78 +1,10 @@
 /* ==========================================
-   1. COMPONENT: TOAST MESSAGE (Bọc an toàn)
+   1. THAM CHIẾU TOAST SYSTEM TOÀN CỤC
 ========================================== */
-if (typeof window.Toast === "undefined" || !window.Toast.initStyle) {
-    window.Toast = {
-        initStyle: function () {
-            if (!document.getElementById('toast-style-css')) {
-                const style = document.createElement('style');
-                style.id = 'toast-style-css';
-                style.innerHTML = `
-                    .toast-message {
-                        position: fixed; top: 24px; right: 24px; 
-                        padding: 12px 20px; border-radius: 8px; 
-                        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.2);
-                        font-family: var(--font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif); font-size: 13.5px; font-weight: 700;
-                        color: #fff; z-index: 99999; opacity: 0;
-                        transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        display: flex; align-items: center; gap: 10px;
-                        pointer-events: none; max-width: calc(100vw - 48px);
-                    }
-                    .toast-message.show { opacity: 1; transform: translateY(0); }
-                    .toast-success { background-color: #16a34a !important; }
-                    .toast-error { background-color: #dc2626 !important; }
-                    .toast-warning { background-color: #f59e0b !important; }
-                    .toast-info { background-color: #2563eb !important; }
-                    @media (max-width: 640px) {
-                        .toast-message {
-                            top: 16px; right: 16px; left: 16px;
-                            justify-content: center; text-align: center; max-width: none;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        },
-        show: function (message, type = 'success') {
-            this.initStyle();
-            document.querySelectorAll('.toast-message').forEach(el => el.remove());
-
-            const toast = document.createElement('div');
-            toast.className = `toast-message toast-${type}`;
-            const icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
-            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-            document.body.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => toast.classList.add('show'));
-            });
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
-        }
-    };
-}
-var Toast = window.Toast;
-
-// Lắng nghe Flash message từ sessionStorage khi trang vừa tải/reload xong
-document.addEventListener('DOMContentLoaded', function () {
-    const flashToast = sessionStorage.getItem('bobin_toast_flash');
-    if (flashToast) {
-        try {
-            const data = JSON.parse(flashToast);
-            if (data && data.message) {
-                setTimeout(() => {
-                    Toast.show(data.message, data.type || 'success');
-                }, 300);
-            }
-        } catch (e) {
-            console.error('Lỗi phân tích flash toast:', e);
-        }
-        sessionStorage.removeItem('bobin_toast_flash');
-    }
-});
+var Toast = window.Toast || {
+    show: function (msg, type) { console.log(msg); },
+    flash: function (msg, type) { sessionStorage.setItem('bobin_toast_flash', JSON.stringify({ message: msg, type: type, timestamp: Date.now() })); }
+};
 
 /* ==========================================
    2. COMPONENT: CONFIRM DIALOG (Bọc an toàn)
@@ -230,25 +162,29 @@ function handleDelete(btnElement, bobinCode, bobinKeyCode) {
                 const data = await response.json();
 
                 if (data.success) {
-                    const successMsg = data.message || "Đã hủy Bobin thành công!";
+                    const successMsg = data.message || (window.t ? window.t('toast_deleted_success') : "Đã hủy Bobin thành công!");
                     
-                    // Lưu Flash Toast để tiếp tục hiển thị sau khi reload trang
-                    sessionStorage.setItem('bobin_toast_flash', JSON.stringify({
-                        message: successMsg,
-                        type: 'success'
-                    }));
-
-                    Toast.show(successMsg, 'success');
-
-                    // Hiệu ứng mờ dần card trên giao diện trước khi reload
+                    // Hiệu ứng mờ dần card trên giao diện
                     const card = btnElement.closest('.bobin-item');
                     if (card) {
-                        card.style.transition = 'all 0.4s ease';
+                        card.style.transition = 'all 0.35s ease';
                         card.style.opacity = '0';
                         card.style.transform = 'scale(0.95)';
                     }
 
-                    setTimeout(() => window.location.reload(), 800);
+                    // Lưu Flash Toast để hiển thị DUY NHẤT 1 LẦN sau khi trang tải lại với danh sách mới
+                    if (window.Toast && typeof window.Toast.flash === 'function') {
+                        window.Toast.flash(successMsg, 'success');
+                    } else {
+                        sessionStorage.setItem('bobin_toast_flash', JSON.stringify({
+                            message: successMsg,
+                            type: 'success',
+                            timestamp: Date.now()
+                        }));
+                    }
+
+                    // Không gọi Toast.show() ở đây để tránh Toast hiện 2 lần (1 lần trước reload và 1 lần sau reload)
+                    setTimeout(() => window.location.reload(), 450);
                 } else {
                     Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), 'error');
                     btnElement.innerHTML = originalBtnText;

@@ -3,11 +3,13 @@
 ========================================= */
 var Toast = window.Toast || {
   show(message, type = "success") {
-    if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
+    if (window.Toast && window.Toast.show)
+      return window.Toast.show(message, type);
   },
   flash(message, type = "success") {
-    if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
-  }
+    if (window.Toast && window.Toast.flash)
+      return window.Toast.flash(message, type);
+  },
 };
 
 /* =========================================
@@ -48,7 +50,9 @@ if (typeof ConfirmDialog === "undefined") {
         document.head.appendChild(style);
       }
 
-      box.querySelector(".cancel-btn").addEventListener("click", () => overlay.remove());
+      box
+        .querySelector(".cancel-btn")
+        .addEventListener("click", () => overlay.remove());
       box.querySelector(".confirm-btn").addEventListener("click", () => {
         const dialogBox = box;
         overlay.remove();
@@ -69,12 +73,21 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
     return;
   }
 
-  const inspectorCode = container?.querySelector(".input-inspector-code")?.value?.trim() || "";
-  const inspectorName = container?.querySelector(".input-inspector-name")?.value?.trim() || "";
+  const inspectorCode =
+    container?.querySelector(".input-inspector-code")?.value?.trim() || "";
+  const inspectorName =
+    container?.querySelector(".input-inspector-name")?.value?.trim() || "";
   const note = container?.querySelector(".note-field")?.value?.trim() || "";
 
-  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
-    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi xác nhận!", "error");
+  if (
+    !inspectorCode ||
+    inspectorCode === "Chưa cập nhật" ||
+    inspectorCode === ""
+  ) {
+    Toast.show(
+      "⚠️ Vui lòng nhập Mã số nhân viên QC trước khi xác nhận!",
+      "error",
+    );
     const inputCode = container?.querySelector(".input-inspector-code");
     if (inputCode) {
       inputCode.style.border = "2px solid red";
@@ -85,10 +98,10 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
   }
 
   const defects = {};
-  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
-    const key = switchItem.getAttribute("data-key");
-    const goodDefect = switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") === "true";
-    defects[key] = goodDefect;
+  container?.querySelectorAll(".toggle-switch[data-defect]")?.forEach((btn) => {
+    const key = btn.getAttribute("data-defect");
+    const isDefect = btn.getAttribute("data-value") === "true";
+    defects[key] = isDefect;
   });
 
   const bodyData = {
@@ -103,8 +116,10 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
     defect_print_quality: defects["print_quality"] || false,
   };
 
-  const defectBadge = (val) =>
-    val ? '<span class="vi-badge-ok">OK</span>' : '<span class="vi-badge-ng">NG</span>';
+  const defectBadge = (hasDefect) =>
+    hasDefect
+      ? '<span class="vi-badge-ng">NG</span>'
+      : '<span class="vi-badge-ok">OK</span>';
 
   let reviewHTML = `
         <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
@@ -136,17 +151,25 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
       try {
         const response = await fetch(requestUrl, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           body: JSON.stringify(bodyData),
         });
 
         const data = await response.json();
         if (data.success) {
           if (window.Toast && window.Toast.flash) {
-            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
+            window.Toast.flash(
+              data.message ||
+                (window.t
+                  ? window.t("toast_saved_success")
+                  : "Cập nhật thành công!"),
+              "success",
+            );
           }
-          Toast.show(data.message, "success");
-          setTimeout(() => window.location.reload(), 800);
+          setTimeout(() => window.location.reload(), 450);
         } else {
           Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
           btnElement.innerHTML = originalBtnText;
@@ -157,7 +180,7 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }
-    }
+    },
   );
 }
 
@@ -172,12 +195,23 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
     return;
   }
 
-  const inspectorCode = container?.querySelector(".input-inspector-code")?.value?.trim() || "";
-  const inspectorName = container?.querySelector(".input-inspector-name")?.value?.trim() || "";
+  const inspectorCode =
+    container?.querySelector(".input-inspector-code")?.value?.trim() || "";
+  const inspectorName =
+    container?.querySelector(".input-inspector-name")?.value?.trim() || "";
   const note = container?.querySelector(".note-field")?.value?.trim() || "";
 
-  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
-    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi hủy!", "error");
+  if (
+    !inspectorCode ||
+    inspectorCode === "Chưa cập nhật" ||
+    inspectorCode === ""
+  ) {
+    Toast.show(
+      window.t
+        ? window.t("toast_err_req_emp_code")
+        : "⚠️ Vui lòng nhập Mã số nhân viên QC trước khi hủy!",
+      "error",
+    );
     const inputCode = container?.querySelector(".input-inspector-code");
     if (inputCode) {
       inputCode.style.border = "2px solid red";
@@ -187,8 +221,33 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
     return;
   }
 
-  if (!note) {
-    Toast.show("⚠️ Vui lòng nhập lý do hủy vào phần Ghi chú QC!", "error");
+  if (
+    !inspectorName ||
+    inspectorName === "Chưa cập nhật" ||
+    inspectorName === ""
+  ) {
+    Toast.show(
+      window.t
+        ? window.t("toast_err_req_emp_name")
+        : "⚠️ Vui lòng nhập Họ tên nhân viên QC trước khi hủy!",
+      "error",
+    );
+    const inputName = container?.querySelector(".input-inspector-name");
+    if (inputName) {
+      inputName.style.border = "2px solid red";
+      inputName.focus();
+      setTimeout(() => (inputName.style.border = "1.5px solid #cbd5e1"), 2000);
+    }
+    return;
+  }
+
+  if (!note || note === "Chưa cập nhật") {
+    Toast.show(
+      window.t
+        ? window.t("toast_err_req_cancel_note")
+        : "⚠️ Vui lòng nhập lý do hủy vào phần Ghi chú QC!",
+      "error",
+    );
     const noteField = container?.querySelector(".note-field");
     if (noteField) {
       noteField.style.border = "2px solid red";
@@ -199,10 +258,10 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
   }
 
   const defects = {};
-  container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
-    const key = switchItem.getAttribute("data-key");
-    const goodDefect = switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") === "true";
-    defects[key] = goodDefect;
+  container?.querySelectorAll(".toggle-switch[data-defect]")?.forEach((btn) => {
+    const key = btn.getAttribute("data-defect");
+    const isDefect = btn.getAttribute("data-value") === "true";
+    defects[key] = isDefect;
   });
 
   const bodyData = {
@@ -217,8 +276,26 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
     defect_print_quality: defects["print_quality"] || false,
   };
 
-  const defectBadge = (val) =>
-    val ? '<span class="vi-badge-ok">OK</span>' : '<span class="vi-badge-ng">NG</span>';
+  const hasNG = Boolean(
+    bodyData.defect_gel ||
+    bodyData.defect_foreign_object ||
+    bodyData.defect_color_issue ||
+    bodyData.defect_print_quality,
+  );
+  if (!hasNG) {
+    Toast.show(
+      window.t
+        ? window.t("toast_err_qc_require_ng")
+        : "⚠️ Chưa chọn hạng mục phán định là NG!",
+      "error",
+    );
+    return;
+  }
+
+  const defectBadge = (hasDefect) =>
+    hasDefect
+      ? '<span class="vi-badge-ng">NG</span>'
+      : '<span class="vi-badge-ok">OK</span>';
 
   let reviewHTML = `
         <ul style="list-style: none; padding: 10px 12px; background: #f9fafb; border-radius: 6px; text-align: left; border: 1px solid #e5e7eb; margin: 0;">
@@ -250,16 +327,24 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
       try {
         const response = await fetch(requestUrl, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           body: JSON.stringify(bodyData),
         });
         const data = await response.json();
         if (data.success) {
           if (window.Toast && window.Toast.flash) {
-            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Hủy thành công!'), 'success');
+            window.Toast.flash(
+              data.message ||
+                (window.t
+                  ? window.t("toast_saved_success")
+                  : "Hủy thành công!"),
+              "success",
+            );
           }
-          Toast.show(data.message, "success");
-          setTimeout(() => window.location.reload(), 800);
+          setTimeout(() => window.location.reload(), 450);
         } else {
           Toast.show("Lỗi: " + (data.message || "Hủy thất bại"), "error");
           btnElement.innerHTML = originalBtnText;
@@ -270,7 +355,7 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }
-    }
+    },
   );
 }
 
@@ -287,14 +372,25 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
 
   const inputCodeEl = container?.querySelector(".input-inspector-code");
   const inspectorCode = inputCodeEl?.value?.trim() || "";
-  const inspectorName = container?.querySelector(".input-inspector-name")?.value?.trim() || "";
+  const inspectorName =
+    container?.querySelector(".input-inspector-name")?.value?.trim() || "";
 
-  if (!inspectorCode || inspectorCode === "Chưa cập nhật" || inspectorCode === "") {
-    Toast.show("⚠️ Vui lòng nhập Mã số nhân viên QC trước khi thực hiện!", "error");
+  if (
+    !inspectorCode ||
+    inspectorCode === "Chưa cập nhật" ||
+    inspectorCode === ""
+  ) {
+    Toast.show(
+      "⚠️ Vui lòng nhập Mã số nhân viên QC trước khi thực hiện!",
+      "error",
+    );
     if (inputCodeEl) {
       inputCodeEl.style.border = "2px solid red";
       inputCodeEl.focus();
-      setTimeout(() => (inputCodeEl.style.border = "1.5px solid #cbd5e1"), 2000);
+      setTimeout(
+        () => (inputCodeEl.style.border = "1.5px solid #cbd5e1"),
+        2000,
+      );
     }
     return;
   }
@@ -303,11 +399,17 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
   const note = noteInputEl?.value?.trim() || "";
 
   if (!note) {
-    Toast.show("⚠️ Vui lòng nhập ghi chú giải trình lý do trước khi đưa Bobin về ĐIỀU CHỈNH!", "error");
+    Toast.show(
+      "⚠️ Vui lòng nhập ghi chú giải trình lý do trước khi đưa Bobin về ĐIỀU CHỈNH!",
+      "error",
+    );
     if (noteInputEl) {
       noteInputEl.style.border = "2px solid red";
       noteInputEl.focus();
-      setTimeout(() => (noteInputEl.style.border = "1.5px solid #cbd5e1"), 2500);
+      setTimeout(
+        () => (noteInputEl.style.border = "1.5px solid #cbd5e1"),
+        2500,
+      );
     }
     return;
   }
@@ -315,7 +417,9 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
   const defects = {};
   container?.querySelectorAll(".vi-item-switch")?.forEach((switchItem) => {
     const key = switchItem.getAttribute("data-key");
-    const goodDefect = switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") === "true";
+    const goodDefect =
+      switchItem.querySelector(".toggle-switch")?.getAttribute("data-value") ===
+      "true";
     defects[key] = goodDefect;
   });
 
@@ -385,9 +489,13 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
     "Xác nhận QC & Đổi loại Bobin",
     dialogHTML,
     async (dialogBox) => {
-      const selectedType = (dialogBox ? dialogBox.querySelector('input[name="new_bobin_type"]:checked')?.value : null)
-        || document.querySelector('input[name="new_bobin_type"]:checked')?.value
-        || "Điều chỉnh (Do CP)";
+      const selectedType =
+        (dialogBox
+          ? dialogBox.querySelector('input[name="new_bobin_type"]:checked')
+              ?.value
+          : null) ||
+        document.querySelector('input[name="new_bobin_type"]:checked')?.value ||
+        "Điều chỉnh (Do CP)";
 
       const prefixNote = `Phán định chuyển Bobin sang: ${selectedType}`;
       const fullNote = note ? `${prefixNote} - ${note}` : prefixNote;
@@ -405,7 +513,8 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
         defect_print_quality: defects["print_quality"] || false,
       };
 
-      const requestUrl = "/WEB_BOBIN/public/index.php?url=bobin/updateQCAndChangeType";
+      const requestUrl =
+        "/WEB_BOBIN/public/index.php?url=bobin/updateQCAndChangeType";
       const originalBtnText = btnElement.innerHTML;
 
       btnElement.innerHTML = "⏳ Đang chuyển...";
@@ -414,17 +523,25 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
       try {
         const response = await fetch(requestUrl, {
           method: "PUT",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           body: JSON.stringify(bodyData),
         });
 
         const data = await response.json();
         if (data.success) {
           if (window.Toast && window.Toast.flash) {
-            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
+            window.Toast.flash(
+              data.message ||
+                (window.t
+                  ? window.t("toast_saved_success")
+                  : "Cập nhật thành công!"),
+              "success",
+            );
           }
-          Toast.show(data.message, "success");
-          setTimeout(() => window.location.reload(), 800);
+          setTimeout(() => window.location.reload(), 450);
         } else {
           Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), "error");
           btnElement.innerHTML = originalBtnText;
@@ -435,6 +552,6 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
         btnElement.innerHTML = originalBtnText;
         btnElement.disabled = false;
       }
-    }
+    },
   );
 }

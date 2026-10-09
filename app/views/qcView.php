@@ -248,7 +248,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                     $qcItems = ['gel' => 'Gel', 'foreign_object' => 'Dị vật', 'color_issue' => 'Màu sắc', 'print_quality' => 'Chữ in'];
                                     foreach ($qcItems as $key => $lbl):
                                     ?>
-                                        <div class="vi-item-switch">
+                                        <div class="vi-item-switch" data-key="<?= $key ?>">
                                             <span class="switch-title"><?= $lbl ?></span>
                                             <button type="button" class="toggle-switch active" data-defect="<?= $key ?>"
                                                 data-value="false" onclick="this.classList.toggle('active'); 

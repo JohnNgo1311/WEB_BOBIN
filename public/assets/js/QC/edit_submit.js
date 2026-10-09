@@ -1,21 +1,12 @@
 /* =========================================
     MODULE TOAST & DIALOG FOR QC EDIT
 ========================================= */
-const Toast = {
+var Toast = window.Toast || {
     show(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `toast-message${type === 'error' ? ' toast-error' : ''}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => toast.classList.add('show'));
-        });
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
-        }, 3000);
+        if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
+    },
+    flash(message, type = 'success') {
+        if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
     }
 };
 
@@ -52,7 +43,7 @@ const ConfirmDialog = (() => {
                     <label style="display: block; font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
                         🔐 <span data-i18n="confirm_pwd_label">${window.t ? window.t('confirm_pwd_label') : 'Nhập mật khẩu tài khoản của bạn để xác nhận:'}</span>
                     </label>
-                    <input type="password" id="confirm_dialog_password" class="form-control" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="${window.t ? window.t('confirm_pwd_ph') : 'Nhập mật khẩu đăng nhập...'}">
+                    <input type="password" id="confirm_dialog_password" class="form-control" style="width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px;" placeholder="${window.t ? window.t('confirm_pwd_ph') : 'Nhập mật khẩu đăng nhập...'}" data-i18n-ph="confirm_pwd_ph">
                     <div id="confirm_pwd_error" style="color: #ef4444; font-size: 12px; margin-top: 4px; display: none; font-weight: 600;"></div>
                 </div>
             ` : '';
@@ -304,11 +295,14 @@ async function handleQCConfirm(buttonElement, bobinCode, bobinKeyCode) {
 
                     const res = await response.json();
                     if (res.success) {
+                        if (window.Toast && window.Toast.flash) {
+                            window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
+                        }
                         Toast.show(res.message, 'success');
                         buttonElement.innerText = window.t ? window.t('saved') : 'Đã lưu ✔️';
                         currentEditingContainer = null;
                         originalDataBackup = null;
-                        setTimeout(() => window.location.reload(), 1200);
+                        setTimeout(() => window.location.reload(), 800);
                     } else {
                         Toast.show(`❌ ${res.message || (window.t ? window.t('save_failed') : 'Lưu thất bại')}`, 'error');
                         buttonElement.innerText = originalText;

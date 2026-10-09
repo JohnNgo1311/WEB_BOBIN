@@ -27,6 +27,7 @@ $homeUrl = match ($userRole) {
         window.__CUSTOM_I18N__ = <?= json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UNICODE) ?: '{}' ?>;
     </script>
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -119,7 +120,7 @@ $homeUrl = match ($userRole) {
                             placeholder="<?= __('cp_current_pwd_ph') ?>" data-i18n-ph="cp_current_pwd_ph"
                             required autocomplete="current-password" autofocus>
                         <button type="button" class="btn-toggle-pwd" data-target="current_password"
-                            title="Ẩn/Hiện mật khẩu">
+                            title="<?= __('login_toggle_pwd') ?>" data-i18n="[title]login_toggle_pwd">
                             👁️
                         </button>
                     </div>
@@ -142,7 +143,7 @@ $homeUrl = match ($userRole) {
                         <input type="password" id="new_password" name="new_password" placeholder="<?= __('cp_new_pwd_ph') ?>"
                             data-i18n-ph="cp_new_pwd_ph" required autocomplete="new-password" minlength="6">
                         <button type="button" class="btn-toggle-pwd" data-target="new_password"
-                            title="Ẩn/Hiện mật khẩu">
+                            title="<?= __('login_toggle_pwd') ?>" data-i18n="[title]login_toggle_pwd">
                             👁️
                         </button>
                     </div>
@@ -175,7 +176,7 @@ $homeUrl = match ($userRole) {
                         <input type="password" id="confirm_password" name="confirm_password"
                             placeholder="<?= __('cp_confirm_pwd_ph') ?>" data-i18n-ph="cp_confirm_pwd_ph" required autocomplete="new-password" minlength="6">
                         <button type="button" class="btn-toggle-pwd" data-target="confirm_password"
-                            title="Ẩn/Hiện mật khẩu">
+                            title="<?= __('login_toggle_pwd') ?>" data-i18n="[title]login_toggle_pwd">
                             👁️
                         </button>
                     </div>
@@ -218,27 +219,7 @@ $homeUrl = match ($userRole) {
     const isFirstLogin = <?= json_encode($isFirstLogin) ?>;
     const employeeCode = <?= json_encode($employeeCode) ?>;
     const username = <?= json_encode($username) ?>;
-
-    // MODULE TOAST
-    const Toast = {
-        show(message, type = 'success') {
-            document.querySelectorAll('.toast-message').forEach(t => t.remove());
-            const toast = document.createElement('div');
-            toast.className = `toast-message toast-${type}`;
-            const icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
-            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-            document.body.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => toast.classList.add('show'));
-            });
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 3500);
-        }
-    };
+    var Toast = window.Toast;
 
     // 1. Nút Ẩn/Hiện mật khẩu
     document.querySelectorAll('.btn-toggle-pwd').forEach(btn => {
@@ -358,12 +339,14 @@ $homeUrl = match ($userRole) {
             const data = await response.json();
 
             if (data.success) {
-                Toast.show(data.message || "Đổi mật khẩu thành công!", "success");
+                const succMsg = data.message || (window.t ? window.t('toast_saved_success') : "Đổi mật khẩu thành công!");
+                Toast.flash(succMsg, "success");
+                Toast.show(succMsg, "success");
                 submitBtn.innerHTML = '<span>✔️ Đã đổi thành công!</span>';
 
                 setTimeout(() => {
                     window.location.href = data.redirect || '/WEB_BOBIN/public/index.php';
-                }, 1200);
+                }, 1000);
             } else {
                 Toast.show(data.message || "Không thể đổi mật khẩu.", "error");
                 submitBtn.disabled = false;

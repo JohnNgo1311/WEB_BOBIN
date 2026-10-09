@@ -1,22 +1,13 @@
 /* =========================================
     MODULE TOAST: Hiển thị thông báo
 ========================================= */
-var Toast = window.Toast = window.Toast || {
+var Toast = window.Toast || {
   show(message, type = "success") {
-    const toast = document.createElement("div");
-    toast.className = `toast-message${type === "error" ? " toast-error" : ""}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => toast.classList.add("show"));
-    });
-
-    setTimeout(() => {
-      toast.classList.remove("show");
-      setTimeout(() => toast.remove(), 400);
-    }, 3500);
+    if (window.Toast && window.Toast.show) return window.Toast.show(message, type);
   },
+  flash(message, type = "success") {
+    if (window.Toast && window.Toast.flash) return window.Toast.flash(message, type);
+  }
 };
 
 /* =========================================

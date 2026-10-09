@@ -2,6 +2,248 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [2026-10-09] - Làm Hiển Thị Nổi Bật 4 Thông Số Bobin & Khắc Phục Triệt Để Lỗi Nút Hủy Bobin (TASK-022)
+
+### 1. Bối cảnh & Yêu cầu:
+- **Yêu cầu 1:** Tại trang Danh sách (`listBobinDetailView`, `listBobinView`), Lịch sử Bobin (`listBobinHistoryView`), trang QC (`qcView`) và trang Cuộn (`windingView`), làm hiển thị nổi bật 4 thông tin cốt lõi của Bobin:
+  1. **Mã sản phẩm:** Hiển thị nổi bật với badge xanh dương.
+  2. **Vị trí Rack (nếu có):** Badge xanh ngọc hiển thị `📍 [Mã Rack]` khi có giá trị, hiển thị placeholder mờ `---` khi chưa có dữ liệu.
+  3. **Loại Bobin:** Phân màu sắc chuyên biệt theo 3 gam màu chuẩn:
+     - **Sản xuất:** Màu xanh lá đậm (`#14532d`, nền `#dcfce7`, viền `#16a34a`).
+     - **Bù:** Màu xanh dương (`#1e40af`, nền `#dbeafe`, viền `#3b82f6`).
+     - **Các loại điều chỉnh:** Màu cam đậm (`#9a3412`, nền `#ffedd5`, viền `#ea580c`), áp dụng cho tất cả các loại ngoại quan: `Điều chỉnh`, `Điều chỉnh (Do CP)`, `Gel`, `Dị vật`, `Trầy`, `Biến dạng`, `Xước`, `Chữ in`, `Vón cục`, `Màu`.
+  4. **Lot in:** Badge Monospace tím indigo (`#4338ca`, nền `#e0e7ff`, viền `#818cf8`), phân biệt rõ với trạng thái chưa cập nhật.
+- **Yêu cầu 2:** Điều tra và khắc phục nguyên nhân nút "Hủy Bobin" tại trang QC và Cuộn bị hiển thị thành "Trở lại".
+- **Yêu cầu 3:** Tối ưu hóa UI/UX với hiệu ứng chuyển động mượt mà và hover elevation tương tác.
+
+### 2. Nguyên nhân gốc rễ lỗi nút "Hủy Bobin" bị đổi thành "Trở lại" (Root Cause):
+- Trong `config/custom_translations.json`, người dùng cấu hình từ khóa `"btn_cancel"` có nghĩa là `"Trở lại"` (dành cho modal quay lại).
+- Trong `public/assets/js/i18n.js`, hàm `deepTranslateDOM()` duyệt qua danh sách `DOM_MAPPINGS.buttons` chứa `{ key: 'btn_cancel', vi: 'Hủy' }`.
+- Nút bấm tại `qcView.php` và `windingView.php` hiển thị chữ `🗑️ Hủy Bobin`. Vòng lặp so sánh `raw.includes('Hủy')` bị khớp nhầm vào `btn_cancel`, gọi `window.t('btn_cancel')` trả về `"Trở lại"` từ tệp cấu hình động và ghi đè toàn bộ chữ của nút.
+
+### 3. Các giải pháp đã triển khai:
+- **Khắc phục triệt để lỗi nút Hủy Bobin:**
+  - Khởi tạo key dịch chuyên biệt `btn_cancel_bobin`:
+    - `vi`: `"Hủy Bobin"`
+    - `en`: `"Cancel Bobin"`
+    - `ja`: `"ボビン廃棄"`
+  - Đồng bộ từ khóa `btn_cancel_bobin` vào `app/core/Language.php` và `public/assets/js/i18n.js`.
+  - Đặt rule mapping `btn_cancel_bobin` đứng trước `btn_cancel` trong `DOM_MAPPINGS.buttons`.
+  - Bổ sung safeguard chặn khớp nhầm trong `deepTranslateDOM()`: `if (item.key === 'btn_cancel' && (raw.includes('Bobin') || raw.includes('ボビン'))) continue;`.
+  - Gắn thuộc tính `data-i18n="btn_cancel_bobin"` và helper PHP `<?= __('btn_cancel_bobin') ?>` cho nút hủy tại `qcView.php` và `windingView.php`.
+- **Thiết kế khối CSS hiển thị nổi bật 4 thông số Bobin (TASK-022 CSS):**
+  - Xây dựng các class `.bobin-highlight-product`, `.bobin-highlight-rack`, `.bobin-type-badge` (với `.type-san-xuat`, `.type-bu`, `.type-dieu-chinh`), `.bobin-highlight-printlot`.
+  - Tối ưu hóa UI/UX với `transition: transform 0.15s ease, box-shadow 0.15s ease` và hover elevation `transform: translateY(-1px)`.
+  - Đồng bộ trên toàn bộ 5 stylesheet liên quan:
+    - `public/assets/css/listBobinDetail.css`
+    - `public/assets/css/listBobin.css`
+    - `public/assets/css/listBobinHistory.css`
+    - `public/assets/css/listBobin_QC.css`
+    - `public/assets/css/listBobin_Winding.css`
+- **Khắc phục lỗi giá trị "Điều chỉnh..." của "Loại Bobin" tràn qua cột "Lot vật liệu":**
+  - Cập nhật `.bobin-type-badge`: Cho phép `white-space: normal`, tự động xuống dòng (`word-break: break-word; overflow-wrap: anywhere; line-height: 1.25`), giới hạn `max-width: 100%`, `box-sizing: border-box`, căn giữa và padding `2.5px 7px`.
+  - Thêm `min-width: 0; overflow: hidden;` cho `.field-item` và `.val-sub` để bảo đảm các ô trong CSS Grid không bị phình to hoặc tràn ra ngoài track.
+  - Nâng chiều rộng tối thiểu cột trong `.info-grid` lên `minmax(125px, 1fr)` trên cả 5 stylesheet.
+  - Thêm thuộc tính `title="<?= htmlspecialchars($rawBobinType) ?>"` vào thẻ badge trên cả 5 view để hỗ trợ tooltip khi rê chuột.
+
+### 4. Kết quả kiểm thử & Nghiệm thu:
+- PHP Syntax Check (`php -l`): 100% không phát hiện lỗi cú pháp trên toàn bộ các tệp view và core.
+- JS Syntax Check (`node -c`): 100% đạt chuẩn cú pháp trên `i18n.js` và `toast.js`.
+- Cả 4 thông số hiển thị trực quan, đúng màu sắc quy định, chuyển đổi ngôn ngữ trơn tru (Việt - Anh - Nhật), nút "Hủy Bobin" hiển thị chuẩn xác không bị đè thành "Trở lại".
+
+## [2026-10-09] - Chuẩn Hóa Hệ Thống Toast Thông Báo Toàn Cục & Khắc Phục Triệt Để Lỗi Không Hiển Thị
+
+### 1. Bối cảnh & Yêu cầu:
+- **Hiện tượng:** Người dùng phản ánh rất nhiều tính năng hệ thống không hiển thị thông báo Toast khi xảy ra lỗi (lỗi thao tác người dùng, lỗi nhập liệu thiếu trường, nhập sai mật khẩu xác nhận, lỗi kết nối máy chủ, lỗi mở camera quét QR) hoặc khi thực hiện thành công tác vụ (lưu thành công, cập nhật thành công, hủy Bobin, khôi phục từ điển).
+- **Nguyên nhân gốc rễ (Root Cause):**
+  1. **Xung đột & Thiếu CSS tại các trang Điều chỉnh (Đùn, QC, Cuộn):** Trong `Extrusion/edit_submit.js`, `QC/edit_submit.js`, và `Winding/edit_submit.js`, mỗi tệp định nghĩa một đối tượng `const Toast` cục bộ tạo ra thẻ `<div class="toast-message">`, nhưng các tệp CSS tương ứng hoàn toàn KHÔNG có quy tắc CSS nào cho `.toast-message`. Thẻ thông báo được chèn vào cuối `<body>` như một đoạn văn bản thô không màu, không định vị fixed và bị che khuất hoàn toàn.
+  2. **Race condition reload trang làm mất thông báo:** Khi lưu/cập nhật thành công, các module gọi `Toast.show()` và ngay lập tức gọi `window.location.reload()`. Vì không có cơ chế Flash Message lưu tạm qua reload, Toast bị xóa sạch ngay khi trang tải lại khiến người dùng tưởng hệ thống không phản hồi.
+  3. **Sử dụng `alert()` trình duyệt hoặc Toast cục bộ:** Một số trang như `languageManageView.php`, `listBobinHistoryView.php` sử dụng hộp thoại `alert()` gây gián đoạn trải nghiệm người dùng, hoặc dùng div cục bộ không đồng bộ UI/UX.
+  4. **Thiếu module Toast thống nhất:** Chưa có một module Toast độc lập, nạp toàn cục cho mọi trang của dự án.
+
+### 2. Các giải pháp đã triển khai:
+- **Xây dựng module Toast toàn cục độc lập (`public/assets/js/toast.js`):**
+  - 100% Thuần Vanilla JS & CSS, hoạt động hoàn toàn Offline trong mạng nội bộ Intranet, không dùng CDN.
+  - Cung cấp `window.Toast` và `window.showToast` với 4 trạng thái chuẩn:
+    - `success` (✅ Thành công - Màu xanh lá)
+    - `error` (❌ Thất bại/Lỗi - Màu đỏ cảnh báo)
+    - `warning` (⚠️ Cảnh báo - Màu vàng cam)
+    - `info` (ℹ️ Thông tin - Màu xanh dương)
+  - Tự động tiêm CSS `#unified-toast-styles` với z-index cực cao (`999999`), thanh tiến trình thời gian mượt mà, nút đóng tức thì (✕), hiệu ứng trượt vào/ra và responsive trên Desktop/Tablet/Mobile.
+  - Hỗ trợ Flash Message qua `sessionStorage` (`bobin_toast_flash`) và nhận diện tự động qua URL params (`?msg=...&msg_type=...`, `?error=...`, `?success=...`), tự động dọn dẹp URL bằng `history.replaceState`.
+- **Bổ sung khóa đa ngôn ngữ Toast:**
+  - Thêm 19 khóa dịch thuật mới (`toast_saved_success`, `toast_updated_success`, `toast_deleted_success`, `toast_cancelled_success`, `toast_reset_success`, `toast_copied_success`, `toast_error_system`, `toast_error_network`, `toast_error_input`, `toast_error_pwd`, `toast_qr_scanned`, `toast_qr_cam_error`, `warn_select_history_first`,...) cho cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+- **Nạp Toast trên 100% các View (18/18 View):**
+  - Tích hợp vào `app/views/components/header.php` (tự động nạp cho 12 view có header).
+  - Nạp trực tiếp vào thẻ `<head>` của 6 view độc lập: `loginView.php`, `changePasswordView.php`, `manageCapacityView.php`, `createBobinView.php`, `scanQR.php`, `listBobinView.php`.
+- **Đồng bộ hóa các Module Script:**
+  - `Extrusion/edit_submit.js`, `QC/edit_submit.js`, `Winding/edit_submit.js`: Bỏ `const Toast` cục bộ không CSS, chuyển sang ủy quyền `window.Toast` và thêm `Toast.flash(...)` trước khi reload trang.
+  - `Extrusion/submit.js`, `QC/submit.js`, `Winding/submit.js`: Chuẩn hóa ủy quyền `window.Toast` và kích hoạt `Toast.flash(...)`.
+  - `utils.js`, `delete.js`: Chuẩn hóa `window.Toast`.
+  - `employeePermissionsView.php`: Ủy quyền `window.Toast.show()`.
+  - `languageManageView.php`: Thay thế toàn bộ 4 hàm `alert()` bằng `Toast.warning` / `Toast.error`, hỗ trợ `Toast.flash(...)` khi lưu/khôi phục từ điển.
+  - `listBobinHistoryView.php`: Thay thế `alert()` khi chưa chọn checkbox xuất excel bằng `Toast.warning()`.
+  - Toàn bộ 5 file máy quét QR (`scanQR.js`): Kết nối đồng bộ với `Toast.show()`.
+
+### 3. Kết quả kiểm thử:
+- PHP Syntax Check (`php -l`): 100% toàn bộ các tệp `.php` trong thư mục `app/` đạt không lỗi.
+- JS Syntax Check (`node -c`): 100% toàn bộ các tệp JavaScript trong `public/assets/js/` đạt chuẩn cú pháp.
+- Toast hiển thị hoàn hảo ở cả 4 trạng thái, duy trì thông báo qua lượt reload trang và hỗ trợ 3 ngôn ngữ mượt mà.
+
+## [2026-10-08] - Kiểm Tra Và Khắc Phục Toàn Diện Ngôn Ngữ Textfield & Placeholder (TASK-021)
+
+### 1. Bối cảnh & Yêu cầu:
+- **Hiện tượng:** Người dùng phản ánh một số ô textfield, placeholder của các ô tìm kiếm, nhập ghi chú, mã vật tư, mật khẩu không hiển thị đúng ngôn ngữ khi tải trang hoặc khi chuyển đổi qua lại giữa Tiếng Việt, Tiếng Anh và Tiếng Nhật.
+- **Nguyên nhân gốc rễ (Root Cause):**
+  1. **Lỗi phân giải cú pháp tiền tố `[placeholder]` trong `applyDataI18n()` (`public/assets/js/i18n.js`):** Nhiều view sử dụng quy ước `data-i18n="[placeholder]key_name"`, nhưng hàm `applyDataI18n()` truyền nguyên chuỗi `"[placeholder]key_name"` vào `window.t()`, dẫn đến kết quả trả về `undefined` và placeholder bị giữ nguyên chuỗi khởi tạo ban đầu.
+  2. **Thiếu hỗ trợ các thuộc tính dữ liệu mở rộng:** Một số view sử dụng `data-placeholder-i18n="key"` hoặc `data-i18n-ph="key"`, nhưng trước đó `applyDataI18n()` chỉ tìm kiếm thẻ `[data-i18n]` hoặc thiếu bao quát các thẻ biến thể.
+  3. **Placeholder bị hardcode trong mã HTML của PHP:** Một số view (`extrusionView.php`, `qcView.php`, `windingView.php`, `listBobinDetailView.php`, `listBobinHistoryView.php`,...) ghi tĩnh tiếng Việt `placeholder="Nhập hoặc quét mã Bobin..."` thay vì dùng hàm helper `<?= __('ph_scan_bobin') ?>`.
+  4. **Thiếu một số từ khóa placeholder chuyên dụng trong từ điển:** Các key như `search_keyword_ph`, `qc_note_ph`, `qc_note_explain_ph`, `ph_winding_machine_input`, `ph_winding_note_explain`,... chưa có mặt đầy đủ trong `Language.php` và `i18n.js`.
+  5. **Mục Section E của `deepTranslateDOM()`:** Chưa bao quát hết các cụm từ placeholder mới xuất hiện trong các form điều chỉnh và quản trị.
+
+### 2. Các giải pháp đã triển khai:
+- **Nâng cấp công cụ i18n Frontend (`public/assets/js/i18n.js`):**
+  - Cải tiến `applyDataI18n()` sử dụng biểu thức chính quy `/^\[([a-zA-Z0-9_-]+)\](.*)$/` để trích xuất chuẩn xác thuộc tính đích (như `placeholder`, `title`) và mã khóa bản dịch, sau đó gán trực tiếp thuộc tính tương ứng.
+  - Tích hợp thêm truy vấn tự động cho toàn bộ các thuộc tính placeholder: `[data-i18n-ph]`, `[data-placeholder-i18n]`, `[data-i18n-placeholder]`.
+  - Mở rộng Section E trong `deepTranslateDOM()` với regex và chuỗi so khớp dự phòng đầy đủ cho toàn bộ placeholder trên mọi màn hình.
+  - Thêm 12 cặp từ khóa placeholder mới vào cả 3 ngôn ngữ (`DICT.vi`, `DICT.en`, `DICT.ja`).
+- **Nâng cấp từ điển Backend (`app/core/Language.php`):**
+  - Thêm 12 khóa dịch thuật chuyên dụng (`search_keyword_ph`, `qc_note_ph`, `qc_note_explain_ph`, `ph_winding_machine_input`, `ph_winding_note_explain`, `ph_length_hint`, `ph_bobin_id_example`, `ph_qr_scan_result`, `lang_ph_key_name`, `lang_ph_vi_content`, `lang_ph_en_content`, `lang_ph_ja_content`) cho cả 3 ngôn ngữ `vi`, `en`, `ja`.
+- **Rà soát & Đồng bộ hóa toàn bộ 18 file view của hệ thống:**
+  - `extrusionView.php`: Thay thế 10 placeholder hardcode bằng `<?= __('key') ?>` và gắn `data-i18n-ph="key"`.
+  - `extrusionEditBobinView.php`: Chuẩn hóa 7 trường input với `data-i18n-ph`.
+  - `qcView.php`: Cập nhật placeholder ô tìm kiếm và ô ghi chú giải trình lý do QC.
+  - `qcEditBobinView.php`: Chuẩn hóa placeholder tìm kiếm Bobin và ghi chú ngoại quan QC.
+  - `windingView.php`: Chuẩn hóa ô tìm kiếm, ô chọn máy cuộn và ghi chú cuộn.
+  - `windingEditBobinView.php`: Chuẩn hóa ô tìm kiếm và ghi chú cuộn.
+  - `listBobinDetailView.php`, `listBobinHistoryView.php`, `listBobinView.php`, `listPendingCancellationView.php`: Chuẩn hóa các ô tìm kiếm Bobin.
+  - `createBobinView.php`: Cập nhật placeholder ví dụ mã Bobin.
+  - `scanQR.php`: Cập nhật placeholder ô quét kết quả QR và nút tìm kiếm.
+  - `languageManageView.php`: Cập nhật placeholder ô tìm kiếm và các ô nhập tạo mới từ khóa (key name, vi, en, ja).
+  - `employeeListView.php`, `employeePermissionsView.php`, `changePasswordView.php`: Bổ sung `data-i18n-ph` và dịch tooltip `title` ẩn/hiện mật khẩu.
+  - Các tệp JS modal xác thực (`Extrusion/edit_submit.js`, `QC/edit_submit.js`, `Winding/edit_submit.js`): Bổ sung `data-i18n-ph="confirm_pwd_ph"` vào ô nhập mật khẩu xác nhận.
+
+### 3. Kết quả kiểm thử:
+- Kiểm tra cú pháp PHP Syntax Check (`php -l`): 18/18 views + `Language.php` đạt 100% không lỗi.
+- Kiểm tra cú pháp JavaScript Syntax Check (`node -c`): 4/4 files JS đạt 100% không lỗi.
+- Chạy script kiểm thử Backend PHP: 100% các placeholder keys trả về đúng bản dịch tương ứng ở cả `vi`, `en`, `ja`.
+- Chạy script kiểm thử Frontend JS (DOM Simulation): 100% cả 4 cơ chế (tiền tố `[placeholder]`, `data-i18n-ph`, `data-placeholder-i18n`, và fallback Section E) đều dịch chính xác sang tiếng Anh và tiếng Nhật.
+
+## [2026-10-08] - Đồng Bộ Toàn Diện Giao Diện Điều Chỉnh Đùn & Hệ Thống Đa Ngôn Ngữ (TASK-020)
+
+### 1. Bối cảnh & Yêu cầu:
+- **Đồng bộ hóa giao diện Điều chỉnh Đùn (`extrusionEditBobinView.php`):** Nâng cấp trang Điều chỉnh Đùn đồng nhất với phong cách Dashboard hiện đại của Điều chỉnh QC và Điều chỉnh Cuộn:
+  - Header Hero ấn tượng với nhận diện công đoạn (`EXTRUSION PROCESS EDIT`).
+  - Hàng 4 thẻ KPI thống kê trực quan (Tổng số Bobin chờ QC, Đùn Check Đạt chuẩn 5/5 OK, Đùn Check Có lỗi NG, Trạng thái `BUSY_UNCHECKED`).
+  - Khối thẻ Bobin phân chia thành 3 phân vùng rõ ràng, khoa học: Quy cách sản phẩm & Định lượng, Thiết bị máy đùn & Vật liệu, Nhân sự & Thời gian hoàn thành.
+  - Băng chuyền 5 tiêu chí kiểm tra công đoạn Đùn (Đường kính, Gel, Dị vật, Màu sắc, Chữ in) với công tắc toggle switch trực quan.
+  - Bảo toàn 100% các class selector, autocomplete suggestion (`edit_suggestion.js`), máy quét mã QR (`edit_scanQR.js`) và bảo mật xác thực mật khẩu cá nhân khi lưu cập nhật (`edit_submit.js`).
+- **Kiểm tra và đồng bộ hóa đa ngôn ngữ 100%:** Rà soát và bổ sung 46+ từ khóa dịch thuật cho cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`:
+  - Khắc phục triệt để hiện tượng thiếu bản dịch các tiêu đề, nhãn trường (`field_product`, `field_print_lot`, `field_length`, `field_rack`, `field_bobin_type`,...), tiêu chí kiểm tra và các badge trạng thái Bobin (`status_busy_unchecked`, `status_busy_checked`, `status_rolled`).
+  - Đảm bảo popup xác nhận cập nhật/hủy Bobin hiển thị đa ngôn ngữ tự nhiên theo lựa chọn ngôn ngữ của người dùng.
+- **Bảo mật phân quyền:** Bổ sung cơ chế kiểm tra quyền hạn `AuthHelper::hasPermission('extrusion_edit')` tại `BobinController::extrusionEditBobinView()` tương tự như QC và Cuộn.
+
+### 2. Các tệp tin đã thay đổi:
+- **Backend & Controller:**
+  - `app/controllers/BobinController.php`: Bổ sung kiểm tra quyền `extrusion_edit` và truyền `totalRecords` sang view `extrusionEditBobinView`.
+- **Giao diện & Bố cục:**
+  - `public/assets/css/extrusionEditBobin.css`: Viết lại hoàn chỉnh với phong cách Royal Blue / Modern Dashboard, lưới thẻ 3 cột responsive, hiệu ứng hover, thanh 5 tiêu chí Đùn Check và hỗ trợ responsive trên màn hình tablet/mobile.
+  - `app/views/extrusionEditBobinView.php`: Tái cấu trúc toàn diện, tích hợp thống kê KPI động, gắn 100% thuộc tính `data-i18n` và PHP `__()` helper.
+  - `public/assets/js/Extrusion/edit_submit.js`: Đồng bộ popup xác nhận lưu thay đổi với các nhãn i18n động thông qua `window.t()`.
+- **Đa ngôn ngữ (i18n):**
+  - `app/core/Language.php`: Bổ sung 46 key dịch thuật mới (`ext_*`, `field_*`, `crit_*`, `ph_*`, `status_*`) cho cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+  - `public/assets/js/i18n.js`: Bổ sung đồng bộ 46 key tương ứng vào `DICT.vi`, `DICT.en`, `DICT.ja`.
+- **Tài liệu dự án:**
+  - `AI_preference/AI_Task.md`: Ghi nhận hoàn thành `TASK-020`.
+  - `AI_preference/CHANGELOG.md`: Cập nhật chi tiết nội dung thay đổi.
+
+### 3. Kết quả kiểm thử:
+- Kiểm tra cú pháp PHP Syntax Check (`php -l`): 100% tệp tin đạt chuẩn (0 lỗi).
+- Kiểm tra render HTML đa ngôn ngữ: `extrusionEditBobinView` render chuẩn xác cả 3 ngôn ngữ `vi`, `en`, `ja` với dung lượng ~48KB HTML, không có lỗi hay cảnh báo PHP nào.
+- Kiểm tra tính tương thích: Giữ nguyên các class hook JavaScript và hoạt động 100% offline nội bộ.
+
+## [2026-10-08] - Đồng Bộ Kiến Trúc SQL, Tối Ưu Menu Tree & Nâng Cấp Giao Diện QC / Cuộn (TASK-019)
+
+### 1. Bối cảnh & Yêu cầu:
+- **Đồng bộ hóa đa ngôn ngữ tại trang Phân quyền:** Đồng bộ toàn diện các nhãn, placeholder, nút bấm, thông báo trạng thái, popup xác nhận trên trang `employeePermissionsView.php` sang hệ thống i18n động (`vi`, `en`, `ja`) và lắng nghe sự kiện `languageChanged` để cập nhật tức thì trên giao diện mà không cần reload trang.
+- **Tối ưu thanh điều hướng Menu Folder Tree:** Duy trì cấu trúc phân cấp cây thư mục trong `sidebar.css`, xê dịch các mục con (`.sb-tree-children`, `.sb-tree-leaf`) thụt vào trong 1 khoảng so với thư mục cha, đồng thời căn chỉnh đường chỉ dẫn phân cấp (`tree guide line`) và mấu nối ngang (`tree branch connector`) liền mạch, chuyên nghiệp.
+- **Đồng bộ kiến trúc CSDL SQL:** Cập nhật tệp kiến trúc `public/assets/sql/Updated/production_db_Architect_sql.sql` đồng bộ 100% với cấu trúc thực tế của cơ sở dữ liệu `production_db` (bổ sung đầy đủ các cột mới `cost_center`, `permissions`, `update_history`, chuẩn hóa `PRIMARY KEY AUTO_INCREMENT` và các `UNIQUE KEY`, `KEY` cho toàn bộ 15 bảng). Sửa lỗi thiếu khóa chính ở bảng `product_list`.
+- **Nâng cấp giao diện Điều chỉnh QC và Điều chỉnh Cuộn:** Thay thế giao diện đơn điệu, thô sơ cũ bằng giao diện Dashboard chuyên nghiệp, hiện đại:
+  - Header Hero ấn tượng với badge nhận diện phân hệ.
+  - Hàng thẻ KPI thống kê trực quan (Tổng số bản ghi, Đạt/Lỗi ngoại quan QC, Đạt/Không đạt Test thông khí Cuộn).
+  - Khối danh sách dạng thẻ Card 2 cột responsive (cột thông số kỹ thuật Bobin và cột form điều chỉnh tác vụ).
+  - Bộ toggle switch kiểm tra tiêu chí ngoại quan hiện đại (Gel, Dị vật, Lỗi màu, Lỗi in).
+  - Tích hợp 100% hệ thống i18n đa ngôn ngữ cho toàn bộ nhãn, tiêu đề và nút bấm.
+  - Bảo toàn 100% các class hook của JavaScript (`QC/edit_submit.js`, `Winding/edit_submit.js`), xác thực mật khẩu cá nhân và cơ chế phân trang 10 Bobin/trang.
+
+### 2. Các tệp tin đã thay đổi:
+- **Cơ sở dữ liệu & Kiến trúc SQL:**
+  - `public/assets/sql/Updated/production_db_Architect_sql.sql`: Viết lại chuẩn hóa 15 bảng với đầy đủ ràng buộc khóa chính tự tăng `AUTO_INCREMENT`, khóa duy nhất và chỉ mục tối ưu hiệu năng.
+  - `public/assets/production_db_database.sql`: Sửa cú pháp backtick cho cột `cost_center`.
+  - CSDL MySQL `production_db`: Bổ sung `PRIMARY KEY (id) AUTO_INCREMENT` cho bảng `product_list`.
+- **Giao diện & Bố cục:**
+  - `public/assets/css/sidebar.css`: Tăng thụt lề `.sb-tree-children` lên `padding-left: 30px`, căn chỉnh thước kẻ `::before` (`left: 24px`), bổ sung căn lề `.sb-tree-leaf` và mấu nối ngang nhánh cây (`left: -10px; width: 9px`).
+  - `public/assets/css/qcEditBobin.css` (Mới): Thiết kế phong cách Ocean/Cyan chuyên nghiệp, hiệu ứng hover card, switch kiểm tra ngoại quan và responsive mobile/tablet.
+  - `public/assets/css/windingEditBobin.css` (Mới): Thiết kế phong cách Teal/Emerald chuyên nghiệp, hiệu ứng hover card, switch kết quả test thông khí và responsive mobile/tablet.
+  - `app/views/qcEditBobinView.php`: Tái cấu trúc toàn diện theo thiết kế mới, thêm thống kê KPI, gắn thẻ `data-i18n`.
+  - `app/views/windingEditBobinView.php`: Tái cấu trúc toàn diện theo thiết kế mới, thêm thống kê KPI, gắn thẻ `data-i18n`.
+  - `app/views/employeePermissionsView.php`: Gắn thuộc tính `data-i18n` cho toàn bộ thẻ tĩnh, chuyển toàn bộ chuỗi JavaScript động sang `window.t()`, lắng nghe sự kiện `languageChanged`.
+- **Đa ngôn ngữ (i18n):**
+  - `app/core/Language.php`: Bổ sung 40+ khóa dịch thuật (`perm_*`, `qc_*`, `winding_*`) cho cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+  - `public/assets/js/i18n.js`: Đồng bộ từ điển JavaScript cho tất cả các khóa dịch thuật mới của Phân quyền, Điều chỉnh QC và Điều chỉnh Cuộn.
+
+### 3. Kết quả kiểm thử:
+- Kiểm tra cú pháp PHP (`php -l`): Đạt chuẩn 100% không phát sinh lỗi cú pháp nào.
+- Render kiểm thử View: Cả 3 view `qcEditBobinView.php`, `windingEditBobinView.php`, `employeePermissionsView.php` render HTML hoàn chỉnh với dữ liệu mẫu, không có ngoại lệ hay cảnh báo PHP nào.
+- Khả năng hoạt động Local: Không sử dụng bất kỳ CDN ngoài nào, 100% tài nguyên CSS/JS cục bộ.
+
+## [2026-10-08] - Nâng Cấp Quản Lý Nhân Viên: Bổ Sung Mã Bộ Phận (Cost Center), Chuẩn Hóa Schema & Tối Ưu UX Danh Sách (TASK-018)
+
+### 1. Bối cảnh & Mục tiêu:
+- Nâng cấp bảng cơ sở dữ liệu `employee_list` để tối ưu cho việc bảo trì, tra cứu và cập nhật dữ liệu hàng loạt từ Excel/CSV theo bộ phận sản xuất:
+  - Loại bỏ hoàn toàn cột trạng thái `is_active` (không cần thiết).
+  - Thêm trường `cost_center` (`VARCHAR(50) DEFAULT NULL COMMENT 'Mã bộ phận'`).
+  - Thiết lập khóa chính tự tăng `PRIMARY KEY AUTO_INCREMENT` trên cột `id`, các chỉ mục duy nhất `UNIQUE KEY` trên `employee_code` và `username`, cùng các chỉ mục tối ưu tìm kiếm `KEY (role)` và `KEY (cost_center)`.
+- Tái cấu trúc trang Danh sách nhân viên (`employeeListView.php`) và Phân quyền (`employeePermissionsView.php`):
+  - Xóa bỏ bộ lọc theo `role` trên thanh công cụ, thay thế bằng bộ lọc theo `cost_center` (tự động lấy danh sách bộ phận duy nhất từ CSDL).
+  - Loại bỏ cột trạng thái `is_active`, hiển thị rõ ràng cột `cost_center` (Mã bộ phận) với định dạng badge đẹp mắt.
+  - Cập nhật các modal: Thêm mới nhân viên, Sửa nhân viên, Cấp lại mật khẩu, Nhập Excel và Xuất/Tải mẫu CSV để hỗ trợ `cost_center`.
+  - Hỗ trợ đầy đủ đa ngôn ngữ (`vi`, `en`, `ja`) cho các trường thông tin bộ phận mới.
+
+### 2. Các tệp tin đã thay đổi:
+- **Cơ sở dữ liệu:** `production_db.employee_list` (đã nâng cấp cấu trúc chuẩn và lưu trữ 132 nhân viên với dữ liệu `cost_center` hợp lệ).
+- **Backend & Repositories:**
+  - `app/repositories/EmployeeRepository.php`: Bỏ `is_active = 1` trong câu truy vấn dự phòng `findByCode()`. Nạp sẵn `GlobalData.php` để đảm bảo hoạt động độc lập an toàn.
+  - `app/repositories/ListDataRepository.php`: Bỏ `is_active = 1`, truy vấn đầy đủ `cost_center` trong `list_employee`.
+  - `app/controllers/AuthController.php`: Bỏ `is_active = 1`, chọn `cost_center` khi đăng nhập và đổi mật khẩu.
+  - `app/controllers/BobinController.php`: Bỏ `is_active = 1` trong xác thực mật khẩu điều chỉnh Bobin.
+  - `app/controllers/EmployeeController.php`:
+    - `index()`: Tích hợp bộ lọc theo `cost_center`, truy vấn danh sách `cost_center` duy nhất, loại bỏ bộ lọc `status` và `role`, cập nhật tính toán KPI không phụ thuộc `is_active`.
+    - `create()`: Thêm trường `cost_center`, bỏ `is_active`.
+    - `update()`: Cập nhật `employee_name`, `cost_center`, `role` theo `id`, bỏ `is_active`.
+    - `exportExcel()`: Xuất danh sách có cột `Mã bộ phận` (`cost_center`).
+    - `downloadTemplate()`: Cập nhật file mẫu CSV chuẩn với cột `Mã bộ phận` và dữ liệu mẫu minh họa.
+    - `importExcel()`: Nhập danh sách gồm 5 cột chuẩn (Mã NV, Họ tên, Mã bộ phận, Vai trò, Tên đăng nhập).
+    - `permissionsView()` & `getEmployeePermissions()`: Truy vấn và trả về `cost_center`, loại bỏ `is_active`.
+  - `app/models/EmployeeModel.php`: Cập nhật toàn bộ các phương thức `getAll()`, `getStats()`, `create()`, `update()`, `importBatch()` đồng bộ với `cost_center`.
+- **Giao diện người dùng (Views & Styles):**
+  - `app/views/employeeListView.php`:
+    - Thanh công cụ thay thế bộ lọc vai trò/trạng thái bằng dropdown chọn Mã bộ phận (`cost_center`).
+    - Bảng danh sách hiển thị cột `Mã bộ phận` dạng badge monospace trang nhã.
+    - Modal Thêm mới và Sửa nhân viên bổ sung ô nhập liệu `cost_center` kèm hướng dẫn.
+    - Hướng dẫn nhập file CSV trong modal Import được cập nhật theo cấu trúc cột mới.
+    - Bộ lọc nhanh tương tác client-side khi click vào thẻ KPI vai trò hoặc biểu đồ Donut Chart.
+  - `app/views/employeePermissionsView.php`: Thay thế badge trạng thái bằng badge Mã bộ phận của nhân viên.
+  - `public/assets/css/employeeList.css`: Thêm kiểu dáng chuyên biệt `.badge-cost-center`.
+- **Đa ngôn ngữ (i18n):**
+  - `app/core/Language.php`: Bổ sung các từ khóa `emp_cost_center`, `emp_all_cost_centers`, `emp_cost_center_ph`, `emp_cost_center_hint`, cập nhật `emp_import_col3-5` cho cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+  - `public/assets/js/i18n.js`: Đồng bộ từ điển JavaScript và ánh xạ `DOM_MAPPINGS` cho `Mã bộ phận`.
+
+### 3. Kết quả kiểm thử:
+- Kiểm tra cú pháp PHP Syntax Check (`php -l`): 100% tệp tin đạt chuẩn (0 lỗi).
+- Kiểm tra truy vấn CSDL: Nạp và tra cứu chính xác 132 nhân viên theo mã bộ phận (ví dụ: `A00330`: 36 nhân viên).
+- Kiểm tra render HTML của `employeeListView` và `employeePermissionsView`: Render thành công, không phát sinh lỗi cảnh báo nào.
+
 ## [2026-10-06] - Khắc Phục Truy Xuất & Đồng Bộ Từ Điển Đa Ngôn Ngữ Động Từ Trang Cấu Hình (TASK-017)
 
 ### 1. Bối cảnh & Yêu cầu:

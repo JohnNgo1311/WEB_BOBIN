@@ -290,25 +290,31 @@ class BobinController extends Controller
 
     public function extrusionEditBobinView()
     {
-        //TODO 1. Chỉ chấp nhận GET
+        // Kiểm tra quyền extrusion_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+        if (!AuthHelper::hasPermission('extrusion_edit')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
+        // Chỉ chấp nhận GET
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
         try {
-
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getListDetailBobinsForEditting($dto) ?? [];
 
             if (empty($bobins)) {
                 $bobins = [];
-            } else {
             }
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
+
         $this->view('extrusionEditBobinView', data: [
-            'bobins'  => $bobins,
+            'bobins'       => $bobins,
+            'totalRecords' => count($bobins),
         ]);
     }
 
@@ -445,7 +451,7 @@ class BobinController extends Controller
         }
         try {
             $pdo = Database::getInstance()->pdo();
-            $stmt = $pdo->prepare("SELECT password FROM employee_list WHERE id = :id AND is_active = 1 LIMIT 1");
+            $stmt = $pdo->prepare("SELECT password FROM employee_list WHERE id = :id LIMIT 1");
             $stmt->execute([':id' => $userId]);
             $dbHash = $stmt->fetchColumn();
             if (!$dbHash) {

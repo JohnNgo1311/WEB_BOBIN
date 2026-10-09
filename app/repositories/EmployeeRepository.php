@@ -1,4 +1,5 @@
 <?php
+require_once ROOT_PATH . '/app/core/GlobalData.php';
 require_once ROOT_PATH . '/app/entities/EmployeeEntity.php';
 
 class EmployeeRepository
@@ -12,9 +13,8 @@ class EmployeeRepository
 
     public function getListEmployee(): array
     {
-        $sql = "SELECT id, employee_code, employee_name, role, username, is_active, updated_time 
+        $sql = "SELECT id, employee_code, employee_name, cost_center, role, username, updated_time 
                 FROM employee_list 
-                WHERE is_active = 1 
                 ORDER BY employee_code ASC";
 
         try {
@@ -63,7 +63,7 @@ class EmployeeRepository
             $pdo = $this->db->pdo();
             $stmt = $pdo->prepare("SELECT id, employee_code, employee_name, updated_time 
                                    FROM employee_list 
-                                   WHERE employee_code = :code AND is_active = 1 
+                                   WHERE employee_code = :code 
                                    LIMIT 1");
             $stmt->execute([':code' => $code]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);

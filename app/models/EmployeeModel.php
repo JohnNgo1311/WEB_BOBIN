@@ -15,36 +15,31 @@ class EmployeeModel
      */
     public function getAll(array $filters = []): array
     {
-        $sql = "SELECT id, employee_code, employee_name, role, username, password, is_active, is_first_login, updated_time 
+        $sql = "SELECT id, employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time 
                 FROM employee_list 
                 WHERE 1=1";
         $params = [];
 
-        // Lọc từ khóa (Mã NV, Họ tên, Username)
+        // Lọc từ khóa (Mã NV, Họ tên, Username, Mã bộ phận)
         if (!empty($filters['keyword'])) {
             $kw = '%' . trim($filters['keyword']) . '%';
-            $sql .= " AND (employee_code LIKE :kw1 OR employee_name LIKE :kw2 OR username LIKE :kw3)";
+            $sql .= " AND (employee_code LIKE :kw1 OR employee_name LIKE :kw2 OR username LIKE :kw3 OR cost_center LIKE :kw4)";
             $params[':kw1'] = $kw;
             $params[':kw2'] = $kw;
             $params[':kw3'] = $kw;
+            $params[':kw4'] = $kw;
         }
 
-        // Lọc theo vai trò (extrusion, qc, winding, admin)
+        // Lọc theo mã bộ phận (cost_center)
+        if (!empty($filters['cost_center']) && $filters['cost_center'] !== 'all') {
+            $sql .= " AND cost_center = :cost_center";
+            $params[':cost_center'] = $filters['cost_center'];
+        }
+
+        // Lọc theo vai trò (nếu có)
         if (!empty($filters['role']) && $filters['role'] !== 'all') {
             $sql .= " AND role = :role";
             $params[':role'] = $filters['role'];
-        }
-
-        // Lọc theo trạng thái làm việc (1: đang làm, 0: nghỉ/khóa)
-        // Hỗ trợ cả giá trị string 'active'/'inactive' từ form và số nguyên 0/1
-        if (isset($filters['status']) && $filters['status'] !== '' && $filters['status'] !== 'all') {
-            $sql .= " AND is_active = :status";
-            $statusVal = match ($filters['status']) {
-                'active'   => 1,
-                'inactive' => 0,
-                default    => (int)$filters['status']
-            };
-            $params[':status'] = $statusVal;
         }
 
         $sql .= " ORDER BY id ASC";
@@ -88,12 +83,9 @@ class EmployeeModel
         }
 
         $total = $this->pdo->query("SELECT COUNT(*) FROM employee_list")->fetchColumn();
-        $active = $this->pdo->query("SELECT COUNT(*) FROM employee_list WHERE is_active = 1")->fetchColumn();
 
         return [
             'total'     => (int)$total,
-            'active'    => (int)$active,
-            'inactive'  => (int)$total - (int)$active,
             'extrusion' => $roleCounts['extrusion'] ?? 0,
             'qc'        => $roleCounts['qc'] ?? 0,
             'winding'   => $roleCounts['winding'] ?? 0,
@@ -108,10 +100,10 @@ class EmployeeModel
     {
         $code = trim($data['employee_code'] ?? '');
         $name = trim($data['employee_name'] ?? '');
+        $costCenter = trim($data['cost_center'] ?? '');
         $role = trim($data['role'] ?? 'extrusion');
         $username = trim($data['username'] ?? $code);
         $rawPass = trim($data['password'] ?? '123');
-        $isActive = isset($data['is_active']) ? (int)$data['is_active'] : 1;
         $isFirstLogin = isset($data['is_first_login']) ? (int)$data['is_first_login'] : 1;
 
         if ($code === '' || $name === '') {
@@ -130,16 +122,16 @@ class EmployeeModel
 
         $passwordHash = password_hash($rawPass, PASSWORD_DEFAULT);
 
-        $sql = "INSERT INTO employee_list (employee_code, employee_name, role, username, password, is_active, is_first_login, updated_time) 
-                VALUES (:code, :name, :role, :username, :password, :is_active, :is_first_login, NOW())";
+        $sql = "INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time) 
+                VALUES (:code, :name, :cost_center, :role, :username, :password, :is_first_login, NOW())";
         $stmt = $this->pdo->prepare($sql);
         $res = $stmt->execute([
             ':code'           => $code,
             ':name'           => $name,
+            ':cost_center'    => $costCenter !== '' ? $costCenter : null,
             ':role'           => $role,
             ':username'       => $username,
             ':password'       => $passwordHash,
-            ':is_active'      => $isActive,
             ':is_first_login' => $isFirstLogin
         ]);
 
@@ -147,13 +139,13 @@ class EmployeeModel
     }
 
     /**
-     * Cập nhật thông tin nhân viên (Họ tên, Vai trò, Tình trạng)
+     * Cập nhật thông tin nhân viên (Họ tên, Mã bộ phận, Vai trò)
      */
     public function update(int $id, array $data): bool
     {
         $name = trim($data['employee_name'] ?? '');
+        $costCenter = trim($data['cost_center'] ?? '');
         $role = trim($data['role'] ?? 'extrusion');
-        $isActive = isset($data['is_active']) ? (int)$data['is_active'] : 1;
 
         if ($name === '') {
             return false;
@@ -164,44 +156,42 @@ class EmployeeModel
             $role = 'extrusion';
         }
 
-        // Nếu có truyền username hợp lệ thì cập nhật, ngược lại chỉ cập nhật tên, vai trò và tình trạng
         if (!empty($data['username'])) {
             $username = trim($data['username']);
             $sql = "UPDATE employee_list 
                     SET employee_name = :name, 
+                        cost_center = :cost_center, 
                         role = :role, 
                         username = :username, 
-                        is_active = :is_active, 
                         updated_time = NOW() 
                     WHERE id = :id";
             $stmt = $this->pdo->prepare($sql);
             return $stmt->execute([
-                ':name'      => $name,
-                ':role'      => $role,
-                ':username'  => $username,
-                ':is_active' => $isActive,
-                ':id'        => $id
+                ':name'        => $name,
+                ':cost_center' => $costCenter !== '' ? $costCenter : null,
+                ':role'        => $role,
+                ':username'    => $username,
+                ':id'          => $id
             ]);
         }
 
         $sql = "UPDATE employee_list 
                 SET employee_name = :name, 
+                    cost_center = :cost_center, 
                     role = :role, 
-                    is_active = :is_active, 
                     updated_time = NOW() 
                 WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([
-            ':name'      => $name,
-            ':role'      => $role,
-            ':is_active' => $isActive,
-            ':id'        => $id
+            ':name'        => $name,
+            ':cost_center' => $costCenter !== '' ? $costCenter : null,
+            ':role'        => $role,
+            ':id'          => $id
         ]);
     }
 
     /**
      * Thay đổi / Cấp lại mật khẩu nhân viên (Admin Reset Password)
-     * Khi cấp lại mật khẩu, tự động đặt is_first_login = 1 để nhân viên phải đổi MK khi đăng nhập
      */
     public function resetPassword(int $id, ?string $newPassword = null): bool
     {
@@ -241,13 +231,13 @@ class EmployeeModel
         $validRoles = ['extrusion', 'qc', 'winding', 'admin'];
 
         foreach ($rows as $index => $row) {
-            $lineNum = $index + 2; // Dòng excel tính từ 2 (sau header)
+            $lineNum = $index + 2;
 
             $code = trim($row['employee_code'] ?? ($row[0] ?? ''));
             $name = trim($row['employee_name'] ?? ($row[1] ?? ''));
-            $role = strtolower(trim($row['role'] ?? ($row[2] ?? 'extrusion')));
-            $username = trim($row['username'] ?? ($row[3] ?? $code));
-            $isActive = isset($row['is_active']) ? (int)$row['is_active'] : 1;
+            $costCenter = trim($row['cost_center'] ?? ($row[2] ?? ''));
+            $role = strtolower(trim($row['role'] ?? ($row[3] ?? 'extrusion')));
+            $username = trim($row['username'] ?? ($row[4] ?? $code));
 
             if ($code === '' || $name === '') {
                 $errors[] = "Dòng {$lineNum}: Bỏ qua vì thiếu Mã nhân viên hoặc Họ tên.";
@@ -269,14 +259,14 @@ class EmployeeModel
             if ($existing) {
                 if ($updateIfExists) {
                     $upStmt = $this->pdo->prepare("UPDATE employee_list 
-                                                   SET employee_name = :name, role = :role, username = :username, is_active = :is_active, updated_time = NOW() 
+                                                   SET employee_name = :name, cost_center = :cost_center, role = :role, username = :username, updated_time = NOW() 
                                                    WHERE id = :id");
                     $upStmt->execute([
-                        ':name'      => $name,
-                        ':role'      => $role,
-                        ':username'  => $username !== '' ? $username : $code,
-                        ':is_active' => $isActive,
-                        ':id'        => $existing['id']
+                        ':name'        => $name,
+                        ':cost_center' => $costCenter !== '' ? $costCenter : null,
+                        ':role'        => $role,
+                        ':username'    => $username !== '' ? $username : $code,
+                        ':id'          => $existing['id']
                     ]);
                     $updated++;
                 } else {
@@ -284,15 +274,15 @@ class EmployeeModel
                 }
             } else {
                 $defaultPassHash = password_hash('123', PASSWORD_DEFAULT);
-                $insStmt = $this->pdo->prepare("INSERT INTO employee_list (employee_code, employee_name, role, username, password, is_active, is_first_login, updated_time) 
-                                                VALUES (:code, :name, :role, :username, :pass, :is_active, 1, NOW())");
+                $insStmt = $this->pdo->prepare("INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time) 
+                                                VALUES (:code, :name, :cost_center, :role, :username, :pass, 1, NOW())");
                 $insStmt->execute([
-                    ':code'      => $code,
-                    ':name'      => $name,
-                    ':role'      => $role,
-                    ':username'  => $username !== '' ? $username : $code,
-                    ':pass'      => $defaultPassHash,
-                    ':is_active' => $isActive
+                    ':code'        => $code,
+                    ':name'        => $name,
+                    ':cost_center' => $costCenter !== '' ? $costCenter : null,
+                    ':role'        => $role,
+                    ':username'    => $username !== '' ? $username : $code,
+                    ':pass'        => $defaultPassHash
                 ]);
                 $inserted++;
             }

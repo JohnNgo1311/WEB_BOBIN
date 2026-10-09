@@ -2,6 +2,116 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [2026-10-09] - Khắc Phục Triệt Để Lỗi 3 Toast & Màn Hình Camera Chớp Nháy Khi Quét QR (TASK-024)
+
+### 1. Bối cảnh & Yêu cầu:
+- Người dùng phát hiện khi quét 1 mã QR thì xuất hiện cùng lúc **3 thông báo Toast xếp chồng**, đồng thời **màn hình camera chớp chớp nhấp nháy nhanh** trong quá trình quét.
+- Yêu cầu rà soát cẩn thận, khắc phục triệt để.
+- **Ràng buộc an toàn & bản quyền:** Tuyệt đối không liên quan hay sử dụng bất kỳ tác vụ/công cụ nào của Astral (`astral.sh`). Hoàn toàn 100% Offline Local Intranet, không tải thêm thư viện từ internet.
+
+### 2. Phân tích nguyên nhân gốc rễ (Root Cause Analysis):
+1. **Nguyên nhân 3 Toast hiển thị đồng thời:**
+   - Thư viện `html5-qrcode` quét camera liên tục theo chu kỳ 15 FPS (mỗi frame cách nhau ~66.6ms).
+   - Khi phát hiện mã QR hợp lệ ở frame đầu tiên (t = 0ms), hàm `handleScanSuccess()` được gọi và kích hoạt thông báo Toast thành công. Để tạo hiệu ứng thị giác cho người dùng kịp nhìn thấy khung ngắm nhận diện mã, hàm sử dụng `setTimeout(..., 250)` trước khi dừng máy ảnh bằng `stop()`.
+   - Tuy nhiên, `handleScanSuccess()` lại **thiếu cờ khóa chặn re-entry (`hasScanned`)** và không lập tức tạm dừng luồng quét. Do đó, ở frame tiếp theo (t = 66ms) và frame thứ ba (t = 133ms), mã QR vẫn nằm trong khung hình và thư viện tiếp tục gọi `onSuccess()` thêm 2 lần nữa. Kết quả là hàm `window.Toast.show()` bị kích hoạt 3 lần liên tiếp, tạo ra 3 thẻ Toast xếp chồng lên nhau.
+2. **Nguyên nhân màn hình camera quét bị chớp chớp nháy nhanh:**
+   - Thư viện `html5-qrcode` sử dụng một thẻ `<canvas id="qr-canvas">` nội bộ để trích xuất dữ liệu điểm ảnh (pixel) từ thẻ `<video>` đưa vào thuật toán giải mã QR. Mặc định trong mã nguồn của thư viện, phần tử này được gán `canvasElement.style.display = "none"`.
+   - Tuy nhiên, trong file `scanQR.css` và 7 stylesheet của các trang trước đó có chứa selector:
+     ```css
+     #qr-reader canvas { max-width: 100% !important; width: 100% !important; display: block !important; }
+     ```
+     Selector này vô tình bắt trúng thẻ `<canvas id="qr-canvas">` bên trong container `#qr-reader` và ép nó hiển thị ra ngoài màn hình (`display: block !important`).
+   - Vì container `#qr-video-viewport` là một Flexbox (`display: flex; align-items: center; justify-content: center;`), việc cả thẻ `<video>` lẫn thẻ `<canvas>` cùng bị ép hiển thị với kích thước 100% khiến trình duyệt liên tục phải tính toán lại bố cục (flex layout reflow).
+   - Hơn nữa, cấu hình `disableFlip: false` mặc định khiến thư viện liên tục đảo ngược ma trận biến đổi 2D (`context.scale(-1, 1)`) trên canvas 15 lần/giây, dẫn đến hiện tượng khung hình giật cục, chớp nhấp nháy dữ dội.
+
+### 3. Giải pháp đã triển khai:
+1. **Khắc phục dứt điểm lỗi 3 Toast trong `public/assets/js/qrScannerHelper.js`:**
+   - Thêm cờ khóa trạng thái `hasScanned: false` vào `QRScannerHelper`. Reset cờ về `false` mỗi khi khởi động hoặc dừng phiên quét.
+   - Ngay khi phát hiện mã QR đầu tiên trong `handleScanSuccess()`:
+     - Kiểm tra `if (this.hasScanned) return;` và lập tức đánh dấu `this.hasScanned = true;`.
+     - Gọi ngay `this.scannerInstance.pause(true);` để ngắt dứt khoát vòng lặp giải mã frame của thư viện và đóng băng video hiển thị kết quả.
+     - Kích hoạt duy nhất 1 lần `window.Toast.show()`.
+     - Quản lý bộ đếm `closeTimer` an toàn trước khi dọn dẹp camera và gọi callback `onSuccess`.
+2. **Thêm cơ chế phòng thủ nhiều lớp (Defense-in-depth) trong `public/assets/js/toast.js`:**
+   - Bổ sung cơ chế chống spam/trùng lặp Toast trong hàm `Toast.show()`: Tự động chặn các thông báo giống hệt nhau liên tiếp xuất hiện trong khoảng thời gian 1.5 giây (`debounce 1500ms`).
+3. **Triệt tiêu hiện tượng camera chớp nháy trong `public/assets/css/scanQR.css`:**
+   - Ẩn triệt để toàn bộ canvas nội bộ của thư viện:
+     ```css
+     #qr-reader canvas, #reader canvas, #qr-video-viewport canvas, canvas#qr-canvas, .qr-video-region canvas {
+         display: none !important;
+         visibility: hidden !important;
+         position: absolute !important;
+         width: 0 !important;
+         height: 0 !important;
+         opacity: 0 !important;
+         pointer-events: none !important;
+     }
+     ```
+   - Ẩn `#qr-shaded-region` và mọi phần tử phụ ngoài ý muốn do thư viện tự ý chèn: `#qr-video-viewport > *:not(video) { display: none !important; }`.
+   - Cố định tỉ lệ video khung ngắm `height: 100% !important; object-fit: cover !important;`.
+   - Thiết lập `disableFlip: true` trong cấu hình quét để ngắt hoàn toàn việc lật đảo ma trận canvas không cần thiết.
+4. **Chuẩn hóa CSS đồng bộ trên 7 stylesheet các trang:**
+   - Xóa bỏ selector `#qr-reader canvas` và thay bằng quy tắc ẩn triệt để canvas trên 7 file: `extrusion.css`, `extrusionEditBobin.css`, `listBobinDetail.css`, `listBobinHistory.css`, `listBobin_QC.css`, `listBobin_Winding.css`, `listPendingCancellation.css`.
+
+---
+
+## [2026-10-09] - Khắc Phục Triệt Để & Nâng Cấp Toàn Diện Giao Diện Quét Mã QR (TASK-023)
+
+### 1. Bối cảnh & Yêu cầu:
+- Người dùng yêu cầu kiểm tra lại chức năng `scanQR`, khắc phục các lỗi và vấn đề ở giao diện quét mã QR.
+- **Ràng buộc nghiêm ngặt:** Tuyệt đối không tải thêm bất kỳ thư viện ngoài nào trên internet (Offline Intranet 100%).
+
+### 2. Nguyên nhân gốc rễ (Root Cause Analysis):
+1. **Lỗi Fatal Error tại `app/views/scanQR.php`:**
+   - File `app/views/scanQR.php` gọi trực tiếp helper `__('ph_qr_scan_result')` và `__('search')` mà không nạp `Language.php`. Khi truy cập trực tiếp qua browser, PHP dừng với lỗi: `Fatal error: Uncaught Error: Call to undefined function __() in app/views/scanQR.php:84`.
+   - Router chưa đăng ký action `scanQR` trong `publicActions` và `BobinController.php` thiếu method `scanQR()`, khiến route `bobin/scanQR` không hoạt động.
+2. **Giao diện quét mã QR thô sơ và trải nghiệm người dùng kém (UI/UX Flaws):**
+   - Khi sử dụng `Html5QrcodeScanner` mặc định của thư viện `html5-qrcode`, thư viện tự chèn các phần tử DOM unstyled thô sơ: nút "Request Camera Permissions", select box "Select Camera", nút "Start Scanning" / "Stop Scanning", link ngoài ScanApp/Github.
+   - Người dùng bấm nút "Quét QR" trên trang, nhưng camera không mở ngay mà lại hiện một hộp thoại tiếng Anh bắt người dùng phải bấm thêm nút phụ bên trong để cấp quyền hoặc khởi chạy.
+   - Khung hình camera không có Reticle căn chỉnh (góc ngắm), không có hiệu ứng tia laser quét mã, video bị co dãn không đúng tỉ lệ (`object-fit: cover`).
+   - Nút bấm `btnScanQR` khi chuyển sang trạng thái "Đóng Camera" bị hardcode text tiếng Việt, làm hỏng đa ngôn ngữ (`en`, `ja`) và ghi đè mất class CSS riêng của các trang (`ext-btn-scan`, `qc-btn-scan`, `wnd-btn-scan`).
+3. **Quản lý vòng đời Camera chưa triệt để (Lifecycle & Memory Leak):**
+   - Khi đóng camera, hàm `stopScanner()` cũ chỉ gọi `html5QrcodeScanner.clear()` bất đồng bộ mà không dừng dứt khoát MediaStream tracks, không reset biến instance về `null`, khiến đèn webcam vẫn sáng và gây lỗi khi bấm mở lại lần 2.
+
+### 3. Các giải pháp đã triển khai:
+- **Khắc phục trang `app/views/scanQR.php` & Điều hướng:**
+  - Khởi tạo an toàn `ROOT_PATH`, `BASE_URL`, `session_start()` và `Language::init()` ở đầu file `scanQR.php`.
+  - Bổ sung method `scanQR()` vào `BobinController.php` và cấp quyền truy cập `scanqr` trong `$publicActions['bobin']` tại `app/core/Router.php`.
+  - Thiết kế lại trang `scanQR.php` chuẩn Dashboard với nút quay lại, tiêu đề chuyên nghiệp, chọn đích tra cứu (QC, Cuộn, Chi tiết, Lịch sử), input kết quả và tự động submit sau khi quét.
+- **Xây dựng Module Quản lý Camera Trung tâm `public/assets/js/qrScannerHelper.js`:**
+  - Sử dụng trực tiếp lớp `Html5Qrcode` (từ file cục bộ `public/assets/js/html5-qrcode.min.js`), loại bỏ hoàn toàn các phần tử unstyled và link ngoài của Minhaz.
+  - Quản lý trạng thái `isScanning`, tự động dừng camera dứt điểm (`await scannerInstance.stop()`) và giải phóng bộ nhớ.
+  - Tự động kích hoạt ngay camera sau (`facingMode: 'environment'`) hoặc camera đầu tiên mà không yêu cầu thêm thao tác bấm phụ.
+  - Hỗ trợ đổi camera trước/sau linh hoạt khi thiết bị có nhiều camera.
+  - Tích hợp tính năng tải ảnh mã QR từ thiết bị (`scanFile`) dành cho máy tính không có camera hoặc thiết bị bị chặn quyền truy cập.
+  - Màn hình chờ kết nối (Spinner) và khối thông báo lỗi thân thiện kèm nút Thử lại.
+- **Xây dựng Stylesheet Chuyên dụng `public/assets/css/scanQR.css`:**
+  - Thiết kế thẻ `.qr-scanner-card` bo góc 16px, đổ bóng mềm mại, viền chuẩn công nghiệp.
+  - Viewport tối giản với khung ngắm Reticle 4 góc phát sáng ngọc lục bảo (`#10b981`), tia laser quét lên xuống mượt mà (`qrLaserSweep`), và badge trạng thái đang quét.
+  - Hiệu ứng flash viền xanh lá khi nhận diện mã thành công.
+  - Ẩn triệt để toàn bộ watermark bên ngoài, scanapp link của thư viện `html5-qrcode`.
+  - Bổ sung style `.is-scanning` cho nút bấm `#btnScanQR` trên toàn bộ các trang (gradient đỏ, chữ Đóng Camera).
+  - Responsive hoàn hảo trên điện thoại di động, máy tính bảng và màn hình máy tính bàn.
+- **Đa ngôn ngữ & Đồng bộ Toàn Hệ Thống:**
+  - Thêm 11 translation keys cho QR Scanner trên cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+  - Cập nhật 5 file script quét mã QR:
+    - `public/assets/js/Extrusion/scanQR.js`
+    - `public/assets/js/Extrusion/edit_scanQR.js`
+    - `public/assets/js/QC/scanQR.js`
+    - `public/assets/js/Winding/scanQR.js`
+    - `public/assets/js/Manage/scanQR.js`
+  - Đồng bộ trên toàn bộ 10 file view:
+    - `app/views/scanQR.php`
+    - `app/views/extrusionView.php`
+    - `app/views/extrusionEditBobinView.php`
+    - `app/views/qcView.php`
+    - `app/views/qcEditBobinView.php`
+    - `app/views/windingView.php`
+    - `app/views/windingEditBobinView.php`
+    - `app/views/listBobinDetailView.php`
+    - `app/views/listBobinHistoryView.php`
+    - `app/views/listPendingCancellationView.php`
+
 ## [2026-10-09] - Làm Hiển Thị Nổi Bật 4 Thông Số Bobin & Khắc Phục Triệt Để Lỗi Nút Hủy Bobin (TASK-022)
 
 ### 1. Bối cảnh & Yêu cầu:

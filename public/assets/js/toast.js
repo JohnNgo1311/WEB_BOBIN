@@ -299,6 +299,9 @@
     }
 
     // 3. ĐỐI TƯỢNG TOAST TOÀN CỤC CHÍNH
+    let lastToastKey = '';
+    let lastToastTime = 0;
+
     const Toast = {
         /**
          * Hiển thị Toast thông báo
@@ -312,6 +315,15 @@
             const normType = normalizeType(type, message);
             const { icon, title } = getTypeDetails(normType);
             const cleanText = sanitizeMessage(message);
+
+            // Chống spam thông báo giống hệt nhau liên tiếp trong vòng 1.5 giây
+            const now = Date.now();
+            const toastKey = `${normType}_${cleanText}`;
+            if (toastKey === lastToastKey && (now - lastToastTime) < 1500) {
+                return null;
+            }
+            lastToastKey = toastKey;
+            lastToastTime = now;
 
             const container = getToastContainer();
 

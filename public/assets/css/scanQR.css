@@ -1,0 +1,580 @@
+/**
+ * ==============================================================================
+ * DESIGN SYSTEM - QR CODE SCANNER (WEB_BOBIN)
+ * 100% Local Offline - Modern Industrial UX - Responsive Mobile/Tablet/Desktop
+ * ==============================================================================
+ */
+
+/* Container bao ngoài của Scanner */
+#qr-reader,
+#reader {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 16px;
+    background: transparent;
+    border: none !important;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* Thẻ Scanner chuyên nghiệp (QR Scanner Card) */
+.qr-scanner-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 480px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: qrFadeSlideIn 0.25s ease-out;
+}
+
+@keyframes qrFadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header của Scanner */
+.qr-scanner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+}
+
+.qr-scanner-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.qr-scanner-header-title svg {
+    color: #10b981;
+    flex-shrink: 0;
+}
+
+.qr-scanner-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qr-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.qr-btn-icon:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+.qr-btn-close {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+.qr-btn-close:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+/* Viewport khung camera */
+.qr-scanner-viewport-wrap {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    max-height: 380px;
+    background: #090d16;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.qr-video-region {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-video-region video {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 380px !important;
+    object-fit: cover !important;
+    display: block !important;
+    border-radius: 0 !important;
+}
+
+/* Khung ngắm Reticle (Targeting Box) */
+.qr-reticle-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 230px;
+    height: 230px;
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+/* 4 góc khung ngắm */
+.qr-corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: #10b981;
+    border-style: solid;
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6));
+    transition: border-color 0.2s ease;
+}
+
+.qr-corner-tl {
+    top: 0;
+    left: 0;
+    border-width: 3.5px 0 0 3.5px;
+    border-top-left-radius: 6px;
+}
+
+.qr-corner-tr {
+    top: 0;
+    right: 0;
+    border-width: 3.5px 3.5px 0 0;
+    border-top-right-radius: 6px;
+}
+
+.qr-corner-bl {
+    bottom: 0;
+    left: 0;
+    border-width: 0 0 3.5px 3.5px;
+    border-bottom-left-radius: 6px;
+}
+
+.qr-corner-br {
+    bottom: 0;
+    right: 0;
+    border-width: 0 3.5px 3.5px 0;
+    border-bottom-right-radius: 6px;
+}
+
+/* Tia laser quét lên xuống */
+.qr-laser-line {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #10b981 20%, #34d399 50%, #10b981 80%, transparent 100%);
+    box-shadow: 0 0 10px 2px rgba(16, 185, 129, 0.7), 0 0 20px 4px rgba(16, 185, 129, 0.4);
+    animation: qrLaserSweep 2.2s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 11;
+}
+
+@keyframes qrLaserSweep {
+    0% {
+        top: 6px;
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        top: calc(100% - 8px);
+        opacity: 0.6;
+    }
+}
+
+/* Trạng thái quét thành công (Flash Reticle) */
+.qr-reticle-overlay.qr-success .qr-corner {
+    border-color: #22c55e !important;
+    filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.9)) !important;
+}
+
+.qr-reticle-overlay.qr-success .qr-laser-line {
+    background: #22c55e;
+    box-shadow: 0 0 16px 4px rgba(34, 197, 94, 0.9);
+}
+
+/* Badge trạng thái quét ở góc dưới viewport */
+.qr-status-pill {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(6px);
+    color: #e2e8f0;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 12;
+    white-space: nowrap;
+}
+
+.qr-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: qrPulseDot 1.4s ease-in-out infinite;
+}
+
+@keyframes qrPulseDot {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.6;
+    }
+}
+
+/* Màn hình chờ kết nối (Loading Overlay) */
+.qr-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: #090d16;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 20;
+}
+
+.qr-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: qrSpin 0.8s linear infinite;
+}
+
+@keyframes qrSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Khối báo lỗi camera thân thiện */
+.qr-error-card {
+    padding: 24px 20px;
+    text-align: center;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.qr-error-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.qr-error-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.qr-error-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+    max-width: 360px;
+}
+
+.qr-error-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.qr-btn-retry {
+    padding: 8px 16px;
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.qr-btn-retry:hover {
+    background: #0369a1;
+}
+
+/* Footer & công cụ tải ảnh thay thế */
+.qr-scanner-footer {
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.qr-hint-text {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.qr-upload-btn-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.qr-upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.qr-upload-label:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.qr-file-input {
+    display: none;
+}
+
+/* ==============================================================================
+ * OVERRIDES CHO CÁC PHẦN TỬ DO THƯ VIỆN HTML5-QRCODE SINH RA
+ * ============================================================================== */
+#qr-reader,
+#qr-reader__scan_region,
+#qr-reader__dashboard {
+    border: none !important;
+}
+
+/* Ẩn triệt để watermark bên ngoài và link scanapp của thư viện */
+#qr-reader__header_message a,
+#qr-reader__dashboard a[href*="scanapp"],
+#qr-reader__dashboard a[href*="github.com/mebjas"],
+#qr-reader img[alt="Info icon"],
+#reader a[href*="scanapp"],
+#reader a[href*="github.com/mebjas"],
+#reader img[alt="Info icon"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Style cho các nút điều khiển mặc định nếu dùng Html5QrcodeScanner */
+#html5-qrcode-button-camera-permission,
+#html5-qrcode-button-camera-start,
+#html5-qrcode-button-camera-stop {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 8px 18px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
+    margin: 6px 4px !important;
+    transition: all 0.15s ease !important;
+}
+
+#html5-qrcode-button-camera-permission:hover,
+#html5-qrcode-button-camera-start:hover {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
+    transform: translateY(-1px) !important;
+}
+
+#html5-qrcode-button-camera-stop {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25) !important;
+}
+
+#html5-qrcode-button-camera-stop:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+}
+
+/* Select chọn camera */
+#html5-qrcode-select-camera {
+    padding: 7px 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    color: #1e293b !important;
+    background-color: #ffffff !important;
+    outline: none !important;
+    margin: 6px 4px !important;
+    max-width: 240px !important;
+}
+
+#html5-qrcode-anchor-scan-type-change {
+    font-size: 12px !important;
+    color: #0284c7 !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    margin-top: 6px !important;
+    display: inline-block !important;
+}
+
+#html5-qrcode-anchor-scan-type-change:hover {
+    text-decoration: underline !important;
+}
+
+/* Khắc phục tỉ lệ khung video camera không bị tràn hoặc méo */
+#qr-reader video,
+#reader video,
+.qr-video-region video,
+#qr-video-viewport video {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 380px !important;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+    display: block !important;
+}
+
+/* Ẩn triệt để canvas nội bộ của thư viện html5-qrcode để triệt tiêu hiện tượng chớp nháy màn hình */
+#qr-reader canvas,
+#reader canvas,
+#qr-video-viewport canvas,
+canvas#qr-canvas,
+.qr-video-region canvas {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    max-width: 0 !important;
+    max-height: 0 !important;
+    z-index: -1 !important;
+}
+
+/* Ẩn shaded region mặc định và mọi phần tử unstyled do thư viện html5-qrcode tự ý chèn */
+#qr-shaded-region,
+#qr-video-viewport > *:not(video) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Responsive trên màn hình di động & tablet */
+@media (max-width: 768px) {
+    #qr-reader,
+    #reader,
+    .qr-scanner-card {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .qr-scanner-viewport-wrap {
+        min-height: 240px;
+        max-height: 320px;
+    }
+
+    .qr-reticle-overlay {
+        width: 190px;
+        height: 190px;
+    }
+
+    .qr-scanner-footer {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .qr-upload-btn-wrap {
+        justify-content: center;
+    }
+}
+
+/* ==============================================================================
+ * STYLE TRẠNG THÁI NÚT QUÉT QR TRÊN TOÀN BỘ CÁC TRANG
+ * ============================================================================== */
+#btnScanQR.is-scanning {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+#btnScanQR.is-scanning:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+}
+
+#btnScanQR.is-scanning svg {
+    color: #ffffff !important;
+    stroke: #ffffff !important;
+}
+

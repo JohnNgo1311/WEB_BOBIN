@@ -109,6 +109,10 @@ class BobinController extends Controller
     {
         $this->view("createBobinView");
     }
+    public function scanQR()
+    {
+        require_once ROOT_PATH . "/app/views/scanQR.php";
+    }
     #endregion
 
 

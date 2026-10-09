@@ -236,6 +236,31 @@ CREATE TABLE `employee_list` (
 - Tối ưu hóa UI/UX:
   - Bổ sung hiệu ứng chuyển động mượt mà (`transition: transform 0.15s ease, box-shadow 0.15s ease`) và hover elevation (`transform: translateY(-1px)`) trên cả 5 stylesheet.
   - Đồng bộ trên 5 Views: `listBobinDetailView.php`, `listBobinView.php`, `listBobinHistoryView.php`, `qcView.php`, `windingView.php`.
+
+### TASK-023
+**Status:** DONE
+- Kiểm tra lại toàn diện chức năng scanQR và khắc phục triệt để các vấn đề giao diện quét mã QR:
+  - Khắc phục lỗi nghiêm trọng Fatal error `Call to undefined function __()` tại `app/views/scanQR.php` khi truy cập trực tiếp bằng cách khởi tạo `Language::init()` an toàn và bổ sung action `scanQR` vào `BobinController.php` & `Router.php` (hỗ trợ cả URL `bobin/scanQR`).
+  - Thiết kế lại toàn bộ giao diện quét mã QR theo Design System hiện đại, 100% Offline Local, tuân thủ nghiêm ngặt không tải thêm bất kỳ thư viện ngoài nào (sử dụng thư viện `html5-qrcode.min.js` đã có sẵn trong dự án).
+  - Xây dựng module điều phối máy ảnh trung tâm `public/assets/js/qrScannerHelper.js` quản lý vòng đời camera chặt chẽ:
+    - Mở camera ngay lập tức khi bấm nút Quét QR (không bắt người dùng phải bấm thêm nút "Request Permissions" hay "Start scanning" thô sơ của thư viện).
+    - Tạo hiệu ứng khung ngắm Reticle 4 góc phát sáng và tia laser xanh quét lên xuống mượt mà (`qrLaserSweep`).
+    - Hỗ trợ đổi camera trước/sau linh hoạt khi thiết bị có nhiều camera.
+    - Hỗ trợ tính năng tải ảnh mã QR từ thiết bị (`scanFile`) dành cho máy tính không có webcam.
+    - Đóng camera sạch sẽ (dừng toàn bộ MediaStream tracks) khi bấm đóng, giúp tắt đèn webcam ngay lập tức và tránh xung đột khi mở lại.
+  - Xây dựng stylesheet độc lập `public/assets/css/scanQR.css` chuẩn hóa khung hình, tỉ lệ video, ẩn toàn bộ watermark bên ngoài, hỗ trợ responsive trên mọi thiết bị di động, tablet và desktop.
+  - Bổ sung 11 translation keys cho QR Scanner trên cả 3 ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+### TASK-024
+**Status:** DONE
+- Kiểm tra toàn diện và khắc phục triệt để hiện tượng quét 1 mã nhưng hiển thị 3 thông báo Toast xếp chồng, đồng thời màn hình camera quét mã bị chớp chớp nhấp nháy nhanh:
+  - **Khắc phục 3 Toast xếp chồng:**
+    - Phân tích nguyên nhân: Thư viện `html5-qrcode` quét liên tục 15 frame/giây (mỗi 66.6ms). Hàm `handleScanSuccess()` trước đây sử dụng `setTimeout(..., 250)` để đóng máy ảnh nhưng thiếu cờ khóa (`hasScanned`), dẫn đến trong 250ms chờ đó, các frame tiếp theo ở 66ms và 132ms tiếp tục kích hoạt callback nhận diện thành công, làm gọi hàm `window.Toast.show()` 3 lần liên tiếp.
+    - Giải pháp: Bổ sung cờ chặn re-entry `hasScanned` vào `QRScannerHelper`, gọi ngay `this.scannerInstance.pause(true)` ngay khi quét trúng mã đầu tiên để ngắt chu kỳ giải mã frame và đóng băng video; đồng thời bổ sung cơ chế chống spam Toast trùng lặp trong 1.5 giây tại `public/assets/js/toast.js`.
+  - **Khắc phục màn hình quét chớp chớp nháy nhanh:**
+    - Phân tích nguyên nhân: Trong `scanQR.css` và 7 file stylesheet của các trang, selector `#qr-reader canvas` bị gán `display: block !important; width: 100% !important;`. Phần tử `<canvas id="qr-canvas">` vốn là vùng nhớ đệm offscreen ẩn (`display: none`) của thư viện để trích xuất frame, nhưng việc ép hiển thị nó vào trong flex container `#qr-video-viewport` khiến canvas và thẻ video tranh chấp layout 15 lần/giây; đồng thời cấu hình `disableFlip: false` liên tục lật ma trận 2D trên canvas gây ra hiện tượng chớp nhấp nháy dữ dội.
+    - Giải pháp: Ẩn triệt để toàn bộ canvas nội bộ (`#qr-reader canvas, #reader canvas, #qr-video-viewport canvas, canvas#qr-canvas { display: none !important; ... }`), ẩn `#qr-shaded-region`, thiết lập `disableFlip: true`, chuẩn hóa video `height: 100% !important; object-fit: cover !important;`, loại bỏ selector canvas thừa tại cả 7 file stylesheet của các trang.
+  - **Ràng buộc an toàn:** Tuân thủ 100% không liên quan đến tác vụ Astral (`astral.sh`), 100% Offline Intranet cục bộ, không tải thêm bất kỳ thư viện ngoài nào.
+
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

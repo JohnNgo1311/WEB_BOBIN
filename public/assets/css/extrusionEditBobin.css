@@ -705,12 +705,15 @@ body {
 }
 
 #qr-reader video,
-#qr-reader canvas,
 #qr-reader img {
   max-width: 100% !important;
   width: 100% !important;
   height: auto !important;
   object-fit: contain !important;
+}
+
+#qr-reader canvas {
+  display: none !important;
 }
 
 /* ================= 8. RESPONSIVE MEDIA QUERIES ================= */

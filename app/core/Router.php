@@ -51,7 +51,8 @@ class Router
                 'listpendingcancellationview', // Xem danh sách chờ hủy
                 'exportdetailexcel',           // Xuất file Excel chi tiết
                 'exporthistoryexcel',          // Xuất file Excel lịch sử
-                'getspecificbobin'
+                'getspecificbobin',
+                'scanqr'                       // Trang quét mã QR Bobin
             ]
         ];
 

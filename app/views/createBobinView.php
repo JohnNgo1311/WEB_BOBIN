@@ -3,10 +3,12 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký Bobin</title>
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/create_bobin.css">
     <link rel="icon" href="data:,">
-
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
 </head>
 
 <body>

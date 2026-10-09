@@ -32,33 +32,40 @@ function reversePrintLotAll() {
 function reversePrintLot(container) {
   let lotString = "";
 
-  // 1. Tìm chính xác giá trị "Lot vật liệu" bằng cách duyệt qua các .field-item
-  const fieldItems = container.querySelectorAll(".field-item");
-  for (const item of fieldItems) {
-    const label = item.querySelector("label");
-    // Nếu label có nội dung là "Lot vật liệu"
-    if (label && label.textContent.trim() === "Lot vật liệu") {
-      const valSub = item.querySelector(".val-sub");
-      if (valSub) {
-        lotString = valSub.textContent.trim();
+  // 1. Tìm giá trị lot in từ input #print_lot hoặc label Lot in / Lot vật liệu
+  const printLotEl = container.querySelector ? container.querySelector("#print_lot") : null;
+  if (printLotEl && printLotEl.value && printLotEl.value.trim() !== "Chưa cập nhật") {
+    lotString = printLotEl.value.trim();
+  } else if (container.querySelectorAll) {
+    const fieldItems = container.querySelectorAll(".field-item");
+    for (const item of fieldItems) {
+      const label = item.querySelector("label");
+      if (label && (label.textContent.trim() === "Lot in" || label.textContent.trim() === "Lot vật liệu")) {
+        const valSub = item.querySelector(".val-sub") || item.querySelector("input");
+        if (valSub && (valSub.value || valSub.textContent)) {
+          lotString = (valSub.value || valSub.textContent).trim();
+          break;
+        }
       }
-      break; // Đã tìm thấy, thoát vòng lặp để tối ưu hiệu suất
     }
   }
 
-  // Nếu không lấy được chuỗi hoặc chuỗi rỗng thì dừng hàm
-  if (!lotString) return;
+  if (!lotString || lotString === "Chưa cập nhật") return;
 
-  // 2. Tìm đối tượng máy đùn có mã khớp với phần đầu của chuỗi Lot vật liệu
-  const machineObj = listData.list_extrusion_machine.find((item) =>
-    lotString.startsWith(item.machine_code),
-  );
+  const cleanLot = lotString.replace(/\s+/g, '');
+  if (cleanLot.length < 5) return;
 
-  // 3. Nếu tìm thấy, gán tên máy vào phần tử đích
-  if (machineObj) {
-    const el = container.querySelector("#extrusion_machine");
-    if (el) {
-      el.value = machineObj.machine_name;
+  const machineChar = cleanLot.slice(0, 1);
+  if (Array.isArray(listData.list_extrusion_machine)) {
+    const machineObj = listData.list_extrusion_machine.find((item) =>
+      String(item.machine_code ?? "").trim() === machineChar
+    );
+    if (machineObj) {
+      const el = container.querySelector ? container.querySelector("#extrusion_machine") : null;
+      if (el) {
+        el.value = String(machineObj.machine_name ?? "").trim();
+      }
     }
   }
 }
+

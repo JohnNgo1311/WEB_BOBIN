@@ -13,6 +13,7 @@ class BobinQCUpdateDTO
     public bool $defect_color_issue;
     public bool $defect_print_quality;
     public string $defect_note;
+    public string $confirm_password;
 
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
@@ -37,6 +38,7 @@ class BobinQCUpdateDTO
         } else {
             $dto->defect_note = 'Chưa cập nhật';
         }
+        $dto->confirm_password = trim($request['confirm_password'] ?? '');
         return $dto;
     }
 }

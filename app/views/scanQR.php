@@ -5,9 +5,15 @@
     <meta charset="UTF-8">
     <title>Scan QR Code - WEB_BOBIN</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <style>
+        body, button, input, select, textarea {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
             background-color: #f4f4f9;
             padding: 20px;
             text-align: center;

@@ -9,6 +9,7 @@ class BobinUpdateWindingDTO
     public ?string $winding_employee_code; // Có thể null nếu không có thông tin nhân viên cuốn
     public string $flow_test_result; // 'Thành công' hoặc 'Thất bại'
     public ?string $winding_note; // Ghi chú có thể null
+    public string $confirm_password;
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self
@@ -20,6 +21,7 @@ class BobinUpdateWindingDTO
         $dto->winding_employee_code = $request["winding_employee_code"] ?? null;
         $dto->flow_test_result = $request["flow_test_result"] ?? 'Thất bại';
         $dto->winding_note = $request["winding_note"] ?? '';
+        $dto->confirm_password = trim($request['confirm_password'] ?? '');
         return $dto;
     }
 }

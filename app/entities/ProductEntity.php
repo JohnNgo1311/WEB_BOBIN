@@ -2,19 +2,19 @@
 require_once __DIR__ . '/../core/Database.php';
 
 class ProductEntity implements JsonSerializable
-{  
+{
     public function __construct(
-    public ?int $id = null, 
-    public string $production_order_code = '', 
-    public string $product_code = '', 
-    public string $description = '', 
-    public ?DateTime $updated_time = null)
-        {
+        public ?int $id = null,
+        public string $production_order_code = '',
+        public string $product_code = '',
+        public string $description = '',
+        public ?DateTime $updated_time = null
+    ) {
         if ($this->updated_time === null) {
             $this->updated_time = new DateTime();
         }
-        }
-    
+    }
+
     public static function fromArray(array $data): self
     {
         return new self(
@@ -22,12 +22,12 @@ class ProductEntity implements JsonSerializable
             production_order_code: $data['production_order_code'] ?? '',
             product_code: $data['product_code'] ?? '',
             description: $data['description'] ?? '',
-            updated_time: isset($data['updated_time']) 
-                ? new DateTime($data['updated_time']) 
+            updated_time: isset($data['updated_time'])
+                ? new DateTime($data['updated_time'])
                 : null
         );
     }
-    
+
     public function jsonSerialize(): array
     {
         return [
@@ -46,10 +46,9 @@ class ProductEntity implements JsonSerializable
             production_order_code: $data['production_order_code'] ?? '',
             product_code: $data['product_code'] ?? '',
             description: $data['description'] ?? '',
-            updated_time: isset($data['updated_time']) 
-                ? new DateTime($data['updated_time']) 
+            updated_time: isset($data['updated_time'])
+                ? new DateTime($data['updated_time'])
                 : null
         );
     }
-
 }

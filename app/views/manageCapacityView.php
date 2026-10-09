@@ -9,8 +9,11 @@ $capacities = $data['capacities'] ?? [];
     <meta charset="UTF-8">
     <title>Quản lý dung lượng Bobin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Phông chữ hệ thống Local Offline -->
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobinDetail.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
+    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <style>
         .capacity-container {
             max-width: 600px;
@@ -111,15 +114,19 @@ $capacities = $data['capacities'] ?? [];
 
 <body>
 
-    <h1>Cấu hình dung lượng Bobin thực tế</h1>
+    <div
+        style="max-width: 600px; margin: 20px auto 0; display: flex; justify-content: space-between; align-items: center;">
+        <a href="/WEB_BOBIN/public/index.php" style="text-decoration:none; color:#0284c7; font-weight:600;"
+            data-i18n="back">
+            ← <?= __('back') ?>
+        </a>
+        <?php require ROOT_PATH . '/app/views/components/languageSwitcher.php'; ?>
+    </div>
+
+    <h1 style="text-align:center; margin-top:20px; font-size:24px; color:#1e293b;">Cấu hình dung lượng Bobin thực tế
+    </h1>
 
     <div class="container">
-        <div style="margin-bottom: 20px;">
-            <a href="/WEB_BOBIN/public/index.php" style="text-decoration:none; color:#0284c7; font-weight:600;">
-                ← Quay lại trang đăng nhập
-            </a>
-        </div>
-
         <div class="capacity-container">
             <h3 style="margin-top:0; margin-bottom:24px; color:#0f172a; font-size:18px;">Điều chỉnh định mức theo kích
                 thước</h3>

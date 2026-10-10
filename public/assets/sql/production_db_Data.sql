@@ -74,6 +74,7 @@ CREATE TABLE `bobin_history` (
   `winding_employee` text DEFAULT NULL,
   `winding_note` varchar(100) DEFAULT NULL,
   `flow_test_result` enum('Thành công','Thất bại') DEFAULT NULL,
+  `update_history` longtext DEFAULT NULL COMMENT 'Mảng JSON lưu vết lịch sử điều chỉnh (Đùn, QC, Cuộn)',
   `updated_time` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -106,6 +107,7 @@ CREATE TABLE `bobin_list_detail` (
   `winding_employee` text DEFAULT NULL,
   `flow_test_result` enum('Thành công','Thất bại') DEFAULT NULL,
   `winding_note` varchar(100) DEFAULT NULL,
+  `update_history` longtext DEFAULT NULL COMMENT 'Mảng JSON lưu vết lịch sử điều chỉnh (Đùn, QC, Cuộn)',
   `updated_time` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

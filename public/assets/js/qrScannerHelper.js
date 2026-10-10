@@ -34,7 +34,10 @@
      * @param {Object} options - Các tùy chọn và callback
      */
     toggle: function (containerIdOrEl, options) {
-      if (this.isScanning) {
+      const targetContainer = typeof containerIdOrEl === 'string'
+        ? document.getElementById(containerIdOrEl)
+        : containerIdOrEl;
+      if (this.isScanning && this.activeContainer === targetContainer) {
         return this.stop();
       } else {
         return this.start(containerIdOrEl, options);
@@ -45,6 +48,11 @@
      * Khởi động máy quét QR
      */
     start: async function (containerIdOrEl, options) {
+      // Đóng bàn phím ảo nếu đang mở trên thiết bị cảm ứng
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
       const container = typeof containerIdOrEl === 'string' 
         ? document.getElementById(containerIdOrEl) 
         : containerIdOrEl;
@@ -249,6 +257,10 @@
         if (typeof cb === 'function') {
           cb(decodedText, decodedResult);
         }
+        // Đảm bảo bàn phím không hiện lên sau khi quét xong
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
       }, 280);
     },
 
@@ -285,11 +297,11 @@
     renderUI: function (container) {
       container.style.display = 'block';
 
-      const titleText = tr('qr_scanner_title', 'Quét mã QR Bobin');
+      const titleText = (this.callbacks && this.callbacks.title) || tr('qr_scanner_title', 'Quét mã QR Bobin');
       const switchCamText = tr('qr_scanner_switch_cam', 'Đổi camera');
       const closeText = tr('close', 'Đóng');
       const connectingText = tr('qr_scanner_connecting', 'Đang kết nối camera...');
-      const searchingText = tr('qr_scanner_searching', 'Đang quét mã QR Bobin...');
+      const searchingText = (this.callbacks && this.callbacks.searchingText) || tr('qr_scanner_searching', 'Đang quét mã QR Bobin...');
       const hintText = tr('qr_scanner_hint', 'Căn chỉnh mã QR vào giữa khung quét');
       const uploadBtnText = tr('qr_scanner_upload_btn', 'Tải ảnh mã QR');
 

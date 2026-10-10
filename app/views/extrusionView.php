@@ -200,13 +200,28 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     </div>
                 </div>
 
+                <!-- KHUNG CAMERA QUÉT QR VỊ TRÍ RACK -->
+                <div id="qr-reader-rack"></div>
+
                 <div class="form-grid-2">
                     <div class="form-group rack-highlight">
                         <label>Vị trí Rack: <span class="required">*</span></label>
-                        <div class="suggestions">
-                            <input type="text" name="rack_code" id="rack_code" placeholder="<?= __('ph_select_rack') ?>" data-i18n-ph="ph_select_rack"
-                                autocomplete="off" required>
-                            <div id="rack_suggestions" class="suggestion-box"></div>
+                        <div class="qr-input-group">
+                            <div class="suggestions">
+                                <input type="text" name="rack_code" id="rack_code" placeholder="<?= __('ph_select_rack') ?>" data-i18n-ph="ph_select_rack"
+                                    autocomplete="off" required>
+                                <div id="rack_suggestions" class="suggestion-box"></div>
+                            </div>
+                            <button type="button" id="btnScanRackQR" class="btn-modern btn-scan">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <path d="M3 14h7v7H3z"></path>
+                                </svg>
+                                <span data-i18n="btn_scan_qr">Quét QR</span>
+                            </button>
                         </div>
                     </div>
 

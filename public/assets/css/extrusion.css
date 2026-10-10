@@ -156,7 +156,8 @@ h1 {
   font-weight: 500;
 }
 
-#qr-reader {
+#qr-reader,
+#qr-reader-rack {
   display: none;
   width: 100%;
   max-width: 380px;
@@ -169,14 +170,17 @@ h1 {
 }
 
 #qr-reader video,
-#qr-reader img {
+#qr-reader img,
+#qr-reader-rack video,
+#qr-reader-rack img {
   max-width: 100% !important;
   width: 100% !important;
   height: auto !important;
   object-fit: contain !important;
 }
 
-#qr-reader canvas {
+#qr-reader canvas,
+#qr-reader-rack canvas {
   display: none !important;
 }
 
@@ -676,7 +680,8 @@ select {
     height: 44px;
   }
 
-  #qr-reader {
+  #qr-reader,
+  #qr-reader-rack {
     max-width: 100% !important;
     margin: 8px 0 12px;
   }

@@ -2,6 +2,54 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [2026-10-10] - Bổ Sung Quét Mã QR Cho Vị Trí Rack & Ngăn Bàn Phím Ảo Bật Lên Sau Khi Quét (TASK-031)
+
+### 1. Bối cảnh & Yêu cầu:
+- Tại trang Nhóm Đùn (`app/views/extrusionView.php`), bổ sung chức năng quét mã QR cho trường **Vị trí Rack** (`#rack_code`).
+- Ví dụ: Khi quét mã QR có nội dung `"Rack_B21_01"`, ô nhập liệu tại "Vị trí Rack" sẽ hiển thị ngay giá trị vừa giải mã.
+- Đồng thời, sau khi quét xong mã QR, bàn phím ảo trên thiết bị di động/tablet **không** tự động hiện lên nữa.
+
+### 2. Nguyên nhân bàn phím ảo hiện lên sau khi quét:
+- Trong các file `scanQR.js` trước đây, sau khi giải mã thành công (`onSuccess`), hàm xử lý gọi `inputElement.focus()`. Trên các trình duyệt di động (Android/iOS), việc gọi `.focus()` vào thẻ `<input type="text">` sẽ kích hoạt bàn phím ảo bật lên che khuất màn hình.
+
+### 3. Giải pháp đã triển khai:
+1. **Giao diện Quét QR Vị trí Rack (`app/views/extrusionView.php`, `scanQR.css`, `extrusion.css`):**
+   - Bổ sung khung hiển thị camera `<div id="qr-reader-rack"></div>` ngay đầu Khối 3 ("THÔNG SỐ CUỘN & VỊ TRÍ RACK").
+   - Bọc `#rack_code` và `#rack_suggestions` vào `.qr-input-group` cùng nút `<button type="button" id="btnScanRackQR" class="btn-modern btn-scan">`.
+   - Đồng bộ toàn bộ quy tắc hiển thị, ẩn canvas phụ và giao diện responsive cho `#qr-reader-rack` và `#btnScanRackQR.is-scanning`.
+2. **Nâng cấp `QRScannerHelper` (`public/assets/js/qrScannerHelper.js`) & `Extrusion/scanQR.js`:**
+   - Cập nhật `QRScannerHelper.toggle()` nhận diện `this.activeContainer === targetContainer` để cho phép chuyển đổi mượt mà giữa camera quét Bobin (`#qr-reader`) và camera quét Rack (`#qr-reader-rack`).
+   - Hỗ trợ truyền `options.title` và `options.searchingText` riêng cho khung quét Rack (`qr_scanner_rack_title`, `qr_scanner_rack_searching` trên cả 3 ngôn ngữ `vi`, `en`, `ja`).
+   - Thay thế toàn bộ lệnh `.focus()` sau khi quét bằng `.blur()` và `document.activeElement.blur()` trong `qrScannerHelper.js`, `Extrusion/scanQR.js`, `Extrusion/edit_scanQR.js`, `QC/scanQR.js`, `Winding/scanQR.js`, `Manage/scanQR.js`, đồng thời đóng gọn hộp gợi ý `#rack_suggestions` / `#bobin_suggestions`.
+3. **Tương thích mã Rack trong Backend (`app/services/BobinServices.php`):**
+   - Cập nhật `BobinServices::resolveRack(string $rackCode)` hỗ trợ đối chiếu chuẩn hóa số `0` ở đầu (ví dụ mã QR `"Rack_B21_01"` khớp hợp lệ với `"Rack_B021_01"` trong bảng `rack_list`), đảm bảo lưu biểu mẫu thành công với đúng chuỗi mã QR đã quét.
+
+---
+
+## [2026-10-10] - Khắc Phục Lỗi Unknown Column 'update_history' Khi Điều Chỉnh Bobin (TASK-030)
+
+### 1. Bối cảnh & Yêu cầu:
+- Người dùng báo lỗi: `Lỗi Database: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'update_history' in 'field list'` khi bấm xác nhận điều chỉnh thông tin Bobin từ trang Điều chỉnh Đùn (`extrusionEditBobinView.php`).
+
+### 2. Nguyên nhân gốc rễ (Root Cause Analysis):
+1. **Thiếu cột `update_history` trên CSDL và tệp SQL:**
+   - Theo thiết kế tại `AI_preference/DATABASE_SCHEMA.md` (dòng 51) và yêu cầu từ TASK-007/TASK-008, mỗi lần thông tin Bobin được điều chỉnh từ 3 trang: **Điều chỉnh Đùn**, **Điều chỉnh QC**, **Điều chỉnh Cuộn**, hệ thống sẽ ghi nhận vết kiểm toán (người sửa, thời gian sửa, công đoạn, ghi chú) dưới dạng mảng JSON vào cột `update_history` của bảng `bobin_list_detail` và `bobin_history`, đồng thời hiển thị tại trang Lịch sử Bobin (`listBobinHistoryView.php`).
+   - Tuy nhiên, khi xuất/nhập lại CSDL từ file SQL (`production_db._Structure.sql` và `production_db_Data.sql`), hai bảng `bobin_list_detail` và `bobin_history` chưa có định nghĩa cột `update_history`, dẫn đến lỗi `1054 Unknown column 'update_history'` khi thực thi câu lệnh `SELECT`/`UPDATE` tại `BobinRepository::extUpdateBobinDetail()`, `extUpdateBobinHistory()`, `adminUpdateQCBobin()`, và `adminUpdateWindingBobin()`.
+2. **Bảo toàn dữ liệu `update_history`, `extrusion_check`, `rack` qua các bước chuyển trạng thái:**
+   - Trong `app/repositories/BobinRepository.php`, các câu lệnh tạo bản ghi snapshot lịch sử mới (`INSERT INTO bobin_history (...) SELECT ... FROM bobin_list_detail`) khi kiểm tra QC, xác nhận Cuộn hoặc Hủy Bobin trước đó chưa đưa cột `update_history` (và `extrusion_check`, `rack`) vào danh sách `SELECT`, khiến bản ghi lịch sử mới nhất (`MAX(id)`) có nguy cơ bị mất vết điều chỉnh đã lưu ở công đoạn trước.
+   - Đồng thời, tại `insertBobinDetailRecord()`, mệnh đề `ON DUPLICATE KEY UPDATE` khi khởi tạo chu kỳ mới cho Bobin cần đặt lại `update_history = NULL` để tách biệt vết điều chỉnh giữa các `bobin_key_code` khác nhau.
+
+### 3. Giải pháp đã triển khai:
+1. **Cập nhật trực tiếp trên CSDL `production_db` (Live MySQL):**
+   - Thực thi lệnh `ALTER TABLE` bổ sung cột `update_history longtext DEFAULT NULL COMMENT 'Mảng JSON lưu vết lịch sử điều chỉnh (Đùn, QC, Cuộn)'` vào cả hai bảng `bobin_list_detail` và `bobin_history`.
+2. **Đồng bộ hóa cả 2 tệp SQL chuẩn:**
+   - Cập nhật `public/assets/sql/production_db._Structure.sql` và `public/assets/sql/production_db_Data.sql`: bổ sung cột `update_history` vào cấu trúc bảng `bobin_history` và `bobin_list_detail`.
+3. **Hoàn thiện `app/repositories/BobinRepository.php`:**
+   - Đặt `update_history = NULL` trong `ON DUPLICATE KEY UPDATE` của `insertBobinDetailRecord()` khi Bobin bước sang chu kỳ sản xuất mới.
+   - Bổ sung đầy đủ `extrusion_check, rack, update_history` vào toàn bộ 7 câu truy vấn `INSERT INTO bobin_history (...) SELECT ... FROM bobin_list_detail` (`deleteBobin`, `extInsertBobinHistoryAfterDelete`, `updateQCBobinInfor`, `updateBobinTypeInfor`, `qcCancelBobin`, `updateWindingBobinInfor`, `windingCancelBobin`).
+
+---
+
 ## [2026-10-09] - Khắc Phục Triệt Để Hiện Tượng Toast Thông Báo Xuất Hiện 2 Lần Sau Khi Thao Tác (TASK-029)
 
 ### 1. Bối cảnh & Yêu cầu:

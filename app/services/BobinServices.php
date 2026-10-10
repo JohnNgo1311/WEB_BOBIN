@@ -275,14 +275,31 @@ class BobinServices
     }
     private function resolveRack(string $rackCode): ?RackEntity
     {
+        $rackCode = trim($rackCode);
         if (empty($rackCode) || $rackCode === 'Chưa cập nhật') return null;
         $list = GlobalData::$listRackEntity ?? [];
         foreach ($list as $rack) {
-            if (($rack['rack_code'] ?? '') === $rackCode) {
+            if (strcasecmp($rack['rack_code'] ?? '', $rackCode) === 0) {
                 return new RackEntity(
                     id: (int)$rack['id'],
                     code: $rack['rack_code']
                 );
+            }
+        }
+        // Hỗ trợ trường hợp mã QR Rack encode dạng rút gọn số 0 (ví dụ: Rack_B21_01 khớp với Rack_B021_01)
+        if (preg_match('/^Rack_([A-Za-z]+)0*(\d+)_0*(\d+)$/i', $rackCode, $m)) {
+            $prefix = strtoupper($m[1]);
+            $areaNum = (int)$m[2];
+            $slotNum = (int)$m[3];
+            foreach ($list as $rack) {
+                if (preg_match('/^Rack_([A-Za-z]+)0*(\d+)_0*(\d+)$/i', $rack['rack_code'] ?? '', $rm)) {
+                    if (strtoupper($rm[1]) === $prefix && (int)$rm[2] === $areaNum && (int)$rm[3] === $slotNum) {
+                        return new RackEntity(
+                            id: (int)$rack['id'],
+                            code: $rackCode
+                        );
+                    }
+                }
             }
         }
         throw new Exception("Vị trí Rack [{$rackCode}] không tồn tại trong hệ thống.");

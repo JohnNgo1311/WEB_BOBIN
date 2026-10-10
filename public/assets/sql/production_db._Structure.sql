@@ -2,13 +2,15 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
+-- Máy chủ: 127.0.0.1:3307
+-- Thời gian đã tạo: Th10 10, 2026 lúc 10:47 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
--- Kiến trúc Cơ sở dữ liệu Chuẩn: `production_db` (Synchronized Architecture)
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -18,8 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Cơ sở dữ liệu: `production_db`
 --
-CREATE DATABASE IF NOT EXISTS `production_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE `production_db`;
 
 -- --------------------------------------------------------
 
@@ -27,7 +27,6 @@ USE `production_db`;
 -- Cấu trúc bảng cho bảng `bobin_capacity`
 --
 
-DROP TABLE IF EXISTS `bobin_capacity`;
 CREATE TABLE `bobin_capacity` (
   `size_name` varchar(50) NOT NULL,
   `capacity` int(11) NOT NULL DEFAULT 0
@@ -39,7 +38,6 @@ CREATE TABLE `bobin_capacity` (
 -- Cấu trúc bảng cho bảng `bobin_history`
 --
 
-DROP TABLE IF EXISTS `bobin_history`;
 CREATE TABLE `bobin_history` (
   `id` int(11) NOT NULL,
   `bobin_key_code` varchar(50) NOT NULL,
@@ -62,8 +60,8 @@ CREATE TABLE `bobin_history` (
   `winding_employee` text DEFAULT NULL,
   `winding_note` varchar(100) DEFAULT NULL,
   `flow_test_result` enum('Thành công','Thất bại') DEFAULT NULL,
-  `updated_time` datetime DEFAULT NULL,
-  `update_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`update_history`))
+  `update_history` longtext DEFAULT NULL COMMENT 'Mảng JSON lưu vết lịch sử điều chỉnh (Đùn, QC, Cuộn)',
+  `updated_time` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -72,7 +70,6 @@ CREATE TABLE `bobin_history` (
 -- Cấu trúc bảng cho bảng `bobin_list_detail`
 --
 
-DROP TABLE IF EXISTS `bobin_list_detail`;
 CREATE TABLE `bobin_list_detail` (
   `id` int(11) NOT NULL,
   `bobin_key_code` varchar(50) NOT NULL,
@@ -95,8 +92,8 @@ CREATE TABLE `bobin_list_detail` (
   `winding_employee` text DEFAULT NULL,
   `flow_test_result` enum('Thành công','Thất bại') DEFAULT NULL,
   `winding_note` varchar(100) DEFAULT NULL,
-  `updated_time` datetime DEFAULT NULL,
-  `update_history` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`update_history`))
+  `update_history` longtext DEFAULT NULL COMMENT 'Mảng JSON lưu vết lịch sử điều chỉnh (Đùn, QC, Cuộn)',
+  `updated_time` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -105,7 +102,6 @@ CREATE TABLE `bobin_list_detail` (
 -- Cấu trúc bảng cho bảng `bobin_list_general`
 --
 
-DROP TABLE IF EXISTS `bobin_list_general`;
 CREATE TABLE `bobin_list_general` (
   `id` int(11) NOT NULL,
   `bobin_key_code` varchar(50) NOT NULL,
@@ -113,7 +109,7 @@ CREATE TABLE `bobin_list_general` (
   `bobin_size` enum('PL7-3','PL4-7 (TU04.TU06)','PL4-7 (TU08~)') NOT NULL,
   `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)','Điều chỉnh (Ngoại quan: Trầy)','Điều chỉnh (Ngoại quan: Biến dạng)','Điều chỉnh (Ngoại quan: Xước)','Điều chỉnh (Ngoại quan: Chữ in)','Điều chỉnh (Ngoại quan: Vón cục)','Điều chỉnh (Ngoại quan: Màu)') NOT NULL,
   `bobin_current_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT 'Rolled',
-  `updated_time` timestamp NOT NULL DEFAULT current_timestamp()
+  `updated_time` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -122,7 +118,6 @@ CREATE TABLE `bobin_list_general` (
 -- Cấu trúc bảng cho bảng `day_list`
 --
 
-DROP TABLE IF EXISTS `day_list`;
 CREATE TABLE `day_list` (
   `id` int(11) NOT NULL,
   `code` varchar(10) NOT NULL,
@@ -135,7 +130,6 @@ CREATE TABLE `day_list` (
 -- Cấu trúc bảng cho bảng `employee_list`
 --
 
-DROP TABLE IF EXISTS `employee_list`;
 CREATE TABLE `employee_list` (
   `id` int(11) NOT NULL,
   `employee_code` varchar(50) NOT NULL COMMENT 'Mã nhân viên',
@@ -155,7 +149,6 @@ CREATE TABLE `employee_list` (
 -- Cấu trúc bảng cho bảng `extrusion_machine_list`
 --
 
-DROP TABLE IF EXISTS `extrusion_machine_list`;
 CREATE TABLE `extrusion_machine_list` (
   `id` int(11) NOT NULL,
   `machine_number` int(11) NOT NULL,
@@ -169,7 +162,6 @@ CREATE TABLE `extrusion_machine_list` (
 -- Cấu trúc bảng cho bảng `material_list`
 --
 
-DROP TABLE IF EXISTS `material_list`;
 CREATE TABLE `material_list` (
   `id` int(11) NOT NULL,
   `brand` varchar(50) NOT NULL,
@@ -183,7 +175,6 @@ CREATE TABLE `material_list` (
 -- Cấu trúc bảng cho bảng `material_lot_list`
 --
 
-DROP TABLE IF EXISTS `material_lot_list`;
 CREATE TABLE `material_lot_list` (
   `id` int(11) NOT NULL,
   `lot` varchar(50) NOT NULL,
@@ -196,7 +187,6 @@ CREATE TABLE `material_lot_list` (
 -- Cấu trúc bảng cho bảng `month_list`
 --
 
-DROP TABLE IF EXISTS `month_list`;
 CREATE TABLE `month_list` (
   `id` int(11) NOT NULL,
   `code` varchar(10) NOT NULL,
@@ -209,7 +199,6 @@ CREATE TABLE `month_list` (
 -- Cấu trúc bảng cho bảng `product_list`
 --
 
-DROP TABLE IF EXISTS `product_list`;
 CREATE TABLE `product_list` (
   `id` int(11) NOT NULL,
   `production_order_code` varchar(50) NOT NULL,
@@ -224,7 +213,6 @@ CREATE TABLE `product_list` (
 -- Cấu trúc bảng cho bảng `rack_list`
 --
 
-DROP TABLE IF EXISTS `rack_list`;
 CREATE TABLE `rack_list` (
   `id` int(11) NOT NULL,
   `rack_code` varchar(50) NOT NULL
@@ -236,7 +224,6 @@ CREATE TABLE `rack_list` (
 -- Cấu trúc bảng cho bảng `winding_machine_list`
 --
 
-DROP TABLE IF EXISTS `winding_machine_list`;
 CREATE TABLE `winding_machine_list` (
   `id` int(11) NOT NULL,
   `machine_name` varchar(50) NOT NULL
@@ -248,7 +235,6 @@ CREATE TABLE `winding_machine_list` (
 -- Cấu trúc bảng cho bảng `year_list`
 --
 
-DROP TABLE IF EXISTS `year_list`;
 CREATE TABLE `year_list` (
   `id` int(11) NOT NULL,
   `code` varchar(10) NOT NULL,
@@ -281,8 +267,8 @@ ALTER TABLE `bobin_history`
 --
 ALTER TABLE `bobin_list_detail`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `bobin_key_code` (`bobin_key_code`),
-  ADD UNIQUE KEY `bobin_identification_code` (`bobin_identification_code`),
+  ADD UNIQUE KEY `uk_bobin_identification_code` (`bobin_identification_code`),
+  ADD UNIQUE KEY `uk_bobin_key_code` (`bobin_key_code`),
   ADD KEY `idx_detail_status` (`bobin_current_status`);
 
 --
@@ -290,8 +276,8 @@ ALTER TABLE `bobin_list_detail`
 --
 ALTER TABLE `bobin_list_general`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `bobin_key_code` (`bobin_key_code`),
-  ADD UNIQUE KEY `bobin_identification_code` (`bobin_identification_code`),
+  ADD UNIQUE KEY `uk_bobin_identification_code` (`bobin_identification_code`),
+  ADD UNIQUE KEY `uk_bobin_key_code` (`bobin_key_code`),
   ADD KEY `idx_general_status` (`bobin_current_status`);
 
 --
@@ -307,20 +293,14 @@ ALTER TABLE `employee_list`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uk_employee_code` (`employee_code`),
   ADD UNIQUE KEY `uk_username` (`username`),
-  ADD KEY `idx_role` (`role`),
-  ADD KEY `idx_cost_center` (`cost_center`);
+  ADD KEY `idx_employee_role` (`role`);
 
 --
 -- Chỉ mục cho bảng `extrusion_machine_list`
 --
 ALTER TABLE `extrusion_machine_list`
-  ADD PRIMARY KEY (`id`);
-
---
--- Chỉ mục cho bảng `machine_list`
---
-ALTER TABLE `machine_list`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_extrusion_machine_code` (`machine_code`);
 
 --
 -- Chỉ mục cho bảng `material_list`
@@ -332,7 +312,8 @@ ALTER TABLE `material_list`
 -- Chỉ mục cho bảng `material_lot_list`
 --
 ALTER TABLE `material_lot_list`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_lot` (`lot`);
 
 --
 -- Chỉ mục cho bảng `month_list`
@@ -345,21 +326,22 @@ ALTER TABLE `month_list`
 --
 ALTER TABLE `product_list`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `production_order_code` (`production_order_code`),
-  ADD UNIQUE KEY `product_code` (`product_code`);
+  ADD UNIQUE KEY `uk_production_order_code` (`production_order_code`),
+  ADD UNIQUE KEY `uk_product_code` (`product_code`);
 
 --
 -- Chỉ mục cho bảng `rack_list`
 --
 ALTER TABLE `rack_list`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `rack_code` (`rack_code`);
+  ADD UNIQUE KEY `uk_rack_code` (`rack_code`);
 
 --
 -- Chỉ mục cho bảng `winding_machine_list`
 --
 ALTER TABLE `winding_machine_list`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_winding_machine_name` (`machine_name`);
 
 --
 -- Chỉ mục cho bảng `year_list`
@@ -368,55 +350,86 @@ ALTER TABLE `year_list`
   ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT cho các bảng
+-- AUTO_INCREMENT cho các bảng đã đổ
 --
 
-
-ALTER TABLE `bobin_capacity`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
+--
+-- AUTO_INCREMENT cho bảng `bobin_history`
+--
 ALTER TABLE `bobin_history`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `bobin_list_detail`
+--
 ALTER TABLE `bobin_list_detail`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `bobin_list_general`
+--
 ALTER TABLE `bobin_list_general`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `day_list`
+--
 ALTER TABLE `day_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `employee_list`
+--
 ALTER TABLE `employee_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `extrusion_machine_list`
+--
 ALTER TABLE `extrusion_machine_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
-ALTER TABLE `machine_list`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
+--
+-- AUTO_INCREMENT cho bảng `material_list`
+--
 ALTER TABLE `material_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `material_lot_list`
+--
 ALTER TABLE `material_lot_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `month_list`
+--
 ALTER TABLE `month_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `product_list`
+--
 ALTER TABLE `product_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `rack_list`
+--
 ALTER TABLE `rack_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `winding_machine_list`
+--
 ALTER TABLE `winding_machine_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+--
+-- AUTO_INCREMENT cho bảng `year_list`
+--
 ALTER TABLE `year_list`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -220,6 +220,14 @@ if (rackInput && rackBox) {
       return;
     }
 
+    const exactMatch = listData.list_rack.find(
+      (item) => item.rack_code && item.rack_code.toLowerCase() === val,
+    );
+    if (exactMatch) {
+      rackBox.style.display = "none";
+      return;
+    }
+
     const filteredRacks = listData.list_rack.filter(
       (item) => item.rack_code && item.rack_code.toLowerCase().includes(val),
     );
@@ -233,6 +241,7 @@ if (rackInput && rackBox) {
         div.onclick = () => {
           rackInput.value = item.rack_code;
           rackBox.style.display = "none";
+          rackInput.blur();
         };
         rackBox.appendChild(div);
       });

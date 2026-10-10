@@ -7,6 +7,7 @@
 
 /* Container bao ngoài của Scanner */
 #qr-reader,
+#qr-reader-rack,
 #reader {
     width: 100%;
     max-width: 500px;
@@ -490,6 +491,7 @@
 
 /* Khắc phục tỉ lệ khung video camera không bị tràn hoặc méo */
 #qr-reader video,
+#qr-reader-rack video,
 #reader video,
 .qr-video-region video,
 #qr-video-viewport video {
@@ -504,6 +506,7 @@
 
 /* Ẩn triệt để canvas nội bộ của thư viện html5-qrcode để triệt tiêu hiện tượng chớp nháy màn hình */
 #qr-reader canvas,
+#qr-reader-rack canvas,
 #reader canvas,
 #qr-video-viewport canvas,
 canvas#qr-canvas,
@@ -532,6 +535,7 @@ canvas#qr-canvas,
 /* Responsive trên màn hình di động & tablet */
 @media (max-width: 768px) {
     #qr-reader,
+    #qr-reader-rack,
     #reader,
     .qr-scanner-card {
         max-width: 100%;
@@ -562,18 +566,24 @@ canvas#qr-canvas,
 /* ==============================================================================
  * STYLE TRẠNG THÁI NÚT QUÉT QR TRÊN TOÀN BỘ CÁC TRANG
  * ============================================================================== */
-#btnScanQR.is-scanning {
+#btnScanQR.is-scanning,
+#btnScanRackQR.is-scanning,
+.btn-scan.is-scanning {
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
     border-color: #ef4444 !important;
     color: #ffffff !important;
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
 
-#btnScanQR.is-scanning:hover {
+#btnScanQR.is-scanning:hover,
+#btnScanRackQR.is-scanning:hover,
+.btn-scan.is-scanning:hover {
     background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
 }
 
-#btnScanQR.is-scanning svg {
+#btnScanQR.is-scanning svg,
+#btnScanRackQR.is-scanning svg,
+.btn-scan.is-scanning svg {
     color: #ffffff !important;
     stroke: #ffffff !important;
 }

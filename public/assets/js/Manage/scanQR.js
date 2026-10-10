@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
           bobinInput.value = decodedText;
           bobinInput.dispatchEvent(new Event("input", { bubbles: true }));
           bobinInput.dispatchEvent(new Event("change", { bubbles: true }));
-          bobinInput.focus();
+          bobinInput.blur();
         } else if (searchKeyword) {
           searchKeyword.value = decodedText;
           searchKeyword.dispatchEvent(new Event("input", { bubbles: true }));

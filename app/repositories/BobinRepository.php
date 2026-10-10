@@ -1446,6 +1446,7 @@ class BobinRepository
                     winding_employee = VALUES(winding_employee),
                     flow_test_result = VALUES(flow_test_result),
                     winding_note = VALUES(winding_note),
+                    update_history = NULL,
                     updated_time = VALUES(updated_time)";
 
         $stmt = $pdo->prepare($sql);
@@ -1677,15 +1678,15 @@ class BobinRepository
             ]);
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident";
@@ -1785,12 +1786,12 @@ class BobinRepository
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
                     extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
-                    winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
+                    winding_employee, flow_test_result, bobin_current_status, winding_note, update_history, updated_time
                 ) SELECT 
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                     extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                     shift, extrusion_date, finish_time, visual_inspection, 
-                    winding_machine, winding_employee, flow_test_result, bobin_current_status, winding_note, updated_time
+                    winding_machine, winding_employee, flow_test_result, bobin_current_status, winding_note, update_history, updated_time
                 FROM bobin_list_detail
                 WHERE bobin_key_code = :key 
                 AND bobin_identification_code = :ident";
@@ -1851,16 +1852,16 @@ class BobinRepository
             ]);
 
             $sqlHistory = "INSERT INTO bobin_history (
-                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                            extrusion_employee, products, material_lot, print_lot, length_m, 
-                            shift, extrusion_date, finish_time,  
-                            visual_inspection, winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                shift, extrusion_date, finish_time, visual_inspection, 
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident";
@@ -1930,15 +1931,15 @@ class BobinRepository
             // 3. Chèn một dòng lịch sử mới ghi nhận kết quả kiểm tra QC kèm loại Type mới
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, :type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, NOW()
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, NOW()
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident";
@@ -2013,15 +2014,15 @@ class BobinRepository
             ]);
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident
@@ -2094,15 +2095,15 @@ class BobinRepository
 
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident
@@ -2186,15 +2187,15 @@ class BobinRepository
             ]);
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, updated_time
+                                winding_machine, winding_employee, bobin_current_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident

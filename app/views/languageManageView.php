@@ -254,6 +254,7 @@ $customKeysCount = count($customDict['vi'] ?? []);
                 const type = isSuccess ? 'success' : 'error';
                 if (window.Toast && window.Toast.show) {
                     window.Toast.show(message, type);
+                    return;
                 }
                 if (toastMsg && toast) {
                     toastMsg.textContent = message;
@@ -366,13 +367,15 @@ $customKeysCount = count($customDict['vi'] ?? []);
                                 window.loadAndMergeCustomTranslations(data.custom_dict);
                             }
                         }
+                        const succMsg = data.message || (window.t ? window.t('toast_saved_success') : 'Lưu thành công!');
                         if (window.Toast && window.Toast.flash) {
-                            window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Lưu thành công!'), 'success');
+                            window.Toast.flash(succMsg, 'success');
+                        } else {
+                            showToast(succMsg, true);
                         }
-                        showToast(data.message || 'Lưu thành công!', true);
                         setTimeout(() => {
                             window.location.reload();
-                        }, 800);
+                        }, 300);
                     } else {
                         showToast(data.error || 'Lỗi khi lưu từ điển', false);
                         btnSave.disabled = false;
@@ -417,11 +420,13 @@ $customKeysCount = count($customDict['vi'] ?? []);
                                     window.loadAndMergeCustomTranslations(data.custom_dict);
                                 }
                             }
+                            const succMsg = data.message || (window.t ? window.t('toast_reset_success') : 'Đã khôi phục mặc định!');
                             if (window.Toast && window.Toast.flash) {
-                                window.Toast.flash(data.message || (window.t ? window.t('toast_reset_success') : 'Đã khôi phục mặc định!'), 'success');
+                                window.Toast.flash(succMsg, 'success');
+                            } else {
+                                showToast(succMsg, true);
                             }
-                            showToast(data.message, true);
-                            setTimeout(() => window.location.reload(), 800);
+                            setTimeout(() => window.location.reload(), 300);
                         } else {
                             showToast(data.error || 'Lỗi khi khôi phục', false);
                         }
@@ -458,11 +463,13 @@ $customKeysCount = count($customDict['vi'] ?? []);
                         if (typeof window.loadAndMergeCustomTranslations === 'function') {
                             window.loadAndMergeCustomTranslations({ vi: {}, en: {}, ja: {} });
                         }
+                        const succMsg = data.message || (window.t ? window.t('toast_reset_success') : 'Đã khôi phục toàn bộ từ điển!');
                         if (window.Toast && window.Toast.flash) {
-                            window.Toast.flash(data.message || (window.t ? window.t('toast_reset_success') : 'Đã khôi phục toàn bộ từ điển!'), 'success');
+                            window.Toast.flash(succMsg, 'success');
+                        } else {
+                            showToast(succMsg, true);
                         }
-                        showToast(data.message, true);
-                        setTimeout(() => window.location.reload(), 800);
+                        setTimeout(() => window.location.reload(), 300);
                     } else {
                         showToast(data.error || 'Lỗi khi khôi phục', false);
                     }
@@ -546,12 +553,14 @@ $customKeysCount = count($customDict['vi'] ?? []);
                                 window.loadAndMergeCustomTranslations(data.custom_dict);
                             }
                         }
+                        const succMsg = `Thêm từ khóa '${k}' thành công!`;
                         if (window.Toast && window.Toast.flash) {
-                            window.Toast.flash(`Thêm từ khóa '${k}' thành công!`, 'success');
+                            window.Toast.flash(succMsg, 'success');
+                        } else {
+                            showToast(succMsg, true);
                         }
-                        showToast(`Thêm từ khóa '${k}' thành công!`, true);
                         closeModal();
-                        setTimeout(() => window.location.reload(), 800);
+                        setTimeout(() => window.location.reload(), 300);
                     } else {
                         showToast(data.error || 'Lỗi khi thêm từ khóa', false);
                     }

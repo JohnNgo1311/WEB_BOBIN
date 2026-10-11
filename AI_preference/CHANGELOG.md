@@ -2,6 +2,192 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [TASK-037] - 2026-04-20 - Kiểm Tra & Đồng Bộ Toàn Diện Hệ Thống Đa Ngôn Ngữ (`vi`, `en`, `ja`) Trên Toàn Dự Án & Đề Xuất Các Hướng Cải Tiến Kỹ Thuật
+
+### 1. Bối cảnh & Yêu cầu:
+- Kiểm tra toàn diện việc sử dụng đa ngôn ngữ (`vi`, `en`, `ja`) trên toàn bộ dự án (Views, Components, Controllers, JavaScript, Từ điển Backend & Frontend) để phát hiện và khắc phục triệt để các vị trí còn thiếu sót chuyển đổi.
+- Kiểm tra kiến trúc tổng thể và đề xuất các hướng cải tiến thiết thực cho dự án để người dùng xem xét.
+
+### 2. Kết quả kiểm tra & Giải pháp đã triển khai:
+1. **Đồng bộ 100% Từ điển Đa ngôn ngữ giữa Backend (`app/core/Language.php`) và Frontend (`public/assets/js/i18n.js`):**
+   - Bổ sung **14 từ khóa** từng có trong `public/assets/js/i18n.js` nhưng bị thiếu trong `app/core/Language.php`: `confirm_pwd_label`, `confirm_pwd_ph`, `confirm_pwd_empty`, `confirm_edit_title`, `confirm_edit_sub`, `saving`, `saved`, `save_failed`, `audit_trail_title`, `audit_stage_extrusion`, `audit_stage_qc`, `audit_stage_winding`, `audit_updater`, `audit_time` (khắc phục lỗi hiển thị raw key khi gọi `__('audit_trail_title')`, `__('audit_updater')`, `__('confirm_pwd_label')` trên `listBobinHistoryView.php` và `listPendingCancellationView.php`).
+   - Bổ sung **3 từ khóa** từng có trong `app/core/Language.php` nhưng thiếu trong `public/assets/js/i18n.js`: `perm_active_status`, `perm_inactive_status`, `btn_delete`.
+   - Bổ sung **7 từ khóa** đang được sử dụng trong các View/JS nhưng chưa được định nghĩa ở cả 2 từ điển: `no_data_found`, `showing`, `col_size`, `field_defect_note`, `btn_back`, `warning`, `info`.
+   - Bổ sung **16 từ khóa mới** phục vụ chuyển đổi đa ngôn ngữ cho trang Đổi mật khẩu (`changePasswordView.php`), hộp thoại Đăng xuất (`logout.js`) và chức năng Sao chép dữ liệu (`copyText.js`): `cp_guide_title`, `cp_guide_1`, `cp_guide_2`, `cp_guide_3`, `cp_err_empty`, `cp_err_min_len`, `cp_err_mismatch`, `cp_err_same_old`, `cp_err_weak_forbidden`, `cp_err_failed`, `logout_confirm_title`, `logout_confirm_msg`, `copy_empty_err`, `copy_done_btn`, `copy_failed_err`.
+   - Sau khi cập nhật, cả `Language.php` và `i18n.js` đều đạt **581 từ khóa đồng nhất 100%** trên cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+2. **Khắc phục toàn bộ các vị trí văn bản tĩnh/động chưa chuyển đổi trên giao diện & JS:**
+   - **Header (`app/views/components/header.php`):** Thay thế nhãn vai trò người dùng hardcode tiếng Việt (`Nhóm Đùn`, `Nhóm Cuộn`, `Nhóm QC`, `Admin`) trên `.header-user-role` bằng `data-i18n` kết hợp `__()` (`emp_role_extrusion`, `emp_role_winding`, `emp_role_qc`, `emp_role_admin`).
+   - **Trang Đổi mật khẩu (`app/views/changePasswordView.php`):** Chuyển đổi toàn bộ văn bản HTML (tiêu đề, phụ đề, hộp cảnh báo đăng nhập lần đầu, nhãn Mã nhân viên/Tài khoản, khung hướng dẫn quy tắc bảo mật, bản quyền) và thông báo JavaScript (thang đo độ mạnh mật khẩu và các Toast kiểm tra hợp lệ) sang `data-i18n`, `__()`, và `window.t()`.
+   - **Trang Danh sách nhân viên (`app/views/employeeListView.php`):** Tách thẻ `<span data-i18n="...">` riêng biệt trong `#empCounter` (`emp_showing`, `emp_staff`) và tiêu đề cột `emp_code / emp_username` để khi chuyển đổi ngôn ngữ không ghi đè mất số đếm nhân viên.
+   - **Bộ máy dịch thuật Frontend (`public/assets/js/i18n.js`):**
+     - Mở rộng `DOM_MAPPINGS.labels`, `DOM_MAPPINGS.buttons`, `DOM_MAPPINGS.statusBadges` bao phủ toàn bộ nhãn thẻ Bobin và nút thao tác trên các trang Điều chỉnh / Lịch sử / Chờ hủy.
+     - Hỗ trợ thuộc tính `[data-i18n-title]` trong `applyDataI18n()` và hỗ trợ đồng thời cả 2 định dạng placeholder `{current}` / `:current` cho phân trang `page_info`.
+     - Bổ sung hàm toàn cục `window.translateDynamicText(rawText)` để tự động dịch các thông báo Toast/Dialog phát sinh động sang `en` và `ja`.
+     - Bổ sung **Mục J trong `deepTranslateDOM()`** tự động dịch hiển thị của `<select><option>` (giữ nguyên `.value` gửi về server), dịch các giá trị mặc định trên thẻ Bobin (`Chưa cập nhật`, `Chưa kiểm`, `Không có ghi chú`, Loại Bobin, Ca làm việc, Thông khí), thẻ KPI, nhãn lọc ngày, menu xuất dữ liệu (`.exp-title`, `.exp-desc`) và các huy hiệu lỗi ngoại quan (`.vi-badge`, `.ext-chip`, `.qc-chip`).
+   - **Các tiện ích JS (`public/assets/js/toast.js`, `public/assets/js/logout.js`, `public/assets/js/copyText.js`):** Tích hợp `window.t()` và `window.translateDynamicText()` cho toàn bộ thông báo Toast, hộp thoại xác nhận đăng xuất và nút sao chép dữ liệu.
+3. **Triển khai Đề xuất 1 — Hợp nhất Nguồn Từ Điển Đa Ngôn Ngữ Duy Nhất (Single Source of Truth cho i18n):**
+   - **Tách nguồn từ điển mặc định duy nhất (`config/default_translations.json`):** Toàn bộ **581 từ khóa × 3 ngôn ngữ (`vi`, `en`, `ja`)** được lưu trữ tập trung tại `config/default_translations.json` (song song với `config/custom_translations.json` dành cho các bản dịch tùy chỉnh động).
+   - **Tối giản `app/core/Language.php` (giảm từ 2.072 dòng xuống 367 dòng):** Đọc trực tiếp từ `config/default_translations.json` và gộp với `config/custom_translations.json`, bổ sung `getDefaultDictionary()`, `getJsonDefaultDictionary()`, `getMergedDictionary()`, `getDictionaryHash()`, `getCurrentLanguage()`, và `renderJsBootstrap()`.
+   - **Tự động nhúng Bootstrap trước `i18n.js` tại `app/core/Controller.php`:** Phương thức `Controller::view()` tự động chèn khối `<script>` khởi tạo `window.__I18N_HASH__`, `window.__DEFAULT_I18N__` và `window.__CUSTOM_I18N__` **đúng 1 lần duy nhất** ngay trước thẻ `<script src=".../i18n.js">` trong `<head>` của mọi trang View (tránh lặp dữ liệu giữa `sidebar.php` và `header.php`).
+   - **Tối giản `public/assets/js/i18n.js` (giảm từ 3.565 dòng xuống 1.701 dòng):** Loại bỏ hoàn toàn 1.955 dòng đối tượng `DICT` bị trùng lặp; tự động khởi tạo đồng bộ từ `window.__DEFAULT_I18N__` / `localStorage` (`webbobin_default_i18n`, `webbobin_custom_i18n`, `webbobin_i18n_hash`) và tách biệt `DEFAULT_DICT` với `CUSTOM_DICT` trong `rebuildMergedDict()` để khi khôi phục (reset) từ khóa tùy chỉnh sẽ quay về ngay giá trị mặc định mà không cần tải lại trang.
+   - **Bổ sung endpoint công khai `auth/getTranslations` (`AuthController.php`, `Router.php`):** Cho phép đồng bộ dự phòng cả `default_dict`, `custom_dict` và `hash` ngay cả trên các trang không đăng nhập.
+
+---
+
+## [TASK-036] - 2026-04-20 - Cấp Quyền Đưa Bobin Vào Danh Sách Chờ Hủy Cho Toàn Bộ Nhân Viên Extrusion & Khắc Phục Lỗi Nút "Ngoại Quan" / "Thông Khí" Kèm Nâng Cấp UI/UX Hủy Bobin Tại Trang Nhóm Cuộn
+
+### 1. Bối cảnh & Yêu cầu:
+- **Phân quyền Extrusion:** Toàn bộ nhân viên nhóm Đùn (Extrusion) đều được phép đưa Bobin vào danh sách chờ hủy (`extrusion_edit_cancel`).
+- **Trang Nhóm cuộn (`windingView.php`):** Khi nhấn nút Hủy Bobin, người dùng không nhấn chọn được nút **"Ngoại quan"** và **"Thông khí"** trên hộp thoại xác nhận hủy trước khi xác nhận hủy. Cần kiểm tra nguyên nhân gốc rễ, khắc phục triệt để và điều chỉnh UI/UX hợp lý, thuận tiện cho thao tác tại xưởng.
+
+### 2. Nguyên nhân gốc rễ & Giải pháp đã triển khai:
+1. **Cập nhật Phân quyền cho toàn bộ nhân viên nhóm Đùn (`app/core/AuthHelper.php`, `production_db.employee_list`, `public/assets/sql/production_db_Data.sql`):**
+   - Trong `AuthHelper::getDefaultPermissionsForRole('extrusion')` và logic tương thích ngược trong `AuthHelper::getUserPermissions()`, chuyển quyền mặc định của vai trò `extrusion` từ `extrusion_edit_only` sang `extrusion_edit_cancel` (`['extrusion_create', 'extrusion_edit_cancel', 'bobin_list', 'bobin_history', 'pending_cancel_view']`).
+   - Đồng bộ toàn bộ 46 nhân viên nhóm Đùn tiêu chuẩn trong bảng `production_db.employee_list` và file `public/assets/sql/production_db_Data.sql` sang `extrusion_edit_cancel`. Hiện tại **100% nhân viên nhóm Đùn (52/52 nhân viên)** đều có quyền đưa Bobin vào danh sách chờ hủy (`bobin/extrusionDeleteBobin`), trong khi quyền duyệt hủy hoàn toàn (`pending_cancel_edit`) vẫn được bảo vệ chặt chẽ cho Admin và các nhân viên được chỉ định.
+2. **Xác định nguyên nhân gốc rễ & Khắc phục lỗi không nhấn được nút "Ngoại quan" / "Thông khí" (`public/assets/js/Winding/submit.js`, `public/assets/js/logout.js`):**
+   - **Nguyên nhân gốc rễ:** Trong `app/views/windingView.php`, file `public/assets/js/logout.js` được nạp ở dòng 358 trước `public/assets/js/Winding/submit.js` (dòng 360). File `logout.js` đã khởi tạo trước đối tượng toàn cục `window.ConfirmDialog` (phiên bản cơ bản chỉ nhận 3 tham số `show(title, contentHTML, onConfirm)`, không nhận callback `onToggle`, không gắn sự kiện click cho `.error-toggle-btn`, và luôn đóng hộp thoại ngay cả khi `onConfirm()` trả về `false`). Khi `Winding/submit.js` kiểm tra `if (typeof ConfirmDialog === "undefined")`, điều kiện trả về `false` nên toàn bộ phần định nghĩa `ConfirmDialog` nâng cao của trang Cuộn bị bỏ qua.
+   - **Giải pháp:**
+     - Gỡ bỏ điều kiện chặn `if (typeof ConfirmDialog === "undefined")` trong `Winding/submit.js` để luôn đăng ký `window.ConfirmDialog` đầy đủ tính năng với style riêng (`#winding-confirm-dialog-style`), gắn trực tiếp sự kiện `click` (`e.preventDefault(); e.stopPropagation();`) cho từng nút `.error-toggle-btn`, tự động chuyển đổi class `.active`, đổi huy hiệu trạng thái (`☑ NG` / `☐ OK`), gọi `onToggle(box)` và giữ hộp thoại mở nếu `onConfirm()` trả về `false`.
+     - Đồng thời nâng cấp `window.ConfirmDialog` trong `public/assets/js/logout.js` để hỗ trợ đầy đủ tham số thứ 4 `onToggle` và xử lý `.error-toggle-btn` đồng nhất trên toàn hệ thống.
+3. **Cải tiến UI/UX quy trình Hủy Bobin tại trang Nhóm cuộn (`app/views/windingView.php`, `public/assets/css/listBobin_Winding.css`, `public/assets/js/Winding/submit.js`, `app/core/Language.php`, `public/assets/js/i18n.js`):**
+   - Bổ sung thanh chọn nhanh hạng mục lỗi (**🔍 Ngoại quan** và **💨 Thông khí**) trực tiếp ngay trên thẻ Bobin (`.winding-cancel-quick-group` / `.card-error-toggle-btn`) cạnh ô Ghi chú cuộn, đồng bộ 2 chiều với hộp thoại xác nhận hủy.
+   - Mở ngay hộp thoại xác nhận hủy khi đã có Mã máy cuộn & Nhân viên thao tác (không bắt buộc phải nhập tay ghi chú trước khi nhấn nút Hủy Bobin).
+   - Thiết kế lại hộp thoại xác nhận hủy gồm 2 bước rõ ràng:
+     - **Bước 1:** 2 thẻ nút bấm lớn (**🔍 Ngoại quan** & **💨 Thông khí**) kèm mô tả phụ và huy hiệu trạng thái `☐ OK` / `☑ NG` rõ nét, dễ bấm trên màn hình cảm ứng.
+     - **Bước 2:** Ô nhập ghi chú chi tiết ngay trong hộp thoại (đồng bộ 2 chiều với ô ghi chú trên thẻ Bobin) và khung xem trước trực tiếp nội dung lý do hủy tổng hợp (`Cuộn <Máy> yêu cầu Hủy - Lý do: Ngoại quan, Thông khí NG`).
+   - Bổ sung đầy đủ 11 từ khóa đa ngôn ngữ (`vi`, `en`, `ja`) trong `app/core/Language.php` và `public/assets/js/i18n.js`.
+
+---
+
+## [TASK-035] - 2026-04-20 - Phân Quyền Và Đồng Bộ Quyền Cho Các Nhóm Người Dùng (Admin, Đùn, QC, Winding) & Bổ Sung 2 Cấp Quyền Tại Trang Điều Chỉnh Đùn (`Edit Only` vs `Edit + Cancel`)
+
+### 1. Bối cảnh & Yêu cầu:
+- Rà soát và đồng bộ hệ thống phân quyền giữa Database (`production_db.employee_list`), Backend/API và Frontend/UI theo 4 nhóm vai trò:
+  - **Admin:** Toàn bộ quyền trên hệ thống.
+  - **Winding:** Toàn bộ quyền nghiệp vụ Winding (`winding_confirm`, `winding_edit`); được xem 3 danh sách (`bobin_list`, `bobin_history`, `pending_cancel_view`) nhưng không được sửa dữ liệu ngoài phạm vi nghiệp vụ Winding.
+  - **QC:** Toàn bộ quyền nghiệp vụ QC (`qc_check`, `qc_edit`); được xem 3 danh sách nhưng không được sửa dữ liệu ngoài phạm vi nghiệp vụ QC.
+  - **Đùn (Extrusion):** Toàn bộ quyền nghiệp vụ Đùn (`extrusion_create`); được xem 3 danh sách và chỉnh sửa Bobin theo quyền được cấp.
+- Tại trang **Điều chỉnh Đùn** (`extrusionEditBobinView.php`), bổ sung 2 cấp quyền loại trừ lẫn nhau:
+  - **Edit Only (`extrusion_edit_only`):** Được chỉnh sửa Bobin nhưng không được đưa Bobin vào danh sách chờ hủy hoặc hủy Bobin.
+  - **Edit + Cancel (`extrusion_edit_cancel`):** Được chỉnh sửa, đưa Bobin vào danh sách chờ hủy và hủy Bobin theo quy trình hiện tại.
+- **Quyền hủy Bobin hoàn toàn (`pending_cancel_edit`):** Chỉ Admin và những nhân viên được chỉ định cụ thể mới được cấp quyền hủy Bobin hoàn toàn (`bobin/deleteBobin`, `bobin/restoreBobin`), kiểm soát chặt chẽ tại Backend/API.
+
+### 2. Giải pháp đã triển khai:
+1. **Cấu trúc quyền trung tâm & Đồng bộ phiên làm việc (`app/core/AuthHelper.php`, `app/core/Router.php`):**
+   - Tách quyền Điều chỉnh Đùn thành `extrusion_edit_only` (`['bobin/extrusioneditbobinview', 'bobin/extrusionupdatebobin']`) và `extrusion_edit_cancel` (`['bobin/extrusioneditbobinview', 'bobin/extrusionupdatebobin', 'bobin/extrusiondeletebobin']`).
+   - Bổ sung route `bobin/qccancelbobin` vào `qc_check` và `bobin/windingcancelbobin` vào `winding_confirm`; khóa chặt `bobin/deletebobin` và `bobin/restorebobin` chỉ dành cho `pending_cancel_edit`.
+   - Bổ sung `AuthHelper::ensureSessionPermissionsFresh()` tự động đồng bộ `role` và `permissions` mới nhất từ `employee_list` vào `$_SESSION['user']` trên mỗi request.
+   - Tại `Router::dispatch()`, kiểm tra `AuthHelper::isActionAllowed()` cho toàn bộ request đã đăng nhập và trả về HTTP 403 JSON chuẩn đối với mọi lời gọi API vượt quyền.
+2. **Bảo vệ tất cả API & View tại Controller (`app/controllers/BobinController.php`, `app/controllers/EmployeeController.php`):**
+   - Bổ sung kiểm tra `AuthHelper::hasPermission(...)` trực tiếp ở đầu toàn bộ các phương thức View và API trong `BobinController` (`extrusionDeleteBobin` bắt buộc `extrusion_edit_cancel`, `deleteBobin` và `restoreBobin` bắt buộc `pending_cancel_edit`, v.v.).
+   - Cập nhật `EmployeeController` (`create`, `update`, `importExcel`, `getEmployeePermissions`, `updatePermissions`) để tự động đồng bộ cột `permissions` theo role và đảm bảo loại trừ lẫn nhau giữa `extrusion_edit_only` ↔ `extrusion_edit_cancel` và `pending_cancel_view` ↔ `pending_cancel_edit`.
+3. **Giao diện Điều chỉnh Đùn & Quản trị Phân quyền (`app/views/extrusionEditBobinView.php`, `public/assets/js/Extrusion/edit_submit.js`, `app/views/employeePermissionsView.php`, `app/core/Language.php`, `public/assets/js\i18n.js`):**
+   - Hiển thị huy hiệu cấp quyền (`Edit Only` / `Edit + Cancel`) trên `extrusionEditBobinView.php`; ẩn nút `"Hủy Bobin"` (`.btn-delete-scrap`) và chặn hàm `handleDelete()` khi tài khoản chỉ có quyền `extrusion_edit_only`.
+   - Cập nhật trang `employeePermissionsView.php` hỗ trợ chọn loại trừ lẫn nhau cho `extrusion_edit_only` và `extrusion_edit_cancel`, kèm đầy đủ bản dịch `vi`, `en`, `ja`.
+4. **Đồng bộ Database (`production_db.employee_list` & `public/assets/sql/production_db_Data.sql`):**
+   - Đồng bộ 100% (132/132 nhân viên) trong CSDL và file SQL dump: 12 Admin toàn quyền; 6 nhân viên Đùn chỉ định (`id=12, 20, 21, 22, 24, 33`) có `extrusion_edit_cancel` & `pending_cancel_edit`; 2 nhân viên QC chỉ định (`id=15, 16`) và 5 nhân viên Winding chỉ định (`id=72, 75, 81, 82, 84`) có `pending_cancel_edit`; 107 nhân viên tiêu chuẩn còn lại nhận đúng bộ quyền chuẩn theo nhóm.
+
+---
+
+## [2026-04-20] - Chuẩn Hóa Hệ Thống Thông Báo Toast: Loại Bỏ Triệt Để Hiện Tượng Trùng Lặp (Duplicate Toast) Sau Mỗi Tác Vụ
+
+### 1. Bối cảnh & Yêu cầu:
+- Nhiều trang trên hệ thống xuất hiện **2 đến 3 thông báo Toast cùng lúc hoặc nối tiếp nhau** sau một tác vụ duy nhất (hiện song song góc trên phải + góc dưới phải, hiện cả trước và sau khi reload trang, hoặc vừa hiện banner vừa hiện Toast).
+- Yêu cầu: **Sau mỗi tác vụ chỉ hiển thị duy nhất 1 Toast**.
+
+### 2. Nguyên nhân gốc rễ & Giải pháp đã triển khai:
+1. **Chuẩn hóa Singleton & Single-Instance tại `public/assets/js/toast.js`:**
+   - Thêm cờ bảo vệ `window.__BOBIN_TOAST_INITIALIZED__` để ngăn `toast.js` khởi tạo 2 lần khi một số view nạp script này ở cả `<head>` và `components/header.php`.
+   - Trong `Toast.show()`, luôn xóa sạch các Toast cũ trong `#bobin-toast-container` (`container.innerHTML = ''`) và ẩn mọi phần tử toast cục bộ (`.toast-message`, `.perm-toast.show`, `.lang-toast.show`) trước khi hiển thị Toast mới — đảm bảo trên màn hình **chỉ có tối đa 1 Toast tại mọi thời điểm**.
+   - Trong `checkAutoToasts()`, ưu tiên hiển thị `sessionStorage` (`bobin_toast_flash`) và tự động dọn URL query (`?msg=`, `?success=`, `?error=`) mà không kích hoạt Toast thứ 2; đồng thời bỏ qua auto-toast từ URL `?error=` nếu trang đã có hộp cảnh báo lỗi inline (`.login-alert-error`, `.cp-alert-error`).
+2. **Loại bỏ gọi kép ở các trang Quản trị & Đổi mật khẩu:**
+   - `app/views/employeePermissionsView.php`: Thêm `return;` ngay sau `window.Toast.show(message, type)` trong `showToast()` để không kích hoạt thêm `#permToast` ở góc dưới phải.
+   - `app/views/languageManageView.php`: Thêm `return;` ngay sau `window.Toast.show(message, type)` trong `showToast()`, đồng thời tại 4 tác vụ (Lưu từ điển, Khôi phục 1 key, Khôi phục toàn bộ, Thêm key mới) chỉ gọi `window.Toast.flash(...)` trước khi `window.location.reload()` thay vì gọi cả `Toast.flash` lẫn `showToast`.
+   - `app/views/changePasswordView.php`: Chỉ gọi `Toast.flash(succMsg, "success")` trước khi chuyển trang thay vì gọi đồng thời `Toast.flash` và `Toast.show`.
+   - `app/views/employeeListView.php`: Gỡ bỏ khối `<div class="msg-banner" id="msgBanner">` bị trùng lặp với cơ chế bắt `?msg=` tự động của `toast.js`.
+   - `app/views/listBobinHistoryView.php` & `public/assets/js/Winding/submit.js`: Chuyển thông báo lỗi lịch sử sang `window.Toast.error()` đồng nhất và đưa `window.Toast.flash()` vào đúng callback xác nhận của `CopyTextDialog` trước khi reload.
+
+---
+
+## [TASK-034] - 2026-04-20 - Tách Phân Quyền Danh Sách Chờ Hủy (Xem & Chỉnh Sửa vs Chỉ Xem) Và Ghi Nhận "Đưa Vào Danh Sách Chờ Hủy" / "Xác Nhận Hủy" Trong `update_history`
+
+### 1. Bối cảnh & Yêu cầu:
+- Tại trang **Phân quyền truy cập** (`employeePermissionsView.php`), đối với mục **Danh sách chờ Hủy**, tách phân quyền thành 2 dạng độc lập:
+  1. **Được xem và được chỉnh sửa thông tin** (`pending_cancel_edit`): Xem danh sách chờ hủy và được phép thực hiện thao tác **Khôi phục Bobin** hoặc **Xác nhận hủy**.
+  2. **Chỉ được xem nhưng không được chỉnh sửa** (`pending_cancel_view`): Chỉ xem thông tin trên trang Danh sách chờ Hủy, không được phép bấm Khôi phục hay Xác nhận hủy.
+- Tại trường `update_history` (lịch sử cập nhật của Bobin), ngoài các bản ghi điều chỉnh thông tin Bobin và khôi phục Bobin, bổ sung lưu vết đầy đủ cho 2 sự kiện: **"Đưa vào danh sách chờ hủy"** và **"Xác nhận hủy"**.
+
+### 2. Giải pháp đã triển khai:
+1. **Tách phân quyền Danh sách chờ Hủy thành 2 mức loại trừ lẫn nhau (`AuthHelper.php`, `EmployeeController.php`, `employeePermissionsView.php`, `listPendingCancellationView.php`, `BobinController.php`):**
+   - Trong `AuthHelper::getAllPermissions()`, thay thế khóa `pending_cancel` bằng 2 khóa trong nhóm `monitoring`:
+     - `pending_cancel_edit`: Ánh xạ tới `['bobin/listpendingcancellationview', 'bobin/deletebobin', 'bobin/restorebobin']`. Mặc định cấp cho vai trò `admin`.
+     - `pending_cancel_view`: Ánh xạ tới `['bobin/listpendingcancellationview']`. Mặc định cấp cho các vai trò `extrusion`, `qc`, `winding`.
+   - Hỗ trợ tương thích ngược toàn diện trong `AuthHelper::getUserPermissions()`, `hasPermission()` và `isActionAllowed()`:
+     - Tài khoản có `pending_cancel_edit` hoặc `pending_cancel_view` đều thỏa mãn quyền xem trang Danh sách chờ Hủy (`hasPermission('pending_cancel')` / `hasPermission('pending_cancel_view')`).
+     - Chỉ tài khoản có `pending_cancel_edit` mới thỏa mãn `hasPermission('pending_cancel_edit')` để gọi API `bobin/deleteBobin` và `bobin/restoreBobin`.
+   - Trên trang `employeePermissionsView.php` và `EmployeeController::updatePermissions()`, thiết lập cơ chế loại trừ lẫn nhau (mutually exclusive): khi chọn `pending_cancel_edit` sẽ tự động bỏ chọn `pending_cancel_view` và ngược lại; thao tác "Chọn tất cả" tự động chọn mức quyền đầy đủ (`pending_cancel_edit`).
+   - Trên trang `listPendingCancellationView.php`, kiểm tra `AuthHelper::hasPermission('pending_cancel_edit')`: nếu chỉ có quyền xem (`pending_cancel_view`), ẩn 2 nút **Khôi phục Bobin** và **Xác nhận Hủy**, thay bằng huy hiệu thông báo **Chế độ chỉ xem (Không có quyền chỉnh sửa / thao tác)** (`pending_view_only_notice`).
+2. **Ghi nhận `"Đưa vào danh sách chờ hủy"` và `"Xác nhận hủy"` vào `update_history` (`BobinServices.php`, `BobinRepository.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php`, `Language.php`, `i18n.js`):**
+   - Khi chuyển Bobin sang trạng thái chờ hủy từ Nhóm Đùn (`BobinServices::extDeleteBobin()` / `BobinRepository::extrusionDeleteBobin()`), Nhóm QC (`BobinServices::qcCancelBobin()` / `BobinRepository::qcCancelBobin()`), hoặc Nhóm Cuộn (`BobinServices::windingCancelBobin()` / `BobinRepository::windingCancelBobin()`), hệ thống tạo bản ghi `update_history` với `action: "pending_cancel"`, `note: "Đưa vào danh sách chờ hủy"`, kèm thông tin công đoạn, nhân viên thao tác, thời gian và thay đổi trạng thái (`status: old -> Pending_Cancellation`) lưu đồng bộ vào `bobin_list_detail` và `bobin_history`.
+   - Khi xác nhận hủy Bobin (`BobinServices::deleteBobin()` / `BobinRepository::deleteBobin()`, cũng như khi tự động hủy do tạo đè tại `BobinRepository::createNewBobin()`), hệ thống nối tiếp bản ghi `update_history` với `action: "confirm_cancel"`, `note: "Xác nhận hủy"`, người xác nhận, thời gian và thay đổi trạng thái (`Pending_Cancellation -> Cancelled`).
+   - Nâng cấp giao diện hiển thị `update_history` trên `listBobinHistoryView.php` và bổ sung khung hiển thị lịch sử cập nhật trên thẻ `listPendingCancellationView.php`, hỗ trợ dịch đa ngôn ngữ đầy đủ (`vi`, `en`, `ja`).
+
+---
+
+## [2026-10-11] - Khắc Phục Sai Lệch Dữ Liệu Trang Điều Chỉnh QC & Bắt Buộc Chọn Lý Do ("Thông Khí" / "Ngoại Quan") Khi Hủy Bobin Tại Nhóm Cuộn (TASK-033)
+
+### 1. Bối cảnh & Yêu cầu:
+- Kiểm tra và sửa lỗi hiển thị sai dữ liệu tại trang **Điều chỉnh QC** (`qcEditBobinView.php`), đồng thời đảm bảo dữ liệu sau khi điều chỉnh QC đồng bộ hoàn toàn với trang Danh sách chi tiết và Lịch sử Bobin.
+- Tại trang **Nhóm Cuộn** (`windingView.php` / `Winding/submit.js`), khi người dùng bấm Hủy Bobin, trên hộp thoại xác nhận (dialog review) bắt buộc phải chọn ít nhất **"Thông khí"** hoặc **"Ngoại quan"** thì mới được phép xác nhận hủy.
+
+### 2. Nguyên nhân gốc rễ (Root Cause Analysis):
+1. **Lệch cấu trúc JSON `visual_inspection` tại trang Điều chỉnh QC:**
+   - Khi kiểm tra QC tại `qcView.php`, backend (`VisualInspectionEntity::toArray()`) lưu cột `visual_inspection` theo cấu trúc lồng chuẩn:
+     `{"defects": {"gel": bool, "foreign_object": bool, "color_issue": bool, "print_quality": bool, "note": "..."}, "inspector_code": "...", "inspector_name": "...", "inspection_time": "..."}`.
+   - Ngược lại, `qcEditBobinView.php` trước đây lại đọc ở cấp ngoài cùng (`$vi['defect_gel']`, `$vi['defect_foreign']`, `$vi['defect_color']`, `$vi['defect_print']`, `$vi['defect_note']`) khiến mọi Bobin vừa qua QC (kể cả Bobin có lỗi NG hoặc có ghi chú) đều bị hiển thị thành **4 tiêu chí OK hết**, mất ghi chú QC, và bộ đếm KPI trên đầu trang báo `Có lỗi ngoại quan = 0`.
+   - Hơn nữa, hàm `BobinController::updateQCEditBobin()` khi lưu lại ghi đè JSON phẳng (`defect_gel`, ..., `inspected_at`) vào DB, làm mất object `defects` và khiến trang Danh sách chi tiết (`listBobinDetailView.php`) / Lịch sử (`listBobinHistoryView.php`) hiển thị sai ngược trở lại.
+   - Ngoài ra, `BobinRepository::adminUpdateQCBobin()` trước đây chạy `UPDATE bobin_history SET visual_inspection = ... WHERE bobin_key_code = ...` không giới hạn công đoạn, vô tình ghi đè `visual_inspection` vào cả dòng lịch sử công đoạn Đùn (`Busy_Unchecked`).
+2. **Hộp thoại Hủy Bobin tại trang Nhóm Cuộn chưa bắt buộc chọn nút lý do:**
+   - Trong `public/assets/js/Winding/submit.js`, `ConfirmDialog.show()` luôn gọi `overlay.remove()` ngay khi bấm nút "Xác nhận", và `handleWindingCancel()` cho phép gửi request hủy ngay cả khi `selectedErrors.length === 0` (chưa chọn `"Ngoại quan"` hay `"Thông khí"`).
+
+### 3. Giải pháp đã triển khai:
+1. **Chuẩn hóa hiển thị & lưu trữ Điều chỉnh QC (`qcEditBobinView.php`, `qcEditBobin.css`, `BobinController.php`, `BobinServices.php`, `BobinRepository.php`):**
+   - Cập nhật `qcEditBobinView.php` đọc chính xác `$vi['defects']` (`gel`, `foreign_object`, `color_issue`, `print_quality`, `note`) và `$vi['inspection_time']` (kèm fallback tương thích ngược với các khóa phẳng `defect_*`, `inspected_at`) cho cả 4 thẻ KPI và danh sách thẻ Bobin.
+   - Bổ sung hiển thị đầy đủ thông số trên thẻ Điều chỉnh QC: `Kích thước`, `Lot vật liệu`, `Ca sản xuất`, `NV Đùn`, dải 5 tiêu chí `Đùn tự kiểm tra` tham khảo, định dạng hiển thị `bobin_key_code`, và tích hợp gợi ý nhân viên QC (`QC/suggestion.js`).
+   - Cập nhật `BobinController::updateQCEditBobin()` lưu `visual_inspection` đúng chuẩn `VisualInspectionEntity` (`defects: {...}`, `inspector_code`, `inspector_name`, `inspection_time`), tự động đồng bộ tiền tố `"Phán định chuyển Bobin sang: ..."` khi đổi loại Bobin, và xác thực nhân viên QC qua `EmployeeRepository` trong `BobinServices::adminUpdateQCBobin()`.
+   - Sửa `BobinRepository::adminUpdateQCBobin()` và `adminUpdateWindingBobin()` chỉ cập nhật `update_history` trên đúng dòng lịch sử của công đoạn tương ứng (`WHERE id = :hist_id`), bảo toàn nguyên vẹn dòng lịch sử `Busy_Unchecked`.
+   - Sửa lỗi đảo ngược nhãn OK/NG khi xuất Excel cho 4 tiêu chí ngoại quan trong `BobinController` (`prepareHistoryRowData`, `prepareRowData`, `prepareDetailRowData`).
+2. **Bắt buộc chọn "Thông khí" hoặc "Ngoại quan" khi hủy tại Nhóm Cuộn (`Winding/submit.js`, `BobinWindingCancelDTO.php`, `BobinController.php`, `BobinServices.php`):**
+   - Nâng cấp `ConfirmDialog.show()` trong `Winding/submit.js`: nếu `await onConfirm(box)` trả về `false`, giữ nguyên hộp thoại và bật lại nút `.confirm-btn`.
+   - Trong `handleWindingCancel()`, nếu người dùng chưa chọn `"Ngoại quan"` hoặc `"Thông khí"` (`selectedErrors.length === 0`), hiển thị Toast lỗi đa ngôn ngữ (`toast_err_winding_cancel_reason`) cùng cảnh báo trực quan ngay trong hộp thoại (`#winding-cancel-reason-error`) và chặn gửi request.
+   - Bổ sung kiểm tra bắt buộc phía Backend trong `BobinController::validFormWinding_Cancel()` và `BobinServices::windingCancelBobin()`.
+
+---
+
+## [2026-10-11] - Bổ Sung Trường `previous_status` & Chức Năng Khôi Phục Bobin (Restore) Tại Danh Sách Chờ Hủy (TASK-032)
+
+### 1. Bối cảnh & Yêu cầu:
+- Bổ sung trường dữ liệu `previous_status` cho mỗi Bobin để lưu lại trạng thái liền trước trạng thái hiện tại (`bobin_current_status`).
+- Tại trang **Danh sách chờ hủy** (`app/views/listPendingCancellationView.php`), bổ sung nút **"Khôi phục Bobin" (Restore)** để hoàn lại trạng thái trước đó theo quy tắc:
+  1. Nếu đưa vào chờ hủy bởi **Nhóm Đùn** $\rightarrow$ Restore về **Chưa kiểm tra QC** (`Busy_Unchecked`).
+  2. Nếu đưa vào chờ hủy bởi **Nhóm QC** $\rightarrow$ Restore về **Chưa kiểm tra QC** (`Busy_Unchecked`).
+  3. Nếu đưa vào chờ hủy bởi **Nhóm Cuộn**, mà trước đó là **Đã QC** $\rightarrow$ Restore về **Đã QC** (`Busy_Checked`).
+  4. Nếu đưa vào chờ hủy bởi **Nhóm Cuộn**, mà trước đó là **Đã Cuộn** $\rightarrow$ Restore về **Đã Cuộn** (`Rolled`).
+- Phân tích và đề xuất hướng giải quyết cho nghiệp vụ **"Bobin chạy dở dang"** tại nhóm Cuộn.
+
+### 2. Giải pháp đã triển khai:
+1. **Cơ sở dữ liệu & Schema (`production_db`, `production_db._Structure.sql`, `DATABASE_SCHEMA.md`):**
+   - Thêm cột `previous_status enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT NULL` ngay sau `bobin_current_status` trên cả 3 bảng: `bobin_list_detail`, `bobin_list_general`, và `bobin_history`.
+   - Backfill dữ liệu `previous_status` cho toàn bộ bản ghi hiện có trên CSDL.
+2. **Backend (`BobinEntity.php`, `BobinRepository.php`, `BobinServices.php`, `BobinController.php`, `AuthHelper.php`, `Router.php`):**
+   - Cập nhật toàn bộ các hàm chuyển trạng thái (`createNewBobin`, `extrusionDeleteBobin`, `updateQCBobinInfor`, `updateBobinTypeInfor`, `qcCancelBobin`, `updateWindingBobinInfor`, `windingCancelBobin`, `deleteBobin`) để tự động lưu vết `previous_status` đồng bộ trên cả 3 bảng.
+   - Xây dựng hàm `BobinRepository::restoreBobin()`, `BobinServices::restoreBobin()` và API `PUT ?url=bobin/restoreBobin` (`BobinController::restoreBobin()`): xác định chính xác trạng thái khôi phục đích, làm sạch hậu tố/tiền tố báo hủy trong ghi chú, ghi vết kiểm toán `update_history` (`action: 'restore'`), cập nhật `bobin_list_detail`, `bobin_list_general` và ghi bản ghi lịch sử mới vào `bobin_history`.
+3. **Giao diện & Đa ngôn ngữ (`listPendingCancellationView.php`, `listPendingCancellation.css`, `delete.js`, `Language.php`, `i18n.js`):**
+   - Hiển thị huy hiệu trạng thái khôi phục đích (`Khôi phục về: CHƯA KIỂM TRA QC / ĐÃ KIỂM TRA QC / ĐÃ CUỘN`) trên thanh tiêu đề của mỗi thẻ Bobin chờ hủy.
+   - Bổ sung nút `🔄 Khôi phục Bobin` (`.btn-restore-bobin`) và hộp thoại xác nhận `handleRestore()` trong `delete.js`, hỗ trợ đầy đủ 3 ngôn ngữ (`vi`, `en`, `ja`).
+
+---
+
 ## [2026-10-10] - Bổ Sung Quét Mã QR Cho Vị Trí Rack & Ngăn Bàn Phím Ảo Bật Lên Sau Khi Quét (TASK-031)
 
 ### 1. Bối cảnh & Yêu cầu:

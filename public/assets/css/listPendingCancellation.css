@@ -239,6 +239,25 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
 .main-info-wrapper { display: flex; align-items: center; gap: 6px; }
 .main-info { font-size: 0.76rem; font-weight: 500; color: #ffffff; word-break: break-all; }
 .btn-copy { padding: 2px 6px; font-size: 11px; cursor: pointer; border: 1px solid #ffffff; background-color: #ffffff; border-radius: 4px; }
+.status-badges-wrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.prev-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  white-space: nowrap;
+}
+.prev-status-badge strong {
+  font-weight: 800;
+  color: #fef08a;
+  text-transform: uppercase;
+}
 .status-badge { font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; background: #ffffff; color: var(--pending-dark); white-space: nowrap; }
 
 .info-grid {
@@ -297,7 +316,26 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   gap: 8px;
 }
 .update-time { font-size: 0.72rem; color: #64748b; font-style: italic; }
-.button-group { display: flex; gap: 6px; margin-left: auto; }
+.button-group { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+
+.btn-restore-bobin {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  min-height: 40px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-restore-bobin:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+}
 
 .btn-cancel-final {
   border: none;
@@ -310,6 +348,19 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: #ffffff;
   min-height: 40px;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-cancel-final:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-1px);
+}
+
+.admin-only-note {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  align-self: center;
 }
 
 /* ================= RESPONSIVE ================= */
@@ -390,9 +441,13 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
     padding: 4px 10px;
     font-size: 12px;
   }
+  .status-badges-wrap {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 2px;
+  }
   .status-badge {
     align-self: flex-start;
-    margin-top: 2px;
   }
 
   /* Lưới thông số sản xuất */
@@ -415,7 +470,9 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   .button-group {
     width: 100%;
     margin-left: 0;
+    flex-direction: column;
   }
+  .btn-restore-bobin,
   .btn-cancel-final {
     width: 100%;
     min-height: 44px;
@@ -423,6 +480,10 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .admin-only-note {
+    text-align: center;
+    width: 100%;
   }
 }
 

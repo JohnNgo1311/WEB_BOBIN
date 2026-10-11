@@ -54,7 +54,11 @@ $qcPassCount = 0;
 $qcDefectCount = 0;
 foreach ($bobins as $b) {
     $viData = decodeJsonObject($b['visual_inspection'] ?? '');
-    $hasDefect = ($viData['defect_gel'] ?? false) || ($viData['defect_foreign_object'] ?? false) || ($viData['defect_color_issue'] ?? false) || ($viData['defect_print_quality'] ?? false);
+    $defectsData = is_array($viData['defects'] ?? null) ? $viData['defects'] : [];
+    $hasDefect = filter_var($defectsData['gel'] ?? $viData['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['foreign_object'] ?? $viData['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['color_issue'] ?? $viData['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['print_quality'] ?? $viData['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
     if ($hasDefect) {
         $qcDefectCount++;
     } else {
@@ -208,18 +212,46 @@ foreach ($bobins as $b) {
                     $rackData = decodeJsonObject($item['rack'] ?? '');
                     $rackCode = $rackData['code'] ?? '---';
 
+                    $extCheck = decodeJsonObject($item['extrusion_check'] ?? '');
+
                     $vi = decodeJsonObject($item['visual_inspection'] ?? '');
+                    $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [];
 
-                    $chkGel           = !($vi['defect_gel'] ?? false);
-                    $chkForeignObject = !($vi['defect_foreign_object'] ?? false);
-                    $chkColor         = !($vi['defect_color_issue'] ?? false);
-                    $chkPrint         = !($vi['defect_print_quality'] ?? false);
+                    $hasGelDefect     = filter_var($defects['gel'] ?? $vi['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasForeignDefect = filter_var($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasColorDefect   = filter_var($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasPrintDefect   = filter_var($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
-                    $inspectorCode = $vi['inspector_code'] ?? '';
-                    $inspectorName = $vi['inspector_name'] ?? '';
-                    $defectNote    = $vi['defect_note'] ?? '';
+                    $chkGel           = !$hasGelDefect;
+                    $chkForeignObject = !$hasForeignDefect;
+                    $chkColor         = !$hasColorDefect;
+                    $chkPrint         = !$hasPrintDefect;
 
-                    $printLot = $item['print_lot'] ?? 'Chưa cập nhật';
+                    $inspectorCode = trim((string)($vi['inspector_code'] ?? ''));
+                    $inspectorName = trim((string)($vi['inspector_name'] ?? ''));
+                    if ($inspectorCode === 'Chưa cập nhật') $inspectorCode = '';
+                    if ($inspectorName === 'Chưa cập nhật') $inspectorName = '';
+
+                    $rawDefectNote = trim((string)($defects['note'] ?? $vi['defect_note'] ?? ''));
+                    $defectNote    = ($rawDefectNote === 'Chưa cập nhật') ? '' : $rawDefectNote;
+                    $inspectionTime = $vi['inspection_time'] ?? ($vi['inspected_at'] ?? '');
+
+                    $printLot  = $item['print_lot'] ?? 'Chưa cập nhật';
+                    $bobinSize = $item['bobin_size'] ?? '---';
+                    $shift     = $item['shift'] ?? '---';
+                    $rawBobinType = trim($item['bobin_type'] ?? '');
+
+                    $rawKey = $item['bobin_key_code'] ?? '';
+                    $displayKey = htmlspecialchars($rawKey);
+                    if (is_string($rawKey) && strpos($rawKey, '_') !== false) {
+                        $parts = explode('_', $rawKey);
+                        if (count($parts) >= 7) {
+                            $code = array_shift($parts);
+                            $date = implode('/', array_slice($parts, 0, 3));
+                            $time = implode(':', array_slice($parts, 3, 3));
+                            $displayKey = htmlspecialchars("{$code} - {$date} - {$time}");
+                        }
+                    }
                     ?>
                     <div class="qc-card bobin-item status_busy_checked"
                         data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>">
@@ -229,7 +261,7 @@ foreach ($bobins as $b) {
                             <div class="qc-id-group key-info">
                                 <span
                                     class="qc-id-badge id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
-                                <span class="qc-key-code key-code"><?= htmlspecialchars($item['bobin_key_code']) ?></span>
+                                <span class="qc-key-code key-code"><?= $displayKey ?></span>
                             </div>
                             <div class="qc-status-badge status-badge">
                                 <span>🛡️</span>
@@ -246,6 +278,16 @@ foreach ($bobins as $b) {
                                     <div class="qc-val val-sub">
                                         <span class="qc-tag-product font-bold-blue"><?= htmlspecialchars($productCode) ?></span>
                                     </div>
+                                </div>
+
+                                <div class="qc-field field-item">
+                                    <label class="qc-label" data-i18n="col_size"><?= __('col_size') ?></label>
+                                    <div class="qc-val val-sub"><?= htmlspecialchars($bobinSize) ?></div>
+                                </div>
+
+                                <div class="qc-field field-item">
+                                    <label class="qc-label" data-i18n="field_material_lot"><?= __('field_material_lot') ?></label>
+                                    <div class="qc-val val-sub"><?= htmlspecialchars($matLot) ?></div>
                                 </div>
 
                                 <div class="qc-field field-item">
@@ -270,12 +312,50 @@ foreach ($bobins as $b) {
                                     </div>
                                 </div>
 
+                                <div class="qc-field field-item">
+                                    <label class="qc-label" data-i18n="field_shift"><?= __('field_shift') ?></label>
+                                    <div class="qc-val val-sub"><?= htmlspecialchars($shift) ?></div>
+                                </div>
+
+                                <div class="qc-field field-item">
+                                    <label class="qc-label" data-i18n="col_ext_emp"><?= __('col_ext_emp') ?></label>
+                                    <div class="qc-val val-sub"><?= htmlspecialchars($extEmpCode . ' - ' . $extEmpName) ?></div>
+                                </div>
+
+                                <!-- Đùn tự kiểm tra (Tham khảo) -->
+                                <div class="qc-field span-2 field-item">
+                                    <label class="qc-label" data-i18n="ext_criteria_title"><?= __('ext_criteria_title') ?></label>
+                                    <div class="qc-ext-ref-badges">
+                                        <?php
+                                        $extRefChecks = [
+                                            'crit_diameter' => ['label' => 'Đường kính', 'ok' => (bool)($extCheck['diameter'] ?? true)],
+                                            'crit_gel'      => ['label' => 'Gel',        'ok' => (bool)($extCheck['gel'] ?? true)],
+                                            'crit_foreign'  => ['label' => 'Dị vật',     'ok' => (bool)($extCheck['foreign_object'] ?? true)],
+                                            'crit_color'    => ['label' => 'Màu sắc',    'ok' => (bool)($extCheck['color'] ?? true)],
+                                            'crit_print'    => ['label' => 'Chữ in',     'ok' => (bool)($extCheck['print'] ?? true)]
+                                        ];
+                                        foreach ($extRefChecks as $i18nKey => $ec):
+                                        ?>
+                                            <span class="qc-ext-ref-pill <?= $ec['ok'] ? 'is-ok' : 'is-ng' ?>">
+                                                <span data-i18n="<?= $i18nKey ?>"><?= __($i18nKey) ?></span>:
+                                                <strong><?= $ec['ok'] ? 'OK' : 'NG' ?></strong>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+
                                 <div class="qc-field span-2 field-item">
                                     <label class="qc-label" data-i18n="field_bobin_type"><?= __('field_bobin_type') ?></label>
                                     <select class="qc-input-control input-field select-bobin-type" disabled>
-                                        <?php foreach ($typeOptions as $val => $text): ?>
+                                        <?php
+                                        $mergedTypeOptions = $typeOptions;
+                                        if ($rawBobinType !== '' && !isset($mergedTypeOptions[$rawBobinType])) {
+                                            $mergedTypeOptions[$rawBobinType] = $rawBobinType;
+                                        }
+                                        foreach ($mergedTypeOptions as $val => $text):
+                                        ?>
                                             <option value="<?= htmlspecialchars($val) ?>"
-                                                <?= ($item['bobin_type'] ?? '') === $val ? 'selected' : '' ?>>
+                                                <?= $rawBobinType === $val ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($text) ?>
                                             </option>
                                         <?php endforeach; ?>
@@ -285,25 +365,32 @@ foreach ($bobins as $b) {
 
                             <!-- Right: QC Inspection Panel -->
                             <div class="qc-inspect-panel">
-                                <div class="qc-criteria-header ext-title">
-                                    <span>🛡️</span>
-                                    <span data-i18n="qc_criteria_title"><?= __('qc_criteria_title') ?></span>
+                                <div class="qc-criteria-header ext-title" style="justify-content: space-between; flex-wrap: wrap;">
+                                    <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <span>🛡️</span>
+                                        <span data-i18n="qc_criteria_title"><?= __('qc_criteria_title') ?></span>
+                                    </div>
+                                    <?php if (!empty($inspectionTime) && $inspectionTime !== 'Chưa cập nhật'): ?>
+                                        <span style="font-size: 11.5px; font-weight: 600; color: #64748b; text-transform: none;">
+                                            🕒 QC: <?= htmlspecialchars($inspectionTime) ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
 
                                 <!-- 4 Criteria Toggle Buttons -->
                                 <div class="qc-criteria-grid ext-checks-group">
                                     <?php
                                     $qcChecks = [
-                                        'gel'            => ['label' => 'Gel',     'val' => $chkGel],
-                                        'foreign_object' => ['label' => 'Dị vật',  'val' => $chkForeignObject],
-                                        'color'          => ['label' => 'Màu sắc', 'val' => $chkColor],
-                                        'print'          => ['label' => 'Chữ in',  'val' => $chkPrint]
+                                        'gel'            => ['label_key' => 'crit_gel',     'label' => 'Gel',     'val' => $chkGel],
+                                        'foreign_object' => ['label_key' => 'crit_foreign', 'label' => 'Dị vật',  'val' => $chkForeignObject],
+                                        'color'          => ['label_key' => 'crit_color',   'label' => 'Màu sắc', 'val' => $chkColor],
+                                        'print'          => ['label_key' => 'crit_print',   'label' => 'Chữ in',  'val' => $chkPrint]
                                     ];
                                     foreach ($qcChecks as $key => $c):
                                         $isOk = (bool)$c['val'];
                                     ?>
                                         <div class="qc-criteria-item ext-check-box">
-                                            <span class="qc-criteria-name check-box-label"><?= $c['label'] ?></span>
+                                            <span class="qc-criteria-name check-box-label" data-i18n="<?= $c['label_key'] ?>"><?= __($c['label_key']) ?></span>
                                             <button type="button" class="qc-toggle-btn ext-toggle-btn <?= $isOk ? 'active' : '' ?>"
                                                 data-field="qc_check_<?= $key ?>" data-value="<?= $isOk ? 'true' : 'false' ?>"
                                                 onclick="toggleQCCheck(this)" disabled>
@@ -320,6 +407,7 @@ foreach ($bobins as $b) {
                                             data-i18n="field_inspector_code"><?= __('field_inspector_code') ?></label>
                                         <input class="qc-input-control input-field input-inspector-code" type="text"
                                             autocomplete="off" value="<?= htmlspecialchars($inspectorCode) ?>" disabled>
+                                        <div class="suggestion-box"></div>
                                     </div>
 
                                     <div class="qc-field field-item">
@@ -413,6 +501,7 @@ foreach ($bobins as $b) {
     <script>
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
+    <script src="/WEB_BOBIN/public/assets/js/QC/suggestion.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/QC/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_scanQR.js?v=<?= time() ?>"></script>
 </body>

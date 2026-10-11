@@ -5,6 +5,8 @@
 require_once ROOT_PATH . '/app/core/AuthHelper.php';
 require_once ROOT_PATH . '/app/core/Language.php';
 
+AuthHelper::ensureSessionPermissionsFresh();
+
 $user         = $_SESSION['user'] ?? [];
 $userRole     = strtolower($user['role'] ?? '');
 $userName     = $user['employee_name'] ?? 'Người dùng';
@@ -38,8 +40,11 @@ $firstLetter = mb_substr(trim($userName), 0, 1, 'UTF-8');
 // Xác định trang chủ hợp lệ của người dùng dựa theo quyền thực tế
 $userHomeUrl = match (true) {
     $canExtrusionCreate  => '/WEB_BOBIN/public/index.php?url=bobin/index',
+    $canExtrusionEdit    => '/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView',
     $canQcCheck          => '/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC',
+    $canQcEdit           => '/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView',
     $canWindingConfirm   => '/WEB_BOBIN/public/index.php?url=bobin/windingView',
+    $canWindingEdit      => '/WEB_BOBIN/public/index.php?url=bobin/windingEditBobinView',
     $canBobinList        => '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView',
     $canBobinHistory     => '/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView',
     $canPendingCancel    => '/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView',
@@ -62,15 +67,9 @@ $wndCount  = ($canWindingConfirm ? 1 : 0) + ($canWindingEdit ? 1 : 0);
 $monCount  = ($canBobinList ? 1 : 0) + ($canBobinHistory ? 1 : 0) + ($canPendingCancel ? 1 : 0);
 $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
 
-// Nhúng từ điển tùy chỉnh nếu có vào window.__CUSTOM_I18N__ để i18n.js tự động đồng bộ
-$customDictJson = json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UNICODE);
+// Nhúng từ điển mặc định & tùy chỉnh từ nguồn duy nhất (Single Source of Truth)
 ?>
-<script>
-    window.__CUSTOM_I18N__ = <?= $customDictJson ?: '{}' ?>;
-    if (typeof window.loadAndMergeCustomTranslations === 'function') {
-        window.loadAndMergeCustomTranslations(window.__CUSTOM_I18N__);
-    }
-</script>
+<?= Language::renderJsBootstrap() ?>
 
 <!-- Mobile Topbar -->
 <div class="sb-mobile-topbar">

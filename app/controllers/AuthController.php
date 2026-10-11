@@ -295,6 +295,16 @@ class AuthController extends Controller
         exit;
     }
 
+    public function getTranslations(): void
+    {
+        $this->json([
+            'success'      => true,
+            'hash'         => Language::getDictionaryHash(),
+            'default_dict' => Language::getDefaultDictionary(),
+            'custom_dict'  => Language::getCustomDictionary()
+        ]);
+    }
+
     public function logout(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -311,3 +321,4 @@ class AuthController extends Controller
         exit;
     }
 }
+

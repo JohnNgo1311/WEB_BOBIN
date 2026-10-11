@@ -55,6 +55,7 @@ CREATE TABLE `bobin_history` (
   `extrusion_date` date DEFAULT NULL,
   `finish_time` datetime DEFAULT NULL,
   `bobin_current_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT 'Rolled',
+  `previous_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT NULL,
   `visual_inspection` text DEFAULT NULL,
   `winding_machine` varchar(50) DEFAULT NULL,
   `winding_employee` text DEFAULT NULL,
@@ -87,6 +88,7 @@ CREATE TABLE `bobin_list_detail` (
   `extrusion_date` date DEFAULT NULL,
   `finish_time` datetime DEFAULT NULL,
   `bobin_current_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT 'Rolled',
+  `previous_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT NULL,
   `visual_inspection` text DEFAULT NULL,
   `winding_machine` varchar(50) DEFAULT NULL,
   `winding_employee` text DEFAULT NULL,
@@ -109,6 +111,7 @@ CREATE TABLE `bobin_list_general` (
   `bobin_size` enum('PL7-3','PL4-7 (TU04.TU06)','PL4-7 (TU08~)') NOT NULL,
   `bobin_type` enum('Sản xuất','Bù','Điều chỉnh (Do CP)','Điều chỉnh (Ngoại quan: Gel)','Điều chỉnh (Ngoại quan: Dị vật)','Điều chỉnh (Ngoại quan: Trầy)','Điều chỉnh (Ngoại quan: Biến dạng)','Điều chỉnh (Ngoại quan: Xước)','Điều chỉnh (Ngoại quan: Chữ in)','Điều chỉnh (Ngoại quan: Vón cục)','Điều chỉnh (Ngoại quan: Màu)') NOT NULL,
   `bobin_current_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT 'Rolled',
+  `previous_status` enum('Rolled','Busy_Unchecked','Busy_Checked','Pending_Cancellation','Cancelled') DEFAULT NULL,
   `updated_time` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

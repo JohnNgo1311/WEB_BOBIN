@@ -238,7 +238,13 @@ function cancelEdit(btnElement) {
     HÀM XỬ LÝ: Hủy Bobin
 ========================================= */
 async function handleDelete(btnElement, bobinCode, bobinKeyCode) {
-    const container = btnElement.closest('.bobin-item');
+    if (typeof CAN_EXTRUSION_CANCEL !== 'undefined' && !CAN_EXTRUSION_CANCEL) {
+        const msg = window.t ? window.t('ext_err_no_cancel_perm') : 'Bạn chỉ có quyền chỉnh sửa Bobin (Edit Only), không có quyền đưa Bobin vào danh sách chờ hủy.';
+        Toast.show(msg, "error");
+        return;
+    }
+
+    const container = btnElement ? btnElement.closest('.bobin-item') : null;
     if (!bobinCode) {
         Toast.show("Lỗi: Thiếu mã định danh của Bobin!", "error");
         return;

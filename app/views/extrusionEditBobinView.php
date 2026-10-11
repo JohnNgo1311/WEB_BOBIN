@@ -7,6 +7,7 @@ $totalRecords = $data['totalRecords'] ?? count($bobins);
 $userRole     = $_SESSION['user']['role'] ?? '';
 $currentUrl   = $_GET['url'] ?? '';
 $pCount       = $pendingCount ?? (class_exists('GlobalData') ? (GlobalData::$pendingBobinCount ?? 0) : 0);
+$canCancelExtrusionBobin = class_exists('AuthHelper') && AuthHelper::hasPermission('extrusion_edit_cancel');
 
 $typeOptions = [
     'Sản xuất'                           => 'Sản xuất',
@@ -80,9 +81,22 @@ foreach ($bobins as $b) {
                 </h1>
                 <p class="ext-hero-subtitle" data-i18n="ext_edit_subtitle"><?= __('ext_edit_subtitle') ?></p>
             </div>
-            <div class="ext-hero-badge">
-                <span>⚙️</span>
-                <span data-i18n="ext_badge_stage"><?= __('ext_badge_stage') ?></span>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <div class="ext-hero-badge">
+                    <span>⚙️</span>
+                    <span data-i18n="ext_badge_stage"><?= __('ext_badge_stage') ?></span>
+                </div>
+                <?php if ($canCancelExtrusionBobin): ?>
+                <div class="ext-hero-badge" style="background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.45); color: #ecfdf5;">
+                    <span>🛡️</span>
+                    <span data-i18n="ext_perm_badge_edit_cancel"><?= __('ext_perm_badge_edit_cancel') ?></span>
+                </div>
+                <?php else: ?>
+                <div class="ext-hero-badge" style="background: rgba(245, 158, 11, 0.22); border-color: rgba(245, 158, 11, 0.5); color: #fef3c7;">
+                    <span>🔒</span>
+                    <span data-i18n="ext_perm_badge_edit_only"><?= __('ext_perm_badge_edit_only') ?></span>
+                </div>
+                <?php endif; ?>
             </div>
         </header>
 
@@ -451,12 +465,14 @@ foreach ($bobins as $b) {
                             <span data-i18n="ext_btn_save"><?= __('ext_btn_save') ?></span>
                         </button>
 
-                        <!-- Nút Hủy Bobin -->
+                        <!-- Nút Hủy Bobin (chỉ hiển thị khi có quyền extrusion_edit_cancel) -->
+                        <?php if ($canCancelExtrusionBobin): ?>
                         <button type="button" class="ext-btn btn-delete-scrap btn-delete"
                             onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
                             <span>🗑️</span>
                             <span data-i18n="ext_btn_delete"><?= __('ext_btn_delete') ?></span>
                         </button>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -469,6 +485,7 @@ foreach ($bobins as $b) {
 
     <script>
     const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+    const CAN_EXTRUSION_CANCEL = <?= $canCancelExtrusionBobin ? 'true' : 'false' ?>;
     </script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_suggestion.js?v=<?= time() ?>"></script>

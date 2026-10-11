@@ -12,268 +12,309 @@ var Toast = window.Toast || {
 
 
 /* =========================================
-   MODULE CONFIRM DIALOG
+   MODULE CONFIRM DIALOG (WINDING ENHANCED)
 ========================================= */
 
-if (typeof ConfirmDialog === "undefined") {
+window.ConfirmDialog = {
+    show: function (
+        title,
+        contentHTML,
+        onConfirm,
+        onToggle,
+        options = {}
+    ) {
+        if (!document.getElementById('winding-confirm-dialog-style')) {
+            const style = document.createElement('style');
+            style.id = 'winding-confirm-dialog-style';
+            style.innerHTML = `
+                .confirm-dialog-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    background: rgba(15, 23, 42, 0.62);
+                    backdrop-filter: blur(3px);
+                    -webkit-backdrop-filter: blur(3px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 99999;
+                    padding: 16px;
+                    box-sizing: border-box;
+                }
 
-    window.ConfirmDialog = {
+                .confirm-dialog-box {
+                    background: #ffffff;
+                    padding: 20px 22px;
+                    border-radius: 12px;
+                    width: 100%;
+                    max-width: 540px;
+                    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+                    font-family: var(--font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+                    box-sizing: border-box;
+                    animation: wndDialogPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+                }
 
-        show: function (
-            title,
-            contentHTML,
-            onConfirm,
-            onToggle
-        ) {
+                @keyframes wndDialogPop {
+                    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+                    to { opacity: 1; transform: scale(1) translateY(0); }
+                }
 
-            const overlay =
-                document.createElement('div');
+                .confirm-dialog-title {
+                    margin: 0 0 12px 0;
+                    font-size: 17px;
+                    color: #0f172a;
+                    text-align: center;
+                    border-bottom: 1.5px solid #e2e8f0;
+                    padding-bottom: 10px;
+                    font-weight: 800;
+                }
 
-            overlay.className =
-                'confirm-dialog-overlay';
+                .confirm-dialog-content {
+                    margin: 12px 0;
+                    font-size: 13.5px;
+                    color: #334155;
+                    max-height: 70vh;
+                    overflow-y: auto;
+                }
 
+                .confirm-dialog-actions {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 10px;
+                    margin-top: 16px;
+                    padding-top: 12px;
+                    border-top: 1px solid #e2e8f0;
+                }
 
-            const box =
-                document.createElement('div');
+                .wnd-reason-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                    margin-top: 8px;
+                }
 
-            box.className =
-                'confirm-dialog-box';
+                .error-toggle-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 8px;
+                    width: 100%;
+                    padding: 12px 14px;
+                    border: 2px solid #cbd5e1;
+                    border-radius: 10px;
+                    background: #ffffff;
+                    color: #1e293b;
+                    cursor: pointer;
+                    font-size: 13.5px;
+                    font-weight: 700;
+                    text-align: left;
+                    transition: all 0.18s ease;
+                    user-select: none;
+                    box-sizing: border-box;
+                }
 
+                .error-toggle-btn:hover {
+                    border-color: #f87171;
+                    background: #fff5f5;
+                }
 
-            box.innerHTML = `
+                .error-toggle-btn .err-btn-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    pointer-events: none;
+                }
 
-                <h3 class="confirm-dialog-title">
-                    ${title}
-                </h3>
+                .error-toggle-btn .err-btn-icon {
+                    font-size: 18px;
+                    line-height: 1;
+                }
 
-                <div class="confirm-dialog-content">
-                    ${contentHTML}
-                </div>
+                .error-toggle-btn .err-btn-info {
+                    display: flex;
+                    flex-direction: column;
+                }
 
-                <div class="confirm-dialog-actions">
+                .error-toggle-btn .err-btn-title {
+                    font-size: 13.5px;
+                    font-weight: 800;
+                    color: #0f172a;
+                }
 
-                    <button type="button"
-                        class="btn btn-secondary cancel-btn"
-                        style="
-                            padding:7px 16px;
-                            border:1px solid #cbd5e1;
-                            border-radius:5px;
-                            cursor:pointer;
-                            background:#e2e8f0;
-                            color:#334155;
-                            font-weight:600;
-                        ">
-                        Trở lại
-                    </button>
+                .error-toggle-btn .err-btn-sub {
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #64748b;
+                    margin-top: 1px;
+                }
 
-                    <button type="button"
-                        class="btn btn-primary confirm-btn"
-                        style="
-                            padding:7px 16px;
-                            border:none;
-                            border-radius:5px;
-                            cursor:pointer;
-                            background:#2563eb;
-                            color:white;
-                            font-weight:700;
-                        ">
-                        Xác nhận
-                    </button>
+                .error-toggle-btn .err-btn-badge {
+                    pointer-events: none;
+                    padding: 3px 8px;
+                    border-radius: 6px;
+                    font-size: 11px;
+                    font-weight: 800;
+                    background: #f1f5f9;
+                    color: #64748b;
+                    border: 1px solid #cbd5e1;
+                    white-space: nowrap;
+                    transition: all 0.18s ease;
+                }
 
-                </div>
-            `;
+                .error-toggle-btn.active {
+                    background: #fef2f2;
+                    border-color: #ef4444;
+                    color: #991b1b;
+                    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.18);
+                }
 
+                .error-toggle-btn.active .err-btn-title {
+                    color: #b91c1c;
+                }
 
-            overlay.appendChild(box);
+                .error-toggle-btn.active .err-btn-sub {
+                    color: #dc2626;
+                }
 
-            document.body.appendChild(overlay);
+                .error-toggle-btn.active .err-btn-badge {
+                    background: #ef4444;
+                    color: #ffffff;
+                    border-color: #dc2626;
+                }
 
+                .dialog-note-input {
+                    width: 100%;
+                    height: 38px;
+                    padding: 0 11px;
+                    border: 1.5px solid #cbd5e1;
+                    border-radius: 7px;
+                    font-size: 13px;
+                    color: #0f172a;
+                    background: #ffffff;
+                    outline: none;
+                    box-sizing: border-box;
+                    transition: border-color 0.15s ease;
+                }
 
-            if (!document.getElementById(
-                'confirm-dialog-style'
-            )) {
+                .dialog-note-input:focus {
+                    border-color: #2563eb;
+                    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+                }
 
-                const style =
-                    document.createElement('style');
-
-                style.id =
-                    'confirm-dialog-style';
-
-
-                style.innerHTML = `
-
-                    .confirm-dialog-overlay {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100vw;
-                        height: 100vh;
-                        background: rgba(0,0,0,0.5);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 9999;
-                    }
-
+                @media (max-width: 640px) {
                     .confirm-dialog-box {
-                        background: #fff;
-                        padding: 20px;
-                        border-radius: 8px;
-                        width: 90%;
-                        max-width: 520px;
-                        box-shadow:
-                            0 4px 15px rgba(0,0,0,0.2);
-                        font-family: sans-serif;
+                        width: calc(100vw - 24px);
+                        padding: 16px;
                     }
-
-                    .confirm-dialog-title {
-                        margin-top: 0;
-                        font-size: 17px;
-                        color: #333;
-                        text-align: center;
-                        border-bottom: 1px solid #eee;
-                        padding-bottom: 8px;
-                        font-weight: 700;
+                    .wnd-reason-grid {
+                        grid-template-columns: 1fr;
                     }
-
-                    .confirm-dialog-content {
-                        margin: 12px 0;
-                        font-size: 13.5px;
-                        color: #333;
-                        max-height: 65vh;
-                        overflow-y: auto;
-                    }
-
                     .confirm-dialog-actions {
-                        display: flex;
-                        justify-content: flex-end;
+                        flex-direction: column-reverse;
                         gap: 8px;
-                        margin-top: 16px;
                     }
-
-                    .error-toggle-btn {
-                        padding: 4px 12px;
-                        border: 1px solid #cbd5e1;
-                        border-radius: 20px;
-                        background: #f8fafc;
-                        color: #334155;
-                        cursor: pointer;
-                        font-size: 12.5px;
-                        font-weight: 600;
+                    .confirm-dialog-actions button {
+                        width: 100%;
+                        min-height: 42px;
+                        font-size: 14px;
                     }
-
-                    .error-toggle-btn.active {
-                        background: #fee2e2;
-                        border-color: #ef4444;
-                        color: #b91c1c;
-                    }
-
-                    @media (max-width: 640px) {
-                        .confirm-dialog-box {
-                            width: calc(100vw - 32px);
-                            padding: 16px;
-                        }
-                        .confirm-dialog-actions {
-                            flex-direction: column-reverse;
-                            gap: 8px;
-                        }
-                        .confirm-dialog-actions button {
-                            width: 100%;
-                            min-height: 42px;
-                            font-size: 14px;
-                        }
-                    }
-
-                `;
-
-                document.head.appendChild(style);
-            }
-
-
-            /* Xử lý nút chọn lý do NG */
-
-            box.addEventListener('click', (e) => {
-
-                if (
-                    e.target.classList.contains(
-                        'error-toggle-btn'
-                    )
-                ) {
-
-                    e.target.classList.toggle(
-                        'active'
-                    );
-
-                    if (
-                        typeof onToggle ===
-                        'function'
-                    ) {
-
-                        onToggle(box);
-
-                    }
-
                 }
-
-            });
-
-
-            /* Nút trở lại */
-
-            box.querySelector(
-                '.cancel-btn'
-            ).addEventListener(
-                'click',
-                () => overlay.remove()
-            );
-
-
-            /* Nút xác nhận */
-
-            box.querySelector(
-                '.confirm-btn'
-            ).addEventListener(
-                'click',
-                async () => {
-
-                    const confirmBtn =
-                        box.querySelector(
-                            '.confirm-btn'
-                        );
-
-                    confirmBtn.disabled =
-                        true;
-
-                    try {
-
-                        if (
-                            typeof onConfirm ===
-                            'function'
-                        ) {
-
-                            await onConfirm(box);
-
-                        }
-
-                    } catch (error) {
-
-                        console.error(
-                            'ConfirmDialog callback error:',
-                            error
-                        );
-
-                    }
-
-                    overlay.remove();
-
-                }
-            );
-
+            `;
+            document.head.appendChild(style);
         }
 
-    };
+        const overlay = document.createElement('div');
+        overlay.className = 'confirm-dialog-overlay';
 
-}
+        const box = document.createElement('div');
+        box.className = 'confirm-dialog-box';
+
+        const isDanger = Boolean(options.isDanger);
+        const cancelLabel = options.cancelText || (window.t ? window.t('btn_back', 'Trở lại') : 'Trở lại');
+        const confirmLabel = options.confirmText || (window.t ? window.t('btn_confirm', 'Xác nhận') : 'Xác nhận');
+        const confirmBg = isDanger ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #2563eb, #1d4ed8)';
+
+        box.innerHTML = `
+            <h3 class="confirm-dialog-title">${title}</h3>
+            <div class="confirm-dialog-content">${contentHTML}</div>
+            <div class="confirm-dialog-actions">
+                <button type="button"
+                    class="btn btn-secondary cancel-btn"
+                    style="padding:8px 18px; border:1px solid #cbd5e1; border-radius:7px; cursor:pointer; background:#f1f5f9; color:#334155; font-weight:700; font-size:13.5px;">
+                    ${cancelLabel}
+                </button>
+                <button type="button"
+                    class="btn btn-primary confirm-btn"
+                    style="padding:8px 18px; border:none; border-radius:7px; cursor:pointer; background:${confirmBg}; color:white; font-weight:700; font-size:13.5px; box-shadow:0 2px 6px rgba(0,0,0,0.12);">
+                    ${confirmLabel}
+                </button>
+            </div>
+        `;
+
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        /* Gắn trực tiếp sự kiện click vào từng nút .error-toggle-btn */
+        const updateToggleBadge = (btn) => {
+            const badge = btn.querySelector('.err-btn-badge');
+            if (!badge) return;
+            const isActive = btn.classList.contains('active');
+            badge.textContent = isActive ? '☑ NG' : '☐ OK';
+        };
+
+        box.querySelectorAll('.error-toggle-btn').forEach((btn) => {
+            updateToggleBadge(btn);
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                btn.classList.toggle('active');
+                updateToggleBadge(btn);
+                if (typeof onToggle === 'function') {
+                    onToggle(box);
+                }
+            });
+        });
+
+        /* Nút trở lại */
+        box.querySelector('.cancel-btn').addEventListener('click', () => overlay.remove());
+
+        /* Nút xác nhận */
+        box.querySelector('.confirm-btn').addEventListener('click', async () => {
+            const confirmBtn = box.querySelector('.confirm-btn');
+            confirmBtn.disabled = true;
+            let shouldClose = true;
+
+            try {
+                if (typeof onConfirm === 'function') {
+                    const result = await onConfirm(box);
+                    if (result === false) {
+                        shouldClose = false;
+                    }
+                }
+            } catch (error) {
+                console.error('ConfirmDialog callback error:', error);
+            }
+
+            if (shouldClose) {
+                overlay.remove();
+            } else {
+                confirmBtn.disabled = false;
+            }
+        });
+    }
+};
+
+/* Hàm chọn nhanh hạng mục lỗi NG ngay trên Card Nhóm cuộn */
+window.toggleCardCancelReason = function (btnElement) {
+    if (!btnElement) return;
+    btnElement.classList.toggle('active');
+    const checkSpan = btnElement.querySelector('.reason-check');
+    if (checkSpan) {
+        checkSpan.textContent = btnElement.classList.contains('active') ? '✓ NG' : 'NG';
+    }
+};
 
 
 /* =========================================
@@ -628,88 +669,30 @@ function handleWindingCancel(
     bobinCode,
     bobinKeyCode
 ) {
-
-    const container =
-        btnElement.closest('.bobin-item');
-
+    const container = btnElement.closest('.bobin-item');
 
     /* Fallback nếu PHP không truyền parameter */
+    bobinCode = bobinCode || container?.dataset.ident || '';
+    bobinKeyCode = bobinKeyCode || container?.dataset.key || '';
 
-    bobinCode =
-        bobinCode
-        || container?.dataset.ident
-        || '';
-
-    bobinKeyCode =
-        bobinKeyCode
-        || container?.dataset.key
-        || '';
-
-
-    if (
-        !container
-        ||
-        !bobinCode
-        ||
-        !bobinKeyCode
-    ) {
-
-        Toast.show(
-            "Lỗi: Thiếu mã định danh của Bobin!",
-            "error"
-        );
-
+    if (!container || !bobinCode || !bobinKeyCode) {
+        Toast.show("Lỗi: Thiếu mã định danh của Bobin!", "error");
         return;
     }
 
-
-    const inMachine =
-        container
-            .querySelector(
-                '.winding-machine-name'
-            )
-            ?.value
-            .trim()
-        || '';
-
-
-    const inEmployeeCode =
-        container
-            .querySelector(
-                '.winding-employee-code'
-            )
-            ?.value
-            .trim()
-        || '';
-
-
-    const inEmployeeName =
-        container
-            .querySelector(
-                '.winding-employee-name'
-            )
-            ?.value
-            .trim()
-        || '';
-
-
-    const originalNote =
-        container
-            .querySelector(
-                '.winding-note-field'
-            )
-            ?.value
-            .trim()
-        || '';
-
+    const inMachine = container.querySelector('.winding-machine-name')?.value.trim() || '';
+    const inEmployeeCode = container.querySelector('.winding-employee-code')?.value.trim() || '';
+    const inEmployeeName = container.querySelector('.winding-employee-name')?.value.trim() || '';
+    const cardNoteInput = container.querySelector('.winding-note-field');
+    const originalNote = (cardNoteInput?.value.trim() || '');
 
     if (!inMachine || inMachine === 'Chưa cập nhật') {
         Toast.show(window.t ? window.t('toast_err_req_machine') : "⚠️ Vui lòng chọn hoặc nhập Mã máy cuộn trước khi hủy!", "error");
         const machineInput = container.querySelector('.winding-machine-name');
         if (machineInput) {
-            machineInput.style.border = "2px solid red";
+            machineInput.style.border = "2px solid #ef4444";
             machineInput.focus();
-            setTimeout(() => machineInput.style.border = "1px solid #cbd5e1", 2000);
+            setTimeout(() => machineInput.style.border = "1.5px solid #cbd5e1", 2000);
         }
         return;
     }
@@ -718,9 +701,9 @@ function handleWindingCancel(
         Toast.show(window.t ? window.t('toast_err_req_emp_code') : "⚠️ Vui lòng nhập Mã nhân viên cuộn trước khi hủy!", "error");
         const empInput = container.querySelector('.winding-employee-code');
         if (empInput) {
-            empInput.style.border = "2px solid red";
+            empInput.style.border = "2px solid #ef4444";
             empInput.focus();
-            setTimeout(() => empInput.style.border = "1px solid #cbd5e1", 2000);
+            setTimeout(() => empInput.style.border = "1.5px solid #cbd5e1", 2000);
         }
         return;
     }
@@ -729,432 +712,299 @@ function handleWindingCancel(
         Toast.show(window.t ? window.t('toast_err_req_emp_name') : "⚠️ Vui lòng nhập Họ tên nhân viên cuộn trước khi hủy!", "error");
         const nameInput = container.querySelector('.winding-employee-name');
         if (nameInput) {
-            nameInput.style.border = "2px solid red";
+            nameInput.style.border = "2px solid #ef4444";
             nameInput.focus();
-            setTimeout(() => nameInput.style.border = "1px solid #cbd5e1", 2000);
+            setTimeout(() => nameInput.style.border = "1.5px solid #cbd5e1", 2000);
         }
         return;
     }
 
-    if (!originalNote || originalNote === 'Chưa cập nhật' || originalNote === 'Không có ghi chú') {
-        Toast.show(window.t ? window.t('toast_err_req_cancel_note') : "⚠️ Vui lòng nhập lý do hủy vào phần Ghi chú cuộn!", "error");
-        const noteInput = container.querySelector('.winding-note-field');
-        if (noteInput) {
-            noteInput.style.border = "2px solid red";
-            noteInput.focus();
-            setTimeout(() => noteInput.style.border = "1px solid #cbd5e1", 2000);
+    /* Đọc trạng thái các nút Ngoại quan / Thông khí đã chọn sẵn trên Card (nếu có) */
+    const preSelectedErrors = Array.from(
+        container.querySelectorAll('.card-error-toggle-btn.active')
+    ).map(btn => btn.dataset.error);
+
+    const isAppearanceActive = preSelectedErrors.includes('Ngoại quan');
+    const isAirflowActive = preSelectedErrors.includes('Thông khí');
+
+    /* Hàm tổng hợp chuỗi ghi chú hủy chuẩn theo lựa chọn lỗi + ghi chú chi tiết */
+    const buildCombinedCancelNote = (customNote, selectedErrors) => {
+        const cleanCustom = (customNote || '').trim();
+        if (selectedErrors.length > 0) {
+            const errorString = `Cuộn ${inMachine} yêu cầu Hủy - Lý do: ${selectedErrors.join(', ')} NG`;
+            return cleanCustom ? `${cleanCustom} - ${errorString}` : errorString;
         }
-        return;
-    }
-
-
-    const bodyData = {
-
-        bobin_identification_code:
-            bobinCode,
-
-        bobin_key_code:
-            bobinKeyCode,
-
-        winding_machine:
-            inMachine,
-
-        winding_employee_code:
-            inEmployeeCode,
-
-        winding_employee_name:
-            inEmployeeName,
-
-        winding_note:
-            originalNote
-
+        return cleanCustom;
     };
 
+    const initialCombinedNote = buildCombinedCancelNote(originalNote, preSelectedErrors);
+
+    const bodyData = {
+        bobin_identification_code: bobinCode,
+        bobin_key_code: bobinKeyCode,
+        winding_machine: inMachine,
+        winding_employee_code: inEmployeeCode,
+        winding_employee_name: inEmployeeName,
+        winding_note: initialCombinedNote
+    };
+
+    const lblStep1 = window.t ? window.t('winding_cancel_step1_title', '1. Chọn hạng mục phát sinh lỗi NG (Bắt buộc chọn ít nhất 1):') : '1. Chọn hạng mục phát sinh lỗi NG (Bắt buộc chọn ít nhất 1):';
+    const lblApp = window.t ? window.t('winding_reason_appearance', 'Ngoại quan') : 'Ngoại quan';
+    const lblAppSub = window.t ? window.t('winding_reason_appearance_sub', 'Bề mặt, màu, dị vật, chữ in') : 'Bề mặt, màu, dị vật, chữ in';
+    const lblAir = window.t ? window.t('winding_reason_airflow', 'Thông khí') : 'Thông khí';
+    const lblAirSub = window.t ? window.t('winding_reason_airflow_sub', 'Không đạt kiểm tra thông khí') : 'Không đạt kiểm tra thông khí';
+    const lblStep2 = window.t ? window.t('winding_cancel_step2_note', '2. Ghi chú chi tiết lý do hủy (Tùy chọn bổ sung):') : '2. Ghi chú chi tiết lý do hủy (Tùy chọn bổ sung):';
+    const phNote = window.t ? window.t('ph_winding_note_explain', 'Nhập thêm mô tả chi tiết lỗi (nếu có)...') : 'Nhập thêm mô tả chi tiết lỗi (nếu có)...';
 
     let reviewHTML = `
+        <div id="winding-cancel-reason-box" style="
+            margin-bottom: 12px;
+            text-align: left;
+            padding: 12px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            transition: all 0.2s ease;
+        ">
+            <strong style="color:#0f172a; font-size:13px; display:block; margin-bottom:8px;">
+                <span data-i18n="winding_cancel_step1_title">${escapeHtml(lblStep1)}</span>
+                <span style="color:#dc2626;">*</span>
+            </strong>
+
+            <div class="wnd-reason-grid">
+                <button
+                    type="button"
+                    class="error-toggle-btn ${isAppearanceActive ? 'active' : ''}"
+                    data-error="Ngoại quan">
+                    <span class="err-btn-left">
+                        <span class="err-btn-icon">🔍</span>
+                        <span class="err-btn-info">
+                            <span class="err-btn-title" data-i18n="winding_reason_appearance">${escapeHtml(lblApp)}</span>
+                            <span class="err-btn-sub" data-i18n="winding_reason_appearance_sub">${escapeHtml(lblAppSub)}</span>
+                        </span>
+                    </span>
+                    <span class="err-btn-badge">${isAppearanceActive ? '☑ NG' : '☐ OK'}</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="error-toggle-btn ${isAirflowActive ? 'active' : ''}"
+                    data-error="Thông khí">
+                    <span class="err-btn-left">
+                        <span class="err-btn-icon">💨</span>
+                        <span class="err-btn-info">
+                            <span class="err-btn-title" data-i18n="winding_reason_airflow">${escapeHtml(lblAir)}</span>
+                            <span class="err-btn-sub" data-i18n="winding_reason_airflow_sub">${escapeHtml(lblAirSub)}</span>
+                        </span>
+                    </span>
+                    <span class="err-btn-badge">${isAirflowActive ? '☑ NG' : '☐ OK'}</span>
+                </button>
+            </div>
+
+            <div id="winding-cancel-reason-error" style="
+                display:none;
+                margin-top:8px;
+                color:#dc2626;
+                font-size:12.5px;
+                font-weight:700;
+            ">
+                ⚠️ Vui lòng nhấn chọn ít nhất "Ngoại quan" hoặc "Thông khí" trước khi xác nhận hủy!
+            </div>
+
+            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                <label for="dialog-winding-note-input" style="display:block; font-size:12.5px; font-weight:700; color:#334155; margin-bottom:5px;">
+                    <span data-i18n="winding_cancel_step2_note">${escapeHtml(lblStep2)}</span>
+                </label>
+                <input
+                    type="text"
+                    id="dialog-winding-note-input"
+                    class="dialog-note-input"
+                    value="${escapeHtml(originalNote)}"
+                    placeholder="${escapeHtml(phNote)}">
+            </div>
+        </div>
 
         <ul style="
             list-style:none;
             padding:10px 12px;
             background:#f8fafc;
-            border-radius:6px;
+            border-radius:8px;
             text-align:left;
             border:1px solid #e2e8f0;
             margin:0;
         ">
-
-            <li style="
-                margin-bottom:5px;
-                border-bottom:1px dashed #ccc;
-                padding-bottom:3px;
-                display:flex;
-                justify-content:space-between;
-            ">
-
-                <strong>
-                    Mã Bobin:
-                </strong>
-
-                <span style="
-                    color:#1f2937;
-                    font-family:monospace;
+            <li style="margin-bottom:6px; border-bottom:1px dashed #cbd5e1; padding-bottom:4px; display:flex; justify-content:space-between;">
+                <strong>Mã Bobin:</strong>
+                <span style="color:#0f172a; font-family:monospace; font-weight:800;">#${escapeHtml(bobinCode)}</span>
+            </li>
+            <li style="margin-bottom:6px; border-bottom:1px dashed #cbd5e1; padding-bottom:4px; display:flex; justify-content:space-between;">
+                <strong>Máy cuộn:</strong>
+                <span style="font-weight:700; color:#1d4ed8;">${escapeHtml(inMachine || 'Chưa chọn')}</span>
+            </li>
+            <li style="margin-bottom:6px; border-bottom:1px dashed #cbd5e1; padding-bottom:4px; display:flex; justify-content:space-between;">
+                <strong>Nhân viên:</strong>
+                <span>${escapeHtml(inEmployeeCode)} - ${escapeHtml(inEmployeeName)}</span>
+            </li>
+            <li style="padding-top:4px;">
+                <strong>Nội dung ghi nhận hủy:</strong>
+                <div id="dynamic-note-display" style="
+                    margin-top:4px;
+                    padding:6px 8px;
+                    background:#fff1f2;
+                    border:1px solid #fecdd3;
+                    border-radius:5px;
+                    color:#9f1239;
                     font-weight:700;
+                    font-size:12.5px;
                 ">
-                    ${escapeHtml(bobinCode)}
-                </span>
-
+                    ${escapeHtml(initialCombinedNote || 'Chưa chọn hạng mục lỗi NG')}
+                </div>
             </li>
-
-
-            <li style="
-                margin-bottom:5px;
-                border-bottom:1px dashed #ccc;
-                padding-bottom:3px;
-                display:flex;
-                justify-content:space-between;
-            ">
-
-                <strong>
-                    Máy cuộn:
-                </strong>
-
-                <span>
-                    ${escapeHtml(inMachine || 'Chưa chọn')}
-                </span>
-
-            </li>
-
-
-            <li style="
-                margin-bottom:5px;
-                border-bottom:1px dashed #ccc;
-                padding-bottom:3px;
-                display:flex;
-                justify-content:space-between;
-            ">
-
-                <strong>
-                    Nhân viên:
-                </strong>
-
-                <span>
-                    ${escapeHtml(inEmployeeCode)}
-                    -
-                    ${escapeHtml(inEmployeeName)}
-                </span>
-
-            </li>
-
-
-            <li style="
-                padding-top:4px;
-            ">
-
-                <strong>
-                    Ghi chú:
-                </strong>
-
-                <span
-                    id="dynamic-note-display"
-                    style="
-                        color:#1f2937;
-                        font-style:italic;
-                    ">
-
-                    ${escapeHtml(
-        originalNote
-        || 'Không có ghi chú'
-    )}
-
-                </span>
-
-            </li>
-
         </ul>
-
-
-        <div style="
-            margin-top:12px;
-            text-align:left;
-        ">
-
-            <strong style="
-                color:#374151;
-                font-size:13px;
-                display:block;
-                margin-bottom:6px;
-            ">
-
-                Chọn lý do hủy
-                (có thể chọn nhiều):
-
-            </strong>
-
-
-            <div style="
-                display:flex;
-                flex-wrap:wrap;
-                gap:6px;
-            ">
-
-                <button
-                    type="button"
-                    class="error-toggle-btn"
-                    data-error="Ngoại quan">
-
-                    Ngoại quan
-
-                </button>
-
-
-                <button
-                    type="button"
-                    class="error-toggle-btn"
-                    data-error="Thông khí">
-
-                    Thông khí
-
-                </button>
-
-            </div>
-
-        </div>
-
     `;
 
+    const syncDialogState = (dialogBox) => {
+        const selectedErrors = Array.from(
+            dialogBox.querySelectorAll('.error-toggle-btn.active')
+        ).map(btn => btn.dataset.error);
+
+        /* Đồng bộ ngược ra các nút trên Card của Bobin */
+        container.querySelectorAll('.card-error-toggle-btn').forEach(cardBtn => {
+            const isSelected = selectedErrors.includes(cardBtn.dataset.error);
+            cardBtn.classList.toggle('active', isSelected);
+            const checkSpan = cardBtn.querySelector('.reason-check');
+            if (checkSpan) {
+                checkSpan.textContent = isSelected ? '✓ NG' : 'NG';
+            }
+        });
+
+        const reasonBox = dialogBox.querySelector('#winding-cancel-reason-box');
+        const reasonError = dialogBox.querySelector('#winding-cancel-reason-error');
+        if (selectedErrors.length > 0) {
+            if (reasonBox) {
+                reasonBox.style.borderColor = '#cbd5e1';
+                reasonBox.style.background = '#f8fafc';
+            }
+            if (reasonError) {
+                reasonError.style.display = 'none';
+            }
+        }
+
+        const dialogNoteEl = dialogBox.querySelector('#dialog-winding-note-input');
+        const currentCustomNote = dialogNoteEl ? dialogNoteEl.value.trim() : originalNote;
+
+        /* Đồng bộ ô ghi chú trên Card */
+        if (cardNoteInput && dialogNoteEl) {
+            cardNoteInput.value = dialogNoteEl.value;
+        }
+
+        const newNote = buildCombinedCancelNote(currentCustomNote, selectedErrors);
+        const noteDisplay = dialogBox.querySelector('#dynamic-note-display');
+        if (noteDisplay) {
+            noteDisplay.textContent = newNote || (window.t ? window.t('winding_cancel_no_reason_yet', 'Vui lòng chọn Ngoại quan hoặc Thông khí ở trên') : 'Vui lòng chọn Ngoại quan hoặc Thông khí ở trên');
+        }
+        dialogBox.dataset.currentNote = newNote;
+    };
 
     ConfirmDialog.show(
-
-        '⚠️ Xác nhận Hủy Bobin phía Cuộn',
-
+        window.t ? window.t('winding_cancel_dialog_title', '⚠️ Xác nhận Hủy Bobin phía Cuộn') : '⚠️ Xác nhận Hủy Bobin phía Cuộn',
         `
-
         <div style="
-            background:
-                linear-gradient(
-                    135deg,
-                    #fef2f2 0%,
-                    #fecaca 100%
-                );
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
             color:#7f1d1d;
             padding:10px 12px;
-            border-radius:6px;
+            border-radius:8px;
             font-weight:600;
             margin-bottom:12px;
             border-left:4px solid #dc2626;
+            text-align:left;
         ">
-
-            ❗ Hủy Bobin
-
-            <strong style="
-                color:#991b1b;
-            ">
-                ${escapeHtml(bobinCode)}
-            </strong>
-
-            -
-            Hành động này sẽ chuyển
-            sang danh sách chờ hủy!
-
+            ❗ Hủy Bobin <strong style="color:#991b1b;">#${escapeHtml(bobinCode)}</strong> — Hành động này sẽ chuyển Bobin sang danh sách chờ hủy!
         </div>
-
         ${reviewHTML}
-
         `,
-
-
         async (dialogBox) => {
+            syncDialogState(dialogBox);
 
-            const selectedErrors =
-                Array.from(
-                    dialogBox.querySelectorAll(
-                        '.error-toggle-btn.active'
-                    )
-                ).map(
-                    btn => btn.dataset.error
-                );
+            const selectedErrors = Array.from(
+                dialogBox.querySelectorAll('.error-toggle-btn.active')
+            ).map(btn => btn.dataset.error);
 
+            if (selectedErrors.length === 0) {
+                const errMsg = window.t
+                    ? window.t('toast_err_winding_cancel_reason')
+                    : '⚠️ Vui lòng chọn "Thông khí" hoặc "Ngoại quan" trên hộp thoại xác nhận trước khi hủy!';
+                Toast.show(errMsg, 'error');
 
-            bodyData.cancel_errors =
-                selectedErrors;
-
-
-            if (
-                dialogBox.dataset.currentNote
-            ) {
-
-                bodyData.winding_note =
-                    dialogBox.dataset.currentNote;
-
+                const reasonBox = dialogBox.querySelector('#winding-cancel-reason-box');
+                const reasonError = dialogBox.querySelector('#winding-cancel-reason-error');
+                if (reasonBox) {
+                    reasonBox.style.borderColor = '#ef4444';
+                    reasonBox.style.background = '#fef2f2';
+                }
+                if (reasonError) {
+                    reasonError.textContent = errMsg;
+                    reasonError.style.display = 'block';
+                }
+                return false;
             }
 
+            bodyData.cancel_errors = selectedErrors;
+            bodyData.winding_note = dialogBox.dataset.currentNote || buildCombinedCancelNote(originalNote, selectedErrors);
 
-            const requestUrl =
-                '/WEB_BOBIN/public/index.php?url=bobin/windingCancelBobin';
+            const requestUrl = '/WEB_BOBIN/public/index.php?url=bobin/windingCancelBobin';
+            const originalBtnText = btnElement.innerHTML;
 
-
-            const originalBtnText =
-                btnElement.innerHTML;
-
-
-            btnElement.innerHTML =
-                '⏳ Đang xử lý...';
-
-            btnElement.disabled =
-                true;
-
+            btnElement.innerHTML = '⏳ Đang xử lý...';
+            btnElement.disabled = true;
 
             try {
+                const response = await fetch(requestUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(bodyData)
+                });
 
-                const response =
-                    await fetch(
-                        requestUrl,
-                        {
-                            method: 'PUT',
-
-                            headers: {
-                                'Content-Type':
-                                    'application/json',
-
-                                'Accept':
-                                    'application/json'
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    bodyData
-                                )
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
+                const data = await response.json();
 
                 if (data.success) {
-
                     if (window.Toast && window.Toast.flash) {
                         window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Cập nhật thành công!'), 'success');
                     }
-
-                    setTimeout(
-                        () => window.location.reload(),
-                        450
-                    );
-
+                    setTimeout(() => window.location.reload(), 450);
                 } else {
-
-                    Toast.show(
-                        "Lỗi: "
-                        +
-                        (
-                            data.message
-                            ||
-                            "Cập nhật thất bại"
-                        ),
-                        'error'
-                    );
-
-
-                    btnElement.innerHTML =
-                        originalBtnText;
-
-                    btnElement.disabled =
-                        false;
-
+                    Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), 'error');
+                    btnElement.innerHTML = originalBtnText;
+                    btnElement.disabled = false;
                 }
-
-
             } catch (error) {
-
-                console.error(
-                    error
-                );
-
-                Toast.show(
-                    "Đã xảy ra lỗi kết nối!",
-                    'error'
-                );
-
-
-                btnElement.innerHTML =
-                    originalBtnText;
-
-                btnElement.disabled =
-                    false;
-
+                console.error(error);
+                Toast.show("Đã xảy ra lỗi kết nối!", 'error');
+                btnElement.innerHTML = originalBtnText;
+                btnElement.disabled = false;
             }
-
         },
-
-
         (dialogBox) => {
-
-            const selectedErrors =
-                Array.from(
-                    dialogBox.querySelectorAll(
-                        '.error-toggle-btn.active'
-                    )
-                ).map(
-                    btn => btn.dataset.error
-                );
-
-
-            let newNote =
-                originalNote;
-
-
-            if (
-                selectedErrors.length > 0
-            ) {
-
-                const errorString =
-                    "Cuộn "
-                    +
-                    inMachine
-                    +
-                    " yêu cầu Hủy - "
-                    +
-                    "Lý do: "
-                    +
-                    selectedErrors.join(", ")
-                    +
-                    " NG";
-
-
-                newNote =
-                    originalNote
-                        ? originalNote
-                        + " - "
-                        + errorString
-                        : errorString;
-
-            }
-
-
-            const noteDisplay =
-                dialogBox.querySelector(
-                    '#dynamic-note-display'
-                );
-
-
-            if (noteDisplay) {
-
-                noteDisplay.innerText =
-                    newNote
-                    || 'Không có ghi chú';
-
-            }
-
-
-            dialogBox.dataset.currentNote =
-                newNote;
-
+            syncDialogState(dialogBox);
+        },
+        {
+            isDanger: true,
+            confirmText: window.t ? window.t('btn_confirm_cancel_bobin', '🗑️ Xác nhận đưa vào chờ hủy') : '🗑️ Xác nhận đưa vào chờ hủy'
         }
-
     );
 
+    /* Gắn sự kiện lắng nghe khi người dùng gõ trực tiếp vào ô ghi chú trong hộp thoại */
+    const activeDialogBox = document.querySelector('.confirm-dialog-box:last-of-type');
+    if (activeDialogBox) {
+        syncDialogState(activeDialogBox);
+        const dialogNoteInput = activeDialogBox.querySelector('#dialog-winding-note-input');
+        if (dialogNoteInput) {
+            dialogNoteInput.addEventListener('input', () => syncDialogState(activeDialogBox));
+        }
+    }
 }
 
 
@@ -1556,10 +1406,6 @@ function handleWindingConfirm(
 
                 if (data.success) {
 
-                    if (window.Toast && window.Toast.flash) {
-                        window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Xác nhận thành công!'), 'success');
-                    }
-
                     CopyTextDialog.show(
 
                         "Hãy sao chép nội dung sau để nhập vào báo cáo. \n Lưu ý không thể hoàn tác sau khi nhấn Xác Nhận!",
@@ -1567,7 +1413,9 @@ function handleWindingConfirm(
                         mainInfoText,
 
                         () => {
-
+                            if (window.Toast && window.Toast.flash) {
+                                window.Toast.flash(data.message || (window.t ? window.t('toast_saved_success') : 'Xác nhận thành công!'), 'success');
+                            }
                             window.location.reload();
 
                         }

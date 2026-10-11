@@ -107,6 +107,10 @@ class BobinController extends Controller
     }
     public function createBobinView()
     {
+        if (!AuthHelper::hasPermission('extrusion_create')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
         $this->view("createBobinView");
     }
     public function scanQR()
@@ -122,6 +126,11 @@ class BobinController extends Controller
     //! GET
     public function listBobinHistoryView()
     {
+        if (isset($_SESSION['user']) && !AuthHelper::hasPermission('bobin_history')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -153,6 +162,11 @@ class BobinController extends Controller
 
     public function listBobinView_Winding()
     {
+        if (!AuthHelper::hasPermission('winding_confirm')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -185,6 +199,11 @@ class BobinController extends Controller
     }
     public function listBobinDetailView()
     {
+        if (isset($_SESSION['user']) && !AuthHelper::hasPermission('bobin_list')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -220,6 +239,11 @@ class BobinController extends Controller
     }
     public function listBobinView_QC()
     {
+        if (!AuthHelper::hasPermission('qc_check')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -243,6 +267,11 @@ class BobinController extends Controller
     }
     public function listPendingCancellationView()
     {
+        if (isset($_SESSION['user']) && !AuthHelper::hasPermission('pending_cancel_view')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận GET
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -265,6 +294,11 @@ class BobinController extends Controller
     }
     public function windingView()
     {
+        if (!AuthHelper::hasPermission('winding_confirm')) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -294,7 +328,7 @@ class BobinController extends Controller
 
     public function extrusionEditBobinView()
     {
-        // Kiểm tra quyền extrusion_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
+        // Kiểm tra quyền extrusion_edit (hợp lệ với cả extrusion_edit_only và extrusion_edit_cancel)
         if (!AuthHelper::hasPermission('extrusion_edit')) {
             header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
             exit;
@@ -416,6 +450,15 @@ class BobinController extends Controller
 
     public function createBobin(): void
     {
+        if (!AuthHelper::hasPermission('extrusion_create')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền nhập thông số Đùn và tạo Bobin.',
+                'message' => 'Bạn không có quyền nhập thông số Đùn và tạo Bobin.'
+            ], 403);
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận POST
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -473,6 +516,16 @@ class BobinController extends Controller
 
     public function extrusionUpdateBobin(): void
     {
+        // Kiểm tra quyền chỉnh sửa Đùn (hợp lệ với cả Edit Only và Edit + Cancel)
+        if (!AuthHelper::hasPermission('extrusion_edit')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền điều chỉnh thông tin Bobin tại công đoạn Đùn.',
+                'message' => 'Bạn không có quyền điều chỉnh thông tin Bobin tại công đoạn Đùn.'
+            ], 403);
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -525,7 +578,17 @@ class BobinController extends Controller
 
     public function extrusionDeleteBobin(): void
     {
-        //TODO 1. Chỉ chấp nhận POST
+        // Kiểm tra nghiêm ngặt quyền Edit + Cancel (extrusion_edit_cancel) tại Backend/API
+        if (!AuthHelper::hasPermission('extrusion_edit_cancel')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn chỉ có quyền chỉnh sửa Bobin (Edit Only), không có quyền đưa Bobin vào danh sách chờ hủy hoặc hủy Bobin.',
+                'message' => 'Bạn chỉ có quyền chỉnh sửa Bobin (Edit Only), không có quyền đưa Bobin vào danh sách chờ hủy hoặc hủy Bobin.'
+            ], 403);
+            exit;
+        }
+
+        //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -560,6 +623,15 @@ class BobinController extends Controller
     #region QC
     public function updateQCBobin(): void
     {
+        if (!AuthHelper::hasPermission('qc_check')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền thực hiện kiểm tra ngoại quan QC.',
+                'message' => 'Bạn không có quyền thực hiện kiểm tra ngoại quan QC.'
+            ], 403);
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -591,7 +663,11 @@ class BobinController extends Controller
     {
         // 1. Phân quyền: Kiểm tra quyền qc_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
         if (!AuthHelper::hasPermission('qc_edit')) {
-            $this->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này.'], 403);
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền thực hiện thao tác này.',
+                'message' => 'Bạn không có quyền thực hiện thao tác này.'
+            ], 403);
             exit;
         }
 
@@ -618,20 +694,34 @@ class BobinController extends Controller
                 throw new Exception("Mã định danh Bobin không được để trống.");
             }
 
-            // Dữ liệu ngoại quan QC
-            $viData = [
-                'inspector_code'       => $dto->inspector_code,
-                'inspector_name'       => $dto->inspector_name,
-                'defect_gel'           => $dto->defect_gel,
-                'defect_foreign_object'=> $dto->defect_foreign_object,
-                'defect_color_issue'   => $dto->defect_color_issue,
-                'defect_print_quality' => $dto->defect_print_quality,
-                'defect_note'          => $dto->defect_note,
-                'inspected_at'         => date('Y-m-d H:i:s')
-            ];
-
             // Nếu người dùng chọn đổi loại Bobin (tùy chọn)
             $newType = !empty($input['bobin_type']) ? trim($input['bobin_type']) : null;
+            $defectNote = $dto->defect_note;
+
+            if (!empty($newType) && str_starts_with($defectNote, 'Phán định chuyển Bobin sang:')) {
+                if (in_array($newType, ['Sản xuất', 'Bù'], true)) {
+                    $parts = explode(' - ', $defectNote, 2);
+                    $defectNote = isset($parts[1]) && trim($parts[1]) !== '' ? trim($parts[1]) : 'Chưa cập nhật';
+                } else {
+                    $parts = explode(' - ', $defectNote, 2);
+                    $reasonSuffix = isset($parts[1]) && trim($parts[1]) !== '' ? (' - ' . trim($parts[1])) : '';
+                    $defectNote = "Phán định chuyển Bobin sang: {$newType}{$reasonSuffix}";
+                }
+            }
+
+            // Dữ liệu ngoại quan QC (chuẩn cấu trúc VisualInspectionEntity)
+            $viData = [
+                'defects' => [
+                    'gel'            => (bool)$dto->defect_gel,
+                    'foreign_object' => (bool)$dto->defect_foreign_object,
+                    'color_issue'    => (bool)$dto->defect_color_issue,
+                    'print_quality'  => (bool)$dto->defect_print_quality,
+                    'note'           => $defectNote
+                ],
+                'inspector_code'  => $dto->inspector_code,
+                'inspector_name'  => $dto->inspector_name,
+                'inspection_time' => date('Y-m-d H:i:s')
+            ];
 
             // Audit record
             $updateRecord = [
@@ -671,6 +761,15 @@ class BobinController extends Controller
 
     public function qcCancelBobin(): void
     {
+        if (!AuthHelper::hasPermission('qc_check') && !AuthHelper::hasPermission('qc_edit')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền báo hủy Bobin tại công đoạn QC.',
+                'message' => 'Bạn không có quyền báo hủy Bobin tại công đoạn QC.'
+            ], 403);
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -700,6 +799,15 @@ class BobinController extends Controller
     }
     public function updateQCAndChangeType(): void
     {
+        if (!AuthHelper::hasPermission('qc_check')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền thực hiện kiểm tra QC và đổi loại Bobin.',
+                'message' => 'Bạn không có quyền thực hiện kiểm tra QC và đổi loại Bobin.'
+            ], 403);
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -726,6 +834,15 @@ class BobinController extends Controller
     #region WINDING
     public function updateWindingBobin(): void
     {
+        if (!AuthHelper::hasPermission('winding_confirm')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền xác nhận thông tin Cuộn.',
+                'message' => 'Bạn không có quyền xác nhận thông tin Cuộn.'
+            ], 403);
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -759,7 +876,11 @@ class BobinController extends Controller
     {
         // 1. Phân quyền: Kiểm tra quyền winding_edit qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
         if (!AuthHelper::hasPermission('winding_edit')) {
-            $this->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này.'], 403);
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền thực hiện thao tác này.',
+                'message' => 'Bạn không có quyền thực hiện thao tác này.'
+            ], 403);
             exit;
         }
 
@@ -826,6 +947,15 @@ class BobinController extends Controller
 
     public function windingCancelBobin(): void
     {
+        if (!AuthHelper::hasPermission('winding_confirm') && !AuthHelper::hasPermission('winding_edit')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn không có quyền báo hủy Bobin tại công đoạn Cuộn.',
+                'message' => 'Bạn không có quyền báo hủy Bobin tại công đoạn Cuộn.'
+            ], 403);
+            exit;
+        }
+
         //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
@@ -858,7 +988,16 @@ class BobinController extends Controller
 
     //! Đưa BOBIN về trạng thái đã hủy (Canceled) - Xóa mềm
     public function deleteBobin()
-    {   //TODO 1. Chỉ chấp nhận PUT
+    {
+        if (!AuthHelper::hasPermission('pending_cancel_edit')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn chỉ có quyền xem Danh sách chờ Hủy, không có quyền chỉnh sửa hoặc xác nhận hủy hoàn toàn.',
+                'message' => 'Bạn chỉ có quyền xem Danh sách chờ Hủy, không có quyền chỉnh sửa hoặc xác nhận hủy hoàn toàn.'
+            ], 403);
+            exit;
+        }
+        //TODO 1. Chỉ chấp nhận PUT
         if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
@@ -886,12 +1025,76 @@ class BobinController extends Controller
         exit;
     }
 
+    //! Khôi phục BOBIN từ trạng thái chờ hủy (Pending_Cancellation) về trạng thái trước đó
+    public function restoreBobin(): void
+    {
+        if (!AuthHelper::hasPermission('pending_cancel_edit')) {
+            $this->json([
+                'success' => false,
+                'error'   => 'Bạn chỉ có quyền xem Danh sách chờ Hủy, không có quyền khôi phục hoặc chỉnh sửa thông tin.',
+                'message' => 'Bạn chỉ có quyền xem Danh sách chờ Hủy, không có quyền khôi phục hoặc chỉnh sửa thông tin.'
+            ], 403);
+            exit;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $identCode = trim($input['bobin_identification_code'] ?? '');
+            $keyCode   = trim($input['bobin_key_code'] ?? '');
+
+            if (empty($identCode)) {
+                throw new Exception('Mã định danh Bobin không được để trống');
+            }
+
+            $updateRecord = [
+                'stage'          => $_SESSION['user']['role'] ?? 'system',
+                'action'         => 'restore',
+                'employee_code'  => $_SESSION['user']['employee_code'] ?? 'Unknown',
+                'employee_name'  => $_SESSION['user']['employee_name'] ?? 'Unknown',
+                'updated_at'     => date('Y-m-d H:i:s'),
+                'note'           => 'Khôi phục Bobin từ danh sách chờ hủy'
+            ];
+
+            $res = $this->bobinService->restoreBobin($identCode, $keyCode, $updateRecord);
+
+            $statusLabel = match ($res['restored_status'] ?? '') {
+                'Busy_Unchecked' => 'Chưa kiểm tra QC',
+                'Busy_Checked'   => 'Đã kiểm tra QC',
+                'Rolled'         => 'Đã cuộn',
+                default          => $res['restored_status'] ?? ''
+            };
+
+            $this->json([
+                'success'                   => true,
+                'message'                   => "Khôi phục thành công Bobin {$identCode} về trạng thái [{$statusLabel}]!",
+                'bobin_identification_code' => $identCode,
+                'restored_status'           => $res['restored_status'] ?? '',
+                'restored_status_label'     => $statusLabel
+            ]);
+        } catch (Throwable $e) {
+            $this->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+        exit;
+    }
+
     #region EXPORT EXCEL
     /* ================= EXCEL ================= */
     //! Xuất file Excel (CSV)
     //? Xuất Excel danh sách lịch sử Bobin
     public function exportHistoryExcel()
     {
+        if (isset($_SESSION['user']) && !AuthHelper::hasPermission('bobin_history')) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Bạn không có quyền xuất lịch sử Bobin.', 'message' => 'Bạn không có quyền xuất lịch sử Bobin.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
         try {
             $dto = BobinGetListDTO::fromRequest($_REQUEST);
 
@@ -1049,12 +1252,12 @@ class BobinController extends Controller
             // QC Check
             $vi['inspector_code'] ?? 'Chưa cập nhật',
             $vi['inspector_name'] ?? 'Chưa cập nhật',
-            $vi['inspection_time'] ?? 'Chưa cập nhật',
-            ($defects['gel'] ?? false) ? 'OK' : 'NG',
-            ($defects['foreign_object'] ?? false) ? 'OK' : 'NG',
-            ($defects['color_issue'] ?? false) ? 'OK' : 'NG',
-            ($defects['print_quality'] ?? false) ? 'OK' : 'NG',
-            $defects['note'] ?? 'Chưa cập nhật',
+            $vi['inspection_time'] ?? ($vi['inspected_at'] ?? 'Chưa cập nhật'),
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['gel'] ?? $vi['defect_gel'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            $defects['note'] ?? ($vi['defect_note'] ?? 'Chưa cập nhật'),
             // Cuộn
             $row['winding_machine'] ?? 'Chưa cập nhật',
             $windEmp['employee_code'] ?? 'Chưa cập nhật',
@@ -1101,11 +1304,11 @@ class BobinController extends Controller
             $row['finish_time'] ?? '',
             $visual['inspector_code'] ?? 'Chưa cập nhật',
             $visual['inspector_name'] ?? 'Chưa cập nhật',
-            ($defects['gel'] ?? false) ? 'OK' : 'NG',
-            ($defects['foreign_object'] ?? false) ? 'OK' : 'NG',
-            ($defects['color_issue'] ?? false) ? 'OK' : 'NG',
-            ($defects['print_quality'] ?? false) ? 'OK' : 'NG',
-            $defects['note'] ?? 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['gel'] ?? $visual['defect_gel'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['foreign_object'] ?? $visual['defect_foreign_object'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['color_issue'] ?? $visual['defect_color_issue'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['print_quality'] ?? $visual['defect_print_quality'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            $defects['note'] ?? ($visual['defect_note'] ?? 'Chưa cập nhật'),
             $row['winding_machine'] ?? 'Chưa cập nhật',
             $windEmp['employee_code'] ?? 'Chưa cập nhật',
             $windEmp['employee_name'] ?? 'Chưa cập nhật',
@@ -1118,6 +1321,12 @@ class BobinController extends Controller
     //? Xuất Excel danh sách Bobin ngoài line hiện tại
     public function exportDetailExcel()
     {
+        if (isset($_SESSION['user']) && !AuthHelper::hasPermission('bobin_list')) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Bạn không có quyền xuất danh sách Bobin.', 'message' => 'Bạn không có quyền xuất danh sách Bobin.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
         try {
             $dto = BobinGetListDTO::fromRequest($_REQUEST);
 
@@ -1280,12 +1489,12 @@ class BobinController extends Controller
             // QC Check
             $vi['inspector_code'] ?? 'Chưa cập nhật',
             $vi['inspector_name'] ?? 'Chưa cập nhật',
-            $vi['inspection_time'] ?? 'Chưa cập nhật',
-            ($defects['gel'] ?? false) ? 'OK' : 'NG',
-            ($defects['foreign_object'] ?? false) ? 'OK' : 'NG',
-            ($defects['color_issue'] ?? false) ? 'OK' : 'NG',
-            ($defects['print_quality'] ?? false) ? 'OK' : 'NG',
-            $defects['note'] ?? 'Chưa cập nhật',
+            $vi['inspection_time'] ?? ($vi['inspected_at'] ?? 'Chưa cập nhật'),
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['gel'] ?? $vi['defect_gel'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            $defects['note'] ?? ($vi['defect_note'] ?? 'Chưa cập nhật'),
             // Cuộn
             $row['winding_machine'] ?? 'Chưa cập nhật',
             $windEmp['employee_code'] ?? 'Chưa cập nhật',
@@ -1456,6 +1665,18 @@ class BobinController extends Controller
         }
         if (empty($dto->winding_note) || $dto->winding_note === "Chưa cập nhật" || $dto->winding_note === "Không có ghi chú") {
             throw new Exception('Vui lòng nhập lý do hủy Bobin trong phần ghi chú');
+        }
+
+        $hasReasonInErrors = false;
+        foreach ($dto->cancel_errors ?? [] as $err) {
+            if (in_array(trim((string)$err), ['Ngoại quan', 'Thông khí'], true)) {
+                $hasReasonInErrors = true;
+                break;
+            }
+        }
+        $hasReasonInNote = (mb_stripos($dto->winding_note, 'Ngoại quan') !== false) || (mb_stripos($dto->winding_note, 'Thông khí') !== false);
+        if (!$hasReasonInErrors && !$hasReasonInNote) {
+            throw new Exception('Vui lòng chọn lý do hủy "Thông khí" hoặc "Ngoại quan" trên hộp thoại xác nhận trước khi hủy Bobin');
         }
     }
     // Hiển thị trang quản lý dung lượng Bobin cho Quản lý/Admin

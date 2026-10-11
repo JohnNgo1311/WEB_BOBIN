@@ -8,7 +8,27 @@ class Controller
     protected function view(string $view, array $data = []): void
     {
         extract($data);
+        if (class_exists('Language')) {
+            Language::setDeferBootstrapToHead(true);
+        }
+        ob_start();
         require ROOT_PATH . '/app/views/' . $view . '.php';
+        $html = ob_get_clean();
+
+        if (class_exists('Language')) {
+            Language::setDeferBootstrapToHead(false);
+            if (stripos($html, 'i18n.js') !== false && strpos($html, 'window.__DEFAULT_I18N__') === false) {
+                $bootstrap = Language::renderJsBootstrap(true);
+                $html = preg_replace_callback(
+                    '/(<script[^>]+src=["\'][^"\']*i18n\.js[^"\']*["\'][^>]*>\s*<\/script>)/i',
+                    fn($m) => $bootstrap . "\n    " . $m[1],
+                    $html,
+                    1
+                );
+            }
+        }
+
+        echo $html;
     }
 
     protected function json($data, int $status = 200): void

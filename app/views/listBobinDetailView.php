@@ -623,7 +623,16 @@ $typeOptions = [
                         $flow_test_result = $item['flow_test_result'] ?? 'Chưa cập nhật';
 
                         $vi = decodeJsonObject($viRaw);
-                        $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [];
+                        $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [
+                            'gel'            => $vi['defect_gel'] ?? false,
+                            'foreign_object' => $vi['defect_foreign'] ?? ($vi['defect_foreign_object'] ?? false),
+                            'color_issue'    => $vi['defect_color'] ?? ($vi['defect_color_issue'] ?? false),
+                            'print_quality'  => $vi['defect_print'] ?? ($vi['defect_print_quality'] ?? false),
+                            'note'           => $vi['defect_note'] ?? ''
+                        ];
+                        if (empty($vi['inspection_time']) && !empty($vi['inspected_at'])) {
+                            $vi['inspection_time'] = $vi['inspected_at'];
+                        }
                         $products = decodeJsonObject($productsRaw);
                         $productCode = $products['product_code'] ?? 'Chưa cập nhật';
                         $extrusionEmployee = decodeJsonObject($extrusion_employeeRaw);

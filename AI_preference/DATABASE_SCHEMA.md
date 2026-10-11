@@ -43,12 +43,13 @@ Bảng lưu trữ thông tin trạng thái hoạt động hiện thời của t�
 | `extrusion_date` | `DATE` | YES | Ngày thực hiện đùn (`Y-m-d`). |
 | `finish_time` | `DATETIME` | YES | Thời điểm hoàn thành công đoạn đùn / cuộn (`Y-m-d H:i:s`). |
 | `bobin_current_status` | `ENUM` | YES | Trạng thái hiện tại: `'Rolled'`, `'Busy_Unchecked'`, `'Busy_Checked'`, `'Pending_Cancellation'`, `'Cancelled'`. |
+| `previous_status` | `ENUM` | YES | Trạng thái liền trước trạng thái hiện tại (`'Rolled'`, `'Busy_Unchecked'`, `'Busy_Checked'`, `'Pending_Cancellation'`, `'Cancelled'`). Phục vụ truy vết và khôi phục (Restore) Bobin chờ hủy. |
 | `visual_inspection` | `TEXT (JSON)` | YES | Kết quả QC: `{"inspector_code": "NVQC01", "inspector_name": "Trần B", "inspection_time": "...", "defects": {"gel": false, "foreign_object": false, "color_issue": false, "print_quality": false, "note": "..."}}`. |
 | `winding_machine` | `VARCHAR(50)` | YES | Mã máy cuộn thực hiện. |
 | `winding_employee` | `TEXT (JSON)` | YES | Thông tin NV cuộn: `{"employee_code": "NVC01", "employee_name": "Lê C"}`. |
 | `flow_test_result` | `ENUM` | YES | Kết quả test thông khí công đoạn cuộn: `'Thành công'`, `'Thất bại'`. |
 | `winding_note` | `VARCHAR(100)` | YES | Ghi chú từ nhóm cuộn. |
-| `update_history` | `LONGTEXT (JSON)` | YES | Mảng JSON lưu vết lịch sử điều chỉnh: `[{"stage": "extrusion|qc|winding", "action": "edit", "employee_code": "...", "employee_name": "...", "updated_at": "YYYY-MM-DD HH:mm:ss", "note": "..."}]`. |
+| `update_history` | `LONGTEXT (JSON)` | YES | Mảng JSON lưu vết lịch sử điều chỉnh: `[{"stage": "extrusion|qc|winding|pending_cancel", "action": "edit|restore", "employee_code": "...", "employee_name": "...", "updated_at": "YYYY-MM-DD HH:mm:ss", "note": "..."}]`. |
 | `updated_time` | `DATETIME` | YES | Thời điểm cập nhật trạng thái gần nhất. **LƯU Ý:** Không thay đổi khi nhân viên đùn chỉ chỉnh sửa thông tin. |
 
 ---
@@ -56,12 +57,12 @@ Bảng lưu trữ thông tin trạng thái hoạt động hiện thời của t�
 ### 2.2. Bảng `bobin_history` (Nhật Ký Lịch Sử Luân Chuyển Bobin)
 Lưu trữ toàn bộ các phiên bản trạng thái liên tục trong vòng đời Bobin. Dùng để tra cứu lịch sử, kiểm toán và thống kê KPI sản xuất.
 
-- **Cấu trúc:** Tương đồng với bảng `bobin_list_detail` (gồm đầy đủ các cột thông tin từ `bobin_key_code`, `bobin_identification_code`, `extrusion_check`, `rack`, `products`, `visual_inspection`, `winding_*`, `updated_time`).
+- **Cấu trúc:** Tương đồng với bảng `bobin_list_detail` (gồm đầy đủ các cột thông tin từ `bobin_key_code`, `bobin_identification_code`, `extrusion_check`, `rack`, `products`, `bobin_current_status`, `previous_status`, `visual_inspection`, `winding_*`, `updated_time`).
 - **Quy tắc ghi dữ liệu:**
   - Khi đùn tạo mới $\rightarrow$ `INSERT` bản ghi lịch sử đầu tiên (`Busy_Unchecked`).
   - Khi QC xác nhận $\rightarrow$ `INSERT` bản ghi trạng thái mới (`Busy_Checked`).
   - Khi Cuộn xác nhận $\rightarrow$ `INSERT` bản ghi hoàn thành (`Rolled`).
-  - Khi báo hủy / hủy $\rightarrow$ `INSERT` bản ghi (`Pending_Cancellation` / `Cancelled`).
+  - Khi báo hủy / hủy / khôi phục $\rightarrow$ `INSERT` bản ghi (`Pending_Cancellation` / `Cancelled` / trạng thái khôi phục).
   - **QUY TẮC ĐẶC BIỆT (Req VI & VII):** Khi nhân viên Đùn **chỉnh sửa** thông tin qua trang `extrusionEditBobin`:
     - **KHÔNG ĐƯỢC INSERT DÒNG MỚI.**
     - Tìm đến bản ghi có `bobin_key_code` tương ứng và thực hiện `UPDATE` các trường đùn (`products`, `rack`, `extrusion_check`, `print_lot`,...).
@@ -80,6 +81,7 @@ Bảng rút gọn theo dõi trạng thái nhanh của Bobin.
 | `bobin_size` | `ENUM` | NO | Kích thước Bobin. |
 | `bobin_type` | `ENUM` | NO | Loại Bobin. |
 | `bobin_current_status` | `ENUM` | YES | Trạng thái hiện tại. |
+| `previous_status` | `ENUM` | YES | Trạng thái liền trước trạng thái hiện tại. |
 | `updated_time` | `TIMESTAMP` | NO | Thời điểm cập nhật. |
 
 ---

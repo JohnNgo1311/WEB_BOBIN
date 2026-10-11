@@ -101,7 +101,13 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
                         $extCheck = json_decode($item['extrusion_check'] ?? '{}', true) ?: [];
                         $vi = json_decode($item['visual_inspection'] ?? '{}', true) ?: [];
-                        $defects = $vi['defects'] ?? [];
+                        $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [
+                            'gel'            => $vi['defect_gel'] ?? false,
+                            'foreign_object' => $vi['defect_foreign'] ?? ($vi['defect_foreign_object'] ?? false),
+                            'color_issue'    => $vi['defect_color'] ?? ($vi['defect_color_issue'] ?? false),
+                            'print_quality'  => $vi['defect_print'] ?? ($vi['defect_print_quality'] ?? false),
+                            'note'           => $vi['defect_note'] ?? ''
+                        ];
 
                         $printLot = $item['print_lot'] ?? 'Chưa cập nhật';
                         $finishTime = $item['finish_time'] ?? '';
@@ -290,11 +296,28 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                     </div>
                                 </div>
 
-                                <!-- HÀNG 2: GHI CHÚ CUỘN -->
-                                <div class="winding-note">
-                                    <label>Ghi chú cuộn (Bắt buộc nếu yêu cầu hủy):</label>
-                                    <input type="text" class="note-field winding-note-field"
-                                        placeholder="<?= __('ph_winding_note_explain') ?>" data-i18n-ph="ph_winding_note_explain">
+                                <!-- HÀNG 2: HẠNG MỤC LỖI KHI HỦY & GHI CHÚ CUỘN -->
+                                <div class="winding-bottom-row">
+                                    <div class="winding-cancel-quick-group">
+                                        <label data-i18n="winding_cancel_reason_card_lbl"><?= __('winding_cancel_reason_card_lbl') ?></label>
+                                        <div class="winding-quick-reason-btns">
+                                            <button type="button" class="card-error-toggle-btn" data-error="Ngoại quan" onclick="toggleCardCancelReason(this)">
+                                                <span class="reason-icon">🔍</span>
+                                                <span class="reason-text" data-i18n="winding_reason_appearance"><?= __('winding_reason_appearance') ?></span>
+                                                <span class="reason-check">NG</span>
+                                            </button>
+                                            <button type="button" class="card-error-toggle-btn" data-error="Thông khí" onclick="toggleCardCancelReason(this)">
+                                                <span class="reason-icon">💨</span>
+                                                <span class="reason-text" data-i18n="winding_reason_airflow"><?= __('winding_reason_airflow') ?></span>
+                                                <span class="reason-check">NG</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="winding-note">
+                                        <label data-i18n="winding_note_lbl"><?= __('winding_note_lbl') ?></label>
+                                        <input type="text" class="note-field winding-note-field"
+                                            placeholder="<?= __('ph_winding_note_explain') ?>" data-i18n-ph="ph_winding_note_explain">
+                                    </div>
                                 </div>
                             </div>
 

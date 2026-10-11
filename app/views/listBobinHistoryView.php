@@ -644,7 +644,16 @@ if (!function_exists('decodeJsonObject')) {
                         };
 
                         $vi = decodeJsonObject($item['visual_inspection'] ?? '');
-                        $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [];
+                        $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [
+                            'gel'            => $vi['defect_gel'] ?? false,
+                            'foreign_object' => $vi['defect_foreign'] ?? ($vi['defect_foreign_object'] ?? false),
+                            'color_issue'    => $vi['defect_color'] ?? ($vi['defect_color_issue'] ?? false),
+                            'print_quality'  => $vi['defect_print'] ?? ($vi['defect_print_quality'] ?? false),
+                            'note'           => $vi['defect_note'] ?? ''
+                        ];
+                        if (empty($vi['inspection_time']) && !empty($vi['inspected_at'])) {
+                            $vi['inspection_time'] = $vi['inspected_at'];
+                        }
                         $products = decodeJsonObject($item['products'] ?? '');
                         $productCode = $products['product_code'] ?? 'Chưa cập nhật';
                         $extrusionEmployee = decodeJsonObject($item['extrusion_employee'] ?? '');
@@ -942,22 +951,41 @@ if (!function_exists('decodeJsonObject')) {
                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <?php foreach ($auditList as $audit): ?>
                                 <?php
-                                $stageName = match($audit['stage'] ?? '') {
+                                $stageKey = strtolower(trim($audit['stage'] ?? ''));
+                                $stageName = match($stageKey) {
                                     'extrusion' => __('audit_stage_extrusion'),
                                     'qc'        => __('audit_stage_qc'),
                                     'winding'   => __('audit_stage_winding'),
+                                    'admin', 'system' => __('audit_stage_admin'),
                                     default     => htmlspecialchars($audit['stage'] ?? '')
                                 };
                                 $empDisplay = htmlspecialchars(($audit['employee_code'] ?? '') . ' - ' . ($audit['employee_name'] ?? ''));
                                 $timeDisplay = htmlspecialchars($audit['updated_at'] ?? '');
-                                $noteDisplay = htmlspecialchars($audit['note'] ?? '');
+                                $rawNote = trim($audit['note'] ?? '');
+                                $noteI18nAttr = '';
+                                $noteColor = '#64748b';
+                                if ($rawNote === 'Đưa vào danh sách chờ hủy' || ($audit['action'] ?? '') === 'pending_cancel') {
+                                    $noteDisplay = __('audit_note_pending_cancel');
+                                    $noteI18nAttr = 'data-i18n="audit_note_pending_cancel"';
+                                    $noteColor = '#d97706';
+                                } elseif ($rawNote === 'Xác nhận hủy' || ($audit['action'] ?? '') === 'confirm_cancel') {
+                                    $noteDisplay = __('audit_note_confirm_cancel');
+                                    $noteI18nAttr = 'data-i18n="audit_note_confirm_cancel"';
+                                    $noteColor = '#dc2626';
+                                } elseif ($rawNote === 'Khôi phục Bobin từ danh sách chờ hủy' || ($audit['action'] ?? '') === 'restore') {
+                                    $noteDisplay = __('audit_note_restore');
+                                    $noteI18nAttr = 'data-i18n="audit_note_restore"';
+                                    $noteColor = '#059669';
+                                } else {
+                                    $noteDisplay = htmlspecialchars($rawNote);
+                                }
                                 ?>
                                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
                                     <div>
                                         <strong style="color: #2563eb;">[<?= $stageName ?>]</strong>
                                         <span style="color: #1e293b; font-weight: 600;"><?= $empDisplay ?></span>
-                                        <?php if (!empty($noteDisplay)): ?>
-                                        <span style="color: #64748b; font-style: italic;">(<?= $noteDisplay ?>)</span>
+                                        <?php if ($noteDisplay !== ''): ?>
+                                        <span style="color: <?= $noteColor ?>; font-weight: 600; font-style: italic;">(<span <?= $noteI18nAttr ?>><?= $noteDisplay ?></span>)</span>
                                         <?php endif; ?>
                                     </div>
                                     <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒 <?= $timeDisplay ?></span>
@@ -975,17 +1003,13 @@ if (!function_exists('decodeJsonObject')) {
     </div>
 
     <?php if (!empty($data['error'])): ?>
-    <div id="toastMessage" class="toast-message toast-error show">
-        ⚠️ <?= htmlspecialchars($data['error']) ?>
-    </div>
     <script>
-    setTimeout(() => {
-        const toast = document.getElementById('toastMessage');
-        if (toast) {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400);
+    document.addEventListener("DOMContentLoaded", function() {
+        const errMsg = <?= json_encode($data['error'], JSON_UNESCAPED_UNICODE) ?>;
+        if (window.Toast && window.Toast.error) {
+            window.Toast.error(errMsg);
         }
-    }, 3000);
+    });
     </script>
     <?php endif; ?>
 

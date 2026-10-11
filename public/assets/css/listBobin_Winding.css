@@ -390,8 +390,81 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   font-weight: 700;
 }
 
-.winding-note { margin-top: 4px; }
-.winding-note label { font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 2px; }
+.winding-bottom-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-top: 4px;
+}
+
+.winding-cancel-quick-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.winding-cancel-quick-group label,
+.winding-note label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.winding-quick-reason-btns {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.card-error-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.card-error-toggle-btn:hover {
+  border-color: #f87171;
+  background: #fff5f5;
+  color: #b91c1c;
+}
+
+.card-error-toggle-btn .reason-check {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #64748b;
+  transition: all 0.18s ease;
+}
+
+.card-error-toggle-btn.active {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #b91c1c;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.18);
+}
+
+.card-error-toggle-btn.active .reason-check {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.winding-note { min-width: 0; }
 .note-field {
   width: 100%;
   height: 38px;
@@ -404,6 +477,20 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   box-sizing: border-box;
 }
 .note-field:focus { border-color: #2563eb; }
+
+@media (max-width: 768px) {
+  .winding-bottom-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .winding-quick-reason-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .card-error-toggle-btn {
+    justify-content: center;
+  }
+}
 
 /* ================= FOOTER & NÚT HÀNH ĐỘNG ================= */
 .card-footer-simple {

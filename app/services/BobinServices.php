@@ -125,13 +125,25 @@ class BobinServices
 
         $entity->identificationCode = $dto->bobin_identification_code;
 
-        $entity->bobinKeyCode = $this->resolveKeyCode($dto->bobin_identification_code);
+        $entity->bobinKeyCode = !empty($dto->bobin_key_code)
+            ? $dto->bobin_key_code
+            : $this->resolveKeyCode($dto->bobin_identification_code);
 
         $entity->extrusion_employee = $this->resolveEmployee(
             $dto->extrusion_employee_code
         );
         $entity->currentStatus = "Pending_Cancellation";
-        $this->bobinRepo->extrusionDeleteBobin($entity);
+
+        $updateRecord = [
+            'stage'         => 'extrusion',
+            'action'        => 'pending_cancel',
+            'employee_code' => $entity->extrusion_employee->employee_code ?? ($_SESSION['user']['employee_code'] ?? 'Unknown'),
+            'employee_name' => $entity->extrusion_employee->employee_name ?? ($_SESSION['user']['employee_name'] ?? 'Unknown'),
+            'updated_at'    => date('Y-m-d H:i:s'),
+            'note'          => 'Đưa vào danh sách chờ hủy'
+        ];
+
+        $this->bobinRepo->extrusionDeleteBobin($entity, $updateRecord);
         return $entity;
     }
     private function buildBaseEntity($dto, string $function): BobinEntity
@@ -273,14 +285,31 @@ class BobinServices
     }
     private function resolveRack(string $rackCode): ?RackEntity
     {
+        $rackCode = trim($rackCode);
         if (empty($rackCode) || $rackCode === 'Chưa cập nhật') return null;
         $list = GlobalData::$listRackEntity ?? [];
         foreach ($list as $rack) {
-            if (($rack['rack_code'] ?? '') === $rackCode) {
+            if (strcasecmp($rack['rack_code'] ?? '', $rackCode) === 0) {
                 return new RackEntity(
                     id: (int)$rack['id'],
                     code: $rack['rack_code']
                 );
+            }
+        }
+        // Hỗ trợ trường hợp mã QR Rack encode dạng rút gọn số 0 (ví dụ: Rack_B21_01 khớp với Rack_B021_01)
+        if (preg_match('/^Rack_([A-Za-z]+)0*(\d+)_0*(\d+)$/i', $rackCode, $m)) {
+            $prefix = strtoupper($m[1]);
+            $areaNum = (int)$m[2];
+            $slotNum = (int)$m[3];
+            foreach ($list as $rack) {
+                if (preg_match('/^Rack_([A-Za-z]+)0*(\d+)_0*(\d+)$/i', $rack['rack_code'] ?? '', $rm)) {
+                    if (strtoupper($rm[1]) === $prefix && (int)$rm[2] === $areaNum && (int)$rm[3] === $slotNum) {
+                        return new RackEntity(
+                            id: (int)$rack['id'],
+                            code: $rackCode
+                        );
+                    }
+                }
             }
         }
         throw new Exception("Vị trí Rack [{$rackCode}] không tồn tại trong hệ thống.");
@@ -324,6 +353,7 @@ class BobinServices
             throw new Exception("Mã định danh Bobin không tồn tại.");
         }
         $this->employeeRepo->getListEmployee();
+        $foundQcEmp = $this->employeeRepo->findByCode($dto->inspector_code);
 
         $entity = new BobinEntity();
         $entity->identificationCode = $dto->bobin_identification_code;
@@ -339,7 +369,16 @@ class BobinServices
             "Yêu cầu hủy QC: {$dto->defect_note}"
         );
 
-        $this->bobinRepo->qcCancelBobin($entity);
+        $updateRecord = [
+            'stage'         => 'qc',
+            'action'        => 'pending_cancel',
+            'employee_code' => $foundQcEmp->employee_code ?? ($dto->inspector_code ?: ($_SESSION['user']['employee_code'] ?? 'Unknown')),
+            'employee_name' => $foundQcEmp->employee_name ?? ($dto->inspector_name ?: ($_SESSION['user']['employee_name'] ?? 'Unknown')),
+            'updated_at'    => date('Y-m-d H:i:s'),
+            'note'          => 'Đưa vào danh sách chờ hủy'
+        ];
+
+        $this->bobinRepo->qcCancelBobin($entity, $updateRecord);
         return $entity;
     }
 
@@ -482,12 +521,23 @@ class BobinServices
         }
         $entity->winding_note = $dto->winding_note . " (Yêu cầu hủy phía cuộn)";
 
-        if (strpos($dto->winding_note, 'Thông khí') !== false) {
+        $hasFlowError = in_array('Thông khí', $dto->cancel_errors ?? [], true) || (mb_stripos($dto->winding_note, 'Thông khí') !== false);
+        if ($hasFlowError) {
             $entity->flow_test_result = "Thất bại";
         } else {
             $entity->flow_test_result = "Thành công";
         }
-        $this->bobinRepo->windingCancelBobin($entity);
+
+        $updateRecord = [
+            'stage'         => 'winding',
+            'action'        => 'pending_cancel',
+            'employee_code' => $foundwindingEmp->employee_code ?? ($_SESSION['user']['employee_code'] ?? 'Unknown'),
+            'employee_name' => $foundwindingEmp->employee_name ?? ($_SESSION['user']['employee_name'] ?? 'Unknown'),
+            'updated_at'    => date('Y-m-d H:i:s'),
+            'note'          => 'Đưa vào danh sách chờ hủy'
+        ];
+
+        $this->bobinRepo->windingCancelBobin($entity, $updateRecord);
         return $entity;
     }
     #endregion
@@ -504,8 +554,25 @@ class BobinServices
         $entity->bobinKeyCode = $dto->bobin_key_code;
         $entity->currentStatus = "Cancelled";
 
-        $this->bobinRepo->deleteBobin($entity);
+        $updateRecord = [
+            'stage'         => $_SESSION['user']['role'] ?? 'admin',
+            'action'        => 'confirm_cancel',
+            'employee_code' => $_SESSION['user']['employee_code'] ?? 'Unknown',
+            'employee_name' => $_SESSION['user']['employee_name'] ?? 'Unknown',
+            'updated_at'    => date('Y-m-d H:i:s'),
+            'note'          => 'Xác nhận hủy'
+        ];
+
+        $this->bobinRepo->deleteBobin($entity, $updateRecord);
         return $entity;
+    }
+
+    public function restoreBobin(string $identCode, string $keyCode, ?array $updateRecord = null): array
+    {
+        if (empty($identCode)) {
+            throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        return $this->bobinRepo->restoreBobin($identCode, $keyCode, $updateRecord);
     }
 
     #region GET LIST & GET SPECIFIC
@@ -805,6 +872,15 @@ class BobinServices
     {
         if (empty($identCode)) {
             throw new Exception("Mã định danh Bobin không tồn tại.");
+        }
+        $this->employeeRepo->getListEmployee();
+        if (!empty($viData['inspector_code']) && $viData['inspector_code'] !== 'Chưa cập nhật') {
+            $foundQcEmp = $this->employeeRepo->findByCode($viData['inspector_code']);
+            if ($foundQcEmp === null) {
+                throw new Exception("Mã nhân viên QC [{$viData['inspector_code']}] không tồn tại trong hệ thống.");
+            }
+            $viData['inspector_code'] = $foundQcEmp->employee_code;
+            $viData['inspector_name'] = $foundQcEmp->employee_name;
         }
         return $this->bobinRepo->adminUpdateQCBobin($identCode, $keyCode, $viData, $newType, $updateRecord);
     }

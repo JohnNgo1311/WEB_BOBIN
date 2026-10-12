@@ -4,6 +4,8 @@ require_once ROOT_PATH . '/app/core/Database.php';
 
 class AuthHelper
 {
+    private static bool $sessionSynced = false;
+
     /**
      * Danh mục định nghĩa toàn bộ quyền hạn trong hệ thống
      */
@@ -22,12 +24,19 @@ class AuthHelper
                         'desc_default' => 'Truy cập trang nhập liệu sản xuất đùn, khởi tạo mã Bobin mới',
                         'routes' => ['bobin/index', 'bobin/extrusion', 'bobin/createbobinview', 'bobin/createbobin']
                     ],
-                    'extrusion_edit' => [
-                        'name_key' => 'perm_extrusion_edit',
-                        'name_default' => 'Điều chỉnh thông tin Bobin Đùn',
-                        'desc_key' => 'perm_extrusion_edit_desc',
-                        'desc_default' => 'Truy cập trang Điều chỉnh Đùn, cập nhật và xóa Bobin đùn',
+                    'extrusion_edit_cancel' => [
+                        'name_key' => 'perm_extrusion_edit_cancel',
+                        'name_default' => 'Điều chỉnh Đùn (Edit + Cancel): Chỉnh sửa & Đưa vào chờ hủy',
+                        'desc_key' => 'perm_extrusion_edit_cancel_desc',
+                        'desc_default' => 'Được chỉnh sửa Bobin, đưa Bobin vào danh sách chờ hủy và hủy Bobin theo quy trình hiện tại',
                         'routes' => ['bobin/extrusioneditbobinview', 'bobin/extrusionupdatebobin', 'bobin/extrusiondeletebobin']
+                    ],
+                    'extrusion_edit_only' => [
+                        'name_key' => 'perm_extrusion_edit_only',
+                        'name_default' => 'Điều chỉnh Đùn (Edit Only): Chỉ chỉnh sửa Bobin',
+                        'desc_key' => 'perm_extrusion_edit_only_desc',
+                        'desc_default' => 'Được chỉnh sửa Bobin nhưng không được đưa Bobin vào danh sách chờ hủy hoặc hủy Bobin',
+                        'routes' => ['bobin/extrusioneditbobinview', 'bobin/extrusionupdatebobin']
                     ],
                 ]
             ],
@@ -40,8 +49,8 @@ class AuthHelper
                         'name_key' => 'perm_qc_check',
                         'name_default' => 'Kiểm tra ngoại quan QC',
                         'desc_key' => 'perm_qc_check_desc',
-                        'desc_default' => 'Xem danh sách chờ QC, xác nhận đạt/lỗi ngoại quan Bobin',
-                        'routes' => ['bobin/listbobinview_qc', 'bobin/updateqcbobin', 'bobin/changebobintype', 'bobin/updateqcandchangetype']
+                        'desc_default' => 'Xem danh sách chờ QC, xác nhận đạt/lỗi ngoại quan hoặc báo chờ hủy Bobin tại QC',
+                        'routes' => ['bobin/listbobinview_qc', 'bobin/updateqcbobin', 'bobin/changebobintype', 'bobin/updateqcandchangetype', 'bobin/qccancelbobin']
                     ],
                     'qc_edit' => [
                         'name_key' => 'perm_qc_edit',
@@ -61,8 +70,8 @@ class AuthHelper
                         'name_key' => 'perm_winding_confirm',
                         'name_default' => 'Xác nhận thông tin Cuộn',
                         'desc_key' => 'perm_winding_confirm_desc',
-                        'desc_default' => 'Xem danh sách chờ cuộn, nhập máy cuộn, test thông khí & hoàn tất',
-                        'routes' => ['bobin/windingview', 'bobin/listbobinview_winding', 'bobin/updatewindingbobin']
+                        'desc_default' => 'Xem danh sách chờ cuộn, nhập máy cuộn, test thông khí, hoàn tất hoặc báo chờ hủy',
+                        'routes' => ['bobin/windingview', 'bobin/listbobinview_winding', 'bobin/updatewindingbobin', 'bobin/windingcancelbobin']
                     ],
                     'winding_edit' => [
                         'name_key' => 'perm_winding_edit',
@@ -92,12 +101,19 @@ class AuthHelper
                         'desc_default' => 'Tra cứu dòng thời gian và dấu vết lịch sử thay đổi của Bobin',
                         'routes' => ['bobin/listbobinhistoryview', 'bobin/exporthistoryexcel']
                     ],
-                    'pending_cancel' => [
-                        'name_key' => 'perm_pending_cancel',
-                        'name_default' => 'Quản lý Bobin chờ hủy',
-                        'desc_key' => 'perm_pending_cancel_desc',
-                        'desc_default' => 'Xem danh sách Bobin chờ duyệt hủy và thực hiện hủy/khôi phục',
-                        'routes' => ['bobin/listpendingcancellationview', 'bobin/deletebobin']
+                    'pending_cancel_edit' => [
+                        'name_key' => 'perm_pending_cancel_edit',
+                        'name_default' => 'Danh sách chờ Hủy: Được xem và được chỉnh sửa thông tin',
+                        'desc_key' => 'perm_pending_cancel_edit_desc',
+                        'desc_default' => 'Được xem danh sách Bobin chờ hủy và thực hiện khôi phục hoặc xác nhận hủy Bobin hoàn toàn',
+                        'routes' => ['bobin/listpendingcancellationview', 'bobin/deletebobin', 'bobin/restorebobin']
+                    ],
+                    'pending_cancel_view' => [
+                        'name_key' => 'perm_pending_cancel_view',
+                        'name_default' => 'Danh sách chờ Hủy: Chỉ được xem nhưng không được chỉnh sửa',
+                        'desc_key' => 'perm_pending_cancel_view_desc',
+                        'desc_default' => 'Chỉ được xem danh sách Bobin chờ hủy, không có quyền khôi phục hoặc xác nhận hủy',
+                        'routes' => ['bobin/listpendingcancellationview']
                     ],
                 ]
             ],
@@ -111,7 +127,7 @@ class AuthHelper
                         'name_default' => 'Quản lý Danh sách Nhân viên',
                         'desc_key' => 'perm_employee_manage_desc',
                         'desc_default' => 'Thêm mới, sửa, khóa tài khoản và import/export danh sách nhân viên',
-                        'routes' => ['employee/index', 'employee/create', 'employee/update', 'employee/delete', 'employee/importcsv', 'employee/exportcsv', 'employee/resetpassword']
+                        'routes' => ['employee/index', 'employee/create', 'employee/update', 'employee/delete', 'employee/importcsv', 'employee/exportcsv', 'employee/importexcel', 'employee/exportexcel', 'employee/downloadtemplate', 'employee/resetpassword']
                     ],
                     'permission_manage' => [
                         'name_key' => 'perm_permission_manage',
@@ -146,33 +162,74 @@ class AuthHelper
     {
         $role = strtolower(trim($role));
         return match ($role) {
-            'admin' => self::getAllPermissionKeys(),
+            'admin' => array_values(array_diff(self::getAllPermissionKeys(), ['pending_cancel_view', 'extrusion_edit_only'])),
             'extrusion' => [
                 'extrusion_create',
-                'extrusion_edit',
+                'extrusion_edit_cancel',
                 'bobin_list',
                 'bobin_history',
-                'pending_cancel'
+                'pending_cancel_view'
             ],
             'qc' => [
                 'qc_check',
                 'qc_edit',
                 'bobin_list',
                 'bobin_history',
-                'pending_cancel'
+                'pending_cancel_view'
             ],
             'winding' => [
                 'winding_confirm',
+                'winding_edit',
                 'bobin_list',
                 'bobin_history',
-                'pending_cancel'
+                'pending_cancel_view'
             ],
             default => [
                 'bobin_list',
                 'bobin_history',
-                'pending_cancel'
+                'pending_cancel_view'
             ]
         };
+    }
+
+    /**
+     * Đồng bộ quyền mới nhất từ Database vào $_SESSION['user'] trong mỗi HTTP request
+     */
+    public static function ensureSessionPermissionsFresh(): void
+    {
+        if (self::$sessionSynced) {
+            return;
+        }
+        self::$sessionSynced = true;
+
+        if (empty($_SESSION['user']) || !empty($_SESSION['user']['_skip_db_sync'])) {
+            return;
+        }
+
+        $empCode = $_SESSION['user']['employee_code'] ?? '';
+        $empId   = $_SESSION['user']['id'] ?? null;
+        if ($empCode === '' && empty($empId)) {
+            return;
+        }
+
+        try {
+            $pdo = Database::getInstance()->pdo();
+            if (!empty($empId)) {
+                $stmt = $pdo->prepare("SELECT role, permissions FROM employee_list WHERE id = ? LIMIT 1");
+                $stmt->execute([(int)$empId]);
+            } else {
+                $stmt = $pdo->prepare("SELECT role, permissions FROM employee_list WHERE employee_code = ? LIMIT 1");
+                $stmt->execute([$empCode]);
+            }
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $_SESSION['user']['role'] = strtolower(trim($row['role'] ?? $_SESSION['user']['role'] ?? ''));
+                $perms = !empty($row['permissions']) ? json_decode($row['permissions'], true) : null;
+                $_SESSION['user']['permissions'] = is_array($perms) ? $perms : null;
+            }
+        } catch (Throwable $e) {
+            error_log("AuthHelper::ensureSessionPermissionsFresh error: " . $e->getMessage());
+        }
     }
 
     /**
@@ -181,6 +238,7 @@ class AuthHelper
     public static function getUserPermissions(?array $user = null): array
     {
         if ($user === null) {
+            self::ensureSessionPermissionsFresh();
             $user = $_SESSION['user'] ?? [];
         }
 
@@ -188,9 +246,8 @@ class AuthHelper
             return [];
         }
 
-        $role = strtolower($user['role'] ?? '');
+        $role = strtolower(trim($user['role'] ?? ''));
 
-        // Nếu là admin và không có giới hạn tùy biến nào, luôn cấp toàn quyền
         $rawPerms = $user['permissions'] ?? null;
         if (is_string($rawPerms)) {
             $decoded = json_decode($rawPerms, true);
@@ -200,6 +257,29 @@ class AuthHelper
         }
 
         if (is_array($rawPerms) && !empty($rawPerms)) {
+            // Tương thích ngược: chuyển đổi mã quyền cũ 'pending_cancel'
+            if (in_array('pending_cancel', $rawPerms, true)) {
+                $rawPerms = array_diff($rawPerms, ['pending_cancel']);
+                $rawPerms[] = ($role === 'admin') ? 'pending_cancel_edit' : 'pending_cancel_view';
+            }
+
+            // Nếu có cả 2 quyền chờ hủy thì ưu tiên giữ quyền chỉnh sửa (pending_cancel_edit)
+            if (in_array('pending_cancel_edit', $rawPerms, true) && in_array('pending_cancel_view', $rawPerms, true)) {
+                $rawPerms = array_diff($rawPerms, ['pending_cancel_view']);
+            }
+
+            // Tương thích ngược: chuyển đổi mã quyền cũ 'extrusion_edit'
+            if (in_array('extrusion_edit', $rawPerms, true)) {
+                $rawPerms = array_diff($rawPerms, ['extrusion_edit']);
+                $hasCancelAuth = ($role === 'admin' || $role === 'extrusion') || in_array('pending_cancel_edit', $rawPerms, true);
+                $rawPerms[] = $hasCancelAuth ? 'extrusion_edit_cancel' : 'extrusion_edit_only';
+            }
+
+            // Nếu có cả 2 quyền Điều chỉnh Đùn thì ưu tiên giữ quyền cao hơn (extrusion_edit_cancel)
+            if (in_array('extrusion_edit_cancel', $rawPerms, true) && in_array('extrusion_edit_only', $rawPerms, true)) {
+                $rawPerms = array_diff($rawPerms, ['extrusion_edit_only']);
+            }
+
             // Admin luôn giữ quyền quản lý phân quyền để tránh bị lock out
             if ($role === 'admin' && !in_array('permission_manage', $rawPerms, true)) {
                 $rawPerms[] = 'permission_manage';
@@ -216,6 +296,7 @@ class AuthHelper
     public static function hasPermission(string $permKey, ?array $user = null): bool
     {
         if ($user === null) {
+            self::ensureSessionPermissionsFresh();
             $user = $_SESSION['user'] ?? [];
         }
 
@@ -224,6 +305,36 @@ class AuthHelper
         }
 
         $userPerms = self::getUserPermissions($user);
+
+        // Quyền truy cập & chỉnh sửa chung tại trang Điều chỉnh Đùn (Edit Only hoặc Edit + Cancel)
+        if ($permKey === 'extrusion_edit') {
+            return in_array('extrusion_edit_only', $userPerms, true)
+                || in_array('extrusion_edit_cancel', $userPerms, true)
+                || in_array('extrusion_edit', $userPerms, true);
+        }
+
+        // Quyền chỉ chỉnh sửa tại trang Điều chỉnh Đùn (Edit Only - loại trừ với Edit + Cancel)
+        if ($permKey === 'extrusion_edit_only') {
+            return in_array('extrusion_edit_only', $userPerms, true);
+        }
+
+        // Quyền chỉnh sửa & đưa Bobin vào chờ hủy / hủy tại trang Điều chỉnh Đùn (Edit + Cancel)
+        if ($permKey === 'extrusion_edit_cancel') {
+            return in_array('extrusion_edit_cancel', $userPerms, true);
+        }
+
+        // Quyền xem danh sách chờ hủy: hợp lệ nếu có pending_cancel_view hoặc pending_cancel_edit
+        if ($permKey === 'pending_cancel' || $permKey === 'pending_cancel_view') {
+            return in_array('pending_cancel_view', $userPerms, true)
+                || in_array('pending_cancel_edit', $userPerms, true)
+                || in_array('pending_cancel', $userPerms, true);
+        }
+
+        // Quyền chỉnh sửa danh sách chờ hủy (khôi phục / xác nhận hủy hoàn toàn)
+        if ($permKey === 'pending_cancel_edit') {
+            return in_array('pending_cancel_edit', $userPerms, true);
+        }
+
         return in_array($permKey, $userPerms, true);
     }
 
@@ -237,6 +348,7 @@ class AuthHelper
         $route = "{$controller}/{$method}";
 
         if ($user === null) {
+            self::ensureSessionPermissionsFresh();
             $user = $_SESSION['user'] ?? [];
         }
 
@@ -244,23 +356,28 @@ class AuthHelper
             return false;
         }
 
-        // Tìm permission yêu cầu cho route này
-        $requiredPerm = null;
+        // Tìm tất cả các permission cho phép truy cập route này
+        $matchingPerms = [];
         foreach (self::getAllPermissions() as $group) {
             foreach ($group['items'] as $permKey => $info) {
                 if (in_array($route, $info['routes'], true)) {
-                    $requiredPerm = $permKey;
-                    break 2;
+                    $matchingPerms[] = $permKey;
                 }
             }
         }
 
         // Nếu route không nằm trong danh mục kiểm soát đặc biệt, cho phép nếu đã đăng nhập
-        if ($requiredPerm === null) {
+        if (empty($matchingPerms)) {
             return true;
         }
 
-        return self::hasPermission($requiredPerm, $user);
+        foreach ($matchingPerms as $permKey) {
+            if (self::hasPermission($permKey, $user)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -268,12 +385,14 @@ class AuthHelper
      */
     public static function syncCurrentSessionIfMatch(string $employeeCode): void
     {
+        self::$sessionSynced = false;
         if (isset($_SESSION['user']['employee_code']) && $_SESSION['user']['employee_code'] === $employeeCode) {
             $pdo = Database::getInstance()->pdo();
             $stmt = $pdo->prepare("SELECT permissions, role FROM employee_list WHERE employee_code = ? LIMIT 1");
             $stmt->execute([$employeeCode]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row) {
+                $_SESSION['user']['role'] = strtolower(trim($row['role'] ?? $_SESSION['user']['role'] ?? ''));
                 $perms = !empty($row['permissions']) ? json_decode($row['permissions'], true) : null;
                 $_SESSION['user']['permissions'] = $perms;
             }

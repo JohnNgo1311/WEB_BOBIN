@@ -239,11 +239,10 @@ async function handleWindingConfirm(buttonElement, bobinCode, bobinKeyCode) {
                         if (window.Toast && window.Toast.flash) {
                             window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
                         }
-                        Toast.show(res.message, 'success');
                         buttonElement.innerText = window.t ? window.t('saved') : 'Đã lưu ✔️';
                         currentEditingContainer = null;
                         originalDataBackup = null;
-                        setTimeout(() => window.location.reload(), 800);
+                        setTimeout(() => window.location.reload(), 450);
                     } else {
                         Toast.show(`❌ ${res.message || (window.t ? window.t('save_failed') : 'Lưu thất bại')}`, 'error');
                         buttonElement.innerText = originalText;

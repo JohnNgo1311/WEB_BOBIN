@@ -29,6 +29,7 @@ class BobinEntity
     public DateTime $extrusionDate;
     public DateTime $finishTime;
     public string $currentStatus;
+    public ?string $previousStatus = null;
 
     // Field này trong DB là JSON
     public VisualInspectionEntity $visualInspection;
@@ -64,7 +65,8 @@ class BobinEntity
         ?EmployeeEntity $winding_employee = null,
         string $flow_test_result = 'Thất bại',
         string $winding_note = 'Chưa cập nhật',
-        ?DateTime $updatedTime = null
+        ?DateTime $updatedTime = null,
+        ?string $previousStatus = null
     ) {
         $this->id = $id ?? 1;
         $this->bobinKeyCode = $bobinKeyCode;
@@ -82,6 +84,7 @@ class BobinEntity
         $this->extrusionDate = $extrusionDate ?? new DateTime();
         $this->finishTime = $finishTime ?? new DateTime();
         $this->currentStatus = $currentStatus;
+        $this->previousStatus = $previousStatus;
         $this->visualInspection = $visualInspection ?? new VisualInspectionEntity(new DeFectEntity());
         $this->winding_machine = $winding_machine;
         $this->winding_employee = $winding_employee;
@@ -123,7 +126,8 @@ class BobinEntity
             winding_employee: isset($data['winding_employee']) ? EmployeeEntity::fromJson($data['winding_employee']) : null,
             flow_test_result: $data['flow_test_result'] ?? 'Thất bại',
             winding_note: $data['winding_note'] ?? 'Chưa cập nhật',
-            updatedTime: !empty($data['updatedTime']) ? new DateTime($data['updatedTime']) : new DateTime()
+            updatedTime: !empty($data['updatedTime']) ? new DateTime($data['updatedTime']) : new DateTime(),
+            previousStatus: $data['previous_status'] ?? null
         );
     }
 }

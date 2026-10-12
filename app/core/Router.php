@@ -43,7 +43,8 @@ class Router
 
         // ================= 3. DANH MỤC CÔNG KHAI (KHÔNG CẦN LOGIN) =================
         $publicActions = [
-            'auth' => ['login', 'validatelogin', 'logout', 'index', 'changepassword', 'postchangepassword', 'setlanguage'],
+            'auth' => ['login', 'validatelogin', 'logout', 'index', 'changepassword', 'postchangepassword', 'setlanguage', 'gettranslations'],
+            'employee' => ['getcustomtranslations'],
             'listdata' => ['getlistdata', 'index'], // API nạp danh mục gợi ý máy, nhân viên...
             'bobin' => [
                 'listbobindetailview',         // Xem chi tiết danh sách
@@ -51,7 +52,8 @@ class Router
                 'listpendingcancellationview', // Xem danh sách chờ hủy
                 'exportdetailexcel',           // Xuất file Excel chi tiết
                 'exporthistoryexcel',          // Xuất file Excel lịch sử
-                'getspecificbobin'
+                'getspecificbobin',
+                'scanqr'                       // Trang quét mã QR Bobin
             ]
         ];
 
@@ -64,7 +66,8 @@ class Router
                 'extrusioneditbobinview',
                 'createbobin',
                 'extrusionupdatebobin',
-                'extrusiondeletebobin'
+                'extrusiondeletebobin',
+                'restorebobin'
             ],
             'qc' => [
                 'index',
@@ -74,17 +77,20 @@ class Router
                 'updateqcbobin',
                 'qccancelbobin',
                 'changebobintype',
-                'updateqcandchangetype'
+                'updateqcandchangetype',
+                'restorebobin'
             ],
             'winding' => [
                 'index',
                 'listbobinview_winding',
                 'updatewindingbobin',
-                'windingcancelbobin'
+                'windingcancelbobin',
+                'restorebobin'
             ],
             'admin' => [
                 // Admin toàn quyền mọi module, bao gồm xóa hoàn tất Bobin
                 'deletebobin',
+                'restorebobin',
                 'qceditbobinview',
                 'updateqceditbobin',
                 'windingeditbobinview',
@@ -97,7 +103,16 @@ class Router
             $isPublic = in_array($methodLower, $publicActions[$controllerLower], true);
         }
 
-        $isApi = $this->isApiRequest($controllerLower);
+        // Các action hệ thống cơ bản luôn cho phép khi đã đăng nhập (đổi mật khẩu, đổi ngôn ngữ, nạp danh mục gợi ý, quét QR)
+        $alwaysAllowedLoggedIn = [
+            'auth'     => ['login', 'validatelogin', 'logout', 'index', 'changepassword', 'postchangepassword', 'setlanguage'],
+            'listdata' => ['getlistdata', 'index'],
+            'bobin'    => ['scanqr', 'getspecificbobin']
+        ];
+        $isAlwaysAllowedLoggedIn = isset($alwaysAllowedLoggedIn[$controllerLower])
+            && in_array($methodLower, $alwaysAllowedLoggedIn[$controllerLower], true);
+
+        $isApi = $this->isApiRequest($controllerLower, $methodLower);
 
         // ================= 4. KIỂM TRA ĐĂNG NHẬP =================
         if (!isset($_SESSION['user']) && !$isPublic) {
@@ -107,6 +122,7 @@ class Router
                 echo json_encode([
                     'success'  => false,
                     'error'    => 'Unauthorized',
+                    'message'  => 'Vui lòng đăng nhập để thực hiện thao tác này.',
                     'redirect' => BASE_URL . '/index.php?url=auth/login'
                 ], JSON_UNESCAPED_UNICODE);
                 exit;
@@ -126,6 +142,7 @@ class Router
                     echo json_encode([
                         'success' => false,
                         'error'   => 'Bạn bắt buộc phải đổi mật khẩu trong lần đăng nhập đầu tiên.',
+                        'message' => 'Bạn bắt buộc phải đổi mật khẩu trong lần đăng nhập đầu tiên.',
                         'must_change_password' => true
                     ], JSON_UNESCAPED_UNICODE);
                     exit;
@@ -137,7 +154,9 @@ class Router
         }
 
         // ================= 5. KIỂM TRA PHÂN QUYỀN (PERMISSIONS & ROLE) =================
-        if (isset($_SESSION['user']) && !$isPublic) {
+        if (isset($_SESSION['user']) && !$isAlwaysAllowedLoggedIn) {
+            // Đồng bộ quyền mới nhất từ Database
+            AuthHelper::ensureSessionPermissionsFresh();
             $userRole = strtolower($_SESSION['user']['role'] ?? '');
 
             // Kiểm tra phân quyền truy cập chi tiết thông qua AuthHelper (tương thích quyền tùy biến & quyền mặc định)
@@ -149,17 +168,21 @@ class Router
                     header('Content-Type: application/json; charset=utf-8');
                     echo json_encode([
                         'success' => false,
-                        'error'   => 'Bạn không có quyền thực hiện thao tác này.'
+                        'error'   => 'Bạn không có quyền thực hiện thao tác này.',
+                        'message' => 'Bạn không có quyền thực hiện thao tác này.'
                     ], JSON_UNESCAPED_UNICODE);
                     exit;
                 }
 
-                // Chuyển hướng người dùng về trang mặc định phù hợp
-                $redirectUrl = match ($userRole) {
-                    'extrusion' => BASE_URL . '/index.php?url=bobin/index',
-                    'qc'        => BASE_URL . '/index.php?url=bobin/listBobinView_QC',
-                    'winding'   => BASE_URL . '/index.php?url=bobin/windingView',
-                    default     => BASE_URL . '/index.php?url=bobin/listBobinDetailView',
+                // Chuyển hướng người dùng về trang mặc định phù hợp theo quyền thực tế
+                $redirectUrl = match (true) {
+                    AuthHelper::hasPermission('extrusion_create')  => BASE_URL . '/index.php?url=bobin/index',
+                    AuthHelper::hasPermission('qc_check')          => BASE_URL . '/index.php?url=bobin/listBobinView_QC',
+                    AuthHelper::hasPermission('winding_confirm')   => BASE_URL . '/index.php?url=bobin/windingView',
+                    AuthHelper::hasPermission('bobin_list')        => BASE_URL . '/index.php?url=bobin/listBobinDetailView',
+                    AuthHelper::hasPermission('bobin_history')     => BASE_URL . '/index.php?url=bobin/listBobinHistoryView',
+                    AuthHelper::hasPermission('pending_cancel')    => BASE_URL . '/index.php?url=bobin/listPendingCancellationView',
+                    default                                        => BASE_URL . '/index.php?url=auth/login',
                 };
 
                 header("Location: {$redirectUrl}");
@@ -198,8 +221,36 @@ class Router
         call_user_func_array([$instance, $rawMethod], $params);
     }
 
-    private function isApiRequest(string $controller = ''): bool
+    private function isApiRequest(string $controller = '', string $method = ''): bool
     {
+        $reqMethod = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        if ($reqMethod !== 'GET') {
+            return true;
+        }
+
+        $apiMethods = [
+            'createbobin',
+            'extrusionupdatebobin',
+            'extrusiondeletebobin',
+            'updateqcbobin',
+            'updateqceditbobin',
+            'qccancelbobin',
+            'updateqcandchangetype',
+            'updatewindingbobin',
+            'updatewindingeditbobin',
+            'windingcancelbobin',
+            'deletebobin',
+            'restorebobin',
+            'getspecificbobin',
+            'getemployeepermissions',
+            'updatepermissions',
+            'updatetranslations',
+            'resettranslations'
+        ];
+        if ($method !== '' && in_array(strtolower($method), $apiMethods, true)) {
+            return true;
+        }
+
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
             return true;
         }
@@ -223,7 +274,7 @@ class Router
 
         if ($this->isApiRequest()) {
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['success' => false, 'error' => $message], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'error' => $message, 'message' => $message], JSON_UNESCAPED_UNICODE);
             exit;
         }
 

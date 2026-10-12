@@ -33,7 +33,7 @@ flowchart LR
     C --> D["Trạng thái: Busy_Checked"]
     D --> E["3. CUỘN (Winding)<br/>Xác nhận máy cuộn & thông khí"]
     E --> F["Trạng thái: Rolled (Hoàn thành)"]
-    
+
     B -.->|Báo lỗi / Hủy| G["Pending_Cancellation<br/>(Chờ hủy)"]
     D -.->|Báo lỗi / Hủy| G
     G -->|Admin / Quản lý duyệt| H["Cancelled (Đã hủy)"]
@@ -46,7 +46,7 @@ flowchart LR
      - Nhân viên nhập mã định danh Bobin (`bobin_identification_code`), mã sản phẩm, PO, lot vật liệu, lot in, chiều dài, ca làm việc, ngày đùn, thời gian hoàn thành (`finish_time`), vị trí Rack, và 5 tiêu chí Đùn Check (`extrusion_check`: đường kính, gel, dị vật, màu, chữ in).
      - **Quy tắc tạo `bobin_key_code`:** Được sinh tự động từ mã định danh và thời gian hoàn thành đùn:
        $$\text{bobin\_key\_code} = \text{bobin\_identification\_code} + \text{_} + Y\_m\_d\_H\_i\_s$$
-       *(Ví dụ: `A0001_2026_10_04_18_29_44`)*.
+       _(Ví dụ: `A0001_2026_10_04_18_29_44`)_.
      - Dữ liệu được ghi vào `bobin_list_detail`, `bobin_list_general` và đồng thời snapshot một dòng mới vào `bobin_history`.
      - Trạng thái ban đầu: `Busy_Unchecked`.
    - **Điều chỉnh thông tin Bobin (`bobin/extrusionEditBobinView`):**
@@ -77,6 +77,7 @@ flowchart LR
 ## 3. Kiến Trúc Trang Tra Cứu & Báo Cáo
 
 ### A. Trang Danh Sách Bobin Hiện Tại (`bobin/listBobinDetailView`):
+
 - Hiển thị danh sách Bobin đang lưu hành (tham chiếu từ bảng `bobin_list_detail`).
 - Hỗ trợ lọc theo:
   - Trạng thái (`all`, `Rolled`, `Line` [Busy_Unchecked + Busy_Checked], `Busy_Unchecked`, `Busy_Checked`, `Pending_Cancellation`, `Cancelled`).
@@ -89,17 +90,18 @@ flowchart LR
     - `B032` $\rightarrow$ Xưởng 3, tầng 2 (`Rack_B032_%`)
     - Hoặc chọn chính xác từng mã Rack cụ thể.
 - **Trình bày trực quan 3 cột kiểm soát (Pipeline Inspection Grid):**
-  - **🏭 Đùn Check:** Hiển thị 5 tiêu chí. Nếu chưa có dữ liệu $\rightarrow$ Hiển thị `⏳ Chưa có dữ liệu sản xuất Đùn`.
+  - **🏭 Đùn Check:** Hiển thị 5 tiêu chí. Nếu chưa có dữ liệu $\rightarrow$ Hiển thị `⏳ Chưa có dữ liệu kiểm tra Đùn`.
   - **🛡️ QC Check:** Hiển thị mã NV QC, thời gian, tiêu chí lỗi. Nếu chưa có $\rightarrow$ Hiển thị `⏳ Chưa có dữ liệu kiểm tra QC`.
   - **📍 Thông tin cuộn:** Hiển thị máy cuộn, NV cuộn, test thông khí. Nếu chưa có $\rightarrow$ Hiển thị `⏳ Chưa có dữ liệu thông tin cuộn`.
 
 ### B. Trang Lịch Sử Hoạt Động Bobin (`bobin/listBobinHistoryView`):
+
 - Truy vấn toàn bộ dòng thời gian luân chuyển từ bảng `bobin_history`.
 - Mặc định khi vào trang: lọc **7 ngày gần nhất** theo `updated_time`.
 - Các bộ lọc nghiệp vụ chuyên sâu:
   - **ĐÃ ĐÙN:** Lọc các Bobin có `updated_time` và thời điểm trong `bobin_key_code` thuộc khoảng thời gian chọn. Nếu cùng `bobin_key_code` lấy bản ghi có `updated_time` mới nhất. Các Bobin trong danh sách độc nhất theo `bobin_key_code`.
   - **CHƯA KT QC:** Bobin ở trạng thái `Busy_Unchecked` tính đến mốc thời gian lọc.
-  - **ĐÃ KT QC:** Tách biệt KPI: *Đùn trong khoảng thời gian chọn* và *Đùn trước đó*.
+  - **ĐÃ KT QC:** Tách biệt KPI: _Đùn trong khoảng thời gian chọn_ và _Đùn trước đó_.
   - **ĐÃ CUỘN:** Bobin ở trạng thái `Rolled`.
   - **CHỜ HỦY & ĐÃ HỦY:** Tách biệt KPI và danh sách trong kỳ / trước kỳ.
 - Đảm bảo công thức bảo toàn sản lượng giữa các công đoạn:
@@ -109,6 +111,7 @@ flowchart LR
 ---
 
 ## 4. Quản Lý Nhân Viên (`employee/*`)
+
 - Trang quản trị danh sách nhân viên tối ưu UX/UI:
   - Biểu đồ phân bổ vai trò thuần Inline SVG Donut Chart (không phụ thuộc thư viện ngoài).
   - Thẻ thống kê KPI nhân viên (Tổng, Đùn, QC, Cuộn, Admin).
@@ -118,6 +121,7 @@ flowchart LR
 ---
 
 ## 5. Quy Tắc Lập Trình Bắt Buộc Đối Với AI
+
 1. **Bảo toàn dữ liệu & Lịch sử:**
    - Tuyệt đối không xóa dữ liệu sản xuất thực tế.
    - Khi sửa đổi thông tin Đùn: tuân thủ chặt chẽ chỉ `UPDATE`, không `INSERT` vào `bobin_history`, không chạm vào `updated_time`.

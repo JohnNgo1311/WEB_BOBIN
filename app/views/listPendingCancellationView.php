@@ -2,6 +2,7 @@
 $bobins = $data['bobins'] ?? [];
 $pendingCount = count($bobins);
 $userRole   = $_SESSION['user']['role'] ?? '';
+$canEditPendingCancel = !empty($_SESSION['user']) && AuthHelper::hasPermission('pending_cancel_edit');
 $currentUrl = $_GET['url'] ?? '';
 $pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? 0);
 // Hàm badge kiểm tra công đoạn đùn: true = Đạt (OK), false = Lỗi (NG)
@@ -48,9 +49,12 @@ if (!function_exists('decodeJsonObject')) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listPendingCancellation.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/scanQR.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
+    <script src="/WEB_BOBIN/public/assets/js/qrScannerHelper.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -182,6 +186,24 @@ if (!function_exists('decodeJsonObject')) {
                                 $displayKey = htmlspecialchars("{$code} - {$rest}");
                             }
                         }
+
+                        // Xác định trạng thái trước đó (previous_status) và trạng thái đích khi Khôi phục (Restore)
+                        $previousStatus = $item['previous_status'] ?? '';
+                        if (in_array($previousStatus, ['Busy_Unchecked', 'Busy_Checked', 'Rolled'], true)) {
+                            $targetRestoreStatus = $previousStatus;
+                        } elseif (!empty($winding_employeeCode) && $winding_employeeCode !== 'Chưa cập nhật' && $winding_employeeCode !== 'Chưa kiểm') {
+                            $targetRestoreStatus = 'Busy_Checked';
+                        } else {
+                            $targetRestoreStatus = 'Busy_Unchecked';
+                        }
+
+                        $targetStatusI18nKey = match ($targetRestoreStatus) {
+                            'Busy_Unchecked' => 'status_busy_unchecked',
+                            'Busy_Checked'   => 'status_busy_checked',
+                            'Rolled'         => 'status_rolled',
+                            default          => 'status_busy_unchecked'
+                        };
+                        $targetStatusLabel = __($targetStatusI18nKey);
                         ?>
 
                         <div class="bobin-item status_pending_cancellation">
@@ -198,8 +220,14 @@ if (!function_exists('decodeJsonObject')) {
                                         📋 Copy
                                     </button>
                                 </div>
-                                <div class="status-badge">
-                                    ĐANG CHỜ HỦY
+                                <div class="status-badges-wrap">
+                                    <span class="prev-status-badge" title="<?= htmlspecialchars(__('restore_target_label') . ' ' . $targetStatusLabel) ?>">
+                                        <span data-i18n="restore_target_label"><?= __('restore_target_label') ?></span>
+                                        <strong data-i18n="<?= $targetStatusI18nKey ?>"><?= htmlspecialchars($targetStatusLabel) ?></strong>
+                                    </span>
+                                    <div class="status-badge">
+                                        ĐANG CHỜ HỦY
+                                    </div>
                                 </div>
                             </div>
 
@@ -314,21 +342,27 @@ if (!function_exists('decodeJsonObject')) {
                                 </div>
                             </div>
 
-                            <!-- FOOTER: CHỈ ADMIN MỚI ĐƯỢC PHÉP HOÀN TẤT HỦY -->
-                            <div class="card-footer-simple">
+                            <!-- FOOTER: KHÔI PHỤC BOBIN & HOÀN TẤT HỦY BOBIN -->
+                            <div class="card-footer-simple" style="flex-wrap: wrap;">
                                 <?php if (!empty($item['updated_time'])): ?>
-                                    <div class="update-time">🕒 <span class="val-text">Thời điểm yêu cầu hủy:</span>
+                                    <div class="update-time">🕒 <span class="val-text" data-i18n="pending_request_time"><?= __('pending_request_time') ?></span>
                                         <?= htmlspecialchars($item['updated_time']) ?></div>
                                 <?php endif; ?>
                                 <div class="button-group">
-                                    <?php if ($userRole === 'admin'): ?>
+                                    <?php if ($canEditPendingCancel): ?>
+                                        <button type="button" class="btn-restore-bobin"
+                                            data-i18n="btn_restore_bobin_action"
+                                            onclick="handleRestore(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code'] ?? '') ?>', '<?= htmlspecialchars($targetStatusI18nKey) ?>')">
+                                            <?= __('btn_restore_bobin_action') ?>
+                                        </button>
                                         <button type="button" class="btn-cancel-final"
+                                            data-i18n="btn_final_cancel_bobin"
                                             onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code'] ?? '') ?>')">
-                                            🗑️ Hoàn tất hủy Bobin
+                                            <?= __('btn_final_cancel_bobin') ?>
                                         </button>
                                     <?php elseif (!empty($_SESSION['user'])): ?>
-                                        <span style="font-size: 12px; color: #94a3b8; font-style: italic; align-self: center;">
-                                            🔒 Chỉ Quản trị viên (Admin) mới có quyền hoàn tất hủy
+                                        <span class="admin-only-note" data-i18n="pending_view_only_notice">
+                                            <?= __('pending_view_only_notice') ?>
                                         </span>
                                     <?php else: ?>
                                         <a href="/WEB_BOBIN/public/index.php?url=auth/login" class="btn-cancel-final"
@@ -337,6 +371,64 @@ if (!function_exists('decodeJsonObject')) {
                                         </a>
                                     <?php endif; ?>
                                 </div>
+
+                                <?php
+                                $rawAudit = $item['update_history'] ?? '';
+                                $auditList = decodeJsonObject($rawAudit);
+                                if (!empty($auditList) && is_array($auditList)):
+                                ?>
+                                <div class="audit-history-box" style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 12px; width: 100%;">
+                                    <div style="font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                        <span>📝</span>
+                                        <span data-i18n="audit_trail_title"><?= __('audit_trail_title') ?></span>
+                                        <span class="badge" style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px; font-size: 11px;"><?= count($auditList) ?></span>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <?php foreach ($auditList as $audit): ?>
+                                        <?php
+                                        $stageKey = strtolower(trim($audit['stage'] ?? ''));
+                                        $stageName = match($stageKey) {
+                                            'extrusion' => __('audit_stage_extrusion'),
+                                            'qc'        => __('audit_stage_qc'),
+                                            'winding'   => __('audit_stage_winding'),
+                                            'admin', 'system' => __('audit_stage_admin'),
+                                            default     => htmlspecialchars($audit['stage'] ?? '')
+                                        };
+                                        $empDisplay = htmlspecialchars(($audit['employee_code'] ?? '') . ' - ' . ($audit['employee_name'] ?? ''));
+                                        $timeDisplay = htmlspecialchars($audit['updated_at'] ?? '');
+                                        $rawNote = trim($audit['note'] ?? '');
+                                        $noteI18nAttr = '';
+                                        $noteColor = '#64748b';
+                                        if ($rawNote === 'Đưa vào danh sách chờ hủy' || ($audit['action'] ?? '') === 'pending_cancel') {
+                                            $noteDisplay = __('audit_note_pending_cancel');
+                                            $noteI18nAttr = 'data-i18n="audit_note_pending_cancel"';
+                                            $noteColor = '#d97706';
+                                        } elseif ($rawNote === 'Xác nhận hủy' || ($audit['action'] ?? '') === 'confirm_cancel') {
+                                            $noteDisplay = __('audit_note_confirm_cancel');
+                                            $noteI18nAttr = 'data-i18n="audit_note_confirm_cancel"';
+                                            $noteColor = '#dc2626';
+                                        } elseif ($rawNote === 'Khôi phục Bobin từ danh sách chờ hủy' || ($audit['action'] ?? '') === 'restore') {
+                                            $noteDisplay = __('audit_note_restore');
+                                            $noteI18nAttr = 'data-i18n="audit_note_restore"';
+                                            $noteColor = '#059669';
+                                        } else {
+                                            $noteDisplay = htmlspecialchars($rawNote);
+                                        }
+                                        ?>
+                                        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                            <div>
+                                                <strong style="color: #2563eb;">[<?= $stageName ?>]</strong>
+                                                <span style="color: #1e293b; font-weight: 600;"><?= $empDisplay ?></span>
+                                                <?php if ($noteDisplay !== ''): ?>
+                                                <span style="color: <?= $noteColor ?>; font-weight: 600; font-style: italic;">(<span <?= $noteI18nAttr ?>><?= $noteDisplay ?></span>)</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒 <?= $timeDisplay ?></span>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

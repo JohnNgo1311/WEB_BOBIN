@@ -686,6 +686,99 @@ body {
   font-weight: 500;
 }
 
+/* Extrusion Self-Check Reference Strip inside QC Specs */
+.qc-ext-ref-strip {
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.qc-ext-ref-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.qc-ext-ref-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.qc-ext-ref-pill.is-ok {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.qc-ext-ref-pill.is-ok strong {
+  color: #059669;
+  font-weight: 800;
+}
+
+.qc-ext-ref-pill.is-ng {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.qc-ext-ref-pill.is-ng strong {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+/* Autocomplete Suggestion Dropdown */
+.suggestion-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.suggestion-box {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1.5px solid #0284c7;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.14);
+  z-index: 1000;
+  display: none;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #0f172a;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+/* Locked Card State when Editing Another Bobin */
+.qc-card.is-locked {
+  opacity: 0.55;
+  pointer-events: none;
+  filter: grayscale(0.25);
+}
+
 /* Responsive */
 @media (max-width: 992px) {
   .qc-stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -699,4 +792,5 @@ body {
   .qc-criteria-grid { grid-template-columns: repeat(2, 1fr); }
   .qc-hero { padding: 18px 20px; }
 }
+
 

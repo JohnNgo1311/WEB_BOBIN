@@ -8,8 +8,10 @@ class BobinWindingCancelDTO
     public string $bobin_key_code;
     public string $winding_machine;
     public string $winding_employee_code;
+    public string $winding_employee_name;
     public string $flow_test_result; // 'Thành công' hoặc 'Thất bại'
     public string $winding_note;
+    public array $cancel_errors = [];
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self
@@ -19,8 +21,10 @@ class BobinWindingCancelDTO
         $dto->bobin_key_code = $request["bobin_key_code"] ?? '';
         $dto->winding_machine = $request["winding_machine"] ?? '';
         $dto->winding_employee_code = $request["winding_employee_code"] ?? '';
+        $dto->winding_employee_name = $request["winding_employee_name"] ?? '';
         $dto->flow_test_result = $request['flow_test_result'] ?? 'Thất bại';
         $dto->winding_note = $request["winding_note"] ?? '';
+        $dto->cancel_errors = is_array($request['cancel_errors'] ?? null) ? $request['cancel_errors'] : [];
         return $dto;
     }
 }

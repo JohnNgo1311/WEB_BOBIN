@@ -23,9 +23,7 @@ $homeUrl = match ($userRole) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/changePassword.css?v=<?= time() ?>">
     <link rel="icon" href="data:,">
-    <script>
-        window.__CUSTOM_I18N__ = <?= json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UNICODE) ?: '{}' ?>;
-    </script>
+    <?= Language::renderJsBootstrap() ?>
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
@@ -65,10 +63,8 @@ $homeUrl = match ($userRole) {
                     <line x1="12" y1="9" x2="12" y2="13"></line>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
-                <div>
-                    <strong>Yêu cầu bảo mật: Đổi mật khẩu lần đầu!</strong><br>
-                    Để đảm bảo an toàn thông tin cá nhân và tránh trùng lặp mật khẩu ban đầu của hệ thống, vui lòng đổi
-                    mật khẩu mới trước khi tiếp tục.
+                <div data-i18n="cp_alert_first">
+                    <?= __('cp_alert_first') ?>
                 </div>
             </div>
             <?php endif; ?>
@@ -87,15 +83,17 @@ $homeUrl = match ($userRole) {
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                 </div>
-                <h1 class="cp-title"><?= $isFirstLogin ? 'THIẾT LẬP MẬT KHẨU MỚI' : 'ĐỔI MẬT KHẨU TÀI KHOẢN' ?></h1>
-                <p class="cp-subtitle">
-                    <?= $isFirstLogin ? 'Vui lòng nhập mật khẩu hiện tại và tạo mật khẩu mới an toàn' : 'Cập nhật mật khẩu định kỳ để bảo vệ tài khoản của bạn' ?>
+                <h1 class="cp-title" data-i18n="<?= $isFirstLogin ? 'cp_title_first' : 'cp_title_normal' ?>">
+                    <?= $isFirstLogin ? __('cp_title_first') : __('cp_title_normal') ?>
+                </h1>
+                <p class="cp-subtitle" data-i18n="<?= $isFirstLogin ? 'cp_sub_first' : 'cp_sub_normal' ?>">
+                    <?= $isFirstLogin ? __('cp_sub_first') : __('cp_sub_normal') ?>
                 </p>
 
                 <div class="cp-user-info-pill">
-                    <span>Mã NV: <strong><?= htmlspecialchars($employeeCode) ?></strong></span>
+                    <span><span data-i18n="perm_lbl_emp_code"><?= __('perm_lbl_emp_code') ?></span> <strong><?= htmlspecialchars($employeeCode) ?></strong></span>
                     <span>•</span>
-                    <span>Tài khoản: <strong><?= htmlspecialchars($username) ?></strong></span>
+                    <span><span data-i18n="perm_lbl_username"><?= __('perm_lbl_username') ?></span> <strong><?= htmlspecialchars($username) ?></strong></span>
                     <span class="role-badge"><?= strtoupper($userRole) ?></span>
                 </div>
             </div>
@@ -184,13 +182,11 @@ $homeUrl = match ($userRole) {
 
                 <!-- HƯỚNG DẪN BẢO MẬT -->
                 <div class="pwd-guidelines">
-                    <strong>💡 Lưu ý an toàn:</strong>
+                    <strong data-i18n="cp_guide_title"><?= __('cp_guide_title') ?></strong>
                     <ul>
-                        <li>Độ dài tối thiểu từ <strong>6 ký tự trở lên</strong>.</li>
-                        <li>Không đặt mật khẩu trùng với mật khẩu cũ hoặc mật khẩu mặc định (<code>123</code>,
-                            <code>123456</code>).
-                        </li>
-                        <li>Nên kết hợp chữ cái và số để tăng tính bảo mật cho tài khoản của bạn.</li>
+                        <li data-i18n="cp_guide_1"><?= __('cp_guide_1') ?></li>
+                        <li data-i18n="cp_guide_2"><?= __('cp_guide_2') ?></li>
+                        <li data-i18n="cp_guide_3"><?= __('cp_guide_3') ?></li>
                     </ul>
                 </div>
 
@@ -210,8 +206,8 @@ $homeUrl = match ($userRole) {
         </div>
     </main>
 
-    <footer class="cp-footer">
-        © <?= date('Y') ?> SMC Factory. Đã kích hoạt cơ chế bảo vệ danh tính & kiểm soát mật khẩu cá nhân.
+    <footer class="cp-footer" data-i18n="login_copyright">
+        <?= __('login_copyright') ?>
     </footer>
 
     <!-- SCRIPT XỬ LÝ ĐỔI MẬT KHẨU HIỆN ĐẠI -->
@@ -262,15 +258,15 @@ $homeUrl = match ($userRole) {
         strengthFill.className = 'pwd-strength-fill';
         if (score <= 1) {
             strengthFill.classList.add('strength-weak');
-            strengthLabel.textContent = 'Yếu';
+            strengthLabel.textContent = window.t ? window.t('cp_strength_weak', 'Yếu') : 'Yếu';
             strengthLabel.style.color = '#ef4444';
         } else if (score <= 2) {
             strengthFill.classList.add('strength-medium');
-            strengthLabel.textContent = 'Trung bình';
+            strengthLabel.textContent = window.t ? window.t('cp_strength_medium', 'Trung bình') : 'Trung bình';
             strengthLabel.style.color = '#f59e0b';
         } else {
             strengthFill.classList.add('strength-strong');
-            strengthLabel.textContent = 'Mạnh';
+            strengthLabel.textContent = window.t ? window.t('cp_strength_strong', 'Mạnh') : 'Mạnh';
             strengthLabel.style.color = '#16a34a';
         }
     });
@@ -287,24 +283,24 @@ $homeUrl = match ($userRole) {
         const cfmPwd = document.getElementById('confirm_password').value.trim();
 
         if (!curPwd || !newPwd || !cfmPwd) {
-            Toast.show("Vui lòng điền đầy đủ các trường mật khẩu.", "warning");
+            Toast.show(window.t ? window.t('cp_err_empty', "Vui lòng điền đầy đủ các trường mật khẩu.") : "Vui lòng điền đầy đủ các trường mật khẩu.", "warning");
             return;
         }
 
         if (newPwd.length < 6) {
-            Toast.show("Mật khẩu mới phải có tối thiểu 6 ký tự.", "warning");
+            Toast.show(window.t ? window.t('cp_err_min_len', "Mật khẩu mới phải có tối thiểu 6 ký tự.") : "Mật khẩu mới phải có tối thiểu 6 ký tự.", "warning");
             document.getElementById('new_password').focus();
             return;
         }
 
         if (newPwd !== cfmPwd) {
-            Toast.show("Mật khẩu xác nhận không khớp với mật khẩu mới.", "error");
+            Toast.show(window.t ? window.t('cp_err_mismatch', "Mật khẩu xác nhận không khớp với mật khẩu mới.") : "Mật khẩu xác nhận không khớp với mật khẩu mới.", "error");
             document.getElementById('confirm_password').focus();
             return;
         }
 
         if (newPwd === curPwd) {
-            Toast.show("Mật khẩu mới không được trùng với mật khẩu hiện tại.", "warning");
+            Toast.show(window.t ? window.t('cp_err_same_old', "Mật khẩu mới không được trùng với mật khẩu hiện tại.") : "Mật khẩu mới không được trùng với mật khẩu hiện tại.", "warning");
             document.getElementById('new_password').focus();
             return;
         }
@@ -314,7 +310,7 @@ $homeUrl = match ($userRole) {
         ];
         if (forbidden.includes(newPwd.toLowerCase())) {
             Toast.show(
-                "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn.",
+                window.t ? window.t('cp_err_weak_forbidden', "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn.") : "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn.",
                 "error");
             document.getElementById('new_password').focus();
             return;
@@ -323,7 +319,7 @@ $homeUrl = match ($userRole) {
         // Gửi dữ liệu lên máy chủ
         const originalBtnHtml = submitBtn.innerHTML;
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span>⏳ Đang xử lý...</span>';
+        submitBtn.innerHTML = `<span>⏳ ${window.t ? window.t('loading', 'Đang xử lý...') : 'Đang xử lý...'}</span>`;
 
         try {
             const formData = new FormData(form);
@@ -340,15 +336,18 @@ $homeUrl = match ($userRole) {
 
             if (data.success) {
                 const succMsg = data.message || (window.t ? window.t('toast_saved_success') : "Đổi mật khẩu thành công!");
-                Toast.flash(succMsg, "success");
-                Toast.show(succMsg, "success");
-                submitBtn.innerHTML = '<span>✔️ Đã đổi thành công!</span>';
+                if (Toast && Toast.flash) {
+                    Toast.flash(succMsg, "success");
+                } else if (Toast && Toast.show) {
+                    Toast.show(succMsg, "success");
+                }
+                submitBtn.innerHTML = `<span>${window.t ? window.t('saved', '✔️ Đã lưu') : '✔️ Đã đổi thành công!'}</span>`;
 
                 setTimeout(() => {
                     window.location.href = data.redirect || '/WEB_BOBIN/public/index.php';
-                }, 1000);
+                }, 400);
             } else {
-                Toast.show(data.message || "Không thể đổi mật khẩu.", "error");
+                Toast.show(data.message || (window.t ? window.t('cp_err_failed', "Không thể đổi mật khẩu.") : "Không thể đổi mật khẩu."), "error");
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnHtml;
             }

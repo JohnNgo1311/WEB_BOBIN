@@ -60,16 +60,22 @@ function copyToClipboard(button) {
   const textToCopy = button.getAttribute("data-copy");
 
   if (textToCopy == "Chưa cập nhật đầy đủ thông tin cần thiết") {
-    Toast.show("Không có nội dung để copy!", "error");
+    Toast.show(
+      window.t ? window.t("copy_empty_err", "Không có nội dung để copy!") : "Không có nội dung để copy!",
+      "error"
+    );
     return;
   }
 
   const originalHTML = button.innerHTML;
 
   const handleSuccess = () => {
-    button.innerHTML = "✅ Đã copy";
+    button.innerHTML = window.t ? window.t("copy_done_btn", "✅ Đã copy") : "✅ Đã copy";
     button.style.backgroundColor = "#d4edda";
-    Toast.show("Đã copy nội dung!", "success");
+    Toast.show(
+      window.t ? window.t("toast_copied_success", "Đã copy nội dung!") : "Đã copy nội dung!",
+      "success"
+    );
 
     setTimeout(() => {
       button.innerHTML = originalHTML;
@@ -79,7 +85,10 @@ function copyToClipboard(button) {
 
   const handleError = (err) => {
     console.error(err);
-    Toast.show("Không thể copy nội dung!", "error");
+    Toast.show(
+      window.t ? window.t("copy_failed_err", "Không thể copy nội dung!") : "Không thể copy nội dung!",
+      "error"
+    );
   };
 
   if (

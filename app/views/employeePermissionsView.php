@@ -196,7 +196,7 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
                     <div class="perm-sticky-summary">
                         <span data-i18n="perm_summary_granted"><?= __('perm_summary_granted') ?></span>
                         <span class="perm-count-badge" id="selectedCountBadge">0 /
-                            <?= count(AuthHelper::getAllPermissionKeys()) ?></span>
+                            <?= count(AuthHelper::getDefaultPermissionsForRole('admin')) ?></span>
                         <span style="font-size:13px; color:#94a3b8;" data-i18n="perm_summary_operations"><?= __('perm_summary_operations') ?></span>
                     </div>
 
@@ -223,7 +223,7 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
             'use strict';
 
             let currentEmployee = null;
-            const totalPermsCount = <?= count(AuthHelper::getAllPermissionKeys()) ?>;
+            const totalPermsCount = <?= count(AuthHelper::getDefaultPermissionsForRole('admin')) ?>;
 
             const searchInput = document.getElementById('searchEmpInput');
             const btnSearch = document.getElementById('btnSearchEmp');
@@ -236,10 +236,11 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
             const btnResetDef = document.getElementById('btnResetDefault');
             const countBadge = document.getElementById('selectedCountBadge');
 
-            // Hàm hiển thị Toast
+            // Hàm hiển thị Toast (chỉ hiển thị 1 Toast duy nhất qua hệ thống Toast chung)
             function showToast(message, type = 'success') {
                 if (window.Toast && window.Toast.show) {
                     window.Toast.show(message, type);
+                    return;
                 }
                 const toast = document.getElementById('permToast');
                 if (toast) {
@@ -358,12 +359,37 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
                 countBadge.textContent = checkedCount + ' / ' + totalPermsCount;
             }
 
-            // Sự kiện checkbox thay đổi
+            // Sự kiện checkbox thay đổi (các cặp quyền loại trừ lẫn nhau: Điều chỉnh Đùn & Danh sách chờ Hủy)
             window.onPermCheckboxChange = function(cb) {
                 const parentBox = document.getElementById('box_' + cb.value);
                 if (parentBox) {
                     parentBox.classList.toggle('is-checked', cb.checked);
                 }
+
+                if (cb.checked) {
+                    if (cb.value === 'extrusion_edit_cancel') {
+                        const editOnlyCb = document.getElementById('chk_extrusion_edit_only');
+                        const editOnlyBox = document.getElementById('box_extrusion_edit_only');
+                        if (editOnlyCb) editOnlyCb.checked = false;
+                        if (editOnlyBox) editOnlyBox.classList.remove('is-checked');
+                    } else if (cb.value === 'extrusion_edit_only') {
+                        const editCancelCb = document.getElementById('chk_extrusion_edit_cancel');
+                        const editCancelBox = document.getElementById('box_extrusion_edit_cancel');
+                        if (editCancelCb) editCancelCb.checked = false;
+                        if (editCancelBox) editCancelBox.classList.remove('is-checked');
+                    } else if (cb.value === 'pending_cancel_edit') {
+                        const viewCb = document.getElementById('chk_pending_cancel_view');
+                        const viewBox = document.getElementById('box_pending_cancel_view');
+                        if (viewCb) viewCb.checked = false;
+                        if (viewBox) viewBox.classList.remove('is-checked');
+                    } else if (cb.value === 'pending_cancel_view') {
+                        const editCb = document.getElementById('chk_pending_cancel_edit');
+                        const editBox = document.getElementById('box_pending_cancel_edit');
+                        if (editCb) editCb.checked = false;
+                        if (editBox) editBox.classList.remove('is-checked');
+                    }
+                }
+
                 updateCountSummary();
             };
 
@@ -372,30 +398,32 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
                 const groupBoxes = document.querySelectorAll(`input[name="perms[]"][data-group="${groupKey}"]`);
                 if (groupBoxes.length === 0) return;
 
-                // Kiểm tra xem nhóm đã check hết chưa
                 let allChecked = true;
                 groupBoxes.forEach(cb => {
+                    if (cb.value === 'pending_cancel_view' || cb.value === 'extrusion_edit_only') return;
                     if (!cb.checked) allChecked = false;
                 });
 
                 const newCheckedState = !allChecked;
                 groupBoxes.forEach(cb => {
-                    cb.checked = newCheckedState;
+                    const shouldCheck = (cb.value === 'pending_cancel_view' || cb.value === 'extrusion_edit_only') ? false : newCheckedState;
+                    cb.checked = shouldCheck;
                     const parentBox = document.getElementById('box_' + cb.value);
                     if (parentBox) {
-                        parentBox.classList.toggle('is-checked', newCheckedState);
+                        parentBox.classList.toggle('is-checked', shouldCheck);
                     }
                 });
 
                 updateCountSummary();
             };
 
-            // Chọn tất cả
+            // Chọn tất cả (ưu tiên chọn extrusion_edit_cancel và pending_cancel_edit)
             btnSelectAll.addEventListener('click', function() {
                 document.querySelectorAll('input[name="perms[]"]').forEach(cb => {
-                    cb.checked = true;
+                    const shouldCheck = (cb.value !== 'pending_cancel_view' && cb.value !== 'extrusion_edit_only');
+                    cb.checked = shouldCheck;
                     const parentBox = document.getElementById('box_' + cb.value);
-                    if (parentBox) parentBox.classList.add('is-checked');
+                    if (parentBox) parentBox.classList.toggle('is-checked', shouldCheck);
                 });
                 updateCountSummary();
             });
@@ -470,9 +498,18 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
 
                         if (data.success) {
                             showToast(data.message || window.t('perm_save_success'), 'success');
+                            if (currentEmployee) {
+                                currentEmployee.permissions = data.permissions || checkedPerms;
+                                currentEmployee.has_custom_permissions = !!data.has_custom;
+                            }
                             const permTypeBadge = document.getElementById('profPermTypeBadge');
-                            permTypeBadge.textContent = window.t('perm_badge_custom');
-                            permTypeBadge.className = 'badge-perm-type custom';
+                            if (data.has_custom) {
+                                permTypeBadge.textContent = window.t('perm_badge_custom');
+                                permTypeBadge.className = 'badge-perm-type custom';
+                            } else {
+                                permTypeBadge.textContent = window.t('perm_badge_role_default');
+                                permTypeBadge.className = 'badge-perm-type default';
+                            }
                         } else {
                             showToast(data.error || window.t('perm_msg_save_failed'), 'error');
                         }

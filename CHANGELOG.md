@@ -7,6 +7,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Nâng Cấp UI 3 Trang Điều Chỉnh & Thu Gọn Hiển Thị update_history (TASK-008)
 
 ### 1. Nâng cao UI/UX 3 trang Điều chỉnh (Đùn, QC, Cuộn)
+
 - **Header:**
   - Thiết kế Dark Hero Gradient hiện đại với viền cong mềm mại và shadow đa lớp.
   - Tiêu đề kèm icon trực quan (`🏭 Điều chỉnh Đùn`, `🛡️ Điều chỉnh QC`, `📍 Điều chỉnh Cuộn`).
@@ -24,6 +25,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Các nút hành động (`.btn-edit`, `.btn-confirm`, `.btn-cancel-edit`, `.btn-delete`) có hiệu ứng lift khi hover, bo góc 7px và shadow rõ ràng.
 
 ### 2. Chuẩn hóa vị trí hiển thị dữ liệu `update_history`
+
 - Dữ liệu `update_history` **chỉ được hiển thị duy nhất tại trang Lịch sử Bobin** (`listBobinHistoryView.php`) nhằm tối ưu không gian hiển thị và giữ đúng mục đích tra cứu lịch sử thay đổi.
 - Gỡ bỏ khối hiển thị `update_history` khỏi các trang khác:
   - `app/views/extrusionEditBobinView.php` (Đã gỡ bỏ)
@@ -37,6 +39,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-06] - Phân Quyền Trang Điều Chỉnh, Hiển Thị Lịch Sử Audit Trail & Nâng Cao UI/UX (TASK-007)
 
 ### 1. Phân quyền truy cập các trang điều chỉnh (Extrusion, QC, Winding)
+
 - **Quy tắc phân quyền:**
   - **Điều chỉnh Đùn (`bobin/extrusionEditBobinView`, `bobin/extrusionUpdateBobin`):** Cho phép vai trò `extrusion` và `admin`.
   - **Điều chỉnh QC (`bobin/qcEditBobinView`, `bobin/updateQCEditBobin`):** Cho phép vai trò `qc` và `admin`.
@@ -47,10 +50,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Cập nhật menu điều hướng trên toàn bộ các view (`qcView.php`, `qcEditBobinView.php`, `windingView.php`, `windingEditBobinView.php`, `listBobinDetailView.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php`, `employeeListView.php`, `extrusionEditBobinView.php`, `extrusionView.php`): Hiển thị link `bobin/qcEditBobinView` cho cả vai trò `qc` và `admin`.
 
 ### 2. Trang lịch sử Bobin (`bobin/listBobinHistoryView`)
+
 - Đã gỡ bỏ toàn bộ khối nút chọn nhanh ngày ("Hôm nay", "Hôm qua", "7 ngày", "1 tháng") theo đúng yêu cầu.
 - Loại bỏ hàm JavaScript `setQuickDate()`.
 
 ### 3. Hiển thị vết lịch sử thay đổi `update_history` (Audit Trail)
+
 - Lưu vết lịch sử chỉnh sửa khi thực hiện cập nhật Bobin qua cả 3 trang điều chỉnh (Đùn, QC, Cuộn):
   - Ghi nhận `stage` (`extrusion`, `qc`, `winding`), `action`, `employee_code`, `employee_name`, `updated_at`, `note`.
 - Tích hợp khối hiển thị `.audit-history-box` trực quan trên từng card Bobin trong cả 3 trang điều chỉnh:
@@ -60,6 +65,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 - Đầy đủ thông tin người thay đổi, thời gian thay đổi, công đoạn và ghi chú; hỗ trợ đa ngôn ngữ (`vi`, `en`, `ja`).
 
 ### 4. Nâng cao UI/UX các trang điều chỉnh
+
 - Cải thiện giao diện đồng bộ trong `public/assets/css/extrusionEditBobin.css`:
   - Header hiện đại phong cách Dark Hero Gradient (`#1e293b` đến `#0f172a`), badge công đoạn sắc nét.
   - Card Bobin có viền tinh tế, bóng đổ mềm mại, viền nổi bật khi ở chế độ chỉnh sửa (`.is-editing`).
@@ -71,6 +77,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-05] - Khắc Phục Lỗi Treo Web Khi Đổi Ngôn Ngữ & Tối Ưu Event Loop (TASK-003)
 
 ### 0. Sửa dứt điểm hiện tượng treo web (freeze) và vô hiệu hóa nút bấm khi đổi ngôn ngữ
+
 - **Files thay đổi:**
   - `public/assets/js/i18n.js`
   - `app/views/components/languageSwitcher.php`
@@ -98,6 +105,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-05] - Điều Tra & Đồng Bộ Toàn Diện Đa Ngôn Ngữ (TASK-002), Fallback Pipeline & Logic Đùn
 
 ### 0. Điều tra và đồng bộ toàn diện chức năng chuyển đổi ngôn ngữ (TASK-002)
+
 - **Files thay đổi:**
   - `public/assets/js/i18n.js`
   - `app/core/Language.php`
@@ -112,6 +120,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Xác nhận cơ chế đồng bộ ngôn ngữ ba lớp (Session $\leftrightarrow$ Cookie `app_lang` $\leftrightarrow$ `localStorage`) hoạt động liền mạch, không ảnh hưởng logic lưu trữ DB hay API nghiệp vụ.
 
 ### 1. Xử lý hiển thị thông báo Fallback tại trang Danh Sách và Lịch Sử Bobin (Yêu cầu V)
+
 - **Files thay đổi:**
   - `app/views/listBobinDetailView.php`
   - `app/views/listBobinHistoryView.php`
@@ -121,12 +130,13 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - `app/core/Language.php`
 - **Nội dung:**
   - Tại 3 cột kiểm soát luân chuyển (`inspection-pipeline-grid`):
-    - **🏭 Đùn Check:** Kiểm tra nếu dữ liệu `extrusion_check` rỗng hoặc không có bất kỳ tiêu chí nào $\rightarrow$ Hiển thị badge trực quan: `⏳ Chưa có dữ liệu sản xuất Đùn` (`pipeline_no_ext_data`).
+    - **🏭 Đùn Check:** Kiểm tra nếu dữ liệu `extrusion_check` rỗng hoặc không có bất kỳ tiêu chí nào $\rightarrow$ Hiển thị badge trực quan: `⏳ Chưa có dữ liệu kiểm tra Đùn` (`pipeline_no_ext_data`).
     - **🛡️ QC Check:** Kiểm tra nếu chưa có `inspector_code` hoặc chưa kiểm tra QC $\rightarrow$ Hiển thị: `⏳ Chưa có dữ liệu kiểm tra QC` (`pipeline_no_qc_data`).
     - **📍 Thông tin cuộn:** Kiểm tra nếu chưa có thông tin máy cuộn/nhân viên cuộn hoặc trạng thái chưa hoàn thành `Rolled` $\rightarrow$ Hiển thị: `⏳ Chưa có dữ liệu thông tin cuộn` (`pipeline_no_winding_data`).
   - Hỗ trợ đa ngôn ngữ đồng bộ 3 thứ tiếng (`vi`, `en`, `ja`).
 
 ### 2. Sửa logic cập nhật Bobin của Nhân viên Đùn (Yêu cầu VI & VII)
+
 - **Files thay đổi:**
   - `app/repositories/BobinRepository.php` (`extrusionUpdateBobin`, `extUpdateBobinDetail`, `extUpdateBobinGeneral`, `extUpdateBobinHistory`)
 - **Nội dung:**
@@ -134,6 +144,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - **Không cập nhật `updated_time` (Req VII):** Bỏ việc gán `updated_time = :updated` trong `bobin_list_detail`, bỏ `updated_time = NOW()` trong `bobin_list_general`, và không cập nhật `updated_time` trong `bobin_history`. Thời điểm cập nhật ban đầu được bảo toàn nguyên vẹn.
 
 ### 3. Tạo 3 file tài liệu ngữ cảnh bảo toàn hệ thống
+
 - Tạo và điền nội dung toàn diện cho:
   - `AI_CONTEXT.md`: Toàn bộ luồng nghiệp vụ, kiến trúc MVC, lifecycle Bobin và quy tắc code.
   - `DATABASE_SCHEMA.md`: Đặc tả chi tiết các bảng, cột, kiểu dữ liệu, quan hệ và JSON schemas.
@@ -144,6 +155,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-04] - Tái Cấu Trúc Toàn Diện Trang Nhân Viên & Bộ Lọc Xưởng/Tầng
 
 ### 1. Refactor Mô-đun Quản Lý Nhân Viên (`EmployeeController` & `employeeListView`)
+
 - **Files thay đổi:**
   - `app/controllers/EmployeeController.php`
   - `app/views/employeeListView.php`
@@ -158,6 +170,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
     - Hỗ trợ Import/Export file CSV theo định dạng chuẩn UTF-8 tương thích Excel.
 
 ### 2. Bộ Lọc Rack Theo Phân Xưởng và Tầng (Yêu cầu IV)
+
 - **Files thay đổi:**
   - `app/repositories/BobinRepository.php`
   - `app/views/listBobinDetailView.php`
@@ -171,6 +184,7 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
   - Cho phép người dùng vừa có thể chọn cả khu vực lớn, vừa có thể chọn chi tiết từng kệ cụ thể.
 
 ### 3. Khắc phục sự cố Reverse Print Lot (Yêu cầu VIII)
+
 - **Files thay đổi:**
   - `public/assets/js/Extrusion/suggestion.js`
   - `public/assets/js/Extrusion/edit_suggestion.js`
@@ -185,10 +199,12 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
 ## [2026-10-02 -> 2026-10-03] - Chuẩn Hóa Logic Thống Kê & KPI Báo Cáo Lịch Sử Bobin
 
 ### 1. Chuẩn hóa quy tắc sinh `bobin_key_code`
+
 - Thiết lập quy tắc thống nhất: Thời điểm trong `bobin_key_code` luôn khớp với giá trị `finish_time` (Thời gian hoàn thành).
 - Định dạng chuẩn: `[Mã_định_danh]_[YYYY]_[MM]_[DD]_[HH]_[mm]_[ss]`.
 
 ### 2. Tái cấu trúc bộ lọc và KPI trang Lịch Sử Bobin (`listBobinHistoryView`)
+
 - Mặc định khi vào trang hiển thị nhật ký 7 ngày gần nhất theo `updated_time`.
 - Thiết lập logic lọc chặt chẽ cho từng chế độ:
   - **ĐÃ ĐÙN:** Lọc các bản ghi theo `updated_time` và thời gian trong `bobin_key_code`, lấy phiên bản mới nhất cho mỗi `bobin_key_code`.

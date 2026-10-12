@@ -4,6 +4,7 @@
 class BobinExtDeleteDTO
 {
     public string $bobin_identification_code; // Mã định danh để xác định Bobin cần cập nhật
+    public string $bobin_key_code;
     public string $extrusion_employee_code;
     public string $extrusion_employee_name;
 
@@ -11,6 +12,7 @@ class BobinExtDeleteDTO
     {
         $dto = new self();
         $dto->bobin_identification_code = $request['bobin_identification_code'] ?? '';
+        $dto->bobin_key_code = $request['bobin_key_code'] ?? '';
         $dto->extrusion_employee_code = $request['extrusion_employee_code'] ?? '';
         $dto->extrusion_employee_name = $request['extrusion_employee_name'] ?? '';
         return $dto;

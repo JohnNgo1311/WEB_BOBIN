@@ -27,7 +27,8 @@ class EmployeeController extends Controller
         try {
             $listRepo = new ListDataRepository();
             $listRepo->getListData();
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         $pdo = Database::getInstance()->pdo();
 
@@ -62,7 +63,7 @@ class EmployeeController extends Controller
 
         // Stats
         $stats = ['total' => 0, 'extrusion' => 0, 'qc' => 0, 'winding' => 0, 'admin' => 0];
-        
+
         $stmtTotal = $pdo->query("SELECT COUNT(*) FROM employee_list");
         $stats['total'] = (int)$stmtTotal->fetchColumn();
 
@@ -125,7 +126,9 @@ class EmployeeController extends Controller
                 throw new Exception('Mã nhân viên đã tồn tại.');
             }
 
-            $sql = "INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+            $defaultPermsJson = json_encode(AuthHelper::getDefaultPermissionsForRole($data['role']), JSON_UNESCAPED_UNICODE);
+
+            $sql = "INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, permissions, updated_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $data['employee_code'],
@@ -134,7 +137,8 @@ class EmployeeController extends Controller
                 $data['role'],
                 $data['username'],
                 $data['password'],
-                $data['is_first_login']
+                $data['is_first_login'],
+                $defaultPermsJson
             ]);
             $newId = $pdo->lastInsertId();
 
@@ -168,14 +172,36 @@ class EmployeeController extends Controller
 
             if ($data['employee_name'] === '') throw new Exception('Họ tên không được để trống.');
 
-            $sql = "UPDATE employee_list SET employee_name = ?, cost_center = ?, role = ?, updated_time = NOW() WHERE id = ?";
+            // Kiểm tra thông tin cũ để đồng bộ quyền nếu thay đổi Role
+            $stmtOld = $pdo->prepare("SELECT employee_code, role, permissions FROM employee_list WHERE id = ? LIMIT 1");
+            $stmtOld->execute([$id]);
+            $oldEmp = $stmtOld->fetch(PDO::FETCH_ASSOC);
+
+            $newPermsJson = $oldEmp['permissions'] ?? null;
+            if ($oldEmp && strtolower($oldEmp['role']) !== strtolower($data['role'])) {
+                $oldDefault = AuthHelper::getDefaultPermissionsForRole($oldEmp['role']);
+                $oldCurrent = AuthHelper::getUserPermissions($oldEmp);
+                $wasDefault = empty(array_diff($oldCurrent, $oldDefault)) && empty(array_diff($oldDefault, $oldCurrent));
+                if ($wasDefault || empty($oldEmp['permissions']) || strtolower($data['role']) === 'admin') {
+                    $newPermsJson = json_encode(AuthHelper::getDefaultPermissionsForRole($data['role']), JSON_UNESCAPED_UNICODE);
+                }
+            } elseif ($oldEmp && empty($oldEmp['permissions'])) {
+                $newPermsJson = json_encode(AuthHelper::getDefaultPermissionsForRole($data['role']), JSON_UNESCAPED_UNICODE);
+            }
+
+            $sql = "UPDATE employee_list SET employee_name = ?, cost_center = ?, role = ?, permissions = ?, updated_time = NOW() WHERE id = ?";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 $data['employee_name'],
                 $data['cost_center'] !== '' ? $data['cost_center'] : null,
                 $data['role'],
+                $newPermsJson,
                 $id
             ]);
+
+            if ($oldEmp && !empty($oldEmp['employee_code'])) {
+                AuthHelper::syncCurrentSessionIfMatch($oldEmp['employee_code']);
+            }
 
             if ($this->isAjax()) $this->json(['success' => true, 'message' => 'Cập nhật thông tin nhân viên thành công!']);
             $this->redirectIndex('Cập nhật thông tin nhân viên thành công!', 'success');
@@ -266,7 +292,7 @@ class EmployeeController extends Controller
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
-        
+
         $output = fopen('php://output', 'w');
         fputs($output, "\xEF\xBB\xBF");
         fputcsv($output, ['STT', 'Mã nhân viên', 'Họ và tên', 'Mã bộ phận', 'Vai trò / Nhóm', 'Tên đăng nhập', 'Mật khẩu lần đầu', 'Thời gian cập nhật']);
@@ -274,7 +300,11 @@ class EmployeeController extends Controller
         $stt = 1;
         foreach ($employees as $emp) {
             $roleLabel = match ($emp['role']) {
-                'extrusion' => 'Nhóm Đùn', 'qc' => 'Nhóm QC', 'winding' => 'Nhóm Cuộn', 'admin' => 'Quản trị viên (Admin)', default => $emp['role']
+                'extrusion' => 'Nhóm Đùn',
+                'qc' => 'Nhóm QC',
+                'winding' => 'Nhóm Cuộn',
+                'admin' => 'Quản trị viên (Admin)',
+                default => $emp['role']
             };
             $firstLoginLabel = ($emp['is_first_login'] == 1) ? 'Chưa đổi (123)' : 'Đã đổi riêng';
 
@@ -358,9 +388,9 @@ class EmployeeController extends Controller
 
             $validRoles = ['extrusion', 'qc', 'winding', 'admin'];
 
-            $stmtCheck = $pdo->prepare("SELECT id FROM employee_list WHERE employee_code = ?");
-            $stmtInsert = $pdo->prepare("INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, updated_time) VALUES (?, ?, ?, ?, ?, ?, 1, NOW())");
-            $stmtUpdate = $pdo->prepare("UPDATE employee_list SET employee_name = ?, cost_center = ?, role = ?, updated_time = NOW() WHERE employee_code = ?");
+            $stmtCheck = $pdo->prepare("SELECT id, role, permissions FROM employee_list WHERE employee_code = ?");
+            $stmtInsert = $pdo->prepare("INSERT INTO employee_list (employee_code, employee_name, cost_center, role, username, password, is_first_login, permissions, updated_time) VALUES (?, ?, ?, ?, ?, ?, 1, ?, NOW())");
+            $stmtUpdate = $pdo->prepare("UPDATE employee_list SET employee_name = ?, cost_center = ?, role = ?, permissions = ?, updated_time = NOW() WHERE employee_code = ?");
 
             $defaultHash = password_hash('123', PASSWORD_DEFAULT);
 
@@ -369,28 +399,33 @@ class EmployeeController extends Controller
                 $username = empty($r['username']) ? $r['employee_code'] : $r['username'];
                 $costCenter = $r['cost_center'] !== '' ? $r['cost_center'] : null;
                 $role = in_array($r['role'], $validRoles, true) ? $r['role'] : 'extrusion';
-                
+                $defaultPermsJson = json_encode(AuthHelper::getDefaultPermissionsForRole($role), JSON_UNESCAPED_UNICODE);
+
                 $stmtCheck->execute([$r['employee_code']]);
-                $existsId = $stmtCheck->fetchColumn();
+                $existingRow = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
                 try {
-                    if ($existsId) {
+                    if ($existingRow) {
                         if ($updateIfExists) {
-                            $stmtUpdate->execute([$r['employee_name'], $costCenter, $role, $r['employee_code']]);
+                            $permsToSave = $existingRow['permissions'] ?? null;
+                            if (empty($permsToSave) || strtolower($existingRow['role']) !== $role) {
+                                $permsToSave = $defaultPermsJson;
+                            }
+                            $stmtUpdate->execute([$r['employee_name'], $costCenter, $role, $permsToSave, $r['employee_code']]);
                             $updated++;
                         }
                     } else {
-                        $stmtInsert->execute([$r['employee_code'], $r['employee_name'], $costCenter, $role, $username, $defaultHash]);
+                        $stmtInsert->execute([$r['employee_code'], $r['employee_name'], $costCenter, $role, $username, $defaultHash, $defaultPermsJson]);
                         $inserted++;
                     }
                 } catch (PDOException $e) {
-                    $errors[] = "Dòng " . ($i+2) . ": " . $e->getMessage();
+                    $errors[] = "Dòng " . ($i + 2) . ": " . $e->getMessage();
                 }
             }
 
             $msg = "Nhập hoàn tất! Thêm mới: {$inserted}, Cập nhật: {$updated}.";
             if (!empty($errors)) $msg .= ' Lưu ý: ' . implode(' ', array_slice($errors, 0, 3));
-            
+
             if ($this->isAjax()) $this->json(['success' => true, 'message' => $msg, 'inserted' => $inserted, 'updated' => $updated, 'errors' => $errors]);
             $this->redirectIndex($msg, 'success');
         } catch (Throwable $e) {
@@ -409,7 +444,8 @@ class EmployeeController extends Controller
         try {
             $listRepo = new ListDataRepository();
             $listRepo->getListData();
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         $pdo = Database::getInstance()->pdo();
 
@@ -472,9 +508,10 @@ class EmployeeController extends Controller
                 return;
             }
 
-            $hasCustom = !empty($emp['permissions']);
             $currentPerms = AuthHelper::getUserPermissions($emp);
             $defaultPerms = AuthHelper::getDefaultPermissionsForRole($emp['role']);
+            $hasCustom = !empty($emp['permissions'])
+                && (!empty(array_diff($currentPerms, $defaultPerms)) || !empty(array_diff($defaultPerms, $currentPerms)));
 
             $this->json([
                 'success' => true,
@@ -529,15 +566,17 @@ class EmployeeController extends Controller
             }
 
             if ($resetDefault) {
-                // Khôi phục về quyền mặc định theo role
-                $up = $pdo->prepare("UPDATE employee_list SET permissions = NULL, updated_time = NOW() WHERE employee_code = ?");
-                $up->execute([$code]);
+                // Khôi phục và lưu đồng bộ quyền mặc định theo role vào DB
+                $defaultPerms = AuthHelper::getDefaultPermissionsForRole($emp['role']);
+                $defaultJson  = json_encode($defaultPerms, JSON_UNESCAPED_UNICODE);
+                $up = $pdo->prepare("UPDATE employee_list SET permissions = ?, updated_time = NOW() WHERE employee_code = ?");
+                $up->execute([$defaultJson, $code]);
                 AuthHelper::syncCurrentSessionIfMatch($code);
 
                 $this->json([
                     'success'     => true,
                     'message'     => "Đã khôi phục quyền mặc định theo vai trò cho nhân viên {$emp['employee_name']}.",
-                    'permissions' => AuthHelper::getDefaultPermissionsForRole($emp['role']),
+                    'permissions' => $defaultPerms,
                     'has_custom'  => false
                 ]);
                 return;
@@ -557,11 +596,27 @@ class EmployeeController extends Controller
             $cleanPerms = [];
             foreach ($permsInput as $p) {
                 $p = trim((string)$p);
+                // Chuẩn hóa quyền cũ nếu có
+                if ($p === 'extrusion_edit') {
+                    $p = (strtolower($emp['role']) === 'admin') ? 'extrusion_edit_cancel' : 'extrusion_edit_only';
+                } elseif ($p === 'pending_cancel') {
+                    $p = (strtolower($emp['role']) === 'admin') ? 'pending_cancel_edit' : 'pending_cancel_view';
+                }
                 if (in_array($p, $allValidKeys, true)) {
                     $cleanPerms[] = $p;
                 }
             }
             $cleanPerms = array_values(array_unique($cleanPerms));
+
+            // Đảm bảo 2 cấp quyền Điều chỉnh Đùn loại trừ nhau (ưu tiên extrusion_edit_cancel nếu cả hai được gửi lên)
+            if (in_array('extrusion_edit_cancel', $cleanPerms, true) && in_array('extrusion_edit_only', $cleanPerms, true)) {
+                $cleanPerms = array_values(array_diff($cleanPerms, ['extrusion_edit_only']));
+            }
+
+            // Đảm bảo 2 quyền danh sách chờ hủy loại trừ nhau (ưu tiên pending_cancel_edit nếu cả hai được gửi lên)
+            if (in_array('pending_cancel_edit', $cleanPerms, true) && in_array('pending_cancel_view', $cleanPerms, true)) {
+                $cleanPerms = array_values(array_diff($cleanPerms, ['pending_cancel_view']));
+            }
 
             // Admin luôn giữ quyền quản lý phân quyền để tránh tự khóa mình
             if (strtolower($emp['role']) === 'admin' && !in_array('permission_manage', $cleanPerms, true)) {
@@ -575,11 +630,14 @@ class EmployeeController extends Controller
 
             AuthHelper::syncCurrentSessionIfMatch($code);
 
+            $defaultPerms = AuthHelper::getDefaultPermissionsForRole($emp['role']);
+            $hasCustom = !empty(array_diff($cleanPerms, $defaultPerms)) || !empty(array_diff($defaultPerms, $cleanPerms));
+
             $this->json([
                 'success'     => true,
                 'message'     => "Cập nhật phân quyền cho nhân viên {$emp['employee_name']} thành công!",
                 'permissions' => $cleanPerms,
-                'has_custom'  => true
+                'has_custom'  => $hasCustom
             ]);
         } catch (Throwable $e) {
             $this->json(['success' => false, 'error' => 'Lỗi máy chủ: ' . $e->getMessage()], 500);
@@ -594,11 +652,11 @@ class EmployeeController extends Controller
         try {
             $listRepo = new ListDataRepository();
             $listRepo->getListData();
-        } catch (Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         $customDict = Language::getCustomDictionary();
-        $fullDictJson = Language::getJsonDictionary();
-        $fullDict = json_decode($fullDictJson, true) ?: [];
+        $fullDict = Language::getMergedDictionary();
 
         $allKeys = array_unique(array_merge(
             array_keys($fullDict['vi'] ?? []),
@@ -630,14 +688,15 @@ class EmployeeController extends Controller
     }
 
     /**
-     * API Lấy từ điển ngôn ngữ tùy chỉnh hiện tại
+     * API Lấy từ điển ngôn ngữ hiện tại (Default + Custom + Hash)
      */
     public function getCustomTranslations(): void
     {
-        $customData = Language::getCustomDictionary();
         $this->json([
-            'success'     => true,
-            'custom_dict' => $customData
+            'success'      => true,
+            'hash'         => Language::getDictionaryHash(),
+            'default_dict' => Language::getDefaultDictionary(),
+            'custom_dict'  => Language::getCustomDictionary()
         ]);
     }
 
@@ -697,6 +756,7 @@ class EmployeeController extends Controller
                 $this->json([
                     'success'      => true,
                     'message'      => 'Lưu từ điển dịch thuật thành công!',
+                    'hash'         => Language::getDictionaryHash(),
                     'custom_dict'  => $customData,
                     'custom_count' => count($customData['vi'])
                 ]);
@@ -731,6 +791,7 @@ class EmployeeController extends Controller
                 $this->json([
                     'success'     => true,
                     'message'     => 'Đã khôi phục toàn bộ từ điển gốc mặc định.',
+                    'hash'        => Language::getDictionaryHash(),
                     'custom_dict' => ['vi' => [], 'en' => [], 'ja' => []]
                 ]);
                 return;
@@ -743,6 +804,7 @@ class EmployeeController extends Controller
             $this->json([
                 'success'     => true,
                 'message'     => "Đã khôi phục key '{$keyToReset}' về từ điển mặc định.",
+                'hash'        => Language::getDictionaryHash(),
                 'custom_dict' => $custom
             ]);
         } catch (Throwable $e) {

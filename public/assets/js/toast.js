@@ -18,6 +18,12 @@
 (function (window, document) {
     'use strict';
 
+    // Ngăn chặn khởi tạo trùng lặp nếu toast.js được nạp nhiều lần trên cùng 1 trang
+    if (window.__BOBIN_TOAST_INITIALIZED__ && window.Toast) {
+        return;
+    }
+    window.__BOBIN_TOAST_INITIALIZED__ = true;
+
     // 1. TIÊM CSS TỰ ĐỘNG NẾU CHƯA CÓ TRÊN TRANG
     function injectToastStyles() {
         if (document.getElementById('unified-toast-styles')) return;
@@ -299,6 +305,9 @@
     }
 
     // 3. ĐỐI TƯỢNG TOAST TOÀN CỤC CHÍNH
+    let lastToastKey = '';
+    let lastToastTime = 0;
+
     const Toast = {
         /**
          * Hiển thị Toast thông báo
@@ -311,9 +320,32 @@
 
             const normType = normalizeType(type, message);
             const { icon, title } = getTypeDetails(normType);
-            const cleanText = sanitizeMessage(message);
+            let cleanText = sanitizeMessage(message);
+            if (typeof window.translateDynamicText === 'function') {
+                cleanText = window.translateDynamicText(cleanText);
+            }
+            const closeLabel = typeof window.t === 'function' ? window.t('close', 'Đóng') : 'Đóng';
+
+            // Chống spam thông báo giống hệt nhau liên tiếp trong vòng 1.5 giây
+            const now = Date.now();
+            const toastKey = `${normType}_${cleanText}`;
+            if (toastKey === lastToastKey && (now - lastToastTime) < 1500) {
+                return null;
+            }
+            lastToastKey = toastKey;
+            lastToastTime = now;
 
             const container = getToastContainer();
+
+            // Đảm bảo tại mọi thời điểm chỉ hiển thị DUY NHẤT 1 Toast trên màn hình
+            container.innerHTML = '';
+            document.querySelectorAll('.toast-message, .perm-toast.show, .lang-toast.show').forEach(el => {
+                if (el.classList.contains('toast-message')) {
+                    el.remove();
+                } else {
+                    el.classList.remove('show');
+                }
+            });
 
             const toastItem = document.createElement('div');
             toastItem.className = `bobin-toast-item toast-${normType}`;
@@ -326,7 +358,7 @@
                     <div class="bobin-toast-title">${title}</div>
                     <div class="bobin-toast-text">${cleanText}</div>
                 </div>
-                <button type="button" class="bobin-toast-close" title="Đóng" aria-label="Close">✕</button>
+                <button type="button" class="bobin-toast-close" title="${closeLabel}" aria-label="Close">✕</button>
             `;
 
             container.appendChild(toastItem);
@@ -424,7 +456,14 @@
     };
 
     // 4. KIỂM TRA VÀ HIỂN THỊ FLASH TOAST & URL QUERY TOAST KHI TRANG LOAD
+    let hasCheckedAutoToasts = false;
+
     function checkAutoToasts() {
+        if (hasCheckedAutoToasts) return;
+        hasCheckedAutoToasts = true;
+
+        let shownFromFlash = false;
+
         // A. Kiểm tra sessionStorage ('bobin_toast_flash')
         try {
             const flashRaw = sessionStorage.getItem('bobin_toast_flash');
@@ -434,6 +473,7 @@
                 if (data && data.message) {
                     // Tránh flash cũ quá 30 giây
                     if (!data.timestamp || (Date.now() - data.timestamp) < 30000) {
+                        shownFromFlash = true;
                         setTimeout(() => {
                             Toast.show(data.message, data.type || 'success');
                         }, 180);
@@ -451,15 +491,26 @@
                 const error = params.get('error');
                 const success = params.get('success');
 
+                // Nếu đã hiển thị Flash Toast thì chỉ dọn dẹp URL param, không bật thêm Toast thứ 2
+                if (shownFromFlash) {
+                    cleanUrlParam(['msg', 'msg_type', 'error', 'success']);
+                    return;
+                }
+
+                // Nếu trang đã có sẵn khung thông báo lỗi trực tiếp (trang Đăng nhập / Đổi mật khẩu), chỉ dọn URL param
+                const hasInlineAlert = Boolean(document.querySelector('.login-alert-error, .cp-alert-error'));
+
                 if (msg) {
                     setTimeout(() => {
                         Toast.show(decodeURIComponent(msg), msgType || 'success');
                     }, 220);
                     cleanUrlParam(['msg', 'msg_type']);
                 } else if (error) {
-                    setTimeout(() => {
-                        Toast.show(decodeURIComponent(error), 'error');
-                    }, 220);
+                    if (!hasInlineAlert) {
+                        setTimeout(() => {
+                            Toast.show(decodeURIComponent(error), 'error');
+                        }, 220);
+                    }
                     cleanUrlParam(['error']);
                 } else if (success) {
                     setTimeout(() => {

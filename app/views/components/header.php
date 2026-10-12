@@ -184,15 +184,9 @@ if (!$matchedRoute) {
         'page_title'  => 'nav_extrusion'
     ];
 }
-$customDictJson = json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UNICODE) ?: '{}';
 ?>
 <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
-<script>
-    window.__CUSTOM_I18N__ = <?= $customDictJson ?>;
-    if (typeof window.loadAndMergeCustomTranslations === 'function') {
-        window.loadAndMergeCustomTranslations(window.__CUSTOM_I18N__);
-    }
-</script>
+<?= Language::renderJsBootstrap() ?>
 
 <!-- TOP HEADER BAR (TASK-015 & TASK-016 RESPONSIVE) -->
 <header class="app-top-header" id="appTopHeader">
@@ -286,15 +280,19 @@ $customDictJson = json_encode(Language::getCustomDictionary(), JSON_UNESCAPED_UN
                     <span class="header-user-role role-tag-<?= htmlspecialchars($userRole) ?>">
                         <?= htmlspecialchars($empCode) ?> •
                         <?php
-                        $roleLabels = [
-                            'extrusion' => 'Nhóm Đùn',
-                            'winding' => 'Nhóm Cuộn',
-                            'qc' => 'Nhóm QC',
-                            'admin' => 'Admin',
+                        $roleI18nMap = [
+                            'extrusion' => 'emp_role_extrusion',
+                            'winding'   => 'emp_role_winding',
+                            'qc'        => 'emp_role_qc',
+                            'admin'     => 'emp_role_admin',
                         ];
-                        echo htmlspecialchars($roleLabels[$userRole] ?? strtoupper($userRole));
+                        $roleKey = $roleI18nMap[$userRole] ?? null;
                         ?>
-
+                        <?php if ($roleKey): ?>
+                            <span data-i18n="<?= $roleKey ?>"><?= htmlspecialchars(__($roleKey)) ?></span>
+                        <?php else: ?>
+                            <?= htmlspecialchars(strtoupper($userRole)) ?>
+                        <?php endif; ?>
                     </span>
                 </div>
             </div>

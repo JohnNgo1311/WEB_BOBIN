@@ -1,85 +1,17 @@
 /* ==========================================
-   1. COMPONENT: TOAST MESSAGE (Bọc an toàn)
+   1. THAM CHIẾU TOAST SYSTEM TOÀN CỤC
 ========================================== */
-if (typeof window.Toast === "undefined" || !window.Toast.initStyle) {
-    window.Toast = {
-        initStyle: function () {
-            if (!document.getElementById('toast-style-css')) {
-                const style = document.createElement('style');
-                style.id = 'toast-style-css';
-                style.innerHTML = `
-                    .toast-message {
-                        position: fixed; top: 24px; right: 24px; 
-                        padding: 12px 20px; border-radius: 8px; 
-                        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.2);
-                        font-family: var(--font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif); font-size: 13.5px; font-weight: 700;
-                        color: #fff; z-index: 99999; opacity: 0;
-                        transform: translateY(-20px); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        display: flex; align-items: center; gap: 10px;
-                        pointer-events: none; max-width: calc(100vw - 48px);
-                    }
-                    .toast-message.show { opacity: 1; transform: translateY(0); }
-                    .toast-success { background-color: #16a34a !important; }
-                    .toast-error { background-color: #dc2626 !important; }
-                    .toast-warning { background-color: #f59e0b !important; }
-                    .toast-info { background-color: #2563eb !important; }
-                    @media (max-width: 640px) {
-                        .toast-message {
-                            top: 16px; right: 16px; left: 16px;
-                            justify-content: center; text-align: center; max-width: none;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        },
-        show: function (message, type = 'success') {
-            this.initStyle();
-            document.querySelectorAll('.toast-message').forEach(el => el.remove());
-
-            const toast = document.createElement('div');
-            toast.className = `toast-message toast-${type}`;
-            const icon = type === 'error' ? '❌' : (type === 'warning' ? '⚠️' : '✅');
-            toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
-            document.body.appendChild(toast);
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => toast.classList.add('show'));
-            });
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
-        }
-    };
-}
-var Toast = window.Toast;
-
-// Lắng nghe Flash message từ sessionStorage khi trang vừa tải/reload xong
-document.addEventListener('DOMContentLoaded', function () {
-    const flashToast = sessionStorage.getItem('bobin_toast_flash');
-    if (flashToast) {
-        try {
-            const data = JSON.parse(flashToast);
-            if (data && data.message) {
-                setTimeout(() => {
-                    Toast.show(data.message, data.type || 'success');
-                }, 300);
-            }
-        } catch (e) {
-            console.error('Lỗi phân tích flash toast:', e);
-        }
-        sessionStorage.removeItem('bobin_toast_flash');
-    }
-});
+var Toast = window.Toast || {
+    show: function (msg, type) { console.log(msg); },
+    flash: function (msg, type) { sessionStorage.setItem('bobin_toast_flash', JSON.stringify({ message: msg, type: type, timestamp: Date.now() })); }
+};
 
 /* ==========================================
    2. COMPONENT: CONFIRM DIALOG (Bọc an toàn)
 ========================================== */
 if (typeof ConfirmDialog === "undefined") {
     window.ConfirmDialog = {
-        show: function (title, contentHTML, onConfirm) {
+        show: function (title, contentHTML, onConfirm, confirmBtnClass = 'btn-danger-dialog') {
             if (!document.getElementById('confirm-dialog-style')) {
                 const style = document.createElement('style');
                 style.id = 'confirm-dialog-style';
@@ -116,6 +48,8 @@ if (typeof ConfirmDialog === "undefined") {
                     .back-btn-dialog:hover { background: #e2e8f0; }
                     .btn-danger-dialog { background: #dc2626; color: white; font-weight: 700; }
                     .btn-danger-dialog:hover { background: #b91c1c; }
+                    .btn-success-dialog { background: #10b981; color: white; font-weight: 700; }
+                    .btn-success-dialog:hover { background: #059669; }
                     @media (max-width: 640px) {
                         .confirm-dialog-box {
                             width: calc(100vw - 32px);
@@ -141,12 +75,15 @@ if (typeof ConfirmDialog === "undefined") {
             const box = document.createElement('div');
             box.className = 'confirm-dialog-box';
 
+            const cancelText = window.t ? window.t('btn_cancel', 'Hủy bỏ') : 'Hủy bỏ';
+            const confirmText = window.t ? window.t('btn_confirm', 'Xác nhận') : 'Xác nhận';
+
             box.innerHTML = `
                 <h3 class="confirm-dialog-title">${title}</h3>
                 <div class="confirm-dialog-content">${contentHTML}</div>
                 <div class="confirm-dialog-actions">
-                    <button type="button" class="dialog-btn back-btn-dialog cancel-btn">Hủy bỏ</button>
-                    <button type="button" class="dialog-btn btn-danger-dialog confirm-btn">Xác nhận</button>
+                    <button type="button" class="dialog-btn back-btn-dialog cancel-btn" data-i18n="btn_cancel">${cancelText}</button>
+                    <button type="button" class="dialog-btn ${confirmBtnClass} confirm-btn" data-i18n="btn_confirm">${confirmText}</button>
                 </div>
             `;
 
@@ -214,7 +151,7 @@ function handleDelete(btnElement, bobinCode, bobinKeyCode) {
             const requestUrl = (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/WEB_BOBIN/public/index.php?url=') + 'bobin/deleteBobin';
             const originalBtnText = btnElement.innerHTML;
 
-            btnElement.innerHTML = '⏳ Đang xử lý...';
+            btnElement.innerHTML = '⏳ ' + (window.t ? window.t('loading', 'Đang xử lý...') : 'Đang xử lý...');
             btnElement.disabled = true;
 
             try {
@@ -230,25 +167,29 @@ function handleDelete(btnElement, bobinCode, bobinKeyCode) {
                 const data = await response.json();
 
                 if (data.success) {
-                    const successMsg = data.message || "Đã hủy Bobin thành công!";
+                    const successMsg = data.message || (window.t ? window.t('toast_deleted_success') : "Đã hủy Bobin thành công!");
                     
-                    // Lưu Flash Toast để tiếp tục hiển thị sau khi reload trang
-                    sessionStorage.setItem('bobin_toast_flash', JSON.stringify({
-                        message: successMsg,
-                        type: 'success'
-                    }));
-
-                    Toast.show(successMsg, 'success');
-
-                    // Hiệu ứng mờ dần card trên giao diện trước khi reload
+                    // Hiệu ứng mờ dần card trên giao diện
                     const card = btnElement.closest('.bobin-item');
                     if (card) {
-                        card.style.transition = 'all 0.4s ease';
+                        card.style.transition = 'all 0.35s ease';
                         card.style.opacity = '0';
                         card.style.transform = 'scale(0.95)';
                     }
 
-                    setTimeout(() => window.location.reload(), 800);
+                    // Lưu Flash Toast để hiển thị DUY NHẤT 1 LẦN sau khi trang tải lại với danh sách mới
+                    if (window.Toast && typeof window.Toast.flash === 'function') {
+                        window.Toast.flash(successMsg, 'success');
+                    } else {
+                        sessionStorage.setItem('bobin_toast_flash', JSON.stringify({
+                            message: successMsg,
+                            type: 'success',
+                            timestamp: Date.now()
+                        }));
+                    }
+
+                    // Không gọi Toast.show() ở đây để tránh Toast hiện 2 lần (1 lần trước reload và 1 lần sau reload)
+                    setTimeout(() => window.location.reload(), 450);
                 } else {
                     Toast.show("Lỗi: " + (data.message || "Cập nhật thất bại"), 'error');
                     btnElement.innerHTML = originalBtnText;
@@ -261,6 +202,107 @@ function handleDelete(btnElement, bobinCode, bobinKeyCode) {
                 btnElement.innerHTML = originalBtnText;
                 btnElement.disabled = false;
             }
-        }
+        },
+        'btn-danger-dialog'
+    );
+}
+
+/* ==========================================
+   4. CHỨC NĂNG: KHÔI PHỤC BOBIN (RESTORE)
+========================================== */
+function handleRestore(btnElement, bobinCode, bobinKeyCode, targetStatusI18nKey) {
+    btnElement.blur();
+
+    if (!bobinCode || !bobinKeyCode) {
+        Toast.show("Lỗi: Thiếu mã định danh hoặc mã key của Bobin!", "error");
+        return;
+    }
+
+    const bodyData = {
+        bobin_identification_code: bobinCode,
+        bobin_key_code: bobinKeyCode,
+    };
+
+    const targetStatusText = window.t ? window.t(targetStatusI18nKey, targetStatusI18nKey) : targetStatusI18nKey;
+    const dialogTitle = window.t ? window.t('restore_confirm_title', '🔄 Xác nhận Khôi phục Bobin') : '🔄 Xác nhận Khôi phục Bobin';
+    const dialogMsg = window.t
+        ? window.t('restore_confirm_msg', 'Bạn có chắc chắn muốn khôi phục Bobin này khỏi danh sách chờ hủy và trả về trạng thái trước đó?')
+        : 'Bạn có chắc chắn muốn khôi phục Bobin này khỏi danh sách chờ hủy và trả về trạng thái trước đó?';
+    const lblBobinId = window.t ? window.t('lbl_bobin_id_code', 'Mã định danh Bobin') : 'Mã định danh Bobin';
+    const lblRestoreTo = window.t ? window.t('restore_target_label', 'Khôi phục về:') : 'Khôi phục về:';
+
+    let reviewHTML = `
+        <div style="background: #ecfdf5; color: #065f46; padding: 10px 12px; border-radius: 6px; font-weight: 600; margin-bottom: 12px; border-left: 4px solid #10b981; font-size: 13px; text-align: left;">
+            🔄 ${dialogMsg}
+        </div>
+        <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0; display: flex; flex-direction: column; gap: 8px;">
+            <li style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>${lblBobinId}:</strong> 
+                <span style="color: #0f172a; font-family: var(--font-family-mono, monospace); font-size: 15px; font-weight: 800; background: #e2e8f0; padding: 2px 8px; border-radius: 4px;">${bobinCode}</span>
+            </li>
+            <li style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>${lblRestoreTo}</strong> 
+                <span style="color: #047857; font-size: 13px; font-weight: 800; background: #d1fae5; border: 1px solid #6ee7b7; padding: 3px 10px; border-radius: 4px; text-transform: uppercase;">${targetStatusText}</span>
+            </li>
+        </ul>
+    `;
+
+    ConfirmDialog.show(
+        dialogTitle,
+        reviewHTML,
+        async () => {
+            const requestUrl = (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '/WEB_BOBIN/public/index.php?url=') + 'bobin/restoreBobin';
+            const originalBtnText = btnElement.innerHTML;
+
+            btnElement.innerHTML = '⏳ ' + (window.t ? window.t('loading', 'Đang xử lý...') : 'Đang xử lý...');
+            btnElement.disabled = true;
+
+            try {
+                const response = await fetch(requestUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    const successMsg = data.message || (window.t ? window.t('toast_restored_success') : "Đã khôi phục Bobin thành công!");
+                    
+                    const card = btnElement.closest('.bobin-item');
+                    if (card) {
+                        card.style.transition = 'all 0.35s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                    }
+
+                    if (window.Toast && typeof window.Toast.flash === 'function') {
+                        window.Toast.flash(successMsg, 'success');
+                    } else {
+                        sessionStorage.setItem('bobin_toast_flash', JSON.stringify({
+                            message: successMsg,
+                            type: 'success',
+                            timestamp: Date.now()
+                        }));
+                    }
+
+                    setTimeout(() => window.location.reload(), 450);
+                } else {
+                    Toast.show("Lỗi: " + (data.message || "Khôi phục thất bại"), 'error');
+                    btnElement.innerHTML = originalBtnText;
+                    btnElement.disabled = false;
+                }
+            } catch (error) {
+                console.error('Lỗi Khôi phục Bobin:', error);
+                Toast.show("Lỗi kết nối: " + (error.message || "Không thể thực hiện khôi phục"), 'error');
+
+                btnElement.innerHTML = originalBtnText;
+                btnElement.disabled = false;
+            }
+        },
+        'btn-success-dialog'
     );
 }

@@ -31,13 +31,6 @@ $totalFiltered = count($employees);
     <?php require ROOT_PATH . '/app/views/components/header.php'; ?>
 
     <div class="emp-container">
-        <?php if (!empty($msg)): ?>
-            <div class="msg-banner <?= $msgType === 'success' ? 'success' : 'error' ?>" id="msgBanner">
-                <span><?= $msgType === 'success' ? '✅ ' : '⚠️ ' ?><?= htmlspecialchars($msg) ?></span>
-                <button type="button" class="alert-close" onclick="this.parentElement.remove()">✕</button>
-            </div>
-        <?php endif; ?>
-
         <div class="emp-page-header">
             <div>
                 <h1 class="emp-title" data-i18n="emp_manage_title"><?= __('emp_manage_title') ?></h1>
@@ -157,7 +150,7 @@ $totalFiltered = count($employees);
                         data-i18n="reset_filter">✕ <?= __('reset_filter') ?></a>
                 <?php endif; ?>
                 <div class="emp-counter-badge" id="empCounter">
-                    Hiển thị: <strong><?= $totalFiltered ?></strong> / <?= (int)$stats['total'] ?> NV
+                    <span data-i18n="emp_showing"><?= __('emp_showing') ?></span>: <strong><?= $totalFiltered ?></strong> / <?= (int)$stats['total'] ?> <span data-i18n="emp_staff"><?= __('emp_staff') ?></span>
                 </div>
             </form>
 
@@ -174,7 +167,7 @@ $totalFiltered = count($employees);
                 <thead>
                     <tr>
                         <th style="width: 50px; text-align: center;" data-i18n="stt"><?= __('stt') ?></th>
-                        <th style="width: 140px;" data-i18n="emp_code"><?= __('emp_code') ?> / <?= __('emp_username') ?></th>
+                        <th style="width: 140px;"><span data-i18n="emp_code"><?= __('emp_code') ?></span> / <span data-i18n="emp_username"><?= __('emp_username') ?></span></th>
                         <th style="min-width: 180px;" data-i18n="emp_name"><?= __('emp_name') ?></th>
                         <th style="width: 130px; text-align: center;" data-i18n="emp_cost_center"><?= __('emp_cost_center') ?></th>
                         <th style="width: 130px; text-align: center;" data-i18n="emp_role"><?= __('emp_role') ?></th>

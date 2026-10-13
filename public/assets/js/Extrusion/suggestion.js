@@ -108,19 +108,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// 4. LOGIC GỢI Ý CÁC TRƯỜNG NHẬP LIỆU
+// 4. LOGIC GỢI Ý CÁC TRƯỜNG NHẬP LIỆU (TỐI ƯU HIỆU NĂNG)
+const MAX_SUGGESTIONS = 40;
+
 // --- BOBIN ---
 const bobinCodeInput = document.getElementById("bobin_identification_code");
 const bobinSize = document.getElementById("bobin_size");
 const bobinCodeBox = document.getElementById("bobin_suggestions");
 
 if (bobinCodeInput) {
+  let bobinTimer = null;
   bobinCodeInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    bobinCodeBox.innerHTML = "";
-
     if (bobinSize) bobinSize.value = "";
+
     if (!listData.list_bobin || listData.list_bobin.length === 0 || !val) {
+      clearTimeout(bobinTimer);
+      bobinCodeBox.innerHTML = "";
       bobinCodeBox.style.display = "none";
       return;
     }
@@ -128,6 +132,7 @@ if (bobinCodeInput) {
     const isValidStatus = (status) =>
       status === "Rolled" || status === "Cancelled";
 
+    // Khớp chính xác -> xử lý ngay lập tức (cho máy quét QR)
     const exactMatch = listData.list_bobin.find(
       (bobin) =>
         bobin.bobin_identification_code &&
@@ -136,33 +141,42 @@ if (bobinCodeInput) {
     );
 
     if (exactMatch) {
+      clearTimeout(bobinTimer);
       if (bobinSize) bobinSize.value = exactMatch.bobin_size;
+      bobinCodeBox.innerHTML = "";
       bobinCodeBox.style.display = "none";
       return;
     }
 
-    const matches = listData.list_bobin.filter((bobin) => {
-      const code = bobin.bobin_identification_code || "";
-      const status = bobin.bobin_current_status || "";
-      return code.toLowerCase().includes(val) && isValidStatus(status);
-    });
-
-    if (matches.length > 0) {
-      bobinCodeBox.style.display = "block";
-      matches.forEach((bobin) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = `${bobin.bobin_identification_code} - ${bobin.bobin_size}`;
-        div.onclick = () => {
-          bobinCodeInput.value = bobin.bobin_identification_code;
-          if (bobinSize) bobinSize.value = bobin.bobin_size;
-          bobinCodeBox.style.display = "none";
-        };
-        bobinCodeBox.appendChild(div);
+    clearTimeout(bobinTimer);
+    bobinTimer = setTimeout(() => {
+      bobinCodeBox.innerHTML = "";
+      const matches = listData.list_bobin.filter((bobin) => {
+        const code = bobin.bobin_identification_code || "";
+        const status = bobin.bobin_current_status || "";
+        return code.toLowerCase().includes(val) && isValidStatus(status);
       });
-    } else {
-      bobinCodeBox.style.display = "none";
-    }
+
+      if (matches.length > 0) {
+        bobinCodeBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = matches.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((bobin) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = `${bobin.bobin_identification_code} - ${bobin.bobin_size}`;
+          div.onclick = () => {
+            bobinCodeInput.value = bobin.bobin_identification_code;
+            if (bobinSize) bobinSize.value = bobin.bobin_size;
+            bobinCodeBox.style.display = "none";
+          };
+          fragment.appendChild(div);
+        });
+        bobinCodeBox.appendChild(fragment);
+      } else {
+        bobinCodeBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 
@@ -171,38 +185,58 @@ const material_lotInput = document.getElementById("material_lot");
 const material_lotBox = document.getElementById("material_lot_suggestions");
 
 if (material_lotInput) {
+  let lotTimer = null;
   material_lotInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    material_lotBox.innerHTML = "";
 
     if (
       !listData.list_material_lot ||
       listData.list_material_lot.length === 0 ||
       !val
     ) {
+      clearTimeout(lotTimer);
+      material_lotBox.innerHTML = "";
       material_lotBox.style.display = "none";
       return;
     }
 
-    const filteredLots = listData.list_material_lot.filter(
-      (item) => item.lot && item.lot.toLowerCase().includes(val),
+    // Khớp chính xác
+    const exactMatch = listData.list_material_lot.find(
+      (item) => item.lot && item.lot.toLowerCase() === val
     );
-
-    if (filteredLots.length > 0) {
-      material_lotBox.style.display = "block";
-      filteredLots.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = item.lot;
-        div.onclick = () => {
-          material_lotInput.value = item.lot;
-          material_lotBox.style.display = "none";
-        };
-        material_lotBox.appendChild(div);
-      });
-    } else {
+    if (exactMatch) {
+      clearTimeout(lotTimer);
+      material_lotBox.innerHTML = "";
       material_lotBox.style.display = "none";
+      return;
     }
+
+    clearTimeout(lotTimer);
+    lotTimer = setTimeout(() => {
+      material_lotBox.innerHTML = "";
+      const filteredLots = listData.list_material_lot.filter(
+        (item) => item.lot && item.lot.toLowerCase().includes(val),
+      );
+
+      if (filteredLots.length > 0) {
+        material_lotBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = filteredLots.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = item.lot;
+          div.onclick = () => {
+            material_lotInput.value = item.lot;
+            material_lotBox.style.display = "none";
+          };
+          fragment.appendChild(div);
+        });
+        material_lotBox.appendChild(fragment);
+      } else {
+        material_lotBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 
@@ -211,11 +245,13 @@ const rackInput = document.getElementById("rack_code");
 const rackBox = document.getElementById("rack_suggestions");
 
 if (rackInput && rackBox) {
+  let rackTimer = null;
   rackInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    rackBox.innerHTML = "";
 
     if (!listData.list_rack || listData.list_rack.length === 0 || !val) {
+      clearTimeout(rackTimer);
+      rackBox.innerHTML = "";
       rackBox.style.display = "none";
       return;
     }
@@ -224,30 +260,39 @@ if (rackInput && rackBox) {
       (item) => item.rack_code && item.rack_code.toLowerCase() === val,
     );
     if (exactMatch) {
+      clearTimeout(rackTimer);
+      rackBox.innerHTML = "";
       rackBox.style.display = "none";
       return;
     }
 
-    const filteredRacks = listData.list_rack.filter(
-      (item) => item.rack_code && item.rack_code.toLowerCase().includes(val),
-    );
+    clearTimeout(rackTimer);
+    rackTimer = setTimeout(() => {
+      rackBox.innerHTML = "";
+      const filteredRacks = listData.list_rack.filter(
+        (item) => item.rack_code && item.rack_code.toLowerCase().includes(val),
+      );
 
-    if (filteredRacks.length > 0) {
-      rackBox.style.display = "block";
-      filteredRacks.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = item.rack_code;
-        div.onclick = () => {
-          rackInput.value = item.rack_code;
-          rackBox.style.display = "none";
-          rackInput.blur();
-        };
-        rackBox.appendChild(div);
-      });
-    } else {
-      rackBox.style.display = "none";
-    }
+      if (filteredRacks.length > 0) {
+        rackBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = filteredRacks.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = item.rack_code;
+          div.onclick = () => {
+            rackInput.value = item.rack_code;
+            rackBox.style.display = "none";
+            rackInput.blur();
+          };
+          fragment.appendChild(div);
+        });
+        rackBox.appendChild(fragment);
+      } else {
+        rackBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 
@@ -256,38 +301,47 @@ const materialInput = document.getElementById("material");
 const materialBox = document.getElementById("material_suggestions");
 
 if (materialInput) {
+  let matTimer = null;
   materialInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    materialBox.innerHTML = "";
 
     if (
       !listData.list_material ||
       listData.list_material.length === 0 ||
       !val
     ) {
+      clearTimeout(matTimer);
+      materialBox.innerHTML = "";
       materialBox.style.display = "none";
       return;
     }
 
-    const uniqueBrands = [
-      ...new Set(listData.list_material.map((item) => item.brand)),
-    ].filter((brand) => brand && brand.toLowerCase().includes(val));
+    clearTimeout(matTimer);
+    matTimer = setTimeout(() => {
+      materialBox.innerHTML = "";
+      const uniqueBrands = [
+        ...new Set(listData.list_material.map((item) => item.brand)),
+      ].filter((brand) => brand && brand.toLowerCase().includes(val));
 
-    if (uniqueBrands.length > 0) {
-      materialBox.style.display = "block";
-      uniqueBrands.forEach((value) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = value;
-        div.onclick = () => {
-          materialInput.value = value;
-          materialBox.style.display = "none";
-        };
-        materialBox.appendChild(div);
-      });
-    } else {
-      materialBox.style.display = "none";
-    }
+      if (uniqueBrands.length > 0) {
+        materialBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = uniqueBrands.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((value) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = value;
+          div.onclick = () => {
+            materialInput.value = value;
+            materialBox.style.display = "none";
+          };
+          fragment.appendChild(div);
+        });
+        materialBox.appendChild(fragment);
+      } else {
+        materialBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 
@@ -296,39 +350,48 @@ const machineInput = document.getElementById("machine");
 const machineBox = document.getElementById("machine_suggestions");
 
 if (machineInput) {
+  let machTimer = null;
   machineInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    machineBox.innerHTML = "";
 
     if (
       !listData.list_extrusion_machine ||
       listData.list_extrusion_machine.length === 0 ||
       !val
     ) {
+      clearTimeout(machTimer);
+      machineBox.innerHTML = "";
       machineBox.style.display = "none";
       return;
     }
 
-    const filteredList = listData.list_extrusion_machine.filter(
-      (item) =>
-        item.machine_name && item.machine_name.toLowerCase().includes(val),
-    );
+    clearTimeout(machTimer);
+    machTimer = setTimeout(() => {
+      machineBox.innerHTML = "";
+      const filteredList = listData.list_extrusion_machine.filter(
+        (item) =>
+          item.machine_name && item.machine_name.toLowerCase().includes(val),
+      );
 
-    if (filteredList.length > 0) {
-      machineBox.style.display = "block";
-      filteredList.forEach((item) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = item.machine_name;
-        div.onclick = () => {
-          machineInput.value = item.machine_name;
-          machineBox.style.display = "none";
-        };
-        machineBox.appendChild(div);
-      });
-    } else {
-      machineBox.style.display = "none";
-    }
+      if (filteredList.length > 0) {
+        machineBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = filteredList.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = item.machine_name;
+          div.onclick = () => {
+            machineInput.value = item.machine_name;
+            machineBox.style.display = "none";
+          };
+          fragment.appendChild(div);
+        });
+        machineBox.appendChild(fragment);
+      } else {
+        machineBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 
@@ -340,9 +403,9 @@ const empName = document.getElementById("extrusion_employee_name");
 const empBox = document.getElementById("employee_suggestions");
 
 if (empInput) {
+  let empTimer = null;
   empInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    empBox.innerHTML = "";
 
     // 1. Tự động xóa họ tên nhân viên ngay khi người dùng chỉnh sửa hoặc xóa mã
     if (empName) {
@@ -354,6 +417,8 @@ if (empInput) {
       listData.list_employee.length === 0 ||
       !val
     ) {
+      clearTimeout(empTimer);
+      empBox.innerHTML = "";
       empBox.style.display = "none";
       return;
     }
@@ -363,34 +428,43 @@ if (empInput) {
       (emp) => emp.employee_code && emp.employee_code.toLowerCase() === val,
     );
     if (exactMatch) {
+      clearTimeout(empTimer);
       if (empName) empName.value = exactMatch.employee_name;
+      empBox.innerHTML = "";
       empBox.style.display = "none";
       return;
     }
 
-    // 3. Tìm kiếm và hiển thị danh sách gợi ý tương đối
-    const matches = listData.list_employee.filter(
-      (emp) =>
-        (emp.employee_code && emp.employee_code.toLowerCase().includes(val)) ||
-        (emp.employee_name && emp.employee_name.toLowerCase().includes(val)),
-    );
+    // 3. Tìm kiếm và hiển thị danh sách gợi ý tương đối có debounce
+    clearTimeout(empTimer);
+    empTimer = setTimeout(() => {
+      empBox.innerHTML = "";
+      const matches = listData.list_employee.filter(
+        (emp) =>
+          (emp.employee_code && emp.employee_code.toLowerCase().includes(val)) ||
+          (emp.employee_name && emp.employee_name.toLowerCase().includes(val)),
+      );
 
-    if (matches.length > 0) {
-      empBox.style.display = "block";
-      matches.forEach((emp) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = `${emp.employee_code} - ${emp.employee_name}`;
-        div.onclick = () => {
-          empInput.value = emp.employee_code;
-          if (empName) empName.value = emp.employee_name;
-          empBox.style.display = "none";
-        };
-        empBox.appendChild(div);
-      });
-    } else {
-      empBox.style.display = "none";
-    }
+      if (matches.length > 0) {
+        empBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = matches.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((emp) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = `${emp.employee_code} - ${emp.employee_name}`;
+          div.onclick = () => {
+            empInput.value = emp.employee_code;
+            if (empName) empName.value = emp.employee_name;
+            empBox.style.display = "none";
+          };
+          fragment.appendChild(div);
+        });
+        empBox.appendChild(fragment);
+      } else {
+        empBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 
@@ -400,9 +474,9 @@ const productionOrderCode = document.getElementById("production_order_code");
 const productBox = document.getElementById("product_suggestions");
 
 if (productCodeInput) {
+  let prodTimer = null;
   productCodeInput.addEventListener("input", function () {
     const val = this.value.toLowerCase().trim();
-    productBox.innerHTML = "";
 
     // 1. Tự động xóa mã chỉ thị sản xuất ngay khi người dùng chỉnh sửa hoặc xóa mã sản phẩm
     if (productionOrderCode) {
@@ -410,6 +484,8 @@ if (productCodeInput) {
     }
 
     if (!listData.list_product || listData.list_product.length === 0 || !val) {
+      clearTimeout(prodTimer);
+      productBox.innerHTML = "";
       productBox.style.display = "none";
       return;
     }
@@ -419,40 +495,49 @@ if (productCodeInput) {
       (p) => p.product_code && p.product_code.toLowerCase() === val,
     );
     if (exactMatch) {
+      clearTimeout(prodTimer);
       if (productionOrderCode) {
         productionOrderCode.value = exactMatch.production_order_code;
       }
+      productBox.innerHTML = "";
       productBox.style.display = "none";
       return;
     }
 
-    // 3. Tìm kiếm và hiển thị danh sách gợi ý tương đối
-    const matches = listData.list_product.filter((product) => {
-      const poCode = product.production_order_code || "";
-      const pCode = product.product_code || "";
-      return (
-        poCode.toLowerCase().includes(val) || pCode.toLowerCase().includes(val)
-      );
-    });
-
-    if (matches.length > 0) {
-      productBox.style.display = "block";
-      matches.forEach((product) => {
-        const div = document.createElement("div");
-        div.className = "suggestion-item";
-        div.textContent = `${product.product_code}`;
-        div.onclick = () => {
-          if (productionOrderCode) {
-            productionOrderCode.value = product.production_order_code;
-          }
-          productCodeInput.value = product.product_code;
-          productBox.style.display = "none";
-        };
-        productBox.appendChild(div);
+    // 3. Tìm kiếm và hiển thị danh sách gợi ý tương đối có debounce
+    clearTimeout(prodTimer);
+    prodTimer = setTimeout(() => {
+      productBox.innerHTML = "";
+      const matches = listData.list_product.filter((product) => {
+        const poCode = product.production_order_code || "";
+        const pCode = product.product_code || "";
+        return (
+          poCode.toLowerCase().includes(val) || pCode.toLowerCase().includes(val)
+        );
       });
-    } else {
-      productBox.style.display = "none";
-    }
+
+      if (matches.length > 0) {
+        productBox.style.display = "block";
+        const fragment = document.createDocumentFragment();
+        const limited = matches.slice(0, MAX_SUGGESTIONS);
+        limited.forEach((product) => {
+          const div = document.createElement("div");
+          div.className = "suggestion-item";
+          div.textContent = `${product.product_code}`;
+          div.onclick = () => {
+            if (productionOrderCode) {
+              productionOrderCode.value = product.production_order_code;
+            }
+            productCodeInput.value = product.product_code;
+            productBox.style.display = "none";
+          };
+          fragment.appendChild(div);
+        });
+        productBox.appendChild(fragment);
+      } else {
+        productBox.style.display = "none";
+      }
+    }, 100);
   });
 }
 

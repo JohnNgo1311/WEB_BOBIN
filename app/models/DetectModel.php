@@ -9,13 +9,30 @@ class DefectModel
     public bool $foreign_object;
     public bool $color_issue;
     public bool $print_quality;
+    public bool $clump;
+    public bool $scratch;
+    public bool $streak;
+    public bool $deformation;
     public string $note;
-    public function __construct(bool $gel = false, bool $foreign_object = false, bool $color_issue = false, bool $print_quality = false, string $note = '')
-    {
+    public function __construct(
+        bool $gel = false,
+        bool $foreign_object = false,
+        bool $color_issue = false,
+        bool $print_quality = false,
+        bool $clump = false,
+        bool $scratch = false,
+        bool $streak = false,
+        bool $deformation = false,
+        string $note = ''
+    ) {
         $this->gel = $gel;
         $this->foreign_object = $foreign_object;
         $this->color_issue = $color_issue;
         $this->print_quality = $print_quality;
+        $this->clump = $clump;
+        $this->scratch = $scratch;
+        $this->streak = $streak;
+        $this->deformation = $deformation;
         $this->note = $note;
         
         $this->db = Database::getInstance();

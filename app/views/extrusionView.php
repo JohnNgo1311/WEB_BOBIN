@@ -53,7 +53,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <div class="qr-input-group">
                             <div class="suggestions">
                                 <input type="text" name="bobin_identification_code" id="bobin_identification_code"
-                                    placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin" required autocomplete="off">
+                                    placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin" required
+                                    autocomplete="off">
                                 <div id="bobin_suggestions" class="suggestion-box"></div>
                             </div>
                             <button type="button" id="btnScanQR" class="btn-modern btn-scan">
@@ -104,7 +105,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Mã sản phẩm: <span class="required">*</span></label>
                         <div class="suggestions">
                             <input type="text" name="product_code" id="product_code"
-                                placeholder="<?= __('ph_search_product') ?>" data-i18n-ph="ph_search_product" autocomplete="off" required>
+                                placeholder="<?= __('ph_search_product') ?>" data-i18n-ph="ph_search_product"
+                                autocomplete="off" required>
                             <div id="product_suggestions" class="suggestion-box"></div>
                         </div>
                     </div>
@@ -114,8 +116,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
                     <div class="form-group length-highlight">
                         <label>Chiều dài: <span class="required">*</span> <span class="label-hint">(mét)</span></label>
-                        <input type="number" step="1" name="length_m" id="length_m" placeholder="<?= __('ph_length_hint') ?>" data-i18n-ph="ph_length_hint" required
-                            min="1" max="5000" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4)">
+                        <input type="number" step="1" name="length_m" id="length_m"
+                            placeholder="<?= __('ph_length_hint') ?>" data-i18n-ph="ph_length_hint" required min="1"
+                            max="10000" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4)">
                     </div>
 
                     <div class="form-group">
@@ -149,8 +152,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     <div class="form-group">
                         <label>Số máy đùn: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="machine" id="machine" placeholder="<?= __('ph_select_machine') ?>" data-i18n-ph="ph_select_machine" required
-                                autocomplete="off">
+                            <input type="text" name="machine" id="machine" placeholder="<?= __('ph_select_machine') ?>"
+                                data-i18n-ph="ph_select_machine" required autocomplete="off">
                             <div id="machine_suggestions" class="suggestion-box"></div>
                         </div>
                     </div>
@@ -158,8 +161,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                     <div class="form-group">
                         <label>Vật liệu: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="material" id="material" placeholder="<?= __('ph_select_material') ?>" data-i18n-ph="ph_select_material"
-                                required autocomplete="off">
+                            <input type="text" name="material" id="material"
+                                placeholder="<?= __('ph_select_material') ?>" data-i18n-ph="ph_select_material" required
+                                autocomplete="off">
                             <div id="material_suggestions" class="suggestion-box"></div>
                         </div>
                     </div>
@@ -168,14 +172,15 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Số lần nghiền: <span class="required">*</span> <span class="label-hint">(0, 1 hoặc
                                 2)</span></label>
                         <input type="number" name="grinding_time" id="grinding_time" list="list_grinding_time"
-                            placeholder="<?= __('ph_grind_hint') ?>" data-i18n-ph="ph_grind_hint" required min="0" max="2" step="1"
-                            oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)">
+                            placeholder="<?= __('ph_grind_hint') ?>" data-i18n-ph="ph_grind_hint" required min="0"
+                            max="2" step="1" oninput="this.value = this.value.replace(/[^0-2]/g, '').slice(0, 1)">
                     </div>
 
                     <div class="form-group">
                         <label>Lot vật liệu: <span class="required">*</span></label>
                         <div class="suggestions">
-                            <input type="text" name="material_lot" id="material_lot" placeholder="<?= __('ph_enter_material_lot') ?>" data-i18n-ph="ph_enter_material_lot"
+                            <input type="text" name="material_lot" id="material_lot"
+                                placeholder="<?= __('ph_enter_material_lot') ?>" data-i18n-ph="ph_enter_material_lot"
                                 required autocomplete="off">
                             <div id="material_lot_suggestions" class="suggestion-box"></div>
                         </div>
@@ -185,7 +190,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Lot in (Print Lot): <span class="required">*</span> <span class="label-hint">(Tự động
                                 ghép mã)</span></label>
                         <input type="text" name="print_lot" id="print_lot" class="input-readonly highlight-printlot"
-                            readonly required placeholder="<?= __('ph_auto_printlot') ?>" data-i18n-ph="ph_auto_printlot">
+                            readonly required placeholder="<?= __('ph_auto_printlot') ?>"
+                            data-i18n-ph="ph_auto_printlot">
                     </div>
                 </div>
             </div>
@@ -208,7 +214,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         <label>Vị trí Rack: <span class="required">*</span></label>
                         <div class="qr-input-group">
                             <div class="suggestions">
-                                <input type="text" name="rack_code" id="rack_code" placeholder="<?= __('ph_select_rack') ?>" data-i18n-ph="ph_select_rack"
+                                <input type="text" name="rack_code" id="rack_code"
+                                    placeholder="<?= __('ph_select_rack') ?>" data-i18n-ph="ph_select_rack"
                                     autocomplete="off" required>
                                 <div id="rack_suggestions" class="suggestion-box"></div>
                             </div>
@@ -262,38 +269,45 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                 <div class="ext-checks-group">
                     <?php
                     $checks = [
-                        'diameter'       => 'Đường kính',
-                        'gel'            => 'Gel',
-                        'foreign_object' => 'Dị vật',
-                        'color'          => 'Màu sắc',
-                        'print'          => 'Chữ in'
+                        'diameter'       => ['key' => 'crit_diameter',    'lbl' => 'Đường kính'],
+                        'gel'            => ['key' => 'crit_gel',         'lbl' => 'Gel'],
+                        'foreign_object' => ['key' => 'crit_foreign',     'lbl' => 'Dị vật'],
+                        'color'          => ['key' => 'crit_color',       'lbl' => 'Màu sắc'],
+                        'print'          => ['key' => 'crit_print',       'lbl' => 'Chữ in'],
+                        'clump'          => ['key' => 'crit_clump',       'lbl' => 'Vón cục'],
+                        'scratch'        => ['key' => 'crit_scratch',     'lbl' => 'Trầy'],
+                        'streak'         => ['key' => 'crit_streak',      'lbl' => 'Xước'],
+                        'deformation'    => ['key' => 'crit_deformation', 'lbl' => 'Biến dạng']
                     ];
-                    foreach ($checks as $key => $label):
+                    foreach ($checks as $key => $chkItem):
                     ?>
-                        <div class="ext-check-box">
-                            <span class="check-box-label"><?= $label ?></span>
-                            <button type="button" class="ext-toggle-btn active" data-field="ext_check_<?= $key ?>"
-                                data-value="true" onclick="this.classList.toggle('active'); 
+                    <div class="ext-check-box">
+                        <span class="check-box-label"
+                            data-i18n="<?= $chkItem['key'] ?>"><?= __($chkItem['key']) ?></span>
+                        <button type="button" class="ext-toggle-btn active" data-field="ext_check_<?= $key ?>"
+                            data-value="true" onclick="this.classList.toggle('active'); 
                                          const isActive = this.classList.contains('active');
                                          this.dataset.value = isActive ? 'true' : 'false';
                                          this.textContent = isActive ? 'OK' : 'NG';">
-                                OK
-                            </button>
-                        </div>
+                            OK
+                        </button>
+                    </div>
                     <?php endforeach; ?>
                 </div>
             </div>
 
             <!-- ================= NÚT BẤM HÀNH ĐỘNG ================= -->
             <div class="btn-group">
-                <button type="reset" class="btn btn-secondary" data-i18n="btn_refresh">🔄 <?= __('btn_refresh', 'Làm mới') ?></button>
-                <button type="submit" class="btn btn-primary" data-i18n="btn_save_bobin">💾 <?= __('btn_save_bobin', 'Lưu Bobin') ?></button>
+                <button type="reset" class="btn btn-secondary" data-i18n="btn_refresh">🔄
+                    <?= __('btn_refresh', 'Làm mới') ?></button>
+                <button type="submit" class="btn btn-primary" data-i18n="btn_save_bobin">💾
+                    <?= __('btn_save_bobin', 'Lưu Bobin') ?></button>
             </div>
         </form>
     </div>
 
     <script>
-        const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+    const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/suggestion.js?v=<?= time() ?>"></script>

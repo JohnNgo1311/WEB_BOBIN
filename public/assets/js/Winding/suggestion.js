@@ -37,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
 ========================================= */
 
 function setupWindingAutocomplete() {
+  let debounceTimer = null;
+
   document.addEventListener("input", (e) => {
     if (!e.target.classList.contains("winding-machine-name")) {
       return;
@@ -50,17 +52,18 @@ function setupWindingAutocomplete() {
       return;
     }
 
-    box.innerHTML = "";
-
     if (
       !listData.list_winding_machine ||
       listData.list_winding_machine.length === 0 ||
       !value
     ) {
+      clearTimeout(debounceTimer);
+      box.innerHTML = "";
       box.style.display = "none";
       return;
     }
 
+    // Khớp chính xác -> xử lý ngay lập tức
     const exactMatch = listData.list_winding_machine.find(
       (machine) =>
         machine.machine_name &&
@@ -68,36 +71,46 @@ function setupWindingAutocomplete() {
     );
 
     if (exactMatch) {
+      clearTimeout(debounceTimer);
       input.value = exactMatch.machine_name;
+      box.innerHTML = "";
       box.style.display = "none";
       return;
     }
 
-    const matches = listData.list_winding_machine.filter(
-      (machine) =>
-        machine.machine_name &&
-        machine.machine_name.toLowerCase().includes(value)
-    );
+    // Tìm kiếm tương đối có debounce 100ms
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      box.innerHTML = "";
+      const matches = listData.list_winding_machine.filter(
+        (machine) =>
+          machine.machine_name &&
+          machine.machine_name.toLowerCase().includes(value)
+      );
 
-    if (matches.length === 0) {
-      box.style.display = "none";
-      return;
-    }
-
-    box.style.display = "block";
-
-    matches.forEach((item) => {
-      const suggestion = document.createElement("div");
-
-      suggestion.className = "suggestion-item";
-      suggestion.textContent = item.machine_name;
-      suggestion.onclick = () => {
-        input.value = item.machine_name;
+      if (matches.length === 0) {
         box.style.display = "none";
-      };
+        return;
+      }
 
-      box.appendChild(suggestion);
-    });
+      box.style.display = "block";
+      const fragment = document.createDocumentFragment();
+      const limited = matches.slice(0, 40);
+
+      limited.forEach((item) => {
+        const suggestion = document.createElement("div");
+
+        suggestion.className = "suggestion-item";
+        suggestion.textContent = item.machine_name;
+        suggestion.onclick = () => {
+          input.value = item.machine_name;
+          box.style.display = "none";
+        };
+
+        fragment.appendChild(suggestion);
+      });
+      box.appendChild(fragment);
+    }, 100);
   });
 
   /* ĐÓNG BOX GỢI Ý KHI CLICK RA NGOÀI */

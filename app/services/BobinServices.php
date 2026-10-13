@@ -165,7 +165,11 @@ class BobinServices
             gel: $dto->ext_check_gel,
             foreign_object: $dto->ext_check_foreign_object,
             color: $dto->ext_check_color,
-            print: $dto->ext_check_print
+            print: $dto->ext_check_print,
+            clump: $dto->ext_check_clump,
+            scratch: $dto->ext_check_scratch,
+            streak: $dto->ext_check_streak,
+            deformation: $dto->ext_check_deformation
         );
         $entity->rack = $this->resolveRack($dto->rack_code);
 
@@ -341,6 +345,10 @@ class BobinServices
             $dto->defect_foreign_object,
             $dto->defect_color_issue,
             $dto->defect_print_quality,
+            $dto->defect_clump,
+            $dto->defect_scratch,
+            $dto->defect_streak,
+            $dto->defect_deformation,
             $dto->defect_note
         );
 
@@ -366,6 +374,10 @@ class BobinServices
             $dto->defect_foreign_object,
             $dto->defect_color_issue,
             $dto->defect_print_quality,
+            $dto->defect_clump,
+            $dto->defect_scratch,
+            $dto->defect_streak,
+            $dto->defect_deformation,
             "Yêu cầu hủy QC: {$dto->defect_note}"
         );
 
@@ -389,7 +401,11 @@ class BobinServices
         bool $foreignObject,
         bool $colorIssue,
         bool $printQuality,
-        string $note
+        bool $clump = false,
+        bool $scratch = false,
+        bool $streak = false,
+        bool $deformation = false,
+        string $note = ''
     ): VisualInspectionEntity {
         return new VisualInspectionEntity(
             inspector_code: $inspectorCode,
@@ -400,6 +416,10 @@ class BobinServices
                 foreign_object: $foreignObject,
                 color_issue: $colorIssue,
                 print_quality: $printQuality,
+                clump: $clump,
+                scratch: $scratch,
+                streak: $streak,
+                deformation: $deformation,
                 note: $note
             )
         );
@@ -444,10 +464,14 @@ class BobinServices
         $entity->visualInspection = $this->createVisualInspection(
             $inspectorCode,
             $inspectorName !== '' ? $inspectorName : $foundQcEmp->employee_name,
-            $data['defect_gel'] ?? false,
-            $data['defect_foreign_object'] ?? false,
-            $data['defect_color_issue'] ?? false,
-            $data['defect_print_quality'] ?? false,
+            filter_var($data['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_clump'] ?? $data['defect_lump'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_scratch'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_streak'] ?? $data['defect_scuff'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            filter_var($data['defect_deformation'] ?? $data['defect_deformed'] ?? false, FILTER_VALIDATE_BOOLEAN),
             $defectNote
         );
 
@@ -513,26 +537,43 @@ class BobinServices
         $entity->winding_machine = $dto->winding_machine;
 
 
-        $foundwindingEmp = $this->employeeRepo->findByCode($dto->winding_employee_code);
+        $empCodeToLookup = !empty($dto->winding_employee_code) ? $dto->winding_employee_code : ($_SESSION['user']['employee_code'] ?? '');
+        $foundwindingEmp = !empty($empCodeToLookup) ? $this->employeeRepo->findByCode($empCodeToLookup) : null;
+        if ($foundwindingEmp === null && !empty($_SESSION['user']['employee_code'])) {
+            $foundwindingEmp = $this->employeeRepo->findByCode($_SESSION['user']['employee_code']);
+        }
         if ($foundwindingEmp !== null) {
             $entity->winding_employee = $foundwindingEmp;
         } else {
             throw new Exception('Mã nhân viên không tồn tại trong hệ thống');
         }
-        $entity->winding_note = $dto->winding_note . " (Yêu cầu hủy phía cuộn)";
 
-        $hasFlowError = in_array('Thông khí', $dto->cancel_errors ?? [], true) || (mb_stripos($dto->winding_note, 'Thông khí') !== false);
+        if (mb_stripos($dto->winding_note, '(Yêu cầu hủy phía cuộn)') === false) {
+            $entity->winding_note = $dto->winding_note . " (Yêu cầu hủy phía cuộn)";
+        } else {
+            $entity->winding_note = $dto->winding_note;
+        }
+
+        $hasFlowError = in_array('Thông khí', $dto->cancel_errors ?? [], true)
+            || in_array('Airflow', $dto->cancel_errors ?? [], true)
+            || in_array('通気', $dto->cancel_errors ?? [], true)
+            || (mb_stripos($dto->winding_note, 'Thông khí') !== false)
+            || (mb_stripos($dto->winding_note, 'Airflow') !== false)
+            || (mb_stripos($dto->winding_note, '通気') !== false);
         if ($hasFlowError) {
             $entity->flow_test_result = "Thất bại";
         } else {
-            $entity->flow_test_result = "Thành công";
+            $entity->flow_test_result = !empty($dto->flow_test_result) ? $dto->flow_test_result : "Thành công";
         }
+
+        $operatorCode = $_SESSION['user']['employee_code'] ?? ($foundwindingEmp->employee_code ?? 'Unknown');
+        $operatorName = $_SESSION['user']['employee_name'] ?? ($foundwindingEmp->employee_name ?? 'Unknown');
 
         $updateRecord = [
             'stage'         => 'winding',
             'action'        => 'pending_cancel',
-            'employee_code' => $foundwindingEmp->employee_code ?? ($_SESSION['user']['employee_code'] ?? 'Unknown'),
-            'employee_name' => $foundwindingEmp->employee_name ?? ($_SESSION['user']['employee_name'] ?? 'Unknown'),
+            'employee_code' => $operatorCode,
+            'employee_name' => $operatorName,
             'updated_at'    => date('Y-m-d H:i:s'),
             'note'          => 'Đưa vào danh sách chờ hủy'
         ];
@@ -707,10 +748,10 @@ class BobinServices
     }
     #region QUẢN LÝ DUNG LƯỢNG BOBIN (CAPACITY)
 
-    public function getBobinCapacities(): array
+    public function getBobinCapacities(bool $forceRefresh = false): array
     {
         try {
-            return $this->bobinRepo->getBobinCapacities();
+            return $this->bobinRepo->getBobinCapacities($forceRefresh);
         } catch (Exception $e) {
             throw new Exception("Lỗi khi lấy dữ liệu cấu hình Bobin: " . $e->getMessage(), (int)$e->getCode(), $e);
         }
@@ -734,9 +775,9 @@ class BobinServices
     }
 
     #endregion
-    public function getAllRacks(): array
+    public function getAllRacks(bool $forceRefresh = false): array
     {
-        return $this->bobinRepo->getAllRacks();
+        return $this->bobinRepo->getAllRacks($forceRefresh);
     }
 
     public function getDetailBobins(BobinGetListDTO $dto): array

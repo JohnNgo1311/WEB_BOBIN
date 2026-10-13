@@ -114,6 +114,10 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
     defect_foreign_object: defects["foreign_object"] || false,
     defect_color_issue: defects["color_issue"] || false,
     defect_print_quality: defects["print_quality"] || false,
+    defect_clump: defects["clump"] || false,
+    defect_scratch: defects["scratch"] || false,
+    defect_streak: defects["streak"] || false,
+    defect_deformation: defects["deformation"] || false,
   };
 
   const defectBadge = (hasDefect) =>
@@ -121,16 +125,29 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
       ? '<span class="vi-badge-ng">NG</span>'
       : '<span class="vi-badge-ok">OK</span>';
 
+  const tVal = (k, fb) => (window.t ? window.t(k) : fb);
+
   let reviewHTML = `
         <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
             <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #0056b3; font-weight: 700;">${bobinCode}</span></li>
             <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectBadge(bodyData.defect_gel)}</li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectBadge(bodyData.defect_foreign_object)}</li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Màu sắc:</strong> ${defectBadge(bodyData.defect_color_issue)}</li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectBadge(bodyData.defect_print_quality)}</li>
-            <li style="display: flex; justify-content: space-between;"><strong>Ghi chú:</strong> <span style="color: #334155;">${note || "Không có"}</span></li>
         </ul>
+        <div style="margin-top: 8px; padding: 8px 10px; background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <div style="font-weight: 700; font-size: 12px; color: #475569; margin-bottom: 6px; text-transform: uppercase;">🛡️ Kết quả kiểm tra ngoại quan:</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_gel', 'Gel')}:</span> ${defectBadge(bodyData.defect_gel)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_foreign', 'Dị vật')}:</span> ${defectBadge(bodyData.defect_foreign_object)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_color', 'Màu sắc')}:</span> ${defectBadge(bodyData.defect_color_issue)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_print', 'Chữ in')}:</span> ${defectBadge(bodyData.defect_print_quality)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_clump', 'Vón cục')}:</span> ${defectBadge(bodyData.defect_clump)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_scratch', 'Trầy')}:</span> ${defectBadge(bodyData.defect_scratch)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_streak', 'Xước')}:</span> ${defectBadge(bodyData.defect_streak)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0;"><span>${tVal('crit_deformation', 'Biến dạng')}:</span> ${defectBadge(bodyData.defect_deformation)}</div>
+            </div>
+        </div>
+        <div style="margin-top: 6px; padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12.5px; display: flex; justify-content: space-between;">
+            <strong>Ghi chú:</strong> <span style="color: #334155;">${note || "Không có"}</span>
+        </div>
   `;
 
   ConfirmDialog.show(
@@ -274,13 +291,21 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
     defect_foreign_object: defects["foreign_object"] || false,
     defect_color_issue: defects["color_issue"] || false,
     defect_print_quality: defects["print_quality"] || false,
+    defect_clump: defects["clump"] || false,
+    defect_scratch: defects["scratch"] || false,
+    defect_streak: defects["streak"] || false,
+    defect_deformation: defects["deformation"] || false,
   };
 
   const hasNG = Boolean(
     bodyData.defect_gel ||
     bodyData.defect_foreign_object ||
     bodyData.defect_color_issue ||
-    bodyData.defect_print_quality,
+    bodyData.defect_print_quality ||
+    bodyData.defect_clump ||
+    bodyData.defect_scratch ||
+    bodyData.defect_streak ||
+    bodyData.defect_deformation,
   );
   if (!hasNG) {
     Toast.show(
@@ -297,16 +322,29 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
       ? '<span class="vi-badge-ng">NG</span>'
       : '<span class="vi-badge-ok">OK</span>';
 
+  const tVal = (k, fb) => (window.t ? window.t(k) : fb);
+
   let reviewHTML = `
         <ul style="list-style: none; padding: 10px 12px; background: #f9fafb; border-radius: 6px; text-align: left; border: 1px solid #e5e7eb; margin: 0;">
             <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #1f2937; font-family: monospace; font-weight: 700;">${bobinCode}</span></li>
             <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Gel:</strong> ${defectBadge(bodyData.defect_gel)}</li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Dị vật:</strong> ${defectBadge(bodyData.defect_foreign_object)}</li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Màu sắc:</strong> ${defectBadge(bodyData.defect_color_issue)}</li>
-            <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;"><strong>Chữ in:</strong> ${defectBadge(bodyData.defect_print_quality)}</li>
-            <li style="padding-top: 4px; display: flex; justify-content: space-between;"><strong>Lý do hủy:</strong> <span style="color: #dc2626; font-weight: 700;">${note}</span></li>
         </ul>
+        <div style="margin-top: 8px; padding: 8px 10px; background: #fff; border: 1px solid #fca5a5; border-radius: 6px;">
+            <div style="font-weight: 700; font-size: 12px; color: #991b1b; margin-bottom: 6px; text-transform: uppercase;">🛡️ Kết quả ngoại quan kiểm tra:</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_gel', 'Gel')}:</span> ${defectBadge(bodyData.defect_gel)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_foreign', 'Dị vật')}:</span> ${defectBadge(bodyData.defect_foreign_object)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_color', 'Màu sắc')}:</span> ${defectBadge(bodyData.defect_color_issue)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_print', 'Chữ in')}:</span> ${defectBadge(bodyData.defect_print_quality)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_clump', 'Vón cục')}:</span> ${defectBadge(bodyData.defect_clump)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_scratch', 'Trầy')}:</span> ${defectBadge(bodyData.defect_scratch)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_streak', 'Xước')}:</span> ${defectBadge(bodyData.defect_streak)}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#fef2f2; padding:3px 6px; border-radius:4px; border:1px solid #fee2e2;"><span>${tVal('crit_deformation', 'Biến dạng')}:</span> ${defectBadge(bodyData.defect_deformation)}</div>
+            </div>
+        </div>
+        <div style="margin-top: 6px; padding: 6px 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 12.5px; display: flex; justify-content: space-between;">
+            <strong>Lý do hủy:</strong> <span style="color: #dc2626; font-weight: 700;">${note}</span>
+        </div>
   `;
 
   ConfirmDialog.show(
@@ -511,6 +549,10 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
         defect_foreign_object: defects["foreign_object"] || false,
         defect_color_issue: defects["color_issue"] || false,
         defect_print_quality: defects["print_quality"] || false,
+        defect_clump: defects["clump"] || false,
+        defect_scratch: defects["scratch"] || false,
+        defect_streak: defects["streak"] || false,
+        defect_deformation: defects["deformation"] || false,
       };
 
       const requestUrl =

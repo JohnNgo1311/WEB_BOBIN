@@ -37,7 +37,15 @@ $extCheckOkCount = 0;
 $extCheckNgCount = 0;
 foreach ($bobins as $b) {
     $chk = decodeJsonObject($b['extrusion_check'] ?? '');
-    $isAllOk = ($chk['diameter'] ?? true) && ($chk['gel'] ?? true) && ($chk['foreign_object'] ?? true) && ($chk['color'] ?? true) && ($chk['print'] ?? true);
+    $isAllOk = ($chk['diameter'] ?? true) &&
+        ($chk['gel'] ?? true) &&
+        ($chk['foreign_object'] ?? true) &&
+        ($chk['color'] ?? true) &&
+        ($chk['print'] ?? true) &&
+        ($chk['clump'] ?? $chk['lump'] ?? true) &&
+        ($chk['scratch'] ?? true) &&
+        ($chk['streak'] ?? $chk['scuff'] ?? true) &&
+        ($chk['deformation'] ?? $chk['deformed'] ?? true);
     if ($isAllOk) {
         $extCheckOkCount++;
     } else {
@@ -211,6 +219,10 @@ foreach ($bobins as $b) {
                     $chkForeignObject = $extCheck['foreign_object'] ?? true;
                     $chkColor         = $extCheck['color'] ?? true;
                     $chkPrint         = $extCheck['print'] ?? true;
+                    $chkClump         = $extCheck['clump'] ?? $extCheck['lump'] ?? true;
+                    $chkScratch       = $extCheck['scratch'] ?? true;
+                    $chkStreak        = $extCheck['streak'] ?? $extCheck['scuff'] ?? true;
+                    $chkDeformation   = $extCheck['deformation'] ?? $extCheck['deformed'] ?? true;
 
                     $rawKey = $item['bobin_key_code'] ?? '';
                     $displayKey = htmlspecialchars($rawKey);
@@ -412,11 +424,15 @@ foreach ($bobins as $b) {
                     <div class="ext-checks-group">
                         <?php
                                 $checks = [
-                                    'diameter'       => ['label_key' => 'crit_diameter', 'label' => 'Đường kính', 'val' => $chkDiameter],
-                                    'gel'            => ['label_key' => 'crit_gel',      'label' => 'Gel',        'val' => $chkGel],
-                                    'foreign_object' => ['label_key' => 'crit_foreign',  'label' => 'Dị vật',     'val' => $chkForeignObject],
-                                    'color'          => ['label_key' => 'crit_color',    'label' => 'Màu sắc',    'val' => $chkColor],
-                                    'print'          => ['label_key' => 'crit_print',    'label' => 'Chữ in',     'val' => $chkPrint]
+                                    'diameter'       => ['label_key' => 'crit_diameter',    'label' => 'Đường kính', 'val' => $chkDiameter],
+                                    'gel'            => ['label_key' => 'crit_gel',         'label' => 'Gel',        'val' => $chkGel],
+                                    'foreign_object' => ['label_key' => 'crit_foreign',     'label' => 'Dị vật',     'val' => $chkForeignObject],
+                                    'color'          => ['label_key' => 'crit_color',       'label' => 'Màu sắc',    'val' => $chkColor],
+                                    'print'          => ['label_key' => 'crit_print',       'label' => 'Chữ in',     'val' => $chkPrint],
+                                    'clump'          => ['label_key' => 'crit_clump',       'label' => 'Vón cục',    'val' => $chkClump],
+                                    'scratch'        => ['label_key' => 'crit_scratch',     'label' => 'Trầy',      'val' => $chkScratch],
+                                    'streak'         => ['label_key' => 'crit_streak',      'label' => 'Xước',      'val' => $chkStreak],
+                                    'deformation'    => ['label_key' => 'crit_deformation', 'label' => 'Biến dạng', 'val' => $chkDeformation]
                                 ];
                                 foreach ($checks as $key => $c):
                                     $isOk = (bool)$c['val'];
@@ -490,6 +506,7 @@ foreach ($bobins as $b) {
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_suggestion.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

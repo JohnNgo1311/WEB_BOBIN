@@ -236,21 +236,29 @@ async function handleQCConfirm(buttonElement, bobinCode, bobinKeyCode) {
             defect_foreign_object: !qcChecks['qc_check_foreign_object'],
             defect_color_issue: !qcChecks['qc_check_color'],
             defect_print_quality: !qcChecks['qc_check_print'],
+            defect_clump: !qcChecks['qc_check_clump'],
+            defect_scratch: !qcChecks['qc_check_scratch'],
+            defect_streak: !qcChecks['qc_check_streak'],
+            defect_deformation: !qcChecks['qc_check_deformation'],
             defect_note: note || 'Chưa cập nhật'
         };
 
         const qcDisplay = [
-            { label: 'Gel', ok: !payload.defect_gel },
-            { label: 'Dị vật', ok: !payload.defect_foreign_object },
-            { label: 'Màu sắc', ok: !payload.defect_color_issue },
-            { label: 'Chữ in', ok: !payload.defect_print_quality }
+            { label: window.t ? window.t('crit_gel') : 'Gel', ok: !payload.defect_gel },
+            { label: window.t ? window.t('crit_foreign') : 'Dị vật', ok: !payload.defect_foreign_object },
+            { label: window.t ? window.t('crit_color') : 'Màu sắc', ok: !payload.defect_color_issue },
+            { label: window.t ? window.t('crit_print') : 'Chữ in', ok: !payload.defect_print_quality },
+            { label: window.t ? window.t('crit_clump') : 'Vón cục', ok: !payload.defect_clump },
+            { label: window.t ? window.t('crit_scratch') : 'Trầy', ok: !payload.defect_scratch },
+            { label: window.t ? window.t('crit_streak') : 'Xước', ok: !payload.defect_streak },
+            { label: window.t ? window.t('crit_deformation') : 'Biến dạng', ok: !payload.defect_deformation }
         ];
 
-        let checksHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">';
+        let checksHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">';
         qcDisplay.forEach(item => {
             checksHTML += `
-                <div style="background:#fff;border:1px solid #cbd5e1;padding:3px 6px;border-radius:4px;display:flex;gap:4px;align-items:center;">
-                    <span style="font-size:11px;color:#475569;">${item.label}:</span>
+                <div style="background:#fff;border:1px solid #cbd5e1;padding:4px 8px;border-radius:4px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:11.5px;color:#475569;font-weight:600;">${item.label}:</span>
                     <span class="${item.ok ? 'vi-badge-ok' : 'vi-badge-ng'}">${item.ok ? 'OK' : 'NG'}</span>
                 </div>
             `;

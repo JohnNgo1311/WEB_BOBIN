@@ -463,6 +463,139 @@ CREATE TABLE `employee_list` (
     - Đã phân tích và lập danh mục 6 nhóm đề xuất cải tiến trọng tâm.
     - **Đã triển khai hoàn tất Đề xuất 1:** Hợp nhất toàn bộ 581 từ khóa × 3 ngôn ngữ (`vi`, `en`, `ja`) về nguồn duy nhất `config/default_translations.json` (kết hợp `config/custom_translations.json`); rút gọn `app/core/Language.php` từ 2.072 dòng xuống 367 dòng và `public/assets/js/i18n.js` từ 3.565 dòng xuống 1.701 dòng; tự động nhúng `window.__DEFAULT_I18N__`, `window.__CUSTOM_I18N__`, `window.__I18N_HASH__` ngay trước `i18n.js` trong `<head>` qua `Controller::view()` và `Language::renderJsBootstrap()`.
 
+### TASK-038: 
+**Status:** DONE
+- Cập nhật thêm 4 trường tiêu chí kiểm tra ngoại quan QC: "Vón cục", "Trầy", "Xước", "Biến dạng" (nâng tổng số tiêu chí ngoại quan từ 4 lên 8 tiêu chí).
+  - **1. Cập nhật Từ điển Đa ngôn ngữ (`config/default_translations.json` & `public/assets/js/i18n.js`):**
+    - Bổ sung 8 từ khóa đa ngôn ngữ mới (`crit_clump`, `crit_scratch`, `crit_streak`, `crit_deformation`, `chk_clump`, `chk_scratch`, `chk_streak`, `chk_deformation`) đầy đủ cho cả 3 ngôn ngữ (`vi`, `en`, `ja`) tại `config/default_translations.json` (tổng cộng 589 từ khóa đồng bộ 100%).
+    - Mở rộng `DOM_MAPPINGS.labels` và `DEFECT_NAMES` trong `public/assets/js/i18n.js` cho 4 tiêu chí mới.
+  - **2. Cập nhật Model, Entity & DTO Backend:**
+    - Cập nhật `app/entities/DefectEntity.php` và `app/models/DetectModel.php` bổ sung 4 thuộc tính boolean (`$clump`, `$scratch`, `$streak`, `$deformation`) và phương thức `jsonSerialize()`, `fromArray()` tương thích ngược với các alias (`lump`, `scuff`, `deformed`).
+    - Cập nhật `BobinQCUpdateDTO.php`, `BobinQCCancelDTO.php`, `BobinUpdateQCDTO.php` tiếp nhận và chuyển đổi 4 trường lỗi mới từ request.
+  - **3. Cập nhật Service, Controller & Xuất CSV:**
+    - Cập nhật `BobinServices::createVisualInspection()` và các phương thức `updateQCBobin()`, `qcCancelBobin()`, `updateQCAndChangeTypeBobin()` để xử lý chuẩn hóa 8 tiêu chí ngoại quan.
+    - Cập nhật `BobinController.php`: Xử lý 8 tiêu chí trong `updateQCEditBobin()`, `validFormQC_Cancel()`, và thêm 4 cột tiêu chí mới vào file xuất Excel/CSV lịch sử và chi tiết (`exportHistoryExcel`, `exportDetailExcel`).
+  - **4. Cập nhật Giao diện (Views) & Script Frontend:**
+    - `app/views/qcView.php`: Mở rộng lưới kiểm tra ngoại quan thành 8 công tắc toggle switch với `data-i18n`.
+    - `public/assets/js/QC/submit.js`: Thu thập đủ 8 tiêu chí cho cả 3 luồng xác nhận QC, chuyển loại Bobin và hủy Bobin; tối ưu giao diện hộp thoại xác nhận dạng lưới 2 cột gọn gàng và hỗ trợ i18n.
+    - `app/views/qcEditBobinView.php`: Cập nhật thống kê KPI và lưới nút bấm điều chỉnh kiểm tra ngoại quan sang 8 tiêu chí.
+    - `public/assets/js/QC/edit_submit.js`: Thu thập đủ 8 tiêu chí khi điều chỉnh QC, hiển thị lưới 2 cột trong hộp thoại xác nhận và gửi payload cập nhật.
+    - `app/views/windingView.php`, `app/views/listBobinDetailView.php`, `app/views/listBobinHistoryView.php`, `app/views/listPendingCancellationView.php`, `app/views/listBobinView.php`: Cập nhật hiển thị huy hiệu (badges) kết quả kiểm tra ngoại quan đầy đủ 8 tiêu chí.
+
+### TASK-039:
+**Status:** DONE
+- Đồng bộ các trường dữ liệu ngoại quan mới ("Vón cục", "Trầy", "Xước", "Biến dạng") vào Nhóm Đùn Tự Kiểm Tra (nâng tổng số tiêu chí từ 5 lên 9).
+- Khắc phục lỗi nút nhấn không hoạt động tại trang QC (`qcView.php`):
+  - **1. Sửa lỗi nút nhấn tại trang QC (`qcView.php`):**
+    - Tìm ra và xử lý nguyên nhân gốc rễ: Vòng lặp con duyệt `$qcItems` sử dụng biến `$item` làm che khuất (variable shadowing / collision) biến `$item` của vòng lặp duyệt `$bobins`, dẫn tới các thuộc tính `$item['bobin_identification_code']`, `$item['bobin_key_code']` bị trống (`""`). Toàn bộ nút `handleConfirm()`, `handleCancel()`, `handleChangeType()` khi gọi hàm đều truyền chuỗi rỗng và bị chặn lại.
+    - Đổi tên biến lặp con thành `$qcDefect` và khôi phục 100% hoạt động cho các nút thao tác xác nhận QC, đổi loại, hủy Bobin.
+    - Chuyển container `.qc-badges` thành `.qc-switches-grid` chuẩn 4 cột trên desktop (2 cột trên mobile/tablet) theo CSS.
+    - Hỗ trợ click trực tiếp trên toàn bộ vùng `.vi-item-switch` để kích hoạt toggle switch thuận tiện.
+    - Cho phép nhập mã NV QC nếu session chưa có mã nhân viên (không khóa cứng `readonly`), tích hợp autocomplete gợi ý mã nhân viên qua `suggestion.js`.
+    - Xóa bỏ modal thừa `#modalChangeType` có các hàm JS chưa định nghĩa.
+  - **2. Đồng bộ 9 tiêu chí vào Nhóm Đùn Tự Kiểm Tra (Extrusion Check):**
+    - Cập nhật `ExtrusionCheckEntity.php`: Bổ sung 4 thuộc tính boolean (`$clump`, `$scratch`, `$streak`, `$deformation`), khởi tạo mặc định `true`, `fromArray()` tương thích alias.
+    - Cập nhật DTO `BobinCreateDTO.php` và `BobinExtUpdateDTO.php`: Thêm 4 trường `ext_check_clump`, `ext_check_scratch`, `ext_check_streak`, `ext_check_deformation` và chuyển đổi request.
+    - Cập nhật `BobinServices.php`: Khởi tạo `ExtrusionCheckEntity` đầy đủ 9 tham số khi tạo và cập nhật Bobin.
+    - Cập nhật `extrusionView.php` & `public/assets/js/Extrusion/submit.js`: Hiển thị 9 nút toggle kiểm tra đùn có nhãn đa ngôn ngữ, thu thập và hiển thị đầy đủ trong popup xem trước.
+    - Cập nhật `extrusionEditBobinView.php` & `public/assets/js/Extrusion/edit_submit.js`: Cập nhật thống kê KPI, mảng 9 tiêu chí đùn và thu thập đầy đủ khi điều chỉnh.
+    - Cập nhật dải hiển thị tham khảo Đùn tự kiểm tra tại 5 màn hình: `qcView.php`, `qcEditBobinView.php`, `windingView.php`, `listBobinDetailView.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php`.
+
+### TASK-040:
+**Status:** DONE
+- Cải tiến như sau:
+  + Trang "Nhóm Cuộn - Xác nhận hoàn thành Bobin" chỉ hiển thị danh sách các Bobin ở trạng thái "Busy_Checked" và "Rolled". Tuy nhiên đối với "Rolled" thì chỉ hiển thị những Bobin có updated_time trong vòng 24 tiếng so với thời điểm hiện tại.
+  + Tại trang "Điều chỉnh cuộn": 
+     1. Thêm nút hủy Bobin tương ứng với từng Bobin để đưa Bobin vào danh sách chờ hủy.
+     2. Nếu người dùng nhấn nút "Hủy Bobin" thì sẽ hiện dialog, bao gồm: 1 textfield "ghi chú" lý do hủy Bobin, và 1 textfield nhập số thành phẩm đã chạy được từ Bobin đó trước khi hủy. Cả 2 dữ liệu này sẽ được gom lại và đặt vào trường dữ liệu "winding_note" sao cho hợp lí.
+- **Chi tiết thực hiện:**
+  - **Lọc Bobin Rolled trong vòng 24 giờ tại Nhóm Cuộn (`BobinRepository.php`):**
+    - Cập nhật cả 2 hàm `getDetailBobinsForWinding()` và `countDetailBobinsForWinding()`: Thay đổi điều kiện từ `INTERVAL 3 DAY` thành `INTERVAL 24 HOUR` (`bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR))`).
+  - **Bổ sung nút và dialog Hủy Bobin tại trang Điều chỉnh Cuộn (`windingEditBobinView.php`, `windingEditBobin.css`, `Winding/edit_submit.js`):**
+    - `windingEditBobinView.php`: Bổ sung nút `.wnd-btn-delete.btn-cancel-bobin` ("Hủy Bobin") trên mỗi thẻ Bobin (kèm biểu tượng 🗑️ và `data-i18n="btn_cancel_bobin"`). Bổ sung đối tượng ngữ cảnh tài khoản người dùng `window.CURRENT_USER` chứa `employee_code` và `employee_name`.
+    - `windingEditBobin.css`: Thêm kiểu dáng `.wnd-btn-delete` với màu cảnh báo đỏ, viền mềm và hiệu ứng hover/shadow đồng bộ hệ thống.
+    - `public/assets/js/Winding/edit_submit.js`:
+      - Ẩn nút "Hủy Bobin" khi chuyển sang chế độ sửa và hiện lại khi hủy/hoàn tất sửa.
+      - Xây dựng hàm `handleWindingEditCancel(btnElement, bobinCode, bobinKeyCode)` mở popup dialog xác nhận trực quan:
+        - Hiển thị thông tin tóm tắt Bobin (Mã, Sản phẩm, Máy cuộn, Nhân viên).
+        - Textfield 1: "Lý do hủy Bobin" (bắt buộc nhập, kiểm tra và báo lỗi nếu trống).
+        - Textfield 2: "Số lượng thành phẩm đã chạy trước khi hủy" (type number, nhập 0 hoặc để trống nếu chưa chạy).
+        - Khung xem trước (live preview) cập nhật thời gian thực chuỗi ghi chú sẽ lưu: `Số thành phẩm đã chạy: {qty} | Lý do hủy: {reason}`.
+        - Gửi PUT request đến `bobin/windingCancelBobin`.
+  - **Mở rộng DTO, Controller & Service tiếp nhận Hủy Bobin từ Điều chỉnh Cuộn (`BobinWindingCancelDTO.php`, `BobinController.php`, `BobinServices.php`):**
+    - `BobinWindingCancelDTO.php`: Bổ sung các trường `$source`, `$finished_product_qty`, `$cancel_reason`.
+    - `BobinController::validFormWinding_Cancel()`: Nếu `$dto->source === 'winding_edit'`, cho phép ghi chú lý do hủy tổng hợp tự do (không bắt buộc chỉ chọn riêng "Thông khí" hoặc "Ngoại quan"), đồng thời tự động gán fallback mã/tên nhân viên từ session nếu bản ghi ban đầu chưa cập nhật.
+    - `BobinServices::windingCancelBobin()`: Tối ưu hóa cơ chế đối chiếu nhân viên với fallback session của người thực hiện thao tác, ghi nhận đúng lịch sử `pending_cancel` trong `update_history` và bảo toàn định dạng `winding_note`.
+  - **Đồng bộ Đa ngôn ngữ (`config/default_translations.json`):**
+    - Bổ sung 8 khóa dịch mới cho cả 3 ngôn ngữ (`vi`, `en`, `ja`): `winding_edit_cancel_title`, `winding_edit_cancel_desc`, `winding_cancel_reason_lbl`, `ph_winding_cancel_reason`, `winding_cancel_finished_qty_lbl`, `ph_winding_cancel_finished_qty`, `winding_cancel_preview_lbl`, `err_winding_cancel_reason_required`.
+
+### TASK-041:
+**Status:** DONE
+- Điều chỉnh lại giao diện khi nhấn nút Hủy Bobin ở trang điều chỉnh cuộn (`windingEditBobinView.php`):
+  + **Gợi ý nhanh lý do:** "Thông khí", "Ngoại quan", "A1", "A2", "A3", "A4", "A5"
+  + **Đơn vị thành phẩm:** "Cuộn" (vi: Cuộn, en: Rolls, ja: 巻), không cần gợi ý nhanh số lượng.
+  + **Đồng bộ đa ngôn ngữ:** Hoàn tất 100% trên cả 3 ngôn ngữ (`vi`, `en`, `ja`).
+- **Chi tiết thực hiện:**
+  - **1. Thiết kế Hệ thống CSS Modal chuyên nghiệp (`public/assets/css/windingEditBobin.css`):**
+    - Khởi tạo đầy đủ các lớp CSS chuyên biệt: `.wnd-modal-overlay`, `.wnd-modal-box`, `.wnd-modal-header`, `.wnd-modal-close`, `.wnd-modal-body`, `.wnd-cancel-alert`, `.wnd-cancel-summary`, `.wnd-modal-field`, `.wnd-quick-chips`, `.wnd-chip-btn`, `.wnd-cancel-preview-box`, `.wnd-modal-footer`, `.wnd-btn-modal-cancel`, `.wnd-btn-modal-confirm`.
+    - Điều chỉnh padding-right ô input (`.wnd-modal-input.has-unit { padding-right: 68px; }`) hiển thị vừa vặn huy hiệu đơn vị "Cuộn" / "Rolls" / "巻".
+    - Loại bỏ hoàn toàn sự phụ thuộc vào inline styles thủ công trong JavaScript.
+    - Đảm bảo tính tương thích và phản hồi cao (responsive) trên mọi thiết bị: tablet xưởng, mobile và desktop.
+  - **2. Tối ưu UX & Thiết kế Hộp thoại Hủy Bobin (`public/assets/js/Winding/edit_submit.js`):**
+    - Header: Nổi bật với tone màu đỏ cảnh báo, biểu tượng 🗑️, tiêu đề, mô tả và nút đóng tròn `✕`.
+    - Thẻ tóm tắt Bobin: Hiển thị lưới thông tin 2 cột rõ ràng gồm Mã Bobin (dạng monospace `#...`), Sản phẩm (màu xanh dương đậm), Máy cuộn, Nhân viên cuộn.
+    - Trường "Lý do hủy Bobin": Input hiện đại kèm **Quick Suggestion Chips** chuẩn: **Thông khí, Ngoại quan, A1, A2, A3, A4, A5**. Cơ chế toggle thông minh: nhấp chọn thêm vào, nhấp lại để gỡ bỏ hoặc kết hợp tự do bằng dấu phẩy; đồng bộ trạng thái `.active` khi gõ phím.
+    - Trường "Số lượng thành phẩm đã chạy trước khi hủy": Input số lượng kèm huy hiệu đơn vị **"Cuộn"**, loại bỏ toàn bộ khối gợi ý nhanh số lượng theo yêu cầu.
+    - Khung xem trước trực tiếp (Live Preview): Cập nhật tự động thời gian thực chuỗi ghi chú chuẩn hóa `Số thành phẩm đã chạy: {qty} Cuộn | Lý do hủy: {reason}`.
+    - Tương tác công thái học: Tự động focus vào ô nhập lý do; hỗ trợ phím `Escape` để hủy hộp thoại; phím `Enter` để xác nhận nhanh; click ngoài backdrop để đóng modal; hiệu ứng nút `⏳ Đang xử lý...` chống bấm đúp khi gửi yêu cầu.
+  - **3. Cập nhật Backend nhận diện thông khí đa ngôn ngữ (`app/services/BobinServices.php`):**
+    - Nhận diện linh hoạt các biến thể "Thông khí", "Airflow", "通気" trong `winding_note` để tự động đánh dấu kết quả kiểm tra thông khí NG khi hủy Bobin.
+  - **4. Đa ngôn ngữ (`config/default_translations.json`):**
+    - Đồng bộ 100% các từ khóa đa ngôn ngữ mới cho cả 3 ngôn ngữ (`vi`, `en`, `ja`): `chip_reason_airflow`, `chip_reason_appearance`, `chip_reason_a1`, `chip_reason_a2`, `chip_reason_a3`, `chip_reason_a4`, `chip_reason_a5`, `qty_unit_roll`, `ph_winding_cancel_finished_qty`.
+
+### TASK-042:
+**Status:** DONE
+- Kiểm tra lại source code của dự án, tối ưu về UI/UX, tối ưu tốc độ xử lý, đảm bảo không thay đổi các chức năng hiện có mang tính nghiệp vụ.
+- **Chi tiết thực hiện:**
+  - **1. Tối ưu hóa Tốc độ Xử lý Backend & Truy vấn CSDL (`ListDataRepository.php`, `BobinRepository.php`, `BobinServices.php`):**
+    - `ListDataRepository.php`: Loại bỏ hoàn toàn khối `beginTransaction()` và `commit()` trên 12 truy vấn `SELECT` đọc danh mục, loại bỏ transaction lock và InnoDB read-view overhead. Thay thế `$pdo->prepare()` lặp lại bằng `$pdo->query()` trực tiếp, đưa thời gian thực thi `getListData()` xuống còn ~13ms.
+    - `BobinRepository.php`: Bổ sung request-scoped caching với thuộc tính `$cachedCapacities` và `$cachedRacks`. Các hàm phụ trợ `getActiveBaseTable()` và render view không còn bị truy vấn CSDL trùng lặp nhiều lần trong cùng một chu kỳ request. Tự động xóa cache khi gọi `updateBobinCapacity()`.
+    - `BobinServices.php`: Mở rộng tham số `$forceRefresh` cho `getBobinCapacities()` và `getAllRacks()`.
+  - **2. Tối ưu Chỉ mục CSDL (Database Indexing - An toàn, không sửa schema):**
+    - Thêm chỉ mục composite `idx_status_updated` trên `bobin_list_detail(bobin_current_status, updated_time)`, loại bỏ hoàn toàn hiện tượng `Using filesort` khi thực hiện truy vấn danh sách QC, Cuộn và Chờ hủy theo thời gian thực.
+    - Thêm chỉ mục composite `idx_size_ident` trên `bobin_list_detail(bobin_size, bobin_identification_code)` hỗ trợ phân vùng tính toán row number cho bảng ảo active base table.
+  - **3. Tối ưu Hiệu năng Render Frontend & Trải nghiệm UI/UX (`suggestion.js`, `edit_suggestion.js`):**
+    - Đồng bộ áp dụng cơ chế Debounce (100ms) kết hợp `DocumentFragment` và giới hạn hiển thị tối đa 40 gợi ý (`MAX_SUGGESTIONS = 40`) trên toàn bộ các module: `QC/suggestion.js`, `Winding/suggestion.js`, `Extrusion/suggestion.js`, `Extrusion/edit_suggestion.js`.
+    - Duy trì khả năng nhận diện khớp chính xác tức thì (`exactMatch`) khi quét mã vạch / mã QR mà không bị chậm trễ.
+    - Ngăn ngừa triệt để hiện tượng sụt giảm khung hình (UI frame drops / DOM freeze) khi người dùng gõ phím nhanh hoặc thao tác trên màn hình cảm ứng xưởng sản xuất.
+  - **4. Bảo toàn Nghiệp vụ & Kiểm tra Toàn diện:**
+    - Giữ nguyên 100% logic nghiệp vụ, quy tắc tính toán, luồng chuyển trạng thái Bobin và giao diện chức năng.
+    - Đảm bảo 100% hoạt động offline trong mạng cục bộ nội bộ (local intranet).
+    - Toàn bộ 75 tệp mã nguồn PHP và toàn bộ tệp JavaScript đều vượt qua kiểm tra cú pháp linter đạt 100% thành công.
+
+### TASK-043:
+**Status:** DONE
+- Cải tiến ở các trang thuộc QC, Cuộn, Lịch sử và các trang Danh sách:
+  + Khi nhập đủ mã của Bobin (ví dụ: khi nhập đủ `C0001` vào search bar), dữ liệu tương ứng của Bobin đó sẽ hiện ra ngay lập tức, không cần phải thêm thao tác nhấn nút "Lọc".
+- **Chi tiết thực hiện:**
+  - **1. Xây dựng Module JavaScript Tự Động Lọc Tức Thì (`public/assets/js/autoSearchBobin.js`):**
+    - Nhận diện linh hoạt các thẻ tìm kiếm: `#searchKeyword`, `#searchInput`, `input[name="keyword"]` và các form chứa tương ứng (`#filterForm`, `#searchForm`).
+    - Nhận diện chuẩn xác mẫu mã Bobin xưởng: 1 chữ cái kèm 4 chữ số (`/^[A-Za-z][0-9]{4}$/` như `C0001`, `A0012`, `B0050`), tự động chuyển đổi chữ hoa đồng nhất (`c0001` -> `C0001`).
+    - Nhận diện và cắt ngắn thông minh mã QR barcode chứa nhãn thời gian (`/^[A-Za-z][0-9]{4}_/` như `C0001_2026_10_04_18_29_44` -> `C0001`).
+    - Debounce 150ms tối ưu cho thao tác gõ phím mượt mà và nộp tức thì khi máy quét mã QR/mã vạch bắn tín hiệu.
+    - Cơ chế chống lặp vô tận (Infinite Loop Guard): So sánh giá trị nhập liệu với `initialKeyword` trên URL, chỉ kích hoạt nộp form khi mã khác với từ khóa hiện tại.
+    - Bổ sung nút Xóa nhanh (Clear button `✕` - `.btn-clear-search`): Tự động hiển thị khi có ký tự trong ô tìm kiếm. Khi nhấn `✕`, xóa sạch input và nộp form rỗng để quay về danh sách gốc ngay lập tức nếu đang lọc.
+    - Tự động bôi đen toàn bộ văn bản (auto-select) khi ô tìm kiếm nhận focus hoặc khi vừa tải trang có từ khóa, hỗ trợ công nhân quét Bobin liên tiếp không cần nhấn phím xóa lùi (backspace).
+  - **2. Tích hợp trên Toàn Bộ 10 Trang Giao Diện Hệ Thống:**
+    - Nhóm QC: `qcView.php` (QC Kiểm tra), `qcEditBobinView.php` (Điều chỉnh QC).
+    - Nhóm Cuộn: `windingView.php` (Xác nhận hoàn thành cuộn), `windingEditBobinView.php` (Điều chỉnh Cuộn).
+    - Nhóm Lịch sử & Chi tiết: `listBobinHistoryView.php` (Lịch sử Bobin), `listBobinDetailView.php` (Chi tiết Bobin), `listPendingCancellationView.php` (Chờ hủy).
+    - Nhóm Danh sách tổng quan & Tra cứu: `listBobinView.php` (Danh sách tổng quan Bobin - bổ sung `id="filterForm"` & `id="searchKeyword"`), `extrusionEditBobinView.php` (Điều chỉnh Đùn), `scanQR.php` (Tra cứu mã QR).
+  - **3. Kiểm Thử & Đảm Bảo Tính Toàn Vẹn:**
+    - Kiểm thử unit test 13/13 trường hợp (các tiền tố chưa đủ độ dài, nhập thường, nhập hoa, quét QR có timestamp, ngăn chặn loop, từ khóa không phải mã Bobin).
+    - Bảo toàn 100% các bộ lọc khác (trạng thái, kệ, loại Bobin, ngày tháng) và phân trang.
+    - 100% tuân thủ môi trường mạng nội bộ xưởng (offline / local intranet), không phụ thuộc thư viện bên ngoài.
+
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

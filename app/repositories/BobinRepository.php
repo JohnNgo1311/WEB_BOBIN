@@ -687,6 +687,7 @@ class BobinRepository
             $busyUnchecked = (int)($rows['Busy_Unchecked'] ?? 0);
             $busyChecked   = (int)($rows['Busy_Checked'] ?? 0);
             $pendingCancel = (int)($rows['Pending_Cancellation'] ?? 0);
+            $cancelled     = (int)($rows['Cancelled'] ?? 0);
 
             return [
                 'Rolled'               => $rolled,
@@ -694,6 +695,7 @@ class BobinRepository
                 'Busy_Checked'         => $busyChecked,
                 'Line'                 => $busyUnchecked + $busyChecked,
                 'Pending_Cancellation' => $pendingCancel,
+                'Cancelled'            => $cancelled,
             ];
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());

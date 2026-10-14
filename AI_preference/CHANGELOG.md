@@ -2,6 +2,25 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [TASK-044] - 2026-10-14 - Bổ Sung Chức Năng Lọc Trạng Thái "Đã Hủy" (Cancelled) Tại Trang "Danh Sách Hiện Tại" (listBobinDetailView)
+
+### 1. Bối cảnh & Yêu cầu:
+- Tại trang "Danh sách Hiện tại" (`app/views/listBobinDetailView.php`), ở mục filter dựa trên "📌 Trạng thái:" (`#statusFilter`), bổ sung và hoàn thiện tính năng lọc trạng thái "Đã hủy" (`Cancelled`).
+
+### 2. Các thay đổi kỹ thuật:
+1. **Dropdown Bộ lọc Trạng thái (`listBobinDetailView.php`):**
+   - Đưa tùy chọn `'Cancelled' => '❌ Đã hủy'` vào danh mục `$statusOptions` trong `app/views/listBobinDetailView.php`.
+   - Khi chọn "❌ Đã hủy", hệ thống nạp URL `status=Cancelled`, tự động lọc danh sách chỉ hiển thị các Bobin có `bobin_current_status = 'Cancelled'`.
+2. **Thống kê CSDL & Lưới KPI Dashboard (`BobinRepository.php`, `listBobinDetailView.php`):**
+   - Cập nhật `BobinRepository::getBobinStatusStats()` trả về chỉ số `$cancelled = (int)($rows['Cancelled'] ?? 0)` trong mảng kết quả.
+   - Cập nhật công thức tính `$realRolled` trong `listBobinDetailView.php` trừ đi `$statusCounts['Cancelled']`.
+   - Bổ sung thẻ KPI bấm được cho "Đã hủy" (`.kpi-card.cancelled`) vào lưới KPI Dashboard với biểu tượng `❌`, hiển thị số lượng Bobin đã hủy và liên kết lọc nhanh đến `status=Cancelled`.
+   - Bổ sung cột "Đã hủy" vào nhãn và chuỗi số liệu biểu đồ ApexCharts (`$chartLabels`, `$chartSeries`) kèm mã màu `#ef4444`.
+3. **Đồng bộ Đa ngôn ngữ (`public/assets/js/i18n.js`):**
+   - Bổ sung `{ vi: "❌ Đã hủy", en: "❌ Scrapped", ja: "❌ 廃棄済" }`, `{ vi: "Đã hủy", en: "Scrapped", ja: "廃棄済" }`, `{ vi: "ĐÃ HỦY", en: "SCRAPPED", ja: "廃棄済" }` vào `VALUE_TRANSLATIONS` trong `public/assets/js/i18n.js` để tự động dịch dropdown và thẻ badge khi chuyển đổi giữa Tiếng Việt, Tiếng Anh và Tiếng Nhật.
+
+---
+
 ## [TASK-043] - 2026-04-20 - Tự Động Lọc Tức Thì Dữ Liệu Khi Nhập Đủ Mã Bobin (C0001) Trên Toàn Bộ Các Trang QC, Cuộn, Lịch Sử & Danh Sách
 
 ### 1. Bối cảnh & Yêu cầu:

@@ -23,7 +23,8 @@ $statusOptions = [
     'Busy_Unchecked'       => '⏳ Chưa QC',
     'Busy_Checked'         => '🛡️ Đã QC',
     'Line'                 => '📍 Tồn line',
-    'Pending_Cancellation' => '⌛ Chờ hủy'
+    'Pending_Cancellation' => '⌛ Chờ hủy',
+    'Cancelled'            => '❌ Đã hủy'
 ];
 
 $currentStatus = $_GET['status'] ?? 'all';
@@ -51,7 +52,7 @@ if ($currentSize === 'all') {
 $statusCounts['Line'] = $statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'];
 $emptyBobins = max(0, $totalRealBobins - $statusCounts['Line']);
 
-$realRolled = $totalRealBobins - ($statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'] + $statusCounts['Pending_Cancellation']);
+$realRolled = $totalRealBobins - ($statusCounts['Busy_Unchecked'] + $statusCounts['Busy_Checked'] + $statusCounts['Pending_Cancellation'] + ($statusCounts['Cancelled'] ?? 0));
 $statusCounts['Rolled'] = max(0, $realRolled);
 
 $currentPage  = (int)($pagination['currentPage'] ?? 1);
@@ -59,13 +60,14 @@ $totalPages   = (int)($pagination['totalPages'] ?? 1);
 $totalRecords = (int)($pagination['totalRecords'] ?? count($bobins));
 
 // 2. DỮ LIỆU BIỂU ĐỒ
-$chartLabels = ['Trống', 'Chưa QC', 'Đã QC', 'Tồn line', 'Chờ hủy'];
+$chartLabels = ['Trống', 'Chưa QC', 'Đã QC', 'Tồn line', 'Chờ hủy', 'Đã hủy'];
 $chartSeries = [
     $emptyBobins,
     $statusCounts['Busy_Unchecked'],
     $statusCounts['Busy_Checked'],
     $statusCounts['Line'],
-    $statusCounts['Pending_Cancellation']
+    $statusCounts['Pending_Cancellation'],
+    $statusCounts['Cancelled'] ?? 0
 ];
 
 if (!function_exists('buildFilterUrl')) {
@@ -377,6 +379,17 @@ $typeOptions = [
                             <span class="kpi-arrow">›</span>
                         </div>
                     </a>
+
+                    <a href="<?= buildFilterUrl(['status' => 'Cancelled', 'page' => 1]) ?>" class="kpi-card cancelled">
+                        <div class="kpi-left">
+                            <span class="kpi-icon">❌</span>
+                            <span class="kpi-name">Đã hủy</span>
+                        </div>
+                        <div class="kpi-right">
+                            <strong class="kpi-val"><?= number_format($statusCounts['Cancelled'] ?? 0) ?></strong>
+                            <span class="kpi-arrow">›</span>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -391,7 +404,8 @@ $typeOptions = [
             const translatedLabels = labels.map(function(lbl) {
                 if (typeof window.t !== 'function') return lbl;
                 if (lbl === 'Trống') return window.t('chart_empty', 'Trống');
-                if (lbl === 'Chưa QC' || lbl === 'Chưa KT QC') return window.t('status_unchecked', 'Chưa QC');
+                if (lbl === 'Chưa QC' || lbl === 'Chưa KT QC') return window.t('status_unchecked',
+                    'Chưa QC');
                 if (lbl === 'Đã QC' || lbl === 'Đã KT QC') return window.t('status_checked', 'Đã QC');
                 if (lbl === 'Đã cuộn') return window.t('status_ready', 'Đã cuộn');
                 if (lbl === 'Chờ hủy') return window.t('status_pending_cancel', 'Chờ hủy');
@@ -413,10 +427,11 @@ $typeOptions = [
                     }
                 },
                 series: [{
-                    name: (typeof window.t === 'function' ? window.t('chart_bobin_count', 'Số lượng Bobin') : 'Số lượng Bobin'),
+                    name: (typeof window.t === 'function' ? window.t('chart_bobin_count',
+                        'Số lượng Bobin') : 'Số lượng Bobin'),
                     data: rawData
                 }],
-                colors: ['#94a3b8', '#fb923c', '#38bdf8', '#a855f7', '#fb7185'],
+                colors: ['#94a3b8', '#fb923c', '#38bdf8', '#a855f7', '#fb7185', '#ef4444'],
                 plotOptions: {
                     bar: {
                         horizontal: true,
@@ -764,7 +779,9 @@ $typeOptions = [
                             };
                             ?>
                             <div class="val-sub">
-                                <span class="bobin-type-badge <?= $typeBadgeClass ?>" data-type="<?= htmlspecialchars($rawBobinType) ?>" title="<?= htmlspecialchars($rawBobinType) ?>">
+                                <span class="bobin-type-badge <?= $typeBadgeClass ?>"
+                                    data-type="<?= htmlspecialchars($rawBobinType) ?>"
+                                    title="<?= htmlspecialchars($rawBobinType) ?>">
                                     <?= htmlspecialchars(!empty($rawBobinType) ? $rawBobinType : 'Chưa cập nhật') ?>
                                 </span>
                             </div>
@@ -776,7 +793,8 @@ $typeOptions = [
                         <div class="field-item">
                             <label>Lot in</label>
                             <div class="val-sub">
-                                <span class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                <span
+                                    class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
                                     <?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?>
                                 </span>
                             </div>

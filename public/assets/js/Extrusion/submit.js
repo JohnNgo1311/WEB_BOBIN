@@ -245,13 +245,17 @@ function buildReviewHTML(form, fd) {
 
   html += "</ul></div>";
 
-  // Phân khu 3: 5 tiêu chí Ngoại quan Đùn
+  // Phân khu 3: Tiêu chí Ngoại quan Đùn tự kiểm tra
   const extLabels = {
-    ext_check_diameter: "Đường kính",
-    ext_check_gel: "Gel",
-    ext_check_foreign_object: "Dị vật",
-    ext_check_color: "Màu sắc",
-    ext_check_print: "Chữ in",
+    ext_check_diameter: { key: "crit_diameter", fb: "Đường kính" },
+    ext_check_gel: { key: "crit_gel", fb: "Gel" },
+    ext_check_foreign_object: { key: "crit_foreign", fb: "Dị vật" },
+    ext_check_color: { key: "crit_color", fb: "Màu sắc" },
+    ext_check_print: { key: "crit_print", fb: "Chữ in" },
+    ext_check_clump: { key: "crit_clump", fb: "Vón cục" },
+    ext_check_scratch: { key: "crit_scratch", fb: "Trầy" },
+    ext_check_streak: { key: "crit_streak", fb: "Xước" },
+    ext_check_deformation: { key: "crit_deformation", fb: "Biến dạng" },
   };
 
   html += `
@@ -259,11 +263,12 @@ function buildReviewHTML(form, fd) {
         <strong style="color: #ea580c; font-size: 12.5px; display: block; margin-bottom: 6px; text-transform: uppercase;">
             🛡️ 3. Kết quả tự kiểm tra ngoại quan đùn:
         </strong>
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(68px, 1fr)); gap: 6px;">
   `;
 
-  for (const [key, label] of Object.entries(extLabels)) {
+  for (const [key, item] of Object.entries(extLabels)) {
     const isOk = fd.get(key) === "true";
+    const label = window.t ? (window.t(item.key) || item.fb) : item.fb;
     html += `
         <div style="display: flex; flex-direction: column; align-items: center; background: #f8fafc; padding: 6px 2px; border-radius: 6px; border: 1px solid #e2e8f0;">
             <span style="font-size: 11px; color: #475569; font-weight: 700; margin-bottom: 4px;">${label}</span>

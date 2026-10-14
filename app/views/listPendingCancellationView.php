@@ -302,6 +302,10 @@ if (!function_exists('decodeJsonObject')) {
                                         <?= extCheckBadge('Dị vật', $extCheck['foreign_object'] ?? true) ?>
                                         <?= extCheckBadge('Màu', $extCheck['color'] ?? true) ?>
                                         <?= extCheckBadge('In', $extCheck['print'] ?? true) ?>
+                                        <?= extCheckBadge('Vón cục', $extCheck['clump'] ?? $extCheck['lump'] ?? true) ?>
+                                        <?= extCheckBadge('Trầy', $extCheck['scratch'] ?? true) ?>
+                                        <?= extCheckBadge('Xước', $extCheck['streak'] ?? $extCheck['scuff'] ?? true) ?>
+                                        <?= extCheckBadge('Biến dạng', $extCheck['deformation'] ?? $extCheck['deformed'] ?? true) ?>
                                     </div>
                                 </div>
 
@@ -317,6 +321,10 @@ if (!function_exists('decodeJsonObject')) {
                                         <?= qcDefectBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
                                         <?= qcDefectBadge('Màu', $defects['color_issue'] ?? false) ?>
                                         <?= qcDefectBadge('In', $defects['print_quality'] ?? false) ?>
+                                        <?= qcDefectBadge('Vón cục', ($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ?>
+                                        <?= qcDefectBadge('Trầy', ($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ?>
+                                        <?= qcDefectBadge('Xước', ($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ?>
+                                        <?= qcDefectBadge('Biến dạng', ($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ?>
                                     </div>
                                     <div class="qc-note-text">
                                         📝
@@ -444,6 +452,7 @@ if (!function_exists('decodeJsonObject')) {
     <script src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

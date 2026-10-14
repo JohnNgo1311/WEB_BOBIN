@@ -20,13 +20,17 @@ class BobinExtUpdateDTO
     // Mật khẩu xác nhận điều chỉnh
     public string $confirm_password;
 
-    // Bổ sung Vị trí Rack & 5 tiêu chí Đùn check
+    // Bổ sung Vị trí Rack & tiêu chí Đùn check
     public string $rack_code;
     public bool $ext_check_diameter;
     public bool $ext_check_gel;
     public bool $ext_check_foreign_object;
     public bool $ext_check_color;
     public bool $ext_check_print;
+    public bool $ext_check_clump;
+    public bool $ext_check_scratch;
+    public bool $ext_check_streak;
+    public bool $ext_check_deformation;
 
     public static function fromRequest(array $request): self
     {
@@ -45,13 +49,17 @@ class BobinExtUpdateDTO
         $dto->finish_time = $request['finish_time'] ?? date('Y-m-d H:i:s');
         $dto->confirm_password = trim($request['confirm_password'] ?? '');
 
-        // Gán Rack và 5 tiêu chí ngoại quan
+        // Gán Rack và các tiêu chí ngoại quan
         $dto->rack_code = trim($request['rack_code'] ?? '');
-        $dto->ext_check_diameter = filter_var($request['ext_check_diameter'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $dto->ext_check_gel      = filter_var($request['ext_check_gel'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_diameter       = filter_var($request['ext_check_diameter'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_gel            = filter_var($request['ext_check_gel'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $dto->ext_check_foreign_object = filter_var($request['ext_check_foreign_object'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $dto->ext_check_color    = filter_var($request['ext_check_color'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $dto->ext_check_print    = filter_var($request['ext_check_print'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_color          = filter_var($request['ext_check_color'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_print          = filter_var($request['ext_check_print'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_clump          = filter_var($request['ext_check_clump'] ?? $request['ext_check_lump'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_scratch        = filter_var($request['ext_check_scratch'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_streak         = filter_var($request['ext_check_streak'] ?? $request['ext_check_scuff'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_deformation    = filter_var($request['ext_check_deformation'] ?? $request['ext_check_deformed'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
         return $dto;
     }

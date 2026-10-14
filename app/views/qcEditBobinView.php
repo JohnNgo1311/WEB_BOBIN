@@ -58,7 +58,11 @@ foreach ($bobins as $b) {
     $hasDefect = filter_var($defectsData['gel'] ?? $viData['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN)
         || filter_var($defectsData['foreign_object'] ?? $viData['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN)
         || filter_var($defectsData['color_issue'] ?? $viData['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN)
-        || filter_var($defectsData['print_quality'] ?? $viData['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        || filter_var($defectsData['print_quality'] ?? $viData['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['clump'] ?? $defectsData['lump'] ?? $viData['defect_clump'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['scratch'] ?? $viData['defect_scratch'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['streak'] ?? $defectsData['scuff'] ?? $viData['defect_streak'] ?? false, FILTER_VALIDATE_BOOLEAN)
+        || filter_var($defectsData['deformation'] ?? $defectsData['deformed'] ?? $viData['defect_deformation'] ?? false, FILTER_VALIDATE_BOOLEAN);
     if ($hasDefect) {
         $qcDefectCount++;
     } else {
@@ -217,15 +221,23 @@ foreach ($bobins as $b) {
                     $vi = decodeJsonObject($item['visual_inspection'] ?? '');
                     $defects = is_array($vi['defects'] ?? null) ? $vi['defects'] : [];
 
-                    $hasGelDefect     = filter_var($defects['gel'] ?? $vi['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                    $hasForeignDefect = filter_var($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                    $hasColorDefect   = filter_var($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                    $hasPrintDefect   = filter_var($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasGelDefect         = filter_var($defects['gel'] ?? $vi['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasForeignDefect     = filter_var($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasColorDefect       = filter_var($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasPrintDefect       = filter_var($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasClumpDefect       = filter_var($defects['clump'] ?? $defects['lump'] ?? $vi['defect_clump'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasScratchDefect     = filter_var($defects['scratch'] ?? $vi['defect_scratch'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasStreakDefect      = filter_var($defects['streak'] ?? $defects['scuff'] ?? $vi['defect_streak'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                    $hasDeformationDefect = filter_var($defects['deformation'] ?? $defects['deformed'] ?? $vi['defect_deformation'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                     $chkGel           = !$hasGelDefect;
                     $chkForeignObject = !$hasForeignDefect;
                     $chkColor         = !$hasColorDefect;
                     $chkPrint         = !$hasPrintDefect;
+                    $chkClump         = !$hasClumpDefect;
+                    $chkScratch       = !$hasScratchDefect;
+                    $chkStreak        = !$hasStreakDefect;
+                    $chkDeformation   = !$hasDeformationDefect;
 
                     $inspectorCode = trim((string)($vi['inspector_code'] ?? ''));
                     $inspectorName = trim((string)($vi['inspector_name'] ?? ''));
@@ -328,11 +340,15 @@ foreach ($bobins as $b) {
                                     <div class="qc-ext-ref-badges">
                                         <?php
                                         $extRefChecks = [
-                                            'crit_diameter' => ['label' => 'Đường kính', 'ok' => (bool)($extCheck['diameter'] ?? true)],
-                                            'crit_gel'      => ['label' => 'Gel',        'ok' => (bool)($extCheck['gel'] ?? true)],
-                                            'crit_foreign'  => ['label' => 'Dị vật',     'ok' => (bool)($extCheck['foreign_object'] ?? true)],
-                                            'crit_color'    => ['label' => 'Màu sắc',    'ok' => (bool)($extCheck['color'] ?? true)],
-                                            'crit_print'    => ['label' => 'Chữ in',     'ok' => (bool)($extCheck['print'] ?? true)]
+                                            'crit_diameter'    => ['label' => 'Đường kính', 'ok' => (bool)($extCheck['diameter'] ?? true)],
+                                            'crit_gel'         => ['label' => 'Gel',        'ok' => (bool)($extCheck['gel'] ?? true)],
+                                            'crit_foreign'     => ['label' => 'Dị vật',     'ok' => (bool)($extCheck['foreign_object'] ?? true)],
+                                            'crit_color'       => ['label' => 'Màu sắc',    'ok' => (bool)($extCheck['color'] ?? true)],
+                                            'crit_print'       => ['label' => 'Chữ in',     'ok' => (bool)($extCheck['print'] ?? true)],
+                                            'crit_clump'       => ['label' => 'Vón cục',    'ok' => (bool)($extCheck['clump'] ?? $extCheck['lump'] ?? true)],
+                                            'crit_scratch'     => ['label' => 'Trầy',      'ok' => (bool)($extCheck['scratch'] ?? true)],
+                                            'crit_streak'      => ['label' => 'Xước',      'ok' => (bool)($extCheck['streak'] ?? $extCheck['scuff'] ?? true)],
+                                            'crit_deformation' => ['label' => 'Biến dạng', 'ok' => (bool)($extCheck['deformation'] ?? $extCheck['deformed'] ?? true)]
                                         ];
                                         foreach ($extRefChecks as $i18nKey => $ec):
                                         ?>
@@ -377,14 +393,18 @@ foreach ($bobins as $b) {
                                     <?php endif; ?>
                                 </div>
 
-                                <!-- 4 Criteria Toggle Buttons -->
+                                <!-- 8 Criteria Toggle Buttons -->
                                 <div class="qc-criteria-grid ext-checks-group">
                                     <?php
                                     $qcChecks = [
-                                        'gel'            => ['label_key' => 'crit_gel',     'label' => 'Gel',     'val' => $chkGel],
-                                        'foreign_object' => ['label_key' => 'crit_foreign', 'label' => 'Dị vật',  'val' => $chkForeignObject],
-                                        'color'          => ['label_key' => 'crit_color',   'label' => 'Màu sắc', 'val' => $chkColor],
-                                        'print'          => ['label_key' => 'crit_print',   'label' => 'Chữ in',  'val' => $chkPrint]
+                                        'gel'            => ['label_key' => 'crit_gel',         'label' => 'Gel',       'val' => $chkGel],
+                                        'foreign_object' => ['label_key' => 'crit_foreign',     'label' => 'Dị vật',    'val' => $chkForeignObject],
+                                        'color'          => ['label_key' => 'crit_color',       'label' => 'Màu sắc',   'val' => $chkColor],
+                                        'print'          => ['label_key' => 'crit_print',       'label' => 'Chữ in',    'val' => $chkPrint],
+                                        'clump'          => ['label_key' => 'crit_clump',       'label' => 'Vón cục',   'val' => $chkClump],
+                                        'scratch'        => ['label_key' => 'crit_scratch',     'label' => 'Trầy',      'val' => $chkScratch],
+                                        'streak'         => ['label_key' => 'crit_streak',      'label' => 'Xước',      'val' => $chkStreak],
+                                        'deformation'    => ['label_key' => 'crit_deformation', 'label' => 'Biến dạng', 'val' => $chkDeformation]
                                     ];
                                     foreach ($qcChecks as $key => $c):
                                         $isOk = (bool)$c['val'];
@@ -504,6 +524,7 @@ foreach ($bobins as $b) {
     <script src="/WEB_BOBIN/public/assets/js/QC/suggestion.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/QC/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

@@ -12,6 +12,10 @@ class BobinCreateDTO
     public bool $ext_check_foreign_object;
     public bool $ext_check_color;
     public bool $ext_check_print;
+    public bool $ext_check_clump;
+    public bool $ext_check_scratch;
+    public bool $ext_check_streak;
+    public bool $ext_check_deformation;
     //!
     // Thông tin cơ bản
     public string $bobin_identification_code;
@@ -61,11 +65,15 @@ class BobinCreateDTO
 
         // Thêm vào trong hàm fromRequest():
         $dto->rack_code = trim($request['rack_code'] ?? '');
-        $dto->ext_check_diameter = filter_var($request['ext_check_diameter'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $dto->ext_check_gel      = filter_var($request['ext_check_gel'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_diameter       = filter_var($request['ext_check_diameter'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_gel            = filter_var($request['ext_check_gel'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $dto->ext_check_foreign_object = filter_var($request['ext_check_foreign_object'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $dto->ext_check_color    = filter_var($request['ext_check_color'] ?? true, FILTER_VALIDATE_BOOLEAN);
-        $dto->ext_check_print    = filter_var($request['ext_check_print'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_color          = filter_var($request['ext_check_color'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_print          = filter_var($request['ext_check_print'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_clump          = filter_var($request['ext_check_clump'] ?? $request['ext_check_lump'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_scratch        = filter_var($request['ext_check_scratch'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_streak         = filter_var($request['ext_check_streak'] ?? $request['ext_check_scuff'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->ext_check_deformation    = filter_var($request['ext_check_deformation'] ?? $request['ext_check_deformed'] ?? true, FILTER_VALIDATE_BOOLEAN);
 
         $dto->bobin_size = trim($request['bobin_size'] ?? '');
         $dto->bobin_type = $request['bobin_type'] ?? '';

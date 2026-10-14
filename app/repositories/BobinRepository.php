@@ -11,26 +11,39 @@ class BobinRepository
     {
         $this->db = Database::getInstance();
     }
+    private ?array $cachedRacks = null;
+    private ?array $cachedCapacities = null;
+
     // Bổ sung hàm lấy toàn bộ Rack để hiển thị lên Dropdown
-    public function getAllRacks(): array
+    public function getAllRacks(bool $forceRefresh = false): array
     {
+        if (!$forceRefresh && $this->cachedRacks !== null) {
+            return $this->cachedRacks;
+        }
+
         $pdo = $this->db->pdo();
         try {
             $sql = "SELECT id, rack_code FROM rack_list ORDER BY rack_code ASC";
             $stmt = $pdo->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $this->cachedRacks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->cachedRacks;
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
             return [];
         }
     }
-    public function getBobinCapacities(): array
+    public function getBobinCapacities(bool $forceRefresh = false): array
     {
+        if (!$forceRefresh && $this->cachedCapacities !== null) {
+            return $this->cachedCapacities;
+        }
+
         $pdo = $this->db->pdo();
         try {
             $sql = "SELECT size_name, capacity FROM bobin_capacity";
             $stmt = $pdo->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            $this->cachedCapacities = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            return $this->cachedCapacities;
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
             return [];
@@ -39,6 +52,7 @@ class BobinRepository
 
     public function updateBobinCapacity(string $sizeName, int $newCapacity): bool
     {
+        $this->cachedCapacities = null;
         $pdo = $this->db->pdo();
         try {
             $sql = "UPDATE bobin_capacity SET capacity = :capacity WHERE size_name = :size_name";
@@ -1258,9 +1272,9 @@ class BobinRepository
 
         try {
             $baseTable = $this->getActiveBaseTable();
-            // Task-006: Busy_Checked hoặc Rolled trong 3 ngày gần nhất
+            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất
             $sql = "SELECT * FROM $baseTable AS active_bobins 
-                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)))";
+                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -1310,8 +1324,9 @@ class BobinRepository
         $pdo = $this->db->pdo();
         try {
             $baseTable = $this->getActiveBaseTable();
+            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất
             $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins 
-                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)))";
+                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {

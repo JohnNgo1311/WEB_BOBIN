@@ -716,6 +716,10 @@ class BobinController extends Controller
                     'foreign_object' => (bool)$dto->defect_foreign_object,
                     'color_issue'    => (bool)$dto->defect_color_issue,
                     'print_quality'  => (bool)$dto->defect_print_quality,
+                    'clump'          => (bool)$dto->defect_clump,
+                    'scratch'        => (bool)$dto->defect_scratch,
+                    'streak'         => (bool)$dto->defect_streak,
+                    'deformation'    => (bool)$dto->defect_deformation,
                     'note'           => $defectNote
                 ],
                 'inspector_code'  => $dto->inspector_code,
@@ -1162,6 +1166,10 @@ class BobinController extends Controller
             'QC - Dị vật',
             'QC - Màu sắc',
             'QC - Chữ in',
+            'QC - Vón cục',
+            'QC - Trầy',
+            'QC - Xước',
+            'QC - Biến dạng',
             'Ghi chú QC',
             'Mã máy cuộn',
             'Mã NV cuộn',
@@ -1257,6 +1265,10 @@ class BobinController extends Controller
             (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['clump'] ?? $defects['lump'] ?? $vi['defect_clump'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['scratch'] ?? $vi['defect_scratch'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['streak'] ?? $defects['scuff'] ?? $vi['defect_streak'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['deformation'] ?? $defects['deformed'] ?? $vi['defect_deformation'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             $defects['note'] ?? ($vi['defect_note'] ?? 'Chưa cập nhật'),
             // Cuộn
             $row['winding_machine'] ?? 'Chưa cập nhật',
@@ -1308,6 +1320,10 @@ class BobinController extends Controller
             (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['foreign_object'] ?? $visual['defect_foreign_object'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['color_issue'] ?? $visual['defect_color_issue'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['print_quality'] ?? $visual['defect_print_quality'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['clump'] ?? $defects['lump'] ?? $visual['defect_clump'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['scratch'] ?? $visual['defect_scratch'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['streak'] ?? $defects['scuff'] ?? $visual['defect_streak'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($visual['inspector_code']) && $visual['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['deformation'] ?? $defects['deformed'] ?? $visual['defect_deformation'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             $defects['note'] ?? ($visual['defect_note'] ?? 'Chưa cập nhật'),
             $row['winding_machine'] ?? 'Chưa cập nhật',
             $windEmp['employee_code'] ?? 'Chưa cập nhật',
@@ -1396,6 +1412,10 @@ class BobinController extends Controller
             'QC - Dị vật',
             'QC - Màu sắc',
             'QC - Chữ in',
+            'QC - Vón cục',
+            'QC - Trầy',
+            'QC - Xước',
+            'QC - Biến dạng',
             'Ghi chú QC',
             'Mã máy cuộn',
             'Mã NV cuộn',
@@ -1494,6 +1514,10 @@ class BobinController extends Controller
             (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['foreign_object'] ?? $vi['defect_foreign_object'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['color_issue'] ?? $vi['defect_color_issue'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['print_quality'] ?? $vi['defect_print_quality'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['clump'] ?? $defects['lump'] ?? $vi['defect_clump'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['scratch'] ?? $vi['defect_scratch'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['streak'] ?? $defects['scuff'] ?? $vi['defect_streak'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
+            (!empty($vi['inspector_code']) && $vi['inspector_code'] !== 'Chưa cập nhật') ? ((($defects['deformation'] ?? $defects['deformed'] ?? $vi['defect_deformation'] ?? false) ? 'NG' : 'OK')) : 'Chưa cập nhật',
             $defects['note'] ?? ($vi['defect_note'] ?? 'Chưa cập nhật'),
             // Cuộn
             $row['winding_machine'] ?? 'Chưa cập nhật',
@@ -1643,7 +1667,8 @@ class BobinController extends Controller
             throw new Exception('Vui lòng nhập lý do hủy Bobin trong phần ghi chú');
         }
 
-        $hasNG = $dto->defect_gel || $dto->defect_foreign_object || $dto->defect_color_issue || $dto->defect_print_quality;
+        $hasNG = $dto->defect_gel || $dto->defect_foreign_object || $dto->defect_color_issue || $dto->defect_print_quality
+            || $dto->defect_clump || $dto->defect_scratch || $dto->defect_streak || $dto->defect_deformation;
         if (!$hasNG) {
             throw new Exception('Phải có ít nhất 1 trường ngoại quan đánh giá NG mới được hủy Bobin');
         }
@@ -1657,26 +1682,39 @@ class BobinController extends Controller
         if (empty($dto->winding_machine) || $dto->winding_machine === "Chưa cập nhật") {
             throw new Exception('Vui lòng chọn hoặc nhập mã máy cuộn trước khi hủy');
         }
+
         if (empty($dto->winding_employee_code) || $dto->winding_employee_code === "Chưa cập nhật") {
-            throw new Exception('Vui lòng nhập mã nhân viên cuộn trước khi hủy');
+            if ($dto->source === 'winding_edit' && !empty($_SESSION['user']['employee_code'])) {
+                $dto->winding_employee_code = $_SESSION['user']['employee_code'];
+                $dto->winding_employee_name = $_SESSION['user']['employee_name'] ?? 'Editor';
+            } else {
+                throw new Exception('Vui lòng nhập mã nhân viên cuộn trước khi hủy');
+            }
         }
         if (empty($dto->winding_employee_name) || $dto->winding_employee_name === "Chưa cập nhật") {
-            throw new Exception('Vui lòng nhập họ tên nhân viên cuộn trước khi hủy');
+            if ($dto->source === 'winding_edit' && !empty($_SESSION['user']['employee_name'])) {
+                $dto->winding_employee_name = $_SESSION['user']['employee_name'];
+            } else {
+                throw new Exception('Vui lòng nhập họ tên nhân viên cuộn trước khi hủy');
+            }
         }
         if (empty($dto->winding_note) || $dto->winding_note === "Chưa cập nhật" || $dto->winding_note === "Không có ghi chú") {
             throw new Exception('Vui lòng nhập lý do hủy Bobin trong phần ghi chú');
         }
 
-        $hasReasonInErrors = false;
-        foreach ($dto->cancel_errors ?? [] as $err) {
-            if (in_array(trim((string)$err), ['Ngoại quan', 'Thông khí'], true)) {
-                $hasReasonInErrors = true;
-                break;
+        // Với nguồn hủy trực tiếp từ trang Điều chỉnh Cuộn (winding_edit), cho phép lý do hủy tổng hợp tự do
+        if ($dto->source !== 'winding_edit') {
+            $hasReasonInErrors = false;
+            foreach ($dto->cancel_errors ?? [] as $err) {
+                if (in_array(trim((string)$err), ['Ngoại quan', 'Thông khí'], true)) {
+                    $hasReasonInErrors = true;
+                    break;
+                }
             }
-        }
-        $hasReasonInNote = (mb_stripos($dto->winding_note, 'Ngoại quan') !== false) || (mb_stripos($dto->winding_note, 'Thông khí') !== false);
-        if (!$hasReasonInErrors && !$hasReasonInNote) {
-            throw new Exception('Vui lòng chọn lý do hủy "Thông khí" hoặc "Ngoại quan" trên hộp thoại xác nhận trước khi hủy Bobin');
+            $hasReasonInNote = (mb_stripos($dto->winding_note, 'Ngoại quan') !== false) || (mb_stripos($dto->winding_note, 'Thông khí') !== false);
+            if (!$hasReasonInErrors && !$hasReasonInNote) {
+                throw new Exception('Vui lòng chọn lý do hủy "Thông khí" hoặc "Ngoại quan" trên hộp thoại xác nhận trước khi hủy Bobin');
+            }
         }
     }
     // Hiển thị trang quản lý dung lượng Bobin cho Quản lý/Admin

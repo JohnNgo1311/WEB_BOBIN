@@ -596,6 +596,20 @@ CREATE TABLE `employee_list` (
     - Bảo toàn 100% các bộ lọc khác (trạng thái, kệ, loại Bobin, ngày tháng) và phân trang.
     - 100% tuân thủ môi trường mạng nội bộ xưởng (offline / local intranet), không phụ thuộc thư viện bên ngoài.
 
+### TASK-044:
+**Status:** DONE
+- Tại trang "Danh sách Hiện tại" (`app/views/listBobinDetailView.php`), bổ sung và hoàn thiện tính năng lọc theo trạng thái "Đã hủy" (`Cancelled`):
+  - **1. Bộ lọc Dropdown (`#statusFilter`):**
+    - Đưa tùy chọn `'Cancelled' => '❌ Đã hủy'` vào danh mục `$statusOptions` trong `app/views/listBobinDetailView.php`.
+    - Khi người dùng chọn trạng thái "❌ Đã hủy", hệ thống nạp URL `status=Cancelled`, lọc chính xác các Bobin có `bobin_current_status = 'Cancelled'`.
+  - **2. Đồng bộ Thống kê CSDL & Thẻ KPI Dashboard:**
+    - Cập nhật hàm `BobinRepository::getBobinStatusStats()` trả về chỉ số `$cancelled = (int)($rows['Cancelled'] ?? 0)`.
+    - Cập nhật công thức tính `$realRolled` trong `listBobinDetailView.php` trừ đi số lượng Bobin đã hủy (`$statusCounts['Cancelled'] ?? 0`).
+    - Bổ sung thẻ KPI bấm được cho "Đã hủy" (`.kpi-card.cancelled`) trong lưới KPI Dashboard hiển thị số lượng Bobin đã hủy và liên kết lọc nhanh `status=Cancelled`.
+    - Bổ sung cột "Đã hủy" vào biểu đồ trạng thái (`$chartLabels`, `$chartSeries`) và cập nhật mảng màu ApexCharts tương ứng (`#ef4444`).
+  - **3. Đa ngôn ngữ (`i18n.js`):**
+    - Bổ sung `{ vi: "❌ Đã hủy", en: "❌ Scrapped", ja: "❌ 廃棄済" }`, `{ vi: "Đã hủy", en: "Scrapped", ja: "廃棄済" }`, `{ vi: "ĐÃ HỦY", en: "SCRAPPED", ja: "廃棄済" }` vào `VALUE_TRANSLATIONS` trong `public/assets/js/i18n.js`.
+
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

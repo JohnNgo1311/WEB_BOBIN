@@ -32,19 +32,12 @@ class ListdataRepository
             'pending_count'          => "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Pending_Cancellation'",
         ];
 
-        $pdo = null;
         try {
             $pdo = $this->db->pdo();
-            $pdo->beginTransaction();
-
             $response = $this->fetchAllListData($queries, $pdo);
-            $pdo->commit();
 
             return $this->mapToEntity($response);
         } catch (PDOException $e) {
-            if ($pdo !== null && $pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
             throw new Exception("Lỗi truy vấn danh mục ListData: " . $e->getMessage());
         }
     }
@@ -83,8 +76,7 @@ class ListdataRepository
     {
         $response = [];
         foreach ($queries as $key => $sql) {
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute();
+            $stmt = $pdo->query($sql);
             $response[$key] = $key === 'pending_count'
                 ? (int) $stmt->fetchColumn()
                 : $stmt->fetchAll(PDO::FETCH_ASSOC);

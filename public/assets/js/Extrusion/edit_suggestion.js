@@ -28,7 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(console.error);
 });
 
-// 2. LOGIC GỢI Ý KHI NHẬP LIỆU
+// 2. LOGIC GỢI Ý KHI NHẬP LIỆU (TỐI ƯU HIỆU NĂNG)
+const MAX_EDIT_SUGGESTIONS = 40;
+let editSuggestTimer = null;
+
 document.addEventListener("input", function (e) {
     const target = e.target;
     const container = target.closest('.bobin-item') || document;
@@ -43,37 +46,49 @@ document.addEventListener("input", function (e) {
         // Tự động xóa mã chỉ thị nếu đang sửa mã sản phẩm
         if (poCodeEl) poCodeEl.value = "";
 
-        box.innerHTML = "";
-        if (!listData.list_product || !val) return (box.style.display = "none");
+        if (!listData.list_product || !val) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            return (box.style.display = "none");
+        }
 
         // Khớp chính xác (quét QR / gõ xong)
         const exactMatch = listData.list_product.find(p => p.product_code && p.product_code.toLowerCase() === val);
         if (exactMatch) {
+            clearTimeout(editSuggestTimer);
             if (poCodeEl) poCodeEl.value = exactMatch.production_order_code;
+            box.innerHTML = "";
             box.style.display = "none";
             return;
         }
 
-        const matches = listData.list_product.filter(product => {
-            const po = product.production_order_code || "";
-            const pc = product.product_code || "";
-            return po.toLowerCase().includes(val) || pc.toLowerCase().includes(val);
-        });
-
-        if (matches.length > 0) {
-            box.style.display = "block";
-            matches.forEach(product => {
-                const div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = `${product.product_code}`;
-                div.onclick = () => {
-                    if (poCodeEl) poCodeEl.value = product.production_order_code;
-                    target.value = product.product_code;
-                    box.style.display = "none";
-                };
-                box.appendChild(div);
+        clearTimeout(editSuggestTimer);
+        editSuggestTimer = setTimeout(() => {
+            box.innerHTML = "";
+            const matches = listData.list_product.filter(product => {
+                const po = product.production_order_code || "";
+                const pc = product.product_code || "";
+                return po.toLowerCase().includes(val) || pc.toLowerCase().includes(val);
             });
-        } else box.style.display = "none";
+
+            if (matches.length > 0) {
+                box.style.display = "block";
+                const fragment = document.createDocumentFragment();
+                const limited = matches.slice(0, MAX_EDIT_SUGGESTIONS);
+                limited.forEach(product => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    div.textContent = `${product.product_code}`;
+                    div.onclick = () => {
+                        if (poCodeEl) poCodeEl.value = product.production_order_code;
+                        target.value = product.product_code;
+                        box.style.display = "none";
+                    };
+                    fragment.appendChild(div);
+                });
+                box.appendChild(fragment);
+            } else box.style.display = "none";
+        }, 100);
     }
 
     // --- GỢI Ý NHÂN VIÊN ---
@@ -86,35 +101,47 @@ document.addEventListener("input", function (e) {
         // Tự động xóa họ tên nhân viên nếu đang sửa mã
         if (empName) empName.value = "";
 
-        box.innerHTML = "";
-        if (!listData.list_employee || !val) return (box.style.display = "none");
+        if (!listData.list_employee || !val) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            return (box.style.display = "none");
+        }
 
         const exactMatch = listData.list_employee.find(emp => emp.employee_code && emp.employee_code.toLowerCase() === val);
         if (exactMatch) {
+            clearTimeout(editSuggestTimer);
             if (empName) empName.value = exactMatch.employee_name;
+            box.innerHTML = "";
             box.style.display = "none";
             return;
         }
 
-        const matches = listData.list_employee.filter(emp =>
-            (emp.employee_code && emp.employee_code.toLowerCase().includes(val)) ||
-            (emp.employee_name && emp.employee_name.toLowerCase().includes(val))
-        );
+        clearTimeout(editSuggestTimer);
+        editSuggestTimer = setTimeout(() => {
+            box.innerHTML = "";
+            const matches = listData.list_employee.filter(emp =>
+                (emp.employee_code && emp.employee_code.toLowerCase().includes(val)) ||
+                (emp.employee_name && emp.employee_name.toLowerCase().includes(val))
+            );
 
-        if (matches.length > 0) {
-            box.style.display = "block";
-            matches.forEach(emp => {
-                const div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = `${emp.employee_code} - ${emp.employee_name}`;
-                div.onclick = () => {
-                    target.value = emp.employee_code;
-                    if (empName) empName.value = emp.employee_name;
-                    box.style.display = "none";
-                };
-                box.appendChild(div);
-            });
-        } else box.style.display = "none";
+            if (matches.length > 0) {
+                box.style.display = "block";
+                const fragment = document.createDocumentFragment();
+                const limited = matches.slice(0, MAX_EDIT_SUGGESTIONS);
+                limited.forEach(emp => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    div.textContent = `${emp.employee_code} - ${emp.employee_name}`;
+                    div.onclick = () => {
+                        target.value = emp.employee_code;
+                        if (empName) empName.value = emp.employee_name;
+                        box.style.display = "none";
+                    };
+                    fragment.appendChild(div);
+                });
+                box.appendChild(fragment);
+            } else box.style.display = "none";
+        }, 100);
     }
 
     // --- GỢI Ý VỊ TRÍ RACK ---
@@ -123,20 +150,38 @@ document.addEventListener("input", function (e) {
         const box = container.querySelector("#rack_suggestions");
         if (!box) return;
 
-        box.innerHTML = "";
-        if (!listData.list_rack || !val) return (box.style.display = "none");
+        if (!listData.list_rack || !val) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            return (box.style.display = "none");
+        }
 
-        const matches = listData.list_rack.filter(item => item.rack_code && item.rack_code.toLowerCase().includes(val));
-        if (matches.length > 0) {
-            box.style.display = "block";
-            matches.forEach(item => {
-                const div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = item.rack_code;
-                div.onclick = () => { target.value = item.rack_code; box.style.display = "none"; };
-                box.appendChild(div);
-            });
-        } else box.style.display = "none";
+        const exactMatch = listData.list_rack.find(item => item.rack_code && item.rack_code.toLowerCase() === val);
+        if (exactMatch) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            box.style.display = "none";
+            return;
+        }
+
+        clearTimeout(editSuggestTimer);
+        editSuggestTimer = setTimeout(() => {
+            box.innerHTML = "";
+            const matches = listData.list_rack.filter(item => item.rack_code && item.rack_code.toLowerCase().includes(val));
+            if (matches.length > 0) {
+                box.style.display = "block";
+                const fragment = document.createDocumentFragment();
+                const limited = matches.slice(0, MAX_EDIT_SUGGESTIONS);
+                limited.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    div.textContent = item.rack_code;
+                    div.onclick = () => { target.value = item.rack_code; box.style.display = "none"; };
+                    fragment.appendChild(div);
+                });
+                box.appendChild(fragment);
+            } else box.style.display = "none";
+        }, 100);
     }
 
     // --- GỢI Ý LOT VẬT LIỆU ---
@@ -145,20 +190,38 @@ document.addEventListener("input", function (e) {
         const box = container.querySelector("#material_lot_suggestions");
         if (!box) return;
 
-        box.innerHTML = "";
-        if (!listData.list_material_lot || !val) return (box.style.display = "none");
+        if (!listData.list_material_lot || !val) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            return (box.style.display = "none");
+        }
 
-        const matches = listData.list_material_lot.filter(item => item.lot && item.lot.toLowerCase().includes(val));
-        if (matches.length > 0) {
-            box.style.display = "block";
-            matches.forEach(item => {
-                const div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = item.lot;
-                div.onclick = () => { target.value = item.lot; box.style.display = "none"; };
-                box.appendChild(div);
-            });
-        } else box.style.display = "none";
+        const exactMatch = listData.list_material_lot.find(item => item.lot && item.lot.toLowerCase() === val);
+        if (exactMatch) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            box.style.display = "none";
+            return;
+        }
+
+        clearTimeout(editSuggestTimer);
+        editSuggestTimer = setTimeout(() => {
+            box.innerHTML = "";
+            const matches = listData.list_material_lot.filter(item => item.lot && item.lot.toLowerCase().includes(val));
+            if (matches.length > 0) {
+                box.style.display = "block";
+                const fragment = document.createDocumentFragment();
+                const limited = matches.slice(0, MAX_EDIT_SUGGESTIONS);
+                limited.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    div.textContent = item.lot;
+                    div.onclick = () => { target.value = item.lot; box.style.display = "none"; };
+                    fragment.appendChild(div);
+                });
+                box.appendChild(fragment);
+            } else box.style.display = "none";
+        }, 100);
     }
 
     // --- GỢI Ý VẬT LIỆU ---
@@ -167,22 +230,32 @@ document.addEventListener("input", function (e) {
         const box = container.querySelector("#material_suggestions");
         if (!box) return;
 
-        box.innerHTML = "";
-        if (!listData.list_material || !val) return (box.style.display = "none");
+        if (!listData.list_material || !val) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            return (box.style.display = "none");
+        }
 
-        const uniqueBrands = [...new Set(listData.list_material.map(item => item.brand))]
-            .filter(brand => brand && brand.toLowerCase().includes(val));
+        clearTimeout(editSuggestTimer);
+        editSuggestTimer = setTimeout(() => {
+            box.innerHTML = "";
+            const uniqueBrands = [...new Set(listData.list_material.map(item => item.brand))]
+                .filter(brand => brand && brand.toLowerCase().includes(val));
 
-        if (uniqueBrands.length > 0) {
-            box.style.display = "block";
-            uniqueBrands.forEach(value => {
-                const div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = value;
-                div.onclick = () => { target.value = value; box.style.display = "none"; updatePrintLot(container); };
-                box.appendChild(div);
-            });
-        } else box.style.display = "none";
+            if (uniqueBrands.length > 0) {
+                box.style.display = "block";
+                const fragment = document.createDocumentFragment();
+                const limited = uniqueBrands.slice(0, MAX_EDIT_SUGGESTIONS);
+                limited.forEach(value => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    div.textContent = value;
+                    div.onclick = () => { target.value = value; box.style.display = "none"; updatePrintLot(container); };
+                    fragment.appendChild(div);
+                });
+                box.appendChild(fragment);
+            } else box.style.display = "none";
+        }, 100);
     }
 
     // --- GỢI Ý MÁY ĐÙN ---
@@ -191,20 +264,30 @@ document.addEventListener("input", function (e) {
         const box = container.querySelector("#machine_suggestions");
         if (!box) return;
 
-        box.innerHTML = "";
-        if (!listData.list_extrusion_machine || !val) return (box.style.display = "none");
+        if (!listData.list_extrusion_machine || !val) {
+            clearTimeout(editSuggestTimer);
+            box.innerHTML = "";
+            return (box.style.display = "none");
+        }
 
-        const matches = listData.list_extrusion_machine.filter(item => item.machine_name && item.machine_name.toLowerCase().includes(val));
-        if (matches.length > 0) {
-            box.style.display = "block";
-            matches.forEach(item => {
-                const div = document.createElement("div");
-                div.className = "suggestion-item";
-                div.textContent = item.machine_name;
-                div.onclick = () => { target.value = item.machine_name; box.style.display = "none"; updatePrintLot(container); };
-                box.appendChild(div);
-            });
-        } else box.style.display = "none";
+        clearTimeout(editSuggestTimer);
+        editSuggestTimer = setTimeout(() => {
+            box.innerHTML = "";
+            const matches = listData.list_extrusion_machine.filter(item => item.machine_name && item.machine_name.toLowerCase().includes(val));
+            if (matches.length > 0) {
+                box.style.display = "block";
+                const fragment = document.createDocumentFragment();
+                const limited = matches.slice(0, MAX_EDIT_SUGGESTIONS);
+                limited.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "suggestion-item";
+                    div.textContent = item.machine_name;
+                    div.onclick = () => { target.value = item.machine_name; box.style.display = "none"; updatePrintLot(container); };
+                    fragment.appendChild(div);
+                });
+                box.appendChild(fragment);
+            } else box.style.display = "none";
+        }, 100);
     }
 
     // --- THEO DÕI THAY ĐỔI ĐỂ TÍNH LẠI LOT IN ---

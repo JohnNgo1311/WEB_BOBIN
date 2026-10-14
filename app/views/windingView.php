@@ -106,6 +106,10 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             'foreign_object' => $vi['defect_foreign'] ?? ($vi['defect_foreign_object'] ?? false),
                             'color_issue'    => $vi['defect_color'] ?? ($vi['defect_color_issue'] ?? false),
                             'print_quality'  => $vi['defect_print'] ?? ($vi['defect_print_quality'] ?? false),
+                            'clump'          => $vi['defect_clump'] ?? false,
+                            'scratch'        => $vi['defect_scratch'] ?? false,
+                            'streak'         => $vi['defect_streak'] ?? false,
+                            'deformation'    => $vi['defect_deformation'] ?? false,
                             'note'           => $vi['defect_note'] ?? ''
                         ];
 
@@ -222,16 +226,20 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                     <div class="qc-badges">
                                         <?php
                                         $extChecks = [
-                                            'Đường kính' => $extCheck['diameter'] ?? true,
-                                            'Gel'        => $extCheck['gel'] ?? true,
-                                            'Dị vật'     => $extCheck['foreign_object'] ?? true,
-                                            'Màu'        => $extCheck['color'] ?? true,
-                                            'Chữ in'     => $extCheck['print'] ?? true
+                                            'crit_diameter'    => ['label' => 'Đường kính', 'ok' => (bool)($extCheck['diameter'] ?? true)],
+                                            'crit_gel'         => ['label' => 'Gel',        'ok' => (bool)($extCheck['gel'] ?? true)],
+                                            'crit_foreign'     => ['label' => 'Dị vật',     'ok' => (bool)($extCheck['foreign_object'] ?? true)],
+                                            'crit_color'       => ['label' => 'Màu sắc',    'ok' => (bool)($extCheck['color'] ?? true)],
+                                            'crit_print'       => ['label' => 'Chữ in',     'ok' => (bool)($extCheck['print'] ?? true)],
+                                            'crit_clump'       => ['label' => 'Vón cục',    'ok' => (bool)($extCheck['clump'] ?? $extCheck['lump'] ?? true)],
+                                            'crit_scratch'     => ['label' => 'Trầy',      'ok' => (bool)($extCheck['scratch'] ?? true)],
+                                            'crit_streak'      => ['label' => 'Xước',      'ok' => (bool)($extCheck['streak'] ?? $extCheck['scuff'] ?? true)],
+                                            'crit_deformation' => ['label' => 'Biến dạng', 'ok' => (bool)($extCheck['deformation'] ?? $extCheck['deformed'] ?? true)]
                                         ];
-                                        foreach ($extChecks as $lbl => $isOk):
+                                        foreach ($extChecks as $i18nKey => $ec):
                                         ?>
-                                            <div class="vi-item <?= $isOk ? 'badge-ok' : 'badge-ng' ?>">
-                                                <span><?= $lbl ?></span><strong><?= $isOk ? 'OK' : 'NG' ?></strong>
+                                            <div class="vi-item <?= $ec['ok'] ? 'badge-ok' : 'badge-ng' ?>">
+                                                <span data-i18n="<?= $i18nKey ?>"><?= __($i18nKey) ?></span><strong><?= $ec['ok'] ? 'OK' : 'NG' ?></strong>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -255,6 +263,18 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                         </div>
                                         <div class="vi-item <?= ($defects['print_quality'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
                                             <span>Chữ in</span><strong><?= ($defects['print_quality'] ?? false) ? 'NG' : 'OK' ?></strong>
+                                        </div>
+                                        <div class="vi-item <?= (($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Vón cục</span><strong><?= (($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ? 'NG' : 'OK' ?></strong>
+                                        </div>
+                                        <div class="vi-item <?= (($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Trầy</span><strong><?= (($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ? 'NG' : 'OK' ?></strong>
+                                        </div>
+                                        <div class="vi-item <?= (($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Xước</span><strong><?= (($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ? 'NG' : 'OK' ?></strong>
+                                        </div>
+                                        <div class="vi-item <?= (($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Biến dạng</span><strong><?= (($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ? 'NG' : 'OK' ?></strong>
                                         </div>
                                     </div>
                                     <?php if (!empty($defects['note']) && $defects['note'] !== 'Chưa cập nhật'): ?>
@@ -376,6 +396,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <script src="/WEB_BOBIN/public/assets/js/Winding/suggestion.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
 </body>
 

@@ -269,24 +269,29 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                 <div class="ext-checks-group">
                     <?php
                     $checks = [
-                        'diameter'       => 'Đường kính',
-                        'gel'            => 'Gel',
-                        'foreign_object' => 'Dị vật',
-                        'color'          => 'Màu sắc',
-                        'print'          => 'Chữ in'
+                        'diameter'       => ['key' => 'crit_diameter',    'lbl' => 'Đường kính'],
+                        'gel'            => ['key' => 'crit_gel',         'lbl' => 'Gel'],
+                        'foreign_object' => ['key' => 'crit_foreign',     'lbl' => 'Dị vật'],
+                        'color'          => ['key' => 'crit_color',       'lbl' => 'Màu sắc'],
+                        'print'          => ['key' => 'crit_print',       'lbl' => 'Chữ in'],
+                        'clump'          => ['key' => 'crit_clump',       'lbl' => 'Vón cục'],
+                        'scratch'        => ['key' => 'crit_scratch',     'lbl' => 'Trầy'],
+                        'streak'         => ['key' => 'crit_streak',      'lbl' => 'Xước'],
+                        'deformation'    => ['key' => 'crit_deformation', 'lbl' => 'Biến dạng']
                     ];
-                    foreach ($checks as $key => $label):
+                    foreach ($checks as $key => $chkItem):
                     ?>
-                    <div class="ext-check-box">
-                        <span class="check-box-label"><?= $label ?></span>
-                        <button type="button" class="ext-toggle-btn active" data-field="ext_check_<?= $key ?>"
-                            data-value="true" onclick="this.classList.toggle('active'); 
+                        <div class="ext-check-box">
+                            <span class="check-box-label"
+                                data-i18n="<?= $chkItem['key'] ?>"><?= __($chkItem['key']) ?></span>
+                            <button type="button" class="ext-toggle-btn active" data-field="ext_check_<?= $key ?>"
+                                data-value="true" onclick="this.classList.toggle('active'); 
                                          const isActive = this.classList.contains('active');
                                          this.dataset.value = isActive ? 'true' : 'false';
                                          this.textContent = isActive ? 'OK' : 'NG';">
-                            OK
-                        </button>
-                    </div>
+                                OK
+                            </button>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -302,7 +307,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     </div>
 
     <script>
-    const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+        const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/suggestion.js?v=<?= time() ?>"></script>

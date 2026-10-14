@@ -288,6 +288,10 @@
       { vi: "Dị vật", en: "Foreign Object", ja: "異物" },
       { vi: "Màu sắc", en: "Color", ja: "色調" },
       { vi: "Chữ in", en: "Printing", ja: "印字" },
+      { vi: "Vón cục", en: "Lump", ja: "ダマ（塊）" },
+      { vi: "Trầy", en: "Scratch", ja: "擦れキズ" },
+      { vi: "Xước", en: "Streak", ja: "条痕・線キズ" },
+      { vi: "Biến dạng", en: "Deformation", ja: "変形" },
       {
         vi: "Mã số nhân viên (Tài khoản):",
         en: "Employee ID (Username):",
@@ -1285,7 +1289,7 @@
           }
         });
 
-      // J.3 Dịch các chip kiểm tra ngoại quan (.vi-badge, .ext-chip, .qc-chip)
+      // J.3 Dịch các chip kiểm tra ngoại quan (.vi-badge, .ext-chip, .qc-chip, .vi-item)
       const DEFECT_NAMES = [
         { vi: "Đường kính", en: "Diameter", ja: "外径" },
         { vi: "Đ.Kính", en: "Dia.", ja: "外径" },
@@ -1294,6 +1298,11 @@
         { vi: "Màu sắc", en: "Color", ja: "色調" },
         { vi: "Màu", en: "Color", ja: "色調" },
         { vi: "Chữ in", en: "Print", ja: "印字" },
+        { vi: "In", en: "Print", ja: "印字" },
+        { vi: "Vón cục", en: "Lump", ja: "ダマ（塊）" },
+        { vi: "Trầy", en: "Scratch", ja: "擦れキズ" },
+        { vi: "Xước", en: "Streak", ja: "条痕・線キズ" },
+        { vi: "Biến dạng", en: "Deformation", ja: "変形" },
       ];
       document.querySelectorAll(".vi-badge, .ext-chip").forEach((chip) => {
         const raw = chip.textContent.trim();
@@ -1314,7 +1323,7 @@
           }
         }
       });
-      document.querySelectorAll(".qc-chip > span:first-child").forEach((sp) => {
+      document.querySelectorAll(".qc-chip > span:first-child, .vi-item > span:first-child").forEach((sp) => {
         const raw = sp.textContent.trim();
         for (const d of DEFECT_NAMES) {
           if (raw === d.vi || raw === d.en || raw === d.ja) {

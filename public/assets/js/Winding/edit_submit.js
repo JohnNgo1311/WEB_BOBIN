@@ -127,6 +127,9 @@ function startWindingEdit(btnElement) {
     inputs.forEach(input => input.disabled = false);
 
     container.querySelector('.btn-edit').style.display = 'none';
+    if (container.querySelector('.btn-cancel-bobin')) {
+        container.querySelector('.btn-cancel-bobin').style.display = 'none';
+    }
     container.querySelector('.btn-cancel-edit').style.display = 'inline-flex';
     container.querySelector('.btn-confirm').style.display = 'inline-flex';
 
@@ -163,6 +166,9 @@ function cancelWindingEdit(btnElement) {
     inputs.forEach(input => input.disabled = true);
 
     container.querySelector('.btn-edit').style.display = 'inline-flex';
+    if (container.querySelector('.btn-cancel-bobin')) {
+        container.querySelector('.btn-cancel-bobin').style.display = 'inline-flex';
+    }
     container.querySelector('.btn-cancel-edit').style.display = 'none';
     container.querySelector('.btn-confirm').style.display = 'none';
 
@@ -259,4 +265,312 @@ async function handleWindingConfirm(buttonElement, bobinCode, bobinKeyCode) {
     } catch (err) {
         Toast.show(`❌ ${err.message}`, 'error');
     }
+}
+
+/* =========================================
+    XỬ LÝ: HỦY BOBIN PHÍA ĐIỀU CHỈNH CUỘN (TASK-040 REFINEMENT)
+========================================= */
+async function handleWindingEditCancel(btnElement, bobinCode, bobinKeyCode) {
+    if (!btnElement || !bobinCode || !bobinKeyCode) {
+        Toast.show("⚠️ Lỗi: Thiếu thông tin định danh Bobin!", "error");
+        return;
+    }
+
+    const container = btnElement.closest('.bobin-item');
+    if (!container) return;
+
+    if (currentEditingContainer && currentEditingContainer !== container) {
+        Toast.show("⚠️ Vui lòng hoàn thành hoặc hủy Bobin đang sửa trước!", "error");
+        currentEditingContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+
+    const machine = container.querySelector('.input-winding-machine')?.value.trim() || '';
+    const employeeCode = container.querySelector('.input-winding-employee-code')?.value.trim() || (window.CURRENT_USER?.code || '');
+    const employeeName = container.querySelector('.input-winding-employee-name')?.value.trim() || (window.CURRENT_USER?.name || '');
+    const productCode = container.querySelector('.wnd-tag-product')?.textContent.trim() || 'Chưa cập nhật';
+    const flowResult = container.querySelector('.select-flow-result')?.value || 'Thành công';
+
+    // Xóa overlay cũ nếu có
+    document.getElementById('winding-cancel-modal-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'wnd-modal-overlay';
+    overlay.id = 'winding-cancel-modal-overlay';
+
+    const t = (key, fallback) => (window.t ? window.t(key) : fallback);
+
+    const titleText = t('winding_edit_cancel_title', 'Xác nhận Hủy Bobin');
+    const descText = t('winding_edit_cancel_desc', 'Chuyển Bobin sang danh sách chờ hủy');
+    const alertMsg = t('winding_cancel_alert_msg', 'Chuyển Bobin sang danh sách chờ hủy. Cần phê duyệt từ Quản trị viên để hoàn tất hủy.');
+    const reasonLbl = t('winding_cancel_reason_lbl', 'Lý do hủy Bobin');
+    const reasonPh = t('ph_winding_cancel_reason', 'Nhập lý do hủy Bobin (bắt buộc)...');
+    const finishedQtyLbl = t('winding_cancel_finished_qty_lbl', 'Số lượng thành phẩm đã chạy trước khi hủy');
+    const finishedQtyPh = t('ph_winding_cancel_finished_qty', 'VD: 150 (nhập 0 nếu chưa chạy)');
+    const previewLbl = t('winding_cancel_preview_lbl', 'Nội dung ghi chú sẽ lưu:');
+    const suggestionsLbl = t('winding_cancel_quick_suggestions', 'Gợi ý nhanh:');
+    const unitRoll = t('qty_unit_roll', 'Cuộn');
+    const btnCancelText = t('btn_cancel', 'Hủy bỏ');
+    const btnConfirmText = t('btn_confirm_cancel_bobin', '🗑️ Xác nhận đưa vào chờ hủy');
+
+    // Danh sách gợi ý lý do hủy: Thông khí, ngoại quan, A1, A2, A3, A4, A5
+    const reasonSuggestions = [
+        { label: t('chip_reason_airflow', 'Thông khí'), val: t('chip_reason_airflow', 'Thông khí') },
+        { label: t('chip_reason_appearance', 'Ngoại quan'), val: t('chip_reason_appearance', 'Ngoại quan') },
+        { label: 'A1', val: 'A1' },
+        { label: 'A2', val: 'A2' },
+        { label: 'A3', val: 'A3' },
+        { label: 'A4', val: 'A4' },
+        { label: 'A5', val: 'A5' }
+    ];
+
+    overlay.innerHTML = `
+        <div class="wnd-modal-box" role="dialog" aria-modal="true" aria-labelledby="dlg_title">
+            <div class="wnd-modal-header">
+                <div class="wnd-modal-header-text">
+                    <h3 class="wnd-modal-title" id="dlg_title">
+                        <span>🗑️</span>
+                        <span>${titleText}</span>
+                    </h3>
+                    <p class="wnd-modal-subtitle">${descText}</p>
+                </div>
+                <button type="button" class="wnd-modal-close" title="${btnCancelText}" aria-label="Close">✕</button>
+            </div>
+
+            <div class="wnd-modal-body">
+                <!-- Cảnh báo trạng thái -->
+                <div class="wnd-cancel-alert">
+                    <span class="wnd-cancel-alert-icon">⚠️</span>
+                    <div class="wnd-cancel-alert-content">
+                        <div><strong>Bobin #${bobinCode}</strong></div>
+                        <div style="font-size: 12px; margin-top: 2px;">${alertMsg}</div>
+                    </div>
+                </div>
+
+                <!-- Tóm tắt thông tin Bobin -->
+                <div class="wnd-cancel-summary">
+                    <div class="wnd-summary-item">
+                        <span class="wnd-summary-label">Mã Bobin</span>
+                        <span class="wnd-summary-val mono">#${bobinCode}</span>
+                    </div>
+                    <div class="wnd-summary-item">
+                        <span class="wnd-summary-label">Sản phẩm</span>
+                        <span class="wnd-summary-val product">${productCode}</span>
+                    </div>
+                    <div class="wnd-summary-item">
+                        <span class="wnd-summary-label">Máy cuộn</span>
+                        <span class="wnd-summary-val">${machine || '---'}</span>
+                    </div>
+                    <div class="wnd-summary-item">
+                        <span class="wnd-summary-label">Nhân viên cuộn</span>
+                        <span class="wnd-summary-val">${employeeCode ? employeeCode + ' - ' + employeeName : '---'}</span>
+                    </div>
+                </div>
+
+                <!-- Trường 1: Lý do hủy Bobin -->
+                <div class="wnd-modal-field">
+                    <label for="dlg_cancel_reason" class="wnd-modal-label">
+                        <span>📝 ${reasonLbl}</span>
+                        <span class="req">*</span>
+                    </label>
+                    <div class="wnd-modal-input-wrap">
+                        <input type="text" id="dlg_cancel_reason" class="wnd-modal-input" placeholder="${reasonPh}" autocomplete="off">
+                    </div>
+                    <div id="dlg_cancel_reason_err" class="wnd-modal-error"></div>
+
+                    <!-- Gợi ý nhanh lý do: Thông khí, ngoại quan, A1, A2, A3, A4, A5 -->
+                    <div class="wnd-quick-chips-wrapper">
+                        <span class="wnd-quick-chips-label">${suggestionsLbl}</span>
+                        <div class="wnd-quick-chips" id="reason_chips_container">
+                            ${reasonSuggestions.map(item => `
+                                <button type="button" class="wnd-chip-btn" data-val="${item.val}">
+                                    ${item.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trường 2: Số thành phẩm đã chạy trước khi hủy (Đơn vị: Cuộn, không cần gợi ý nhanh) -->
+                <div class="wnd-modal-field">
+                    <label for="dlg_finished_qty" class="wnd-modal-label">
+                        <span>🔢 ${finishedQtyLbl}</span>
+                    </label>
+                    <div class="wnd-modal-input-wrap">
+                        <input type="number" min="0" step="1" id="dlg_finished_qty" class="wnd-modal-input has-unit" placeholder="${finishedQtyPh}">
+                        <span class="wnd-modal-unit">${unitRoll}</span>
+                    </div>
+                </div>
+
+                <!-- Preview ghi chú sẽ lưu -->
+                <div class="wnd-cancel-preview-box">
+                    <div class="wnd-preview-header">
+                        <span>📋</span>
+                        <span>${previewLbl}</span>
+                    </div>
+                    <div id="dlg_note_preview" class="wnd-preview-text">
+                        Số thành phẩm đã chạy: 0 ${unitRoll} | Lý do hủy: ...
+                    </div>
+                </div>
+            </div>
+
+            <div class="wnd-modal-footer">
+                <button type="button" class="wnd-btn-modal-cancel">${btnCancelText}</button>
+                <button type="button" class="wnd-btn-modal-confirm">${btnConfirmText}</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const reasonInput = overlay.querySelector('#dlg_cancel_reason');
+    const qtyInput = overlay.querySelector('#dlg_finished_qty');
+    const previewEl = overlay.querySelector('#dlg_note_preview');
+    const errEl = overlay.querySelector('#dlg_cancel_reason_err');
+    const closeBtn = overlay.querySelector('.wnd-modal-close');
+    const cancelBtn = overlay.querySelector('.wnd-btn-modal-cancel');
+    const confirmBtn = overlay.querySelector('.wnd-btn-modal-confirm');
+    const reasonChips = overlay.querySelectorAll('#reason_chips_container .wnd-chip-btn');
+
+    // Đóng modal
+    const closeModal = () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        overlay.remove();
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        } else if (e.key === 'Enter' && e.target === reasonInput) {
+            confirmBtn.click();
+        }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Click ra ngoài overlay đóng modal
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Tự động focus vào ô nhập lý do
+    setTimeout(() => reasonInput.focus(), 120);
+
+    // Cập nhật live preview
+    const updatePreview = () => {
+        const reason = reasonInput.value.trim();
+        const qtyVal = qtyInput.value.trim();
+        const qtyText = qtyVal !== '' ? qtyVal : '0';
+
+        if (reason) {
+            previewEl.textContent = `Số thành phẩm đã chạy: ${qtyText} ${unitRoll} | Lý do hủy: ${reason}`;
+            previewEl.style.opacity = '1';
+            reasonInput.style.borderColor = '#cbd5e1';
+            errEl.style.display = 'none';
+        } else {
+            previewEl.textContent = `Số thành phẩm đã chạy: ${qtyText} ${unitRoll} | Lý do hủy: ...`;
+            previewEl.style.opacity = '0.7';
+        }
+
+        // Đồng bộ active state cho chips lý do
+        const currentParts = reason.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+        reasonChips.forEach(chip => {
+            const chipVal = chip.getAttribute('data-val').toLowerCase();
+            chip.classList.toggle('active', currentParts.includes(chipVal));
+        });
+    };
+
+    reasonInput.addEventListener('input', updatePreview);
+    qtyInput.addEventListener('input', updatePreview);
+
+    // Xử lý click chips lý do (hỗ trợ chọn nhanh / thêm / bỏ chọn)
+    reasonChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const chipVal = chip.getAttribute('data-val');
+            let current = reasonInput.value.trim();
+
+            if (!current) {
+                reasonInput.value = chipVal;
+            } else {
+                let parts = current.split(',').map(s => s.trim()).filter(Boolean);
+                const idx = parts.findIndex(p => p.toLowerCase() === chipVal.toLowerCase());
+                if (idx !== -1) {
+                    parts.splice(idx, 1);
+                } else {
+                    parts.push(chipVal);
+                }
+                reasonInput.value = parts.join(', ');
+            }
+            updatePreview();
+            reasonInput.focus();
+        });
+    });
+
+    // Xử lý xác nhận hủy
+    confirmBtn.addEventListener('click', async () => {
+        const reason = reasonInput.value.trim();
+        if (!reason) {
+            reasonInput.style.borderColor = '#ef4444';
+            errEl.textContent = t('err_winding_cancel_reason_required', 'Vui lòng nhập lý do hủy Bobin!');
+            errEl.style.display = 'block';
+            reasonInput.focus();
+            return;
+        }
+
+        const qtyVal = qtyInput.value.trim();
+        const qtyText = qtyVal !== '' ? qtyVal : '0';
+        const combinedNote = `Số thành phẩm đã chạy: ${qtyText} ${unitRoll} | Lý do hủy: ${reason}`;
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '⏳ ' + t('loading', 'Đang xử lý...');
+
+        const payload = {
+            bobin_identification_code: bobinCode,
+            bobin_key_code: bobinKeyCode,
+            winding_machine: machine || 'Chưa cập nhật',
+            winding_employee_code: employeeCode,
+            winding_employee_name: employeeName,
+            flow_test_result: flowResult,
+            winding_note: combinedNote,
+            source: 'winding_edit',
+            finished_product_qty: qtyText,
+            cancel_reason: reason
+        };
+
+        try {
+            const response = await fetch(API_BASE_URL + 'bobin/windingCancelBobin', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                closeModal();
+                if (window.Toast && window.Toast.flash) {
+                    window.Toast.flash(data.message || t('toast_saved_success', 'Hủy thành công!'), 'success');
+                } else {
+                    Toast.show(data.message || 'Hủy thành công!', 'success');
+                }
+                setTimeout(() => window.location.reload(), 450);
+            } else {
+                errEl.textContent = data.message || 'Lỗi khi hủy Bobin!';
+                errEl.style.display = 'block';
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = btnConfirmText;
+            }
+        } catch (error) {
+            console.error(error);
+            errEl.textContent = 'Đã xảy ra lỗi kết nối!';
+            errEl.style.display = 'block';
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = btnConfirmText;
+        }
+    });
 }

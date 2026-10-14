@@ -628,6 +628,10 @@ $typeOptions = [
                             'foreign_object' => $vi['defect_foreign'] ?? ($vi['defect_foreign_object'] ?? false),
                             'color_issue'    => $vi['defect_color'] ?? ($vi['defect_color_issue'] ?? false),
                             'print_quality'  => $vi['defect_print'] ?? ($vi['defect_print_quality'] ?? false),
+                            'clump'          => $vi['defect_clump'] ?? false,
+                            'scratch'        => $vi['defect_scratch'] ?? false,
+                            'streak'         => $vi['defect_streak'] ?? false,
+                            'deformation'    => $vi['defect_deformation'] ?? false,
                             'note'           => $vi['defect_note'] ?? ''
                         ];
                         if (empty($vi['inspection_time']) && !empty($vi['inspected_at'])) {
@@ -804,7 +808,11 @@ $typeOptions = [
                                         isset($extCheck['gel']) ||
                                         isset($extCheck['foreign_object']) ||
                                         isset($extCheck['color']) ||
-                                        isset($extCheck['print'])
+                                        isset($extCheck['print']) ||
+                                        isset($extCheck['clump']) ||
+                                        isset($extCheck['scratch']) ||
+                                        isset($extCheck['streak']) ||
+                                        isset($extCheck['deformation'])
                                     );
                             ?>
                             <?php if (!$hasExtCheck): ?>
@@ -815,14 +823,20 @@ $typeOptions = [
                             <div class="qc-badges">
                                 <?php
                                         $extItems = [
-                                            'Đường kính' => $extCheck['diameter'] ?? true,
-                                            'Gel'        => $extCheck['gel'] ?? true,
-                                            'Dị vật'     => $extCheck['foreign_object'] ?? true,
-                                            'Màu'        => $extCheck['color'] ?? true,
-                                            'Chữ in'     => $extCheck['print'] ?? true,
+                                            'crit_diameter'    => ['label' => 'Đường kính', 'ok' => (bool)($extCheck['diameter'] ?? true)],
+                                            'crit_gel'         => ['label' => 'Gel',        'ok' => (bool)($extCheck['gel'] ?? true)],
+                                            'crit_foreign'     => ['label' => 'Dị vật',     'ok' => (bool)($extCheck['foreign_object'] ?? true)],
+                                            'crit_color'       => ['label' => 'Màu sắc',    'ok' => (bool)($extCheck['color'] ?? true)],
+                                            'crit_print'       => ['label' => 'Chữ in',     'ok' => (bool)($extCheck['print'] ?? true)],
+                                            'crit_clump'       => ['label' => 'Vón cục',    'ok' => (bool)($extCheck['clump'] ?? $extCheck['lump'] ?? true)],
+                                            'crit_scratch'     => ['label' => 'Trầy',      'ok' => (bool)($extCheck['scratch'] ?? true)],
+                                            'crit_streak'      => ['label' => 'Xước',      'ok' => (bool)($extCheck['streak'] ?? $extCheck['scuff'] ?? true)],
+                                            'crit_deformation' => ['label' => 'Biến dạng', 'ok' => (bool)($extCheck['deformation'] ?? $extCheck['deformed'] ?? true)],
                                         ];
-                                        foreach ($extItems as $label => $isOk) {
-                                            echo extCheckBadge($label, $isOk);
+                                        foreach ($extItems as $i18nKey => $ec) {
+                                            $cls = $ec['ok'] ? 'badge-ok' : 'badge-ng';
+                                            $txt = $ec['ok'] ? 'OK' : 'NG';
+                                            echo "<div class='vi-item $cls'><span data-i18n='{$i18nKey}'>" . __($i18nKey) . "</span><strong>$txt</strong></div>";
                                         }
                                         ?>
                             </div>
@@ -862,6 +876,10 @@ $typeOptions = [
                                 <?= qcDefectBadge('Dị vật', $defects['foreign_object'] ?? false) ?>
                                 <?= qcDefectBadge('Màu', $defects['color_issue'] ?? false) ?>
                                 <?= qcDefectBadge('In', $defects['print_quality'] ?? false) ?>
+                                <?= qcDefectBadge('Vón cục', ($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ?>
+                                <?= qcDefectBadge('Trầy', ($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ?>
+                                <?= qcDefectBadge('Xước', ($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ?>
+                                <?= qcDefectBadge('Biến dạng', ($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ?>
                             </div>
                             <?php if (!empty($defects['note']) && $defects['note'] !== 'Chưa cập nhật'): ?>
                             <div class="qc-note">📝 <?= htmlspecialchars($defects['note']) ?></div>
@@ -954,6 +972,7 @@ $typeOptions = [
 
     <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/Manage/scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {

@@ -12,6 +12,9 @@ class BobinWindingCancelDTO
     public string $flow_test_result; // 'Thành công' hoặc 'Thất bại'
     public string $winding_note;
     public array $cancel_errors = [];
+    public ?string $source = null;
+    public ?string $finished_product_qty = null;
+    public ?string $cancel_reason = null;
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self
@@ -25,6 +28,9 @@ class BobinWindingCancelDTO
         $dto->flow_test_result = $request['flow_test_result'] ?? 'Thất bại';
         $dto->winding_note = $request["winding_note"] ?? '';
         $dto->cancel_errors = is_array($request['cancel_errors'] ?? null) ? $request['cancel_errors'] : [];
+        $dto->source = isset($request['source']) ? (string)$request['source'] : null;
+        $dto->finished_product_qty = isset($request['finished_product_qty']) ? (string)$request['finished_product_qty'] : null;
+        $dto->cancel_reason = isset($request['cancel_reason']) ? (string)$request['cancel_reason'] : null;
         return $dto;
     }
 }

@@ -313,6 +313,11 @@ foreach ($bobins as $b) {
                                     <span>✏️</span>
                                     <span data-i18n="winding_btn_edit"><?= __('winding_btn_edit') ?></span>
                                 </button>
+                                <button type="button" class="wnd-btn-delete btn-cancel-bobin"
+                                    onclick="handleWindingEditCancel(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
+                                    <span>🗑️</span>
+                                    <span data-i18n="btn_cancel_bobin"><?= __('btn_cancel_bobin') ?></span>
+                                </button>
                                 <button type="button" class="wnd-btn-cancel btn-cancel-edit" style="display: none;"
                                     onclick="cancelWindingEdit(this)">
                                     <span>✕</span>
@@ -367,9 +372,14 @@ foreach ($bobins as $b) {
     <!-- JS Variables & Script Modules -->
     <script>
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+        window.CURRENT_USER = {
+            code: <?= json_encode($_SESSION['user']['employee_code'] ?? '') ?>,
+            name: <?= json_encode($_SESSION['user']['employee_name'] ?? '') ?>
+        };
     </script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

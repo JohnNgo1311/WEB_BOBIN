@@ -12,6 +12,10 @@ class BobinQCUpdateDTO
     public bool $defect_foreign_object;
     public bool $defect_color_issue;
     public bool $defect_print_quality;
+    public bool $defect_clump;
+    public bool $defect_scratch;
+    public bool $defect_streak;
+    public bool $defect_deformation;
     public string $defect_note;
     public string $confirm_password;
 
@@ -32,6 +36,10 @@ class BobinQCUpdateDTO
         $dto->defect_foreign_object = filter_var($request['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $dto->defect_color_issue = filter_var($request['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $dto->defect_print_quality = filter_var($request['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_clump = filter_var($request['defect_clump'] ?? $request['defect_lump'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_scratch = filter_var($request['defect_scratch'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_streak = filter_var($request['defect_streak'] ?? $request['defect_scuff'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_deformation = filter_var($request['defect_deformation'] ?? $request['defect_deformed'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         if (isset($request['defect_note']) && !empty(trim($request['defect_note']))) {
             $dto->defect_note = trim($request['defect_note']);

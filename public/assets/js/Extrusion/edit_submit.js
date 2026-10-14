@@ -380,7 +380,11 @@ async function handleConfirm(buttonElement, bobinCode) {
             ext_check_gel: extChecks['ext_check_gel'] ?? true,
             ext_check_foreign_object: extChecks['ext_check_foreign_object'] ?? true,
             ext_check_color: extChecks['ext_check_color'] ?? true,
-            ext_check_print: extChecks['ext_check_print'] ?? true
+            ext_check_print: extChecks['ext_check_print'] ?? true,
+            ext_check_clump: extChecks['ext_check_clump'] ?? true,
+            ext_check_scratch: extChecks['ext_check_scratch'] ?? true,
+            ext_check_streak: extChecks['ext_check_streak'] ?? true,
+            ext_check_deformation: extChecks['ext_check_deformation'] ?? true
         };
 
         const extDisplay = [
@@ -388,7 +392,11 @@ async function handleConfirm(buttonElement, bobinCode) {
             { label: window.t ? (window.t('crit_gel') || 'Gel') : 'Gel', ok: payload.ext_check_gel },
             { label: window.t ? (window.t('crit_foreign') || 'Dị vật') : 'Dị vật', ok: payload.ext_check_foreign_object },
             { label: window.t ? (window.t('crit_color') || 'Màu sắc') : 'Màu sắc', ok: payload.ext_check_color },
-            { label: window.t ? (window.t('crit_print') || 'Chữ in') : 'Chữ in', ok: payload.ext_check_print }
+            { label: window.t ? (window.t('crit_print') || 'Chữ in') : 'Chữ in', ok: payload.ext_check_print },
+            { label: window.t ? (window.t('crit_clump') || 'Vón cục') : 'Vón cục', ok: payload.ext_check_clump },
+            { label: window.t ? (window.t('crit_scratch') || 'Trầy') : 'Trầy', ok: payload.ext_check_scratch },
+            { label: window.t ? (window.t('crit_streak') || 'Xước') : 'Xước', ok: payload.ext_check_streak },
+            { label: window.t ? (window.t('crit_deformation') || 'Biến dạng') : 'Biến dạng', ok: payload.ext_check_deformation }
         ];
 
         let checksHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">';

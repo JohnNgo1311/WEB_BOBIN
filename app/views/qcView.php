@@ -205,16 +205,20 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                 <div class="qc-badges">
                                     <?php
                                     $extChecks = [
-                                        'Đường kính' => $extCheck['diameter'] ?? true,
-                                        'Gel'        => $extCheck['gel'] ?? true,
-                                        'Dị vật'     => $extCheck['foreign_object'] ?? true,
-                                        'Màu'        => $extCheck['color'] ?? true,
-                                        'Chữ in'     => $extCheck['print'] ?? true
+                                        'crit_diameter'    => ['label' => 'Đường kính', 'ok' => (bool)($extCheck['diameter'] ?? true)],
+                                        'crit_gel'         => ['label' => 'Gel',        'ok' => (bool)($extCheck['gel'] ?? true)],
+                                        'crit_foreign'     => ['label' => 'Dị vật',     'ok' => (bool)($extCheck['foreign_object'] ?? true)],
+                                        'crit_color'       => ['label' => 'Màu sắc',    'ok' => (bool)($extCheck['color'] ?? true)],
+                                        'crit_print'       => ['label' => 'Chữ in',     'ok' => (bool)($extCheck['print'] ?? true)],
+                                        'crit_clump'       => ['label' => 'Vón cục',    'ok' => (bool)($extCheck['clump'] ?? $extCheck['lump'] ?? true)],
+                                        'crit_scratch'     => ['label' => 'Trầy',      'ok' => (bool)($extCheck['scratch'] ?? true)],
+                                        'crit_streak'      => ['label' => 'Xước',      'ok' => (bool)($extCheck['streak'] ?? $extCheck['scuff'] ?? true)],
+                                        'crit_deformation' => ['label' => 'Biến dạng', 'ok' => (bool)($extCheck['deformation'] ?? $extCheck['deformed'] ?? true)]
                                     ];
-                                    foreach ($extChecks as $lbl => $isOk):
+                                    foreach ($extChecks as $i18nKey => $ec):
                                     ?>
-                                        <div class="vi-item <?= $isOk ? 'badge-ok' : 'badge-ng' ?>">
-                                            <span><?= $lbl ?></span><strong><?= $isOk ? 'OK' : 'NG' ?></strong>
+                                        <div class="vi-item <?= $ec['ok'] ? 'badge-ok' : 'badge-ng' ?>">
+                                            <span data-i18n="<?= $i18nKey ?>"><?= __($i18nKey) ?></span><strong><?= $ec['ok'] ? 'OK' : 'NG' ?></strong>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -229,10 +233,12 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
                                 <div class="qc-form-row">
                                     <!-- TỰ ĐỘNG ĐIỀN THEO TÀI KHOẢN ĐĂNG NHẬP -->
-                                    <div class="qc-input-group">
+                                    <div class="qc-input-group <?= empty($currentEmpCode) ? 'suggestion-wrapper' : '' ?>">
                                         <label>Mã NV QC:</label>
-                                        <input type="text" class="qc-input input-inspector-code input-readonly"
-                                            value="<?= htmlspecialchars($currentEmpCode) ?>" readonly>
+                                        <input type="text" class="qc-input input-inspector-code <?= !empty($currentEmpCode) ? 'input-readonly' : '' ?>"
+                                            value="<?= htmlspecialchars($currentEmpCode) ?>" <?= !empty($currentEmpCode) ? 'readonly' : '' ?>
+                                            placeholder="<?= __('ph_qc_code_input', 'Nhập mã NV QC...') ?>" autocomplete="off">
+                                        <div class="suggestion-box"></div>
                                     </div>
                                     <div class="qc-input-group">
                                         <label>Họ tên NV QC:</label>
@@ -241,15 +247,24 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                     </div>
                                 </div>
 
-                                <!-- 4 NÚT KIỂM SOÁT NGOẠI QUAN -->
+                                <!-- 8 NÚT KIỂM SOÁT NGOẠI QUAN -->
                                 <div class="qc-switches-label">Kết quả kiểm tra ngoại quan:</div>
-                                <div class="qc-badges" style="margin-bottom: 8px;">
+                                <div class="qc-switches-grid">
                                     <?php
-                                    $qcItems = ['gel' => 'Gel', 'foreign_object' => 'Dị vật', 'color_issue' => 'Màu sắc', 'print_quality' => 'Chữ in'];
-                                    foreach ($qcItems as $key => $lbl):
+                                    $qcItems = [
+                                        'gel'            => ['key' => 'crit_gel',         'lbl' => 'Gel'],
+                                        'foreign_object' => ['key' => 'crit_foreign',     'lbl' => 'Dị vật'],
+                                        'color_issue'    => ['key' => 'crit_color',       'lbl' => 'Màu sắc'],
+                                        'print_quality'  => ['key' => 'crit_print',       'lbl' => 'Chữ in'],
+                                        'clump'          => ['key' => 'crit_clump',       'lbl' => 'Vón cục'],
+                                        'scratch'        => ['key' => 'crit_scratch',     'lbl' => 'Trầy'],
+                                        'streak'         => ['key' => 'crit_streak',      'lbl' => 'Xước'],
+                                        'deformation'    => ['key' => 'crit_deformation', 'lbl' => 'Biến dạng']
+                                    ];
+                                    foreach ($qcItems as $key => $qcDefect):
                                     ?>
-                                        <div class="vi-item-switch" data-key="<?= $key ?>">
-                                            <span class="switch-title"><?= $lbl ?></span>
+                                        <div class="vi-item-switch" data-key="<?= $key ?>" onclick="const btn = this.querySelector('.toggle-switch'); if(event.target !== btn) { btn.click(); }">
+                                            <span class="switch-title" data-i18n="<?= $qcDefect['key'] ?>"><?= __($qcDefect['key']) ?></span>
                                             <button type="button" class="toggle-switch active" data-defect="<?= $key ?>"
                                                 data-value="false" onclick="this.classList.toggle('active'); 
                                                          const isOk = this.classList.contains('active');
@@ -292,29 +307,6 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
         </div>
     </div>
 
-    <!-- MODAL ĐỔI LOẠI BOBIN ĐIỀU CHỈNH -->
-    <div id="modalChangeType" class="modal-overlay" style="display: none;">
-        <div class="modal-box">
-            <h3>Đổi loại Bobin sang "Điều chỉnh"</h3>
-            <p>Vui lòng chọn loại điều chỉnh cụ thể:</p>
-            <select id="selectNewBobinType" class="modal-select">
-                <option value="Điều chỉnh (Do CP)">Điều chỉnh (Do CP)</option>
-                <option value="Điều chỉnh (Ngoại quan: Gel)">Điều chỉnh (Ngoại quan: Gel)</option>
-                <option value="Điều chỉnh (Ngoại quan: Dị vật)">Điều chỉnh (Ngoại quan: Dị vật)</option>
-                <option value="Điều chỉnh (Ngoại quan: Trầy)">Điều chỉnh (Ngoại quan: Trầy)</option>
-                <option value="Điều chỉnh (Ngoại quan: Biến dạng)">Điều chỉnh (Ngoại quan: Biến dạng)</option>
-                <option value="Điều chỉnh (Ngoại quan: Xước)">Điều chỉnh (Ngoại quan: Xước)</option>
-                <option value="Điều chỉnh (Ngoại quan: Chữ in)">Điều chỉnh (Ngoại quan: Chữ in)</option>
-                <option value="Điều chỉnh (Ngoại quan: Vón cục)">Điều chỉnh (Ngoại quan: Vón cục)</option>
-                <option value="Điều chỉnh (Ngoại quan: Màu)">Điều chỉnh (Ngoại quan: Màu)</option>
-            </select>
-            <div class="modal-actions">
-                <button type="button" class="btn-modal-cancel" onclick="closeModalChangeType()">Hủy bỏ</button>
-                <button type="button" class="btn-modal-submit" onclick="submitChangeType()">Xác nhận đổi loại</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
     </script>
@@ -322,6 +314,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <script src="/WEB_BOBIN/public/assets/js/QC/suggestion.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/QC/submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/QC/scanQR.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=1"></script>
 </body>
 

@@ -346,7 +346,7 @@ if (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '
             });
         });
     </script>
-
+    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

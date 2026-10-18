@@ -117691,14 +117691,14 @@ MODIFY
   `id` int(11) NOT NULL AUTO_INCREMENT,
   AUTO_INCREMENT = 427;
 
---
--- AUTO_INCREMENT cho bảng `rack_list`
---
-ALTER TABLE
-  `rack_list`
-MODIFY
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  AUTO_INCREMENT = 401;
+  --
+  -- AUTO_INCREMENT cho bảng ` rack_list`
+  --
+  ALTER TABLE
+    `rack_list`
+  MODIFY
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    AUTO_INCREMENT = 401;
 
 --
 -- AUTO_INCREMENT cho bảng `winding_machine_list`

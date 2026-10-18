@@ -1,6 +1,5 @@
 <?php
 // File: app/core/GlobalData.php
-require_once __DIR__ . '/../models/ListDataModel.php';
 require_once __DIR__ . '/../entities/BobinEntity.php';
 
 class GlobalData

@@ -618,9 +618,27 @@ class EmployeeController extends Controller
                 $cleanPerms = array_values(array_diff($cleanPerms, ['pending_cancel_view']));
             }
 
-            // Admin luôn giữ quyền quản lý phân quyền để tránh tự khóa mình
-            if (strtolower($emp['role']) === 'admin' && !in_array('permission_manage', $cleanPerms, true)) {
-                $cleanPerms[] = 'permission_manage';
+            // Admin luôn giữ quyền quản lý phân quyền và quyền xem hết cả 3 trang điều chỉnh theo mặc định
+            $empRoleLower = strtolower(trim($emp['role'] ?? ''));
+            if ($empRoleLower === 'admin') {
+                foreach (['permission_manage', 'extrusion_edit_view_all', 'qc_edit_view_all', 'winding_edit_view_all'] as $adminPerm) {
+                    if (!in_array($adminPerm, $cleanPerms, true)) {
+                        $cleanPerms[] = $adminPerm;
+                    }
+                }
+            } else {
+                // Nhân viên không phải Admin chỉ được cấp quyền xem toàn bộ trang điều chỉnh thuộc đúng nhóm của mình (đùn / cuộn / QC)
+                $allowedViewAll = match ($empRoleLower) {
+                    'extrusion' => 'extrusion_edit_view_all',
+                    'qc'        => 'qc_edit_view_all',
+                    'winding'   => 'winding_edit_view_all',
+                    default     => ''
+                };
+                foreach (['extrusion_edit_view_all', 'qc_edit_view_all', 'winding_edit_view_all'] as $vp) {
+                    if ($vp !== $allowedViewAll && in_array($vp, $cleanPerms, true)) {
+                        $cleanPerms = array_values(array_diff($cleanPerms, [$vp]));
+                    }
+                }
             }
 
             $permsJson = json_encode($cleanPerms, JSON_UNESCAPED_UNICODE);

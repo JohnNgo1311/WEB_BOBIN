@@ -2,6 +2,102 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [TASK-048] - 2026-10-19 - Tính Năng Yêu Cầu Đăng Xuất Định Kỳ Tại 4 Thời Điểm Cố Định (6:05 AM, 2:05 PM, 4:40 PM, 10:05 PM) Kèm Bộ Đếm Ngược Tự Động Đăng Xuất Sau 1 Phút
+
+### 1. Bối cảnh & Yêu cầu:
+- **Mục đích:** Đảm bảo nhân viên ca sau (User 2) không sử dụng tài khoản còn đang mở của nhân viên ca trước (User 1) để thực hiện các tác vụ sản xuất/kiểm tra.
+- **Các thời điểm cố định trong ngày:**
+  - `6:05 AM` (`06:05`)
+  - `2:05 PM` (`14:05`)
+  - `4:40 PM` (`16:40`)
+  - `10:05 PM` (`22:05`)
+- **Phạm vi & Hành vi:**
+  - Áp dụng đối với **toàn bộ User** (khi đã đăng nhập).
+  - Khi đến thời điểm cố định, hiển thị Dialog yêu cầu User phải đăng xuất định kỳ.
+  - Hiển thị **Counter đếm ngược 1 phút (60 giây)**: nếu trong vòng 1 phút User không nhấn xác nhận đăng xuất trên Dialog, hệ thống tự động đăng xuất tài khoản.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Cấu hình Mốc Thời Gian & Kiểm Soát Phiên Cấp Backend (`AuthHelper.php`, `AuthController.php`, `Router.php`):**
+   - Định nghĩa `AuthHelper::PERIODIC_LOGOUT_SCHEDULES` (`06:05`, `14:05`, `16:40`, `22:05`) và `AuthHelper::PERIODIC_LOGOUT_COUNTDOWN_SECONDS = 60`.
+   - Xây dựng `AuthHelper::getNextPeriodicLogoutCheckpoint()` và `AuthHelper::checkPeriodicLogoutStatus()` tính toán mốc đăng xuất định kỳ kế tiếp ngay sau thời điểm đăng nhập (`logged_at_ts` theo múi giờ `Asia/Ho_Chi_Minh`).
+   - Bổ sung kiểm tra tại `Router::run()`: nếu phiên làm việc đã vượt quá mốc cố định + 60 giây mà chưa đăng xuất, Server tự động hủy Session và chuyển hướng về trang Login (hoặc trả về HTTP 401 cho AJAX); đồng thời khóa các thao tác ghi dữ liệu (`POST` API) khi đang trong cửa sổ 60 giây chờ xác nhận đăng xuất.
+2. **Giao diện Dialog Yêu Cầu Đăng Xuất Định Kỳ & Counter Đếm Ngược 60 Giây (`periodicLogoutModal.php`, `header.php`, `Controller.php`, `loginView.php`):**
+   - Tạo component [periodicLogoutModal.php](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/components/periodicLogoutModal.php) tự động tích hợp vào mọi trang đã đăng nhập thông qua `header.php` và `Controller::view()`.
+   - Hiển thị thông tin nhân viên đang đăng nhập, khung giờ kiểm soát cố định, vòng tròn tiến trình SVG kèm số giây đếm ngược (`60` -> `0` giây) và thanh progress bar đổi màu cảnh báo khẩn cấp khi còn $\le 15$ giây.
+   - Chặn đóng Dialog bằng phím `Escape` hoặc click nền ngoài; tự động kích hoạt đăng xuất ngay khi nhấn **"Xác nhận đăng xuất ngay"** hoặc khi bộ đếm ngược chạm `0` giây, đồng thời hiển thị thông báo tương ứng tại [loginView.php](file:///c:/xampp/htdocs/WEB_BOBIN/app/views/loginView.php).
+   - Bổ sung đầy đủ từ điển đa ngôn ngữ (`vi`, `en`, `ja`) trong [default_translations.json](file:///c:/xampp/htdocs/WEB_BOBIN/config/default_translations.json).
+
+---
+
+## [TASK-047] - 2026-10-18 - Bổ Sung Phân Trang Cho Toàn Bộ Các Trang Danh Sách/Lịch Sử/QC/Điều Chỉnh Đùn & Phân Quyền Sở Hữu / Xem Toàn Bộ Tại 3 Trang Điều Chỉnh (Đùn / QC / Cuộn)
+
+### 1. Bối cảnh & Yêu cầu:
+- **Mục 1 & 2 (Đồng bộ phân trang trên 9 trang nghiệp vụ):**
+  - Giữ nguyên 4 trang đã có phân trang (`Danh sách điều chỉnh QC`, `Danh sách điều chỉnh cuộn`, `Nhóm Cuộn`, `Danh sách Bobin hiện tại`).
+  - Bổ sung phân trang (50 mục/trang) cho 5 trang còn lại (`Danh sách điều chỉnh đùn`, `Nhóm QC`, `Lịch sử Bobin`, `Danh sách chờ hủy`, `Danh sách đã hủy`) mà không làm ảnh hưởng đến bất kỳ logic xử lý dữ liệu, biểu đồ, thẻ KPI, bộ lọc hay tính năng xuất Excel nào.
+- **Mục 3 (Phân quyền sở hữu tại 3 trang Điều chỉnh & Mở rộng quyền xem toàn bộ theo nhóm):**
+  - Áp dụng cơ chế quyền hiển thị và thao tác theo người thực hiện tại trang **Điều chỉnh Đùn** (`extrusion_employee`) và **Điều chỉnh QC** (`visual_inspection.inspector_code`) tương tự như trang **Điều chỉnh Cuộn** (`winding_employee`).
+  - Bổ sung tại trang Phân quyền (`employee/permissionsView`) tùy chọn cho phép chỉ định nhân viên cụ thể được xem và điều chỉnh toàn bộ Bobin thuộc nhóm của mình (Đùn / QC / Cuộn); tài khoản `admin` mặc định xem và thao tác được toàn bộ cả 3 trang điều chỉnh.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Phân trang 5 trang nghiệp vụ (`BobinRepository.php`, `BobinServices.php`, `BobinController.php`, các file View & CSS):**
+   - **Điều chỉnh Đùn (`extrusionEditBobinView.php`):** Bổ sung `countDetailBobinsForEditting()`, cập nhật `getListDetailBobinsForEditting()` hỗ trợ `LIMIT / OFFSET` (50 mục/trang) và thêm thanh điều hướng phân trang (`extrusionEditBobin.css`).
+   - **Nhóm QC (`qcView.php`):** Cập nhật `getDetailBobinsForQC()` nhận `$page`, `$limit` và kết nối với `countDetailBobinsForQC()` trong `BobinController::listBobinView_QC()`, hiển thị thanh phân trang (`listBobin_QC.css`).
+   - **Lịch sử Bobin (`listBobinHistoryView.php`), Danh sách chờ hủy (`listPendingCancellationView.php`), Danh sách đã hủy (`listCancelledBobinView.php`):** Giữ nguyên việc tính toán KPI, biểu đồ, thống kê mã sản phẩm và thống kê ngoại quan QC trên toàn bộ tập kết quả lọc (`$allBobins`), sau đó phân trang 50 mục/trang (`array_slice`) cho bảng dữ liệu hiển thị và thanh điều hướng phân trang (`advancedBobinFilter.css`). Đồng thời khắc phục lỗi bí danh bảng SQL trong `getDetailBobinsForPendingCancellation()` và `getDetailBobinsForCancelled()`.
+2. **Kiểm soát quyền sở hữu tại Điều chỉnh Đùn & Điều chỉnh QC (`BobinRepository.php`, `BobinServices.php`, `BobinController.php`):**
+   - Lọc mặc định theo mã nhân viên / ID người dùng đang đăng nhập (`extrusion_employee` cho Đùn, `visual_inspection` cho QC) và gỡ bỏ giới hạn `INTERVAL 3 DAY`.
+   - Bổ sung `isBobinExtrusionCreatedByUser()` và `isBobinQcInspectedByUser()` để kiểm tra quyền sở hữu ở tầng API (`extrusionUpdateBobin`, `extrusionDeleteBobin`, `updateQCEditBobin`, `qcCancelBobin`), trả về HTTP 403 nếu người dùng không có quyền sở hữu và không có quyền xem toàn bộ.
+3. **Bổ sung 3 quyền "Xem & điều chỉnh toàn bộ Bobin" theo nhóm (`AuthHelper.php`, `EmployeeController.php`, `employeePermissionsView.php`):**
+   - Định nghĩa 3 quyền mới `extrusion_edit_view_all`, `qc_edit_view_all`, `winding_edit_view_all` kèm thuộc tính `role_group` (`extrusion`, `qc`, `winding`).
+   - Xây dựng `AuthHelper::canViewAllEditBobins(string $stage, ?array $user = null)` và ràng buộc chặt chẽ tại `AuthHelper::getUserPermissions()` + `EmployeeController::updatePermissions()`: `admin` mặc định có đủ cả 3 quyền; nhân viên thuộc nhóm nào chỉ có thể được cấp quyền `*_edit_view_all` của đúng nhóm đó.
+   - Cập nhật giao diện `employeePermissionsView.php` tự động vô hiệu hóa (disable) các checkbox `*_edit_view_all` khác nhóm vai trò của nhân viên đang chọn, kèm bản dịch `vi`/`en`/`ja` trong `config/default_translations.json`.
+
+---
+
+## [TASK-046] - 2026-10-18 - Phân Quyền Hiển Thị Theo Người Xác Nhận Tại Trang "Điều Chỉnh Cuộn" & Bổ Sung Bộ Lọc / Thống Kê Đa Chiều Tại 4 Trang Quản Lý Bobin
+
+### 1. Bối cảnh & Yêu cầu:
+- **Mục 1 (Trang "Điều chỉnh cuộn"):** Chỉ hiển thị và cho phép thao tác trên những Bobin mà User đang đăng nhập là người đã nhập và xác nhận thông tin cuộn trước đó (xử lý trực tiếp ở tầng Backend/API; ví dụ Bobin `A0022` do nhân viên **Lê Thị Lụa** - mã NV `02224428` xác nhận chỉ hiển thị khi `02224428` đăng nhập).
+- **Mục 2 & 3 (Bổ sung Filter & Thống kê tại 4 trang quản lý Bobin — Danh sách Bobin, Lịch sử Bobin, Danh sách chờ hủy, Danh sách đã hủy):**
+  - **2a. Filter theo mã số nhân viên (`employee_code`):** Gợi ý dropdown danh sách nhân viên và tìm kiếm đồng thời trên cả **3 nhóm nhân viên** (Đùn `extrusion_employee`, Cuộn `winding_employee`, QC `visual_inspection`).
+  - **2b. Filter theo mã sản phẩm (`product_code`) & thống kê số lượng Bobin:** Gợi ý dropdown mã sản phẩm kèm số lượng Bobin và hiển thị thống kê số lượng Bobin tương ứng với mã sản phẩm đang lọc.
+  - **2c. Filter theo tình trạng ngoại quan QC (`qc_defect`) & thống kê số lượng:** Đồng bộ đủ 8 trường ngoại quan QC (`gel`, `foreign_object`, `color_issue`, `print_quality`, `clump`, `scratch`, `streak`, `deformation`) cùng tùy chọn tổng hợp (`ok_all`, `ng_any`), hiển thị số lượng Bobin của từng tình trạng ngoại quan tương ứng với tập dữ liệu lọc.
+  - Kết hợp độc lập và đồng thời tất cả các bộ lọc mới với các bộ lọc sẵn có trên từng trang.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Phân quyền hiển thị & bảo vệ API theo người xác nhận tại "Điều chỉnh cuộn" (`BobinRepository.php`, `BobinServices.php`, `BobinController.php`):**
+   - Cập nhật `getListDetailBobinsForWindingEdit()` và `countDetailBobinsForWindingEdit()` lọc theo `winding_employee.employee_code` / `winding_employee.id` của User đang đăng nhập và gỡ bỏ giới hạn `INTERVAL 3 DAY`.
+   - Bổ sung `isBobinWindingConfirmedByUser()` kiểm tra quyền sở hữu ở tầng API trong `updateWindingEditBobin()` và `windingCancelBobin()` (khi `source === 'winding_edit'`), trả về HTTP 403 nếu User khác cố tình gửi request chỉnh sửa/hủy.
+2. **Mở rộng DTO, Repository & Service cho 3 Bộ lọc và Thống kê (`BobinGetListDTO.php`, `BobinRepository.php`, `BobinServices.php`):**
+   - Bổ sung `$employeeCode`, `$productCode`, `$qcDefect` vào `BobinGetListDTO`.
+   - Xây dựng `appendAdvancedManagementFilters()` thực thi truy vấn SQL `OR` trên cả 3 trường JSON nhân viên (`$.employee_code` của Đùn, Cuộn và `$.inspector_code` của QC), lọc `$.product_code` và lọc tình trạng ngoại quan QC NULL-safe (`getSingleQcDefectNgExpr()`, `getQcDefectFilterCondition()`).
+   - Xây dựng các hàm thống kê `getDetailQcDefectStats()`, `getDetailProductCounts()`, `computeQcDefectStatsFromRows()`, `computeProductCountsFromRows()` và `getDetailBobinsForCancelled()`.
+3. **Giao diện Component Bộ lọc & Thống kê dùng chung và Trang "Danh sách đã hủy" (`advancedBobinFilterAndStats.php`, `advancedBobinFilter.css`, `listCancelledBobinView.php`):**
+   - Tạo component `app/views/components/advancedBobinFilterAndStats.php` và stylesheet `public/assets/css/advancedBobinFilter.css`, tích hợp đồng bộ vào `listBobinDetailView.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php` và `listCancelledBobinView.php`.
+   - Bổ sung route và menu "Danh sách đã hủy" (`bobin/listCancelledBobinView`) trong `Router.php`, `AuthHelper.php`, `sidebar.php` và cập nhật từ điển đa ngôn ngữ `vi`/`en`/`ja` trong `config/default_translations.json`.
+
+---
+
+## [TASK-045] - 2026-10-18 - Giả Lập 500 Mẫu Bobin CSDL & Chuẩn Hóa Logic Thống Kê / Lọc Theo Điều Kiện Đầy Đủ Thông Tin Nhóm Đùn
+
+### 1. Bối cảnh & Yêu cầu:
+- Giả lập dữ liệu CSDL khoảng 500 Bobin có đầy đủ thông tin sản xuất để phục vụ kiểm thử.
+- Tại `kpi-grid` (trang Danh sách Bobin hiện tại), đối với tất cả các thẻ trạng thái lọc (`kpi-card`), chỉ đếm những Bobin có đầy đủ thông tin nhập từ nhóm đùn (`A0028` thuộc "Đã QC" & "Tồn line"; `A0031` thuộc "Đã cuộn"; các Bobin mang trạng thái `Rolled` nhưng chưa có hoặc thiếu thông tin đùn như `A0029`, `A0032` không được liệt vào "Đã cuộn" mà chỉ thuộc "Bobin trống").
+- Tại `filter-dashboard`, tất cả các chức năng lọc chỉ lọc những Bobin có thông tin đầy đủ từ nhóm đùn; riêng logic Bobin trống vẫn giữ nguyên chức năng.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Giả lập Dữ liệu 500 Bobin Trong CSDL (`bobin_list_detail`, `bobin_list_general`, `bobin_history`):**
+   - Bảo toàn các bản ghi test hiện hữu (`A0021..A0050`, `C0001`) và bổ sung đồng bộ 473 Bobin mới (`A0051..A0204`, `B0001..B0160`, `C0002..C0160`) sử dụng dữ liệu danh mục thực tế (`product_list`, `material_lot_list`, `employee_list`, `rack_list`, `winding_machine_list`).
+   - Tổng số Bobin có đầy đủ thông tin nhóm đùn đạt đúng **500 Bobin** (`PL7-3`: 180, `PL4-7 (TU04.TU06)`: 160, `PL4-7 (TU08~)`: 160), phân bổ trạng thái: `Đã cuộn` (220), `Chưa QC` (110), `Đã QC` (120), `Tồn line` (230), `Chờ hủy` (20), `Đã hủy` (30), `Bobin trống` (1,110 / 1,360).
+2. **Định nghĩa Điều kiện Đầy đủ Thông tin Nhóm Đùn (`app/repositories/BobinRepository.php`):**
+   - Xây dựng phương thức `getExtrusionCompleteCondition()` kiểm tra đầy đủ các trường bắt buộc từ công đoạn Đùn: `products` (`$.product_code`), `extrusion_employee` (`$.employee_code`), `material_lot` (`$.lot`), `rack` (`$.code`), `extrusion_check`, `print_lot`, `length_m > 0`, `shift`, `extrusion_date`, `finish_time`.
+   - Áp dụng điều kiện này vào `getBobinStatusStats()`, `getBobinListDetail()`, `countBobinListDetail()`, `getBobinListDetailForExport()` và các truy vấn danh sách công đoạn liên quan, giữ nguyên điều kiện cho trường hợp `status = 'Empty'`.
+3. **Chuẩn hóa Hiển thị KPI Grid (`app/views/listBobinDetailView.php`):**
+   - Cập nhật `$statusCounts['Rolled']` lấy trực tiếp số lượng Bobin có `bobin_current_status = 'Rolled'` kèm đầy đủ thông tin nhóm đùn từ `getBobinStatusStats()`, loại bỏ công thức trừ ngược gây đếm nhầm các Bobin trống chưa nhập dữ liệu đùn vào mục "Đã cuộn".
+   - Giữ nguyên công thức tính "Bobin Trống": `$emptyBobins = max(0, $totalRealBobins - $statusCounts['Line'] - $statusCounts['Pending_Cancellation'])`.
+
+---
+
 ## [TASK-044] - 2026-10-14 - Bổ Sung Chức Năng Lọc Trạng Thái "Đã Hủy" (Cancelled) Tại Trang "Danh Sách Hiện Tại" (listBobinDetailView)
 
 ### 1. Bối cảnh & Yêu cầu:
@@ -18,37 +114,6 @@ Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã ngu�
    - Bổ sung cột "Đã hủy" vào nhãn và chuỗi số liệu biểu đồ ApexCharts (`$chartLabels`, `$chartSeries`) kèm mã màu `#ef4444`.
 3. **Đồng bộ Đa ngôn ngữ (`public/assets/js/i18n.js`):**
    - Bổ sung `{ vi: "❌ Đã hủy", en: "❌ Scrapped", ja: "❌ 廃棄済" }`, `{ vi: "Đã hủy", en: "Scrapped", ja: "廃棄済" }`, `{ vi: "ĐÃ HỦY", en: "SCRAPPED", ja: "廃棄済" }` vào `VALUE_TRANSLATIONS` trong `public/assets/js/i18n.js` để tự động dịch dropdown và thẻ badge khi chuyển đổi giữa Tiếng Việt, Tiếng Anh và Tiếng Nhật.
-
----
-
-## [TASK-043] - 2026-04-20 - Tự Động Lọc Tức Thì Dữ Liệu Khi Nhập Đủ Mã Bobin (C0001) Trên Toàn Bộ Các Trang QC, Cuộn, Lịch Sử & Danh Sách
-
-### 1. Bối cảnh & Yêu cầu:
-- Tại các trang thuộc QC, Cuộn, Lịch sử và các trang Danh sách Bobin:
-  - Khi người dùng nhập đủ mã của Bobin (ví dụ: khi nhập đủ `C0001` vào thanh tìm kiếm search bar), dữ liệu tương ứng của Bobin đó sẽ tự động hiển thị ra ngay lập tức mà không cần phải thực hiện thêm thao tác nhấn nút "Lọc".
-- Yêu cầu kỹ thuật & nghiệp vụ:
-  - Hỗ trợ thao tác gõ phím nhanh, dán văn bản (paste) và quét bằng máy quét mã vạch / mã QR chuyên dụng tại xưởng.
-  - Tuyệt đối không làm thay đổi các quy tắc nghiệp vụ, các tham số lọc bổ trợ (trạng thái, kệ, ngày giờ) và phân trang hiện có.
-  - Đảm bảo 100% môi trường mạng cục bộ nội bộ (local intranet), không tải tài nguyên bên ngoài.
-  - Ngăn ngừa triệt để hiện tượng vòng lặp tải lại trang vô tận (infinite reload loop) khi URL đã chứa tham số keyword.
-
-### 2. Các thay đổi kỹ thuật:
-1. **Xây dựng Thư Viện Tự Động Tìm Kiếm Độc Lập (`public/assets/js/autoSearchBobin.js`):**
-   - Viết dưới dạng IIFE đóng gói chặt chẽ, tự nhận diện ô tìm kiếm `#searchKeyword`, `#searchInput` hoặc `input[name="keyword"]` và biểu mẫu cha `#filterForm` / `#searchForm`.
-   - **Nhận diện mẫu mã Bobin xưởng:** Regex `BOBIN_CODE_REGEX = /^[A-Za-z][0-9]{4}$/` khớp chính xác 1 ký tự chữ cái + 4 chữ số (ví dụ: `C0001`, `A0015`, `B0999`, không phân biệt hoa thường và tự động viết hoa).
-   - **Xử lý mã QR kèm nhãn thời gian:** Regex `BOBIN_KEY_REGEX = /^[A-Za-z][0-9]{4}_/` tự động nhận diện và trích xuất 5 ký tự đầu tiên (ví dụ: `C0001_2026_10_04_18_29_44` -> `C0001`) giúp máy quét QR tự động kích hoạt lọc ngay lập tức.
-   - **Cơ chế Chống Lặp Tải Trang (Loop Guard):** Ghi nhớ `initialKeyword` ban đầu từ URL. Chỉ nộp form khi mã nhập mới khác với mã ban đầu, triệt tiêu nguy cơ reload lặp lại vô tận.
-   - **Cơ chế Đệm Thời Gian (Debounce 150ms):** Tối ưu hóa phản hồi gõ phím nhẹ nhàng và phản hồi tức thời đối với tín hiệu quét mã máy vạch.
-   - **Nút Xóa Nhanh Tương Tác (`.btn-clear-search` ✕):** Tự động hiển thị khi ô có nội dung. Nhấp vào sẽ xóa trắng ô tìm kiếm và tự động nộp form rỗng để quay lại toàn bộ danh sách Bobin ban đầu mà không cần thao tác thủ công.
-   - **Tự động Bôi Đen (Auto-Select On Focus/Load):** Khi focus vào ô tìm kiếm hoặc trang vừa tải xong có từ khóa, toàn bộ nội dung được bôi đen sẵn sàng cho công nhân quét Bobin tiếp theo đè lên mã cũ mà không cần nhấn phím xóa lùi.
-2. **Tích hợp Đồng Bộ Trên 10 Trang Giao Diện Hệ Thống:**
-   - **Trang QC:** `app/views/qcView.php`, `app/views/qcEditBobinView.php`.
-   - **Trang Cuộn:** `app/views/windingView.php`, `app/views/windingEditBobinView.php`.
-   - **Trang Lịch sử & Chi tiết:** `app/views/listBobinHistoryView.php`, `app/views/listBobinDetailView.php`, `app/views/listPendingCancellationView.php`.
-   - **Trang Danh sách & Điều chỉnh Đùn:** `app/views/listBobinView.php` (chuẩn hóa `id="filterForm"` & `id="searchKeyword"`), `app/views/extrusionEditBobinView.php`, `app/views/scanQR.php`.
-3. **Kiểm Tra & Xác Minh Toàn Diện:**
-   - Hoàn thành bộ kiểm thử tự động 13/13 test cases (khớp mã, phân biệt độ dài ký tự, chuẩn hóa chữ hoa, mã QR có timestamp, chống reload loop, xử lý chuỗi không phải mã Bobin).
-   - Kiểm tra cú pháp toàn diện: Toàn bộ 75 tệp PHP và tệp JS đều vượt qua `php -l` và `node -c` với 0 lỗi cú pháp.
 
 ---
 

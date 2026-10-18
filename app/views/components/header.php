@@ -320,3 +320,4 @@ if (!$matchedRoute) {
         <?php endif; ?>
     </div>
 </header>
+<?php require ROOT_PATH . '/app/views/components/periodicLogoutModal.php'; ?>

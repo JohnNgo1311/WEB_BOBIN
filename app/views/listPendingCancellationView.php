@@ -1,10 +1,63 @@
 <?php
 $bobins = $data['bobins'] ?? [];
-$pendingCount = count($bobins);
+$totalRecords = $data['totalRecords'] ?? count($bobins);
+$filteredPendingCount = $totalRecords;
+$pagination = $data['pagination'] ?? [];
 $userRole   = $_SESSION['user']['role'] ?? '';
 $canEditPendingCancel = !empty($_SESSION['user']) && AuthHelper::hasPermission('pending_cancel_edit');
 $currentUrl = $_GET['url'] ?? '';
-$pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? 0);
+$pCount     = $pendingCount ?? (GlobalData::$pendingBobinCount ?? $filteredPendingCount);
+
+$currentSize   = $_GET['bobin_size'] ?? 'all';
+$currentType   = $_GET['bobin_type'] ?? 'all';
+$currentRack   = $_GET['rack'] ?? 'all';
+$currentEmpCode  = trim((string)($_GET['employee_code'] ?? ''));
+$currentProdCode = trim((string)($_GET['product_code'] ?? ''));
+$currentQcDefect = trim((string)($_GET['qc_defect'] ?? 'all'));
+if ($currentQcDefect === '') {
+    $currentQcDefect = 'all';
+}
+$racks = $data['racks'] ?? [];
+
+$sizeOptions = [
+    'all'               => 'Tất cả kích thước',
+    'PL7-3'             => 'PL7-3',
+    'PL4-7 (TU04.TU06)' => 'PL4-7 (TU04.TU06)',
+    'PL4-7 (TU08~)'     => 'PL4-7 (TU08~)'
+];
+
+$typeOptions = [
+    'all'                              => 'Tất cả loại Bobin',
+    'Sản xuất'                         => 'Sản xuất',
+    'Bù'                               => 'Bù',
+    'Điều chỉnh (Do CP)'               => 'Điều chỉnh (Do CP)',
+    'Điều chỉnh (Ngoại quan: Gel)'     => 'Điều chỉnh (Ngoại quan: Gel)',
+    'Điều chỉnh (Ngoại quan: Dị vật)' => 'Điều chỉnh (Ngoại quan: Dị vật)',
+    'Điều chỉnh (Ngoại quan: Trầy)'    => 'Điều chỉnh (Ngoại quan: Trầy)',
+    'Điều chỉnh (Ngoại quan: Biến dạng)' => 'Điều chỉnh (Ngoại quan: Biến dạng)',
+    'Điều chỉnh (Ngoại quan: Xước)'    => 'Điều chỉnh (Ngoại quan: Xước)',
+    'Điều chỉnh (Ngoại quan: Chữ in)'  => 'Điều chỉnh (Ngoại quan: Chữ in)',
+    'Điều chỉnh (Ngoại quan: Vón cục)' => 'Điều chỉnh (Ngoại quan: Vón cục)',
+    'Điều chỉnh (Ngoại quan: Màu)'     => 'Điều chỉnh (Ngoại quan: Màu)'
+];
+
+if (!function_exists('buildFilterUrl')) {
+    function buildFilterUrl(array $overrideParams = []): string
+    {
+        $query = $_GET ?? [];
+        if (!isset($query['url'])) {
+            $query['url'] = 'bobin/listPendingCancellationView';
+        }
+        $query = array_merge($query, $overrideParams);
+        foreach ($query as $key => $value) {
+            if (is_null($value) || $value === '' || $value === 'all') {
+                unset($query[$key]);
+            }
+        }
+        return '/WEB_BOBIN/public/index.php?' . http_build_query($query);
+    }
+}
+
 // Hàm badge kiểm tra công đoạn đùn: true = Đạt (OK), false = Lỗi (NG)
 if (!function_exists('extCheckBadge')) {
     function extCheckBadge($label, $isOk)
@@ -49,8 +102,11 @@ if (!function_exists('decodeJsonObject')) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listPendingCancellation.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/advancedBobinFilter.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/scanQR.css?v=<?= time() ?>">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
@@ -74,9 +130,9 @@ if (!function_exists('decodeJsonObject')) {
 
         <!-- CONTROL BAR GỌN GÀNG -->
         <div class="control-bar-modern">
-            <?php 
-                $canExtrusion = AuthHelper::hasPermission('extrusion_create');
-                $pendingBackUrl = $canExtrusion ? '/WEB_BOBIN/public/index.php?url=bobin/index' : ($userHomeUrl ?? '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView');
+            <?php
+            $canExtrusion = AuthHelper::hasPermission('extrusion_create');
+            $pendingBackUrl = $canExtrusion ? '/WEB_BOBIN/public/index.php?url=bobin/index' : ($userHomeUrl ?? '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView');
             ?>
             <a href="<?= $pendingBackUrl ?>" class="btn-back-modern" title="Quay lại">
                 <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
@@ -89,6 +145,24 @@ if (!function_exists('decodeJsonObject')) {
             <div class="control-main">
                 <form method="GET" action="/WEB_BOBIN/public/index.php" class="filter-form-modern" id="filterForm">
                     <input type="hidden" name="url" value="bobin/listPendingCancellationView">
+                    <?php if ($currentSize !== 'all'): ?>
+                        <input type="hidden" name="bobin_size" value="<?= htmlspecialchars($currentSize) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentType !== 'all'): ?>
+                        <input type="hidden" name="bobin_type" value="<?= htmlspecialchars($currentType) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentRack !== 'all'): ?>
+                        <input type="hidden" name="rack" value="<?= htmlspecialchars($currentRack) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentEmpCode !== ''): ?>
+                        <input type="hidden" name="employee_code" value="<?= htmlspecialchars($currentEmpCode) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentProdCode !== ''): ?>
+                        <input type="hidden" name="product_code" value="<?= htmlspecialchars($currentProdCode) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentQcDefect !== 'all'): ?>
+                        <input type="hidden" name="qc_defect" value="<?= htmlspecialchars($currentQcDefect) ?>">
+                    <?php endif; ?>
 
                     <div class="control-row">
                         <div class="search-box-modern">
@@ -125,10 +199,90 @@ if (!function_exists('decodeJsonObject')) {
             </div>
         </div>
 
+        <!-- BỘ LỌC VÀ THỐNG KÊ ĐỒNG BỘ -->
+        <div class="filter-dashboard">
+            <div class="filter-dashboard-header">
+                <h2>Kết quả lọc danh sách chờ hủy: <span><?= number_format($filteredPendingCount) ?></span> Bobin</h2>
+                <a href="<?= buildFilterUrl(['bobin_size' => 'all', 'bobin_type' => 'all', 'rack' => 'all', 'keyword' => null, 'employee_code' => null, 'product_code' => null, 'qc_defect' => 'all']) ?>"
+                    class="btn-reset-filter">
+                    🔄 Đặt lại bộ lọc
+                </a>
+            </div>
+
+            <div class="filter-grid-row cols-3">
+                <div class="filter-col">
+                    <div class="filter-label">📏 Kích thước:</div>
+                    <select id="sizeFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <?php foreach ($sizeOptions as $key => $label): ?>
+                            <option value="<?= buildFilterUrl(['bobin_size' => $key]) ?>"
+                                <?= $currentSize === $key ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="filter-col">
+                    <div class="filter-label">🏷️ Loại Bobin:</div>
+                    <select id="typeFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <?php foreach ($typeOptions as $key => $label): ?>
+                            <option value="<?= buildFilterUrl(['bobin_type' => $key]) ?>"
+                                <?= $currentType === $key ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($label) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="filter-col">
+                    <div class="filter-label">🏢 Vị trí Rack:</div>
+                    <select id="rackFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <option value="<?= buildFilterUrl(['rack' => 'all']) ?>"
+                            <?= $currentRack === 'all' ? 'selected' : '' ?>>
+                            Tất cả các Rack
+                        </option>
+                        <optgroup label="🏭 Khu vực Rack theo Xưởng / Tầng">
+                            <option value="<?= buildFilterUrl(['rack' => 'B021']) ?>"
+                                <?= $currentRack === 'B021' ? 'selected' : '' ?>>
+                                🏢 B021 => Xưởng 2, tầng 1
+                            </option>
+                            <option value="<?= buildFilterUrl(['rack' => 'B022']) ?>"
+                                <?= $currentRack === 'B022' ? 'selected' : '' ?>>
+                                🏢 B022 => Xưởng 2, tầng 2
+                            </option>
+                            <option value="<?= buildFilterUrl(['rack' => 'B031']) ?>"
+                                <?= $currentRack === 'B031' ? 'selected' : '' ?>>
+                                🏢 B031 => Xưởng 3, tầng 1
+                            </option>
+                            <option value="<?= buildFilterUrl(['rack' => 'B032']) ?>"
+                                <?= $currentRack === 'B032' ? 'selected' : '' ?>>
+                                🏢 B032 => Xưởng 3, tầng 2
+                            </option>
+                        </optgroup>
+                        <?php if (!empty($racks)): ?>
+                            <optgroup label="📍 Chi tiết từng Rack cụ thể">
+                                <?php foreach ($racks as $r): ?>
+                                    <?php $rCode = $r['rack_code'] ?? $r['code'] ?? ''; ?>
+                                    <?php if (!empty($rCode)): ?>
+                                        <option value="<?= buildFilterUrl(['rack' => $rCode]) ?>"
+                                            <?= $currentRack === $rCode ? 'selected' : '' ?>>
+                                            📍 <?= htmlspecialchars($rCode) ?>
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </optgroup>
+                        <?php endif; ?>
+                    </select>
+                </div>
+            </div>
+
+            <?php require ROOT_PATH . '/app/views/components/advancedBobinFilterAndStats.php'; ?>
+        </div>
+
         <!-- LIST CARD -->
         <div class="list-card">
             <div class="header-row">
-                <h2>Số lượng Bobin chờ hủy: <span class="counter-badge" id="pendingCounterBadge"><?= $pendingCount ?></span> Bobin</h2>
+                <h2>Số lượng Bobin chờ hủy: <span class="counter-badge" id="pendingCounterBadge"><?= $filteredPendingCount ?></span> Bobin</h2>
             </div>
 
             <?php if (empty($bobins)): ?>
@@ -314,7 +468,7 @@ if (!function_exists('decodeJsonObject')) {
                                     <div class="pipeline-title">
                                         <span>🛡️ QC Check</span>
                                         <span
-                                             class="pipeline-submeta"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa kiểm') ?></span>
+                                            class="pipeline-submeta"><?= htmlspecialchars($vi['inspector_code'] ?? 'Chưa kiểm') ?></span>
                                     </div>
                                     <div class="qc-badges-static">
                                         <?= qcDefectBadge('Gel', $defects['gel'] ?? false) ?>
@@ -385,62 +539,95 @@ if (!function_exists('decodeJsonObject')) {
                                 $auditList = decodeJsonObject($rawAudit);
                                 if (!empty($auditList) && is_array($auditList)):
                                 ?>
-                                <div class="audit-history-box" style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 12px; width: 100%;">
-                                    <div style="font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-                                        <span>📝</span>
-                                        <span data-i18n="audit_trail_title"><?= __('audit_trail_title') ?></span>
-                                        <span class="badge" style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px; font-size: 11px;"><?= count($auditList) ?></span>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                                        <?php foreach ($auditList as $audit): ?>
-                                        <?php
-                                        $stageKey = strtolower(trim($audit['stage'] ?? ''));
-                                        $stageName = match($stageKey) {
-                                            'extrusion' => __('audit_stage_extrusion'),
-                                            'qc'        => __('audit_stage_qc'),
-                                            'winding'   => __('audit_stage_winding'),
-                                            'admin', 'system' => __('audit_stage_admin'),
-                                            default     => htmlspecialchars($audit['stage'] ?? '')
-                                        };
-                                        $empDisplay = htmlspecialchars(($audit['employee_code'] ?? '') . ' - ' . ($audit['employee_name'] ?? ''));
-                                        $timeDisplay = htmlspecialchars($audit['updated_at'] ?? '');
-                                        $rawNote = trim($audit['note'] ?? '');
-                                        $noteI18nAttr = '';
-                                        $noteColor = '#64748b';
-                                        if ($rawNote === 'Đưa vào danh sách chờ hủy' || ($audit['action'] ?? '') === 'pending_cancel') {
-                                            $noteDisplay = __('audit_note_pending_cancel');
-                                            $noteI18nAttr = 'data-i18n="audit_note_pending_cancel"';
-                                            $noteColor = '#d97706';
-                                        } elseif ($rawNote === 'Xác nhận hủy' || ($audit['action'] ?? '') === 'confirm_cancel') {
-                                            $noteDisplay = __('audit_note_confirm_cancel');
-                                            $noteI18nAttr = 'data-i18n="audit_note_confirm_cancel"';
-                                            $noteColor = '#dc2626';
-                                        } elseif ($rawNote === 'Khôi phục Bobin từ danh sách chờ hủy' || ($audit['action'] ?? '') === 'restore') {
-                                            $noteDisplay = __('audit_note_restore');
-                                            $noteI18nAttr = 'data-i18n="audit_note_restore"';
-                                            $noteColor = '#059669';
-                                        } else {
-                                            $noteDisplay = htmlspecialchars($rawNote);
-                                        }
-                                        ?>
-                                        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                                            <div>
-                                                <strong style="color: #2563eb;">[<?= $stageName ?>]</strong>
-                                                <span style="color: #1e293b; font-weight: 600;"><?= $empDisplay ?></span>
-                                                <?php if ($noteDisplay !== ''): ?>
-                                                <span style="color: <?= $noteColor ?>; font-weight: 600; font-style: italic;">(<span <?= $noteI18nAttr ?>><?= $noteDisplay ?></span>)</span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒 <?= $timeDisplay ?></span>
+                                    <div class="audit-history-box" style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 12px; width: 100%;">
+                                        <div style="font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                            <span>📝</span>
+                                            <span data-i18n="audit_trail_title"><?= __('audit_trail_title') ?></span>
+                                            <span class="badge" style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px; font-size: 11px;"><?= count($auditList) ?></span>
                                         </div>
-                                        <?php endforeach; ?>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <?php foreach ($auditList as $audit): ?>
+                                                <?php
+                                                $stageKey = strtolower(trim($audit['stage'] ?? ''));
+                                                $stageName = match ($stageKey) {
+                                                    'extrusion' => __('audit_stage_extrusion'),
+                                                    'qc'        => __('audit_stage_qc'),
+                                                    'winding'   => __('audit_stage_winding'),
+                                                    'admin', 'system' => __('audit_stage_admin'),
+                                                    default     => htmlspecialchars($audit['stage'] ?? '')
+                                                };
+                                                $empDisplay = htmlspecialchars(($audit['employee_code'] ?? '') . ' - ' . ($audit['employee_name'] ?? ''));
+                                                $timeDisplay = htmlspecialchars($audit['updated_at'] ?? '');
+                                                $rawNote = trim($audit['note'] ?? '');
+                                                $noteI18nAttr = '';
+                                                $noteColor = '#64748b';
+                                                if ($rawNote === 'Đưa vào danh sách chờ hủy' || ($audit['action'] ?? '') === 'pending_cancel') {
+                                                    $noteDisplay = __('audit_note_pending_cancel');
+                                                    $noteI18nAttr = 'data-i18n="audit_note_pending_cancel"';
+                                                    $noteColor = '#d97706';
+                                                } elseif ($rawNote === 'Xác nhận hủy' || ($audit['action'] ?? '') === 'confirm_cancel') {
+                                                    $noteDisplay = __('audit_note_confirm_cancel');
+                                                    $noteI18nAttr = 'data-i18n="audit_note_confirm_cancel"';
+                                                    $noteColor = '#dc2626';
+                                                } elseif ($rawNote === 'Khôi phục Bobin từ danh sách chờ hủy' || ($audit['action'] ?? '') === 'restore') {
+                                                    $noteDisplay = __('audit_note_restore');
+                                                    $noteI18nAttr = 'data-i18n="audit_note_restore"';
+                                                    $noteColor = '#059669';
+                                                } else {
+                                                    $noteDisplay = htmlspecialchars($rawNote);
+                                                }
+                                                ?>
+                                                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                                    <div>
+                                                        <strong style="color: #2563eb;">[<?= $stageName ?>]</strong>
+                                                        <span style="color: #1e293b; font-weight: 600;"><?= $empDisplay ?></span>
+                                                        <?php if ($noteDisplay !== ''): ?>
+                                                            <span style="color: <?= $noteColor ?>; font-weight: 600; font-style: italic;">(<span <?= $noteI18nAttr ?>><?= $noteDisplay ?></span>)</span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒 <?= $timeDisplay ?></span>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
                                     </div>
-                                </div>
                                 <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- PHÂN TRANG -->
+                <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
+                    <div class="pagination-wrapper">
+                        <?php if ($pagination['currentPage'] > 1): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] - 1]) ?>" class="page-btn">
+                                ‹ Trước
+                            </a>
+                        <?php endif; ?>
+
+                        <?php
+                        $start = max(1, $pagination['currentPage'] - 2);
+                        $end = min($pagination['totalPages'], $pagination['currentPage'] + 2);
+                        for ($p = $start; $p <= $end; $p++): $isActive = ($p === (int)$pagination['currentPage']);
+                        ?>
+                            <a href="<?= buildFilterUrl(['page' => $p]) ?>" class="page-btn <?= $isActive ? 'active' : '' ?>">
+                                <?= $p ?>
+                            </a>
+                        <?php endfor; ?>
+
+                        <?php if ($pagination['currentPage'] < $pagination['totalPages']): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] + 1]) ?>" class="page-btn">
+                                Sau ›
+                            </a>
+                        <?php endif; ?>
+
+                        <span class="page-info">
+                            Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
+                            <?= number_format($totalRecords) ?> Bobin)
+                        </span>
+                    </div>
+                <?php endif; ?>
+
             <?php endif; ?>
         </div>
     </div>

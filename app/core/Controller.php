@@ -28,6 +28,22 @@ class Controller
             }
         }
 
+        if (!defined('WEB_BOBIN_PERIODIC_LOGOUT_RENDERED') && !empty($_SESSION['user']['id']) && $view !== 'loginView') {
+            $modalFile = ROOT_PATH . '/app/views/components/periodicLogoutModal.php';
+            if (file_exists($modalFile)) {
+                ob_start();
+                require $modalFile;
+                $modalHtml = ob_get_clean();
+                if ($modalHtml !== '') {
+                    if (stripos($html, '</body>') !== false) {
+                        $html = str_ireplace('</body>', $modalHtml . "\n</body>", $html);
+                    } else {
+                        $html .= $modalHtml;
+                    }
+                }
+            }
+        }
+
         echo $html;
     }
 

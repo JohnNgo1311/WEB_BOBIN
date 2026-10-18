@@ -59,7 +59,9 @@ foreach ($bobins as $b) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/windingEditBobin.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/scanQR.css?v=<?= time() ?>">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
 
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
@@ -80,7 +82,6 @@ foreach ($bobins as $b) {
                     <span>📍</span>
                     <span data-i18n="page_winding_edit"><?= __('page_winding_edit') ?></span>
                 </h1>
-                <p class="wnd-hero-subtitle" data-i18n="winding_edit_subtitle"><?= __('winding_edit_subtitle') ?></p>
             </div>
             <div class="wnd-hero-badge">
                 <span>⚡</span>
@@ -379,7 +380,6 @@ foreach ($bobins as $b) {
     </script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/edit_submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Extrusion/edit_scanQR.js?v=<?= time() ?>"></script>
-    <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
 </body>
 
 </html>

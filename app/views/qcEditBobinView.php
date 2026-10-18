@@ -83,7 +83,9 @@ foreach ($bobins as $b) {
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/qcEditBobin.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/scanQR.css?v=<?= time() ?>">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
 
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
@@ -104,7 +106,6 @@ foreach ($bobins as $b) {
                     <span>🛡️</span>
                     <span data-i18n="page_qc_edit"><?= __('page_qc_edit') ?></span>
                 </h1>
-                <p class="qc-hero-subtitle" data-i18n="qc_edit_subtitle"><?= __('qc_edit_subtitle') ?></p>
             </div>
             <div class="qc-hero-badge">
                 <span>🔍</span>
@@ -298,7 +299,8 @@ foreach ($bobins as $b) {
                                 </div>
 
                                 <div class="qc-field field-item">
-                                    <label class="qc-label" data-i18n="field_material_lot"><?= __('field_material_lot') ?></label>
+                                    <label class="qc-label"
+                                        data-i18n="field_material_lot"><?= __('field_material_lot') ?></label>
                                     <div class="qc-val val-sub"><?= htmlspecialchars($matLot) ?></div>
                                 </div>
 
@@ -336,7 +338,8 @@ foreach ($bobins as $b) {
 
                                 <!-- Đùn tự kiểm tra (Tham khảo) -->
                                 <div class="qc-field span-2 field-item">
-                                    <label class="qc-label" data-i18n="ext_criteria_title"><?= __('ext_criteria_title') ?></label>
+                                    <label class="qc-label"
+                                        data-i18n="ext_criteria_title"><?= __('ext_criteria_title') ?></label>
                                     <div class="qc-ext-ref-badges">
                                         <?php
                                         $extRefChecks = [
@@ -381,7 +384,8 @@ foreach ($bobins as $b) {
 
                             <!-- Right: QC Inspection Panel -->
                             <div class="qc-inspect-panel">
-                                <div class="qc-criteria-header ext-title" style="justify-content: space-between; flex-wrap: wrap;">
+                                <div class="qc-criteria-header ext-title"
+                                    style="justify-content: space-between; flex-wrap: wrap;">
                                     <div style="display: inline-flex; align-items: center; gap: 6px;">
                                         <span>🛡️</span>
                                         <span data-i18n="qc_criteria_title"><?= __('qc_criteria_title') ?></span>
@@ -410,7 +414,8 @@ foreach ($bobins as $b) {
                                         $isOk = (bool)$c['val'];
                                     ?>
                                         <div class="qc-criteria-item ext-check-box">
-                                            <span class="qc-criteria-name check-box-label" data-i18n="<?= $c['label_key'] ?>"><?= __($c['label_key']) ?></span>
+                                            <span class="qc-criteria-name check-box-label"
+                                                data-i18n="<?= $c['label_key'] ?>"><?= __($c['label_key']) ?></span>
                                             <button type="button" class="qc-toggle-btn ext-toggle-btn <?= $isOk ? 'active' : '' ?>"
                                                 data-field="qc_check_<?= $key ?>" data-value="<?= $isOk ? 'true' : 'false' ?>"
                                                 onclick="toggleQCCheck(this)" disabled>

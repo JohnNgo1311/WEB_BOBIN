@@ -1,7 +1,21 @@
 <?php
 $bobins = $data['bobins'] ?? [];
+$totalWaiting = $data['totalWaiting'] ?? count($bobins);
+$pagination = $data['pagination'] ?? [];
 $pendingCount = $data['pendingCount'] ?? 0;
 $userRole = $_SESSION['user']['role'] ?? '';
+
+if (!function_exists('buildFilterUrl')) {
+    function buildFilterUrl(array $newParams): string
+    {
+        $query = $_GET;
+        $query['url'] = 'bobin/listBobinView_QC';
+        foreach ($newParams as $k => $v) {
+            $query[$k] = $v;
+        }
+        return '/WEB_BOBIN/public/index.php?' . http_build_query($query);
+    }
+}
 
 // Lấy thông tin tài khoản đăng nhập hiện tại
 $currentEmpCode = $_SESSION['user']['employee_code'] ?? '';
@@ -20,7 +34,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/listBobin_QC.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/scanQR.css?v=<?= time() ?>">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/html5-qrcode.min.js"></script>
@@ -303,6 +319,40 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- 5. PHÂN TRANG (PAGINATION) -->
+                <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
+                    <nav class="qc-pagination pagination-wrapper">
+                        <?php if ($pagination['currentPage'] > 1): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] - 1]) ?>" class="qc-page-btn page-btn">
+                                ‹ Trước
+                            </a>
+                        <?php endif; ?>
+
+                        <?php
+                        $start = max(1, $pagination['currentPage'] - 2);
+                        $end = min($pagination['totalPages'], $pagination['currentPage'] + 2);
+                        for ($p = $start; $p <= $end; $p++):
+                            $isActive = ($p === (int)$pagination['currentPage']);
+                        ?>
+                            <a href="<?= buildFilterUrl(['page' => $p]) ?>"
+                                class="qc-page-btn page-btn <?= $isActive ? 'active' : '' ?>">
+                                <?= $p ?>
+                            </a>
+                        <?php endfor; ?>
+
+                        <?php if ($pagination['currentPage'] < $pagination['totalPages']): ?>
+                            <a href="<?= buildFilterUrl(['page' => $pagination['currentPage'] + 1]) ?>" class="qc-page-btn page-btn">
+                                Sau ›
+                            </a>
+                        <?php endif; ?>
+
+                        <span class="qc-page-info page-info">
+                            Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
+                            <?= number_format($totalWaiting) ?> Bobin)
+                        </span>
+                    </nav>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
     </div>

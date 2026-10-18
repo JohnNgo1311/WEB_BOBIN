@@ -57,14 +57,15 @@ $userHomeUrl = match (true) {
 $isExtrusionActive  = in_array($currentUrl, ['bobin/index', 'bobin/extrusion', 'bobin/extrusionEditBobinView', '']);
 $isQcActive         = in_array($currentUrl, ['bobin/listBobinView_QC', 'bobin/qcEditBobinView']);
 $isWindingActive    = in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding', 'bobin/windingEditBobinView']);
-$isMonitorActive    = in_array($currentUrl, ['bobin/listBobinDetailView', 'bobin/listBobinHistoryView', 'bobin/listPendingCancellationView']);
+$isMonitorActive    = in_array($currentUrl, ['bobin/listBobinDetailView', 'bobin/listBobinHistoryView', 'bobin/listPendingCancellationView', 'bobin/listCancelledBobinView']);
 $isSystemActive     = (strpos($currentUrl, 'employee') === 0);
 
 // Đếm số mục con hợp lệ của từng thư mục
+$canCancelledList = ($canBobinList || $canBobinHistory || $canPendingCancel);
 $extCount  = ($canExtrusionCreate ? 1 : 0) + ($canExtrusionEdit ? 1 : 0);
 $qcCount   = ($canQcCheck ? 1 : 0) + ($canQcEdit ? 1 : 0);
 $wndCount  = ($canWindingConfirm ? 1 : 0) + ($canWindingEdit ? 1 : 0);
-$monCount  = ($canBobinList ? 1 : 0) + ($canBobinHistory ? 1 : 0) + ($canPendingCancel ? 1 : 0);
+$monCount  = ($canBobinList ? 1 : 0) + ($canBobinHistory ? 1 : 0) + ($canPendingCancel ? 1 : 0) + ($canCancelledList ? 1 : 0);
 $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
 
 // Nhúng từ điển mặc định & tùy chỉnh từ nguồn duy nhất (Single Source of Truth)
@@ -245,6 +246,14 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                             <?php if ($pCount > 0): ?>
                                 <span class="sb-badge-pending"><?= $pCount ?></span>
                             <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if ($canCancelledList): ?>
+                        <a href="/WEB_BOBIN/public/index.php?url=bobin/listCancelledBobinView"
+                            class="sb-tree-leaf <?= ($currentUrl === 'bobin/listCancelledBobinView') ? 'active-nav' : '' ?>">
+                            <span class="sb-tree-leaf-icon">🗑️</span>
+                            <span class="sb-tree-leaf-text" data-i18n="nav_cancelled_list"><?= __('nav_cancelled_list') ?></span>
                         </a>
                     <?php endif; ?>
                 </div>

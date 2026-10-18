@@ -64,15 +64,19 @@ class AuthController extends Controller
             $perms = !empty($user['permissions']) ? json_decode($user['permissions'], true) : null;
 
             // Lưu phiên làm việc vào Session
+            $nowDt = new DateTimeImmutable('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
             $_SESSION['user'] = [
-                'id'            => (int)$user['id'],
-                'employee_code' => $user['employee_code'],
-                'employee_name' => $user['employee_name'],
-                'username'      => $user['username'],
-                'role'          => strtolower($user['role']),
-                'permissions'   => is_array($perms) ? $perms : null,
-                'is_first_login'=> $isFirstLogin,
-                'logged_at'     => date('Y-m-d H:i:s')
+                'id'               => (int)$user['id'],
+                'employee_code'    => $user['employee_code'],
+                'employee_name'    => $user['employee_name'],
+                'username'         => $user['username'],
+                'role'             => strtolower($user['role']),
+                'permissions'      => is_array($perms) ? $perms : null,
+                'is_first_login'   => $isFirstLogin,
+                'logged_at'        => $nowDt->format('Y-m-d H:i:s'),
+                'logged_at_ts'     => $nowDt->getTimestamp(),
+                'login_minute_key' => $nowDt->format('Y-m-d_H:i'),
+                'just_logged_in'   => true,
             ];
 
             // Nếu là lần đầu đăng nhập -> Bắt buộc chuyển hướng đến trang đổi mật khẩu
@@ -311,7 +315,16 @@ class AuthController extends Controller
             $_SESSION = [];
             session_destroy();
         }
-        header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+        $reason = trim((string)($_GET['reason'] ?? ''));
+        $cp     = trim((string)($_GET['cp'] ?? ''));
+        $loginUrl = BASE_URL . '/index.php?url=auth/login';
+        if ($reason !== '') {
+            $loginUrl .= '&logout_reason=' . urlencode($reason);
+        }
+        if ($cp !== '') {
+            $loginUrl .= '&cp=' . urlencode($cp);
+        }
+        header('Location: ' . $loginUrl);
         exit;
     }
 

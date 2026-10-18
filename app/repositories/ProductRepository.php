@@ -1,7 +1,6 @@
 <?php
 require_once ROOT_PATH . '/app/entities/ProductEntity.php';
 require_once ROOT_PATH . '/app/core/GlobalData.php';
-require_once ROOT_PATH . '/app/models/ListDataModel.php';
 
 // Giả định class GlobalData đã được load ở index.php hoặc config.php
 

@@ -8,7 +8,9 @@
     <!-- Phông chữ hệ thống Offline không phụ thuộc Google Fonts khi chạy Local Intranet -->
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/login.css?v=<?= time() ?>">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
     <?= Language::renderJsBootstrap() ?>
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
@@ -132,6 +134,29 @@
                         <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
                     <span><?= htmlspecialchars($_GET['error']) ?></span>
+                </div>
+                <?php endif; ?>
+
+                <?php if (!empty($_GET['logout_reason'])):
+                    $logoutReason = (string)$_GET['logout_reason'];
+                    $cpLabel = trim((string)($_GET['cp'] ?? ''));
+                    $isAutoLogout = ($logoutReason === 'periodic_auto');
+                ?>
+                <div class="login-alert-periodic" style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px; margin-bottom:16px; font-size:13.5px; font-weight:600; line-height:1.45; background:<?= $isAutoLogout ? '#fffbeb' : '#f0fdf4' ?>; border:1px solid <?= $isAutoLogout ? '#f59e0b' : '#22c55e' ?>; color:<?= $isAutoLogout ? '#92400e' : '#166534' ?>;">
+                    <span style="font-size:18px; line-height:1; flex-shrink:0;"><?= $isAutoLogout ? '⏰' : '✅' ?></span>
+                    <div>
+                        <?php if ($isAutoLogout): ?>
+                            <span data-i18n="periodic_logout_login_auto_banner"><?= __('periodic_logout_login_auto_banner', 'Hệ thống đã tự động đăng xuất định kỳ (quá 1 phút không xác nhận). Vui lòng đăng nhập bằng tài khoản của bạn để tiếp tục.') ?></span>
+                        <?php else: ?>
+                            <span data-i18n="periodic_logout_login_confirm_banner"><?= __('periodic_logout_login_confirm_banner', 'Đã xác nhận đăng xuất định kỳ thành công. Vui lòng đăng nhập lại bằng tài khoản của bạn.') ?></span>
+                        <?php endif; ?>
+                        <?php if ($cpLabel !== ''): ?>
+                            <div style="margin-top:4px; font-size:12px; opacity:0.85;">
+                                <span data-i18n="periodic_logout_checkpoint_label"><?= __('periodic_logout_checkpoint_label', 'Mốc kiểm soát cố định:') ?></span>
+                                <strong><?= htmlspecialchars($cpLabel) ?></strong>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <?php endif; ?>
 
@@ -263,6 +288,14 @@
     </div>
 
     <script>
+    try {
+        Object.keys(sessionStorage).forEach(function(k) {
+            if (k.indexOf('webbobin_periodic_logout_active_') === 0) {
+                sessionStorage.removeItem(k);
+            }
+        });
+    } catch (e) {}
+
     // Toggle mật khẩu
     document.getElementById('togglePwd')?.addEventListener('click', function() {
         const pwdInput = document.getElementById('password');

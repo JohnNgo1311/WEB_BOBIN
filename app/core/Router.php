@@ -50,6 +50,7 @@ class Router
                 'listbobindetailview',         // Xem chi tiết danh sách
                 'listbobinhistoryview',        // Xem lịch sử hoạt động
                 'listpendingcancellationview', // Xem danh sách chờ hủy
+                'listcancelledbobinview',      // Xem danh sách đã hủy
                 'exportdetailexcel',           // Xuất file Excel chi tiết
                 'exporthistoryexcel',          // Xuất file Excel lịch sử
                 'getspecificbobin',

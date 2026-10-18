@@ -22,7 +22,9 @@ $homeUrl = match ($userRole) {
     <!-- Phông chữ hệ thống Local Offline -->
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
     <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/changePassword.css?v=<?= time() ?>">
-    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
     <?= Language::renderJsBootstrap() ?>
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
@@ -42,8 +44,8 @@ $homeUrl = match ($userRole) {
             <span class="user-badge-nav">
                 👤 <?= htmlspecialchars($employeeName) ?> (<?= strtoupper($userRole) ?>)
             </span>
-            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="btn-nav-logout"
-                title="Đăng xuất khỏi hệ thống" data-i18n="nav_logout">
+            <a href="/WEB_BOBIN/public/index.php?url=auth/logout" class="btn-nav-logout" title="Đăng xuất khỏi hệ thống"
+                data-i18n="nav_logout">
                 <?= __('nav_logout') ?>
             </a>
         </div>
@@ -91,9 +93,11 @@ $homeUrl = match ($userRole) {
                 </p>
 
                 <div class="cp-user-info-pill">
-                    <span><span data-i18n="perm_lbl_emp_code"><?= __('perm_lbl_emp_code') ?></span> <strong><?= htmlspecialchars($employeeCode) ?></strong></span>
+                    <span><span data-i18n="perm_lbl_emp_code"><?= __('perm_lbl_emp_code') ?></span>
+                        <strong><?= htmlspecialchars($employeeCode) ?></strong></span>
                     <span>•</span>
-                    <span><span data-i18n="perm_lbl_username"><?= __('perm_lbl_username') ?></span> <strong><?= htmlspecialchars($username) ?></strong></span>
+                    <span><span data-i18n="perm_lbl_username"><?= __('perm_lbl_username') ?></span>
+                        <strong><?= htmlspecialchars($username) ?></strong></span>
                     <span class="role-badge"><?= strtoupper($userRole) ?></span>
                 </div>
             </div>
@@ -115,8 +119,8 @@ $homeUrl = match ($userRole) {
                             </svg>
                         </span>
                         <input type="password" id="current_password" name="current_password"
-                            placeholder="<?= __('cp_current_pwd_ph') ?>" data-i18n-ph="cp_current_pwd_ph"
-                            required autocomplete="current-password" autofocus>
+                            placeholder="<?= __('cp_current_pwd_ph') ?>" data-i18n-ph="cp_current_pwd_ph" required
+                            autocomplete="current-password" autofocus>
                         <button type="button" class="btn-toggle-pwd" data-target="current_password"
                             title="<?= __('login_toggle_pwd') ?>" data-i18n="[title]login_toggle_pwd">
                             👁️
@@ -138,8 +142,9 @@ $homeUrl = match ($userRole) {
                                 <circle cx="7" cy="7" r="2"></circle>
                             </svg>
                         </span>
-                        <input type="password" id="new_password" name="new_password" placeholder="<?= __('cp_new_pwd_ph') ?>"
-                            data-i18n-ph="cp_new_pwd_ph" required autocomplete="new-password" minlength="6">
+                        <input type="password" id="new_password" name="new_password"
+                            placeholder="<?= __('cp_new_pwd_ph') ?>" data-i18n-ph="cp_new_pwd_ph" required
+                            autocomplete="new-password" minlength="6">
                         <button type="button" class="btn-toggle-pwd" data-target="new_password"
                             title="<?= __('login_toggle_pwd') ?>" data-i18n="[title]login_toggle_pwd">
                             👁️
@@ -172,7 +177,8 @@ $homeUrl = match ($userRole) {
                             </svg>
                         </span>
                         <input type="password" id="confirm_password" name="confirm_password"
-                            placeholder="<?= __('cp_confirm_pwd_ph') ?>" data-i18n-ph="cp_confirm_pwd_ph" required autocomplete="new-password" minlength="6">
+                            placeholder="<?= __('cp_confirm_pwd_ph') ?>" data-i18n-ph="cp_confirm_pwd_ph" required
+                            autocomplete="new-password" minlength="6">
                         <button type="button" class="btn-toggle-pwd" data-target="confirm_password"
                             title="<?= __('login_toggle_pwd') ?>" data-i18n="[title]login_toggle_pwd">
                             👁️
@@ -283,24 +289,30 @@ $homeUrl = match ($userRole) {
         const cfmPwd = document.getElementById('confirm_password').value.trim();
 
         if (!curPwd || !newPwd || !cfmPwd) {
-            Toast.show(window.t ? window.t('cp_err_empty', "Vui lòng điền đầy đủ các trường mật khẩu.") : "Vui lòng điền đầy đủ các trường mật khẩu.", "warning");
+            Toast.show(window.t ? window.t('cp_err_empty', "Vui lòng điền đầy đủ các trường mật khẩu.") :
+                "Vui lòng điền đầy đủ các trường mật khẩu.", "warning");
             return;
         }
 
         if (newPwd.length < 6) {
-            Toast.show(window.t ? window.t('cp_err_min_len', "Mật khẩu mới phải có tối thiểu 6 ký tự.") : "Mật khẩu mới phải có tối thiểu 6 ký tự.", "warning");
+            Toast.show(window.t ? window.t('cp_err_min_len', "Mật khẩu mới phải có tối thiểu 6 ký tự.") :
+                "Mật khẩu mới phải có tối thiểu 6 ký tự.", "warning");
             document.getElementById('new_password').focus();
             return;
         }
 
         if (newPwd !== cfmPwd) {
-            Toast.show(window.t ? window.t('cp_err_mismatch', "Mật khẩu xác nhận không khớp với mật khẩu mới.") : "Mật khẩu xác nhận không khớp với mật khẩu mới.", "error");
+            Toast.show(window.t ? window.t('cp_err_mismatch',
+                    "Mật khẩu xác nhận không khớp với mật khẩu mới.") :
+                "Mật khẩu xác nhận không khớp với mật khẩu mới.", "error");
             document.getElementById('confirm_password').focus();
             return;
         }
 
         if (newPwd === curPwd) {
-            Toast.show(window.t ? window.t('cp_err_same_old', "Mật khẩu mới không được trùng với mật khẩu hiện tại.") : "Mật khẩu mới không được trùng với mật khẩu hiện tại.", "warning");
+            Toast.show(window.t ? window.t('cp_err_same_old',
+                    "Mật khẩu mới không được trùng với mật khẩu hiện tại.") :
+                "Mật khẩu mới không được trùng với mật khẩu hiện tại.", "warning");
             document.getElementById('new_password').focus();
             return;
         }
@@ -310,7 +322,10 @@ $homeUrl = match ($userRole) {
         ];
         if (forbidden.includes(newPwd.toLowerCase())) {
             Toast.show(
-                window.t ? window.t('cp_err_weak_forbidden', "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn.") : "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn.",
+                window.t ? window.t('cp_err_weak_forbidden',
+                    "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn."
+                ) :
+                "Mật khẩu mới quá đơn giản hoặc trùng mã NV/tài khoản. Vui lòng chọn mật khẩu an toàn hơn.",
                 "error");
             document.getElementById('new_password').focus();
             return;
@@ -319,7 +334,8 @@ $homeUrl = match ($userRole) {
         // Gửi dữ liệu lên máy chủ
         const originalBtnHtml = submitBtn.innerHTML;
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<span>⏳ ${window.t ? window.t('loading', 'Đang xử lý...') : 'Đang xử lý...'}</span>`;
+        submitBtn.innerHTML =
+            `<span>⏳ ${window.t ? window.t('loading', 'Đang xử lý...') : 'Đang xử lý...'}</span>`;
 
         try {
             const formData = new FormData(form);
@@ -335,19 +351,22 @@ $homeUrl = match ($userRole) {
             const data = await response.json();
 
             if (data.success) {
-                const succMsg = data.message || (window.t ? window.t('toast_saved_success') : "Đổi mật khẩu thành công!");
+                const succMsg = data.message || (window.t ? window.t('toast_saved_success') :
+                    "Đổi mật khẩu thành công!");
                 if (Toast && Toast.flash) {
                     Toast.flash(succMsg, "success");
                 } else if (Toast && Toast.show) {
                     Toast.show(succMsg, "success");
                 }
-                submitBtn.innerHTML = `<span>${window.t ? window.t('saved', '✔️ Đã lưu') : '✔️ Đã đổi thành công!'}</span>`;
+                submitBtn.innerHTML =
+                    `<span>${window.t ? window.t('saved', '✔️ Đã lưu') : '✔️ Đã đổi thành công!'}</span>`;
 
                 setTimeout(() => {
                     window.location.href = data.redirect || '/WEB_BOBIN/public/index.php';
                 }, 400);
             } else {
-                Toast.show(data.message || (window.t ? window.t('cp_err_failed', "Không thể đổi mật khẩu.") : "Không thể đổi mật khẩu."), "error");
+                Toast.show(data.message || (window.t ? window.t('cp_err_failed',
+                    "Không thể đổi mật khẩu.") : "Không thể đổi mật khẩu."), "error");
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnHtml;
             }

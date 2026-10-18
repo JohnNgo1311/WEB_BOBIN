@@ -137,26 +137,68 @@ class BobinController extends Controller
 
         $errorMsg = null;
         $bobins = [];
+        $totalRecords = 0;
+        $totalPages = 0;
+        $currentPage = 1;
+        $limit = 50;
         $statusCounts = [];
         $capacityMap = []; // Thêm biến lưu trữ dung lượng
+        $qcDefectStats = [];
+        $productCountsMap = [];
+        $racks = [];
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getBobinsHistory($dto) ?? [];
+            $limit = $dto->limit;
+            $currentPage = max(1, (int)$dto->page);
+            $allBobins = $this->bobinService->getBobinsHistory($dto) ?? [];
+            $totalRecords = count($allBobins);
+            $totalPages = (int)ceil($totalRecords / $limit);
+            $bobins = array_slice($allBobins, ($currentPage - 1) * $limit, $limit);
+
             $statusCounts = $this->bobinService->getBobinHistoryStats($dto);
             $capacityMap = $this->bobinService->getBobinCapacities();
             $racks = $this->bobinService->getAllRacks(); // <-- Thêm lấy danh sách Rack
+
+            if (!empty($dto->qcDefect) && $dto->qcDefect !== 'all') {
+                $dtoForQcStats = clone $dto;
+                $dtoForQcStats->qcDefect = 'all';
+                $rowsForQcStats = $this->bobinService->getBobinsHistory($dtoForQcStats) ?? [];
+                $qcDefectStats = $this->bobinService->computeQcDefectStatsFromRows($rowsForQcStats);
+            } else {
+                $qcDefectStats = $this->bobinService->computeQcDefectStatsFromRows($allBobins);
+            }
+
+            if (!empty($dto->productCode) && $dto->productCode !== 'all') {
+                $dtoForProdCounts = clone $dto;
+                $dtoForProdCounts->productCode = '';
+                $rowsForProdCounts = $this->bobinService->getBobinsHistory($dtoForProdCounts) ?? [];
+                $productCountsMap = $this->bobinService->computeProductCountsFromRows($rowsForProdCounts);
+            } else {
+                $productCountsMap = $this->bobinService->computeProductCountsFromRows($allBobins);
+            }
         } catch (Throwable $e) {
             $errorMsg = $e->getMessage();
         }
 
         $this->view('listBobinHistoryView', data: [
-            'bobins'       => $bobins,
-            'statusCounts' => $statusCounts,
-            'capacityMap'  => $capacityMap,
-            'racks'        => $racks ?? [], // <-- Truyền xuống View
-            'pendingCount' => $this->bobinService->countPendingBobins(),
-            'error'        => $errorMsg,
-            'success'      => empty($errorMsg),
+            'bobins'           => $bobins,
+            'totalRecords'     => $totalRecords,
+            'pagination'       => [
+                'currentPage'  => $currentPage,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $limit
+            ],
+            'statusCounts'     => $statusCounts,
+            'capacityMap'      => $capacityMap,
+            'racks'            => $racks ?? [],
+            'qcDefectStats'    => $qcDefectStats,
+            'productCountsMap' => $productCountsMap,
+            'employees'        => GlobalData::$listEmployeeEntity ?? [],
+            'products'         => GlobalData::$listProductEntity ?? [],
+            'pendingCount'     => $this->bobinService->countPendingBobins(),
+            'error'            => $errorMsg,
+            'success'          => empty($errorMsg),
         ]);
     }
 
@@ -215,6 +257,8 @@ class BobinController extends Controller
             $totalPages = (int)ceil($totalRecords / $dto->limit);
 
             $statusCounts = $this->bobinService->getBobinStatusStats($dto);
+            $qcDefectStats = $this->bobinService->getDetailQcDefectStats($dto);
+            $productCountsMap = $this->bobinService->getDetailProductCounts($dto);
             $capacityMap = $this->bobinService->getBobinCapacities();
 
             // Lấy danh sách Rack truyền xuống View
@@ -224,12 +268,16 @@ class BobinController extends Controller
         }
 
         $this->view('listBobinDetailView', data: [
-            'bobins'       => $bobins,
-            'statusCounts' => $statusCounts,
-            'capacityMap'  => $capacityMap,
-            'racks'        => $racks, // <-- Thêm danh sách Racks
-            'pendingCount' => $this->bobinService->countPendingBobins(),
-            'pagination'   => [
+            'bobins'           => $bobins,
+            'statusCounts'     => $statusCounts,
+            'qcDefectStats'    => $qcDefectStats,
+            'productCountsMap' => $productCountsMap,
+            'capacityMap'      => $capacityMap,
+            'racks'            => $racks,
+            'employees'        => GlobalData::$listEmployeeEntity ?? [],
+            'products'         => GlobalData::$listProductEntity ?? [],
+            'pendingCount'     => $this->bobinService->countPendingBobins(),
+            'pagination'       => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
                 'totalRecords' => $totalRecords,
@@ -252,6 +300,7 @@ class BobinController extends Controller
             $dto = BobinGetListDTO::fromRequest($_GET);
             $bobins = $this->bobinService->getDetailBobinsForQC($dto) ?? [];
             $totalWaiting = $this->bobinService->countDetailBobinsForQC($dto);
+            $totalPages = (int)ceil($totalWaiting / $dto->limit);
 
             // Lấy số lượng Bobin đang chờ hủy
             $pendingCount = $this->bobinService->countPendingBobins();
@@ -263,6 +312,12 @@ class BobinController extends Controller
             'bobins'       => $bobins,
             'totalWaiting' => $totalWaiting ?? count($bobins),
             'pendingCount' => $pendingCount ?? 0,
+            'pagination'   => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalWaiting ?? count($bobins),
+                'limit'        => $dto->limit
+            ]
         ]);
     }
     public function listPendingCancellationView()
@@ -277,19 +332,134 @@ class BobinController extends Controller
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
+        $qcDefectStats = [];
+        $productCountsMap = [];
+        $racks = [];
+        $totalRecords = 0;
+        $totalPages = 0;
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getDetailBobinsForPendingCancellation($dto) ?? [];
-            if (empty($bobins)) {
-                $bobins = [];
-            } else {
+            $allBobins = $this->bobinService->getDetailBobinsForPendingCancellation($dto) ?? [];
+            if (empty($allBobins)) {
+                $allBobins = [];
             }
+
+            $totalRecords = count($allBobins);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
+            $currentPage = max(1, (int)$dto->page);
+            $bobins = array_slice($allBobins, ($currentPage - 1) * $dto->limit, $dto->limit);
+
+            if (!empty($dto->qcDefect) && $dto->qcDefect !== 'all') {
+                $dtoForQcStats = clone $dto;
+                $dtoForQcStats->qcDefect = 'all';
+                $rowsForQcStats = $this->bobinService->getDetailBobinsForPendingCancellation($dtoForQcStats) ?? [];
+                $qcDefectStats = $this->bobinService->computeQcDefectStatsFromRows($rowsForQcStats);
+            } else {
+                $qcDefectStats = $this->bobinService->computeQcDefectStatsFromRows($allBobins);
+            }
+
+            if (!empty($dto->productCode) && $dto->productCode !== 'all') {
+                $dtoForProdCounts = clone $dto;
+                $dtoForProdCounts->productCode = '';
+                $rowsForProdCounts = $this->bobinService->getDetailBobinsForPendingCancellation($dtoForProdCounts) ?? [];
+                $productCountsMap = $this->bobinService->computeProductCountsFromRows($rowsForProdCounts);
+            } else {
+                $productCountsMap = $this->bobinService->computeProductCountsFromRows($allBobins);
+            }
+
+            $racks = $this->bobinService->getAllRacks();
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
         $this->view('listPendingCancellationView', data: [
-            'bobins'       => $bobins,
-            'pendingCount' => count($bobins),
+            'bobins'           => $bobins,
+            'totalRecords'     => $totalRecords,
+            'pagination'       => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ],
+            'qcDefectStats'    => $qcDefectStats,
+            'productCountsMap' => $productCountsMap,
+            'racks'            => $racks ?? [],
+            'employees'        => GlobalData::$listEmployeeEntity ?? [],
+            'products'         => GlobalData::$listProductEntity ?? [],
+            'pendingCount'     => $this->bobinService->countPendingBobins(),
+        ]);
+    }
+
+    public function listCancelledBobinView()
+    {
+        if (
+            isset($_SESSION['user'])
+            && !AuthHelper::hasPermission('bobin_list')
+            && !AuthHelper::hasPermission('bobin_history')
+            && !AuthHelper::hasPermission('pending_cancel_view')
+        ) {
+            header('Location: ' . BASE_URL . '/index.php?url=bobin/index');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        $qcDefectStats = [];
+        $productCountsMap = [];
+        $racks = [];
+        $totalRecords = 0;
+        $totalPages = 0;
+        try {
+            $dto = BobinGetListDTO::fromRequest($_GET);
+            $allBobins = $this->bobinService->getDetailBobinsForCancelled($dto) ?? [];
+            if (empty($allBobins)) {
+                $allBobins = [];
+            }
+
+            $totalRecords = count($allBobins);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
+            $currentPage = max(1, (int)$dto->page);
+            $bobins = array_slice($allBobins, ($currentPage - 1) * $dto->limit, $dto->limit);
+
+            if (!empty($dto->qcDefect) && $dto->qcDefect !== 'all') {
+                $dtoForQcStats = clone $dto;
+                $dtoForQcStats->qcDefect = 'all';
+                $rowsForQcStats = $this->bobinService->getDetailBobinsForCancelled($dtoForQcStats) ?? [];
+                $qcDefectStats = $this->bobinService->computeQcDefectStatsFromRows($rowsForQcStats);
+            } else {
+                $qcDefectStats = $this->bobinService->computeQcDefectStatsFromRows($allBobins);
+            }
+
+            if (!empty($dto->productCode) && $dto->productCode !== 'all') {
+                $dtoForProdCounts = clone $dto;
+                $dtoForProdCounts->productCode = '';
+                $rowsForProdCounts = $this->bobinService->getDetailBobinsForCancelled($dtoForProdCounts) ?? [];
+                $productCountsMap = $this->bobinService->computeProductCountsFromRows($rowsForProdCounts);
+            } else {
+                $productCountsMap = $this->bobinService->computeProductCountsFromRows($allBobins);
+            }
+
+            $racks = $this->bobinService->getAllRacks();
+        } catch (Throwable $e) {
+            throw new Exception($e->getMessage(), $e->getCode(), $e);
+        }
+
+        $this->view('listCancelledBobinView', data: [
+            'bobins'           => $bobins,
+            'totalRecords'     => $totalRecords,
+            'pagination'       => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ],
+            'qcDefectStats'    => $qcDefectStats,
+            'productCountsMap' => $productCountsMap,
+            'racks'            => $racks ?? [],
+            'employees'        => GlobalData::$listEmployeeEntity ?? [],
+            'products'         => GlobalData::$listProductEntity ?? [],
+            'pendingCount'     => $this->bobinService->countPendingBobins(),
         ]);
     }
     public function windingView()
@@ -341,7 +511,10 @@ class BobinController extends Controller
 
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getListDetailBobinsForEditting($dto) ?? [];
+            $canViewAll = AuthHelper::canViewAllEditBobins('extrusion');
+            $bobins = $this->bobinService->getListDetailBobinsForEditting($dto, '', 0, $canViewAll) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForEditting($dto, '', 0, $canViewAll);
+            $totalPages = (int)ceil($totalRecords / $dto->limit);
 
             if (empty($bobins)) {
                 $bobins = [];
@@ -352,7 +525,13 @@ class BobinController extends Controller
 
         $this->view('extrusionEditBobinView', data: [
             'bobins'       => $bobins,
-            'totalRecords' => count($bobins),
+            'totalRecords' => $totalRecords,
+            'pagination'   => [
+                'currentPage'  => $dto->page,
+                'totalPages'   => $totalPages,
+                'totalRecords' => $totalRecords,
+                'limit'        => $dto->limit
+            ]
         ]);
     }
 
@@ -370,8 +549,9 @@ class BobinController extends Controller
 
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getListDetailBobinsForQCEdit($dto) ?? [];
-            $totalRecords = $this->bobinService->countDetailBobinsForQCEdit($dto);
+            $canViewAll = AuthHelper::canViewAllEditBobins('qc');
+            $bobins = $this->bobinService->getListDetailBobinsForQCEdit($dto, '', $canViewAll) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForQCEdit($dto, '', $canViewAll);
             $totalPages = (int)ceil($totalRecords / $dto->limit);
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
@@ -403,8 +583,9 @@ class BobinController extends Controller
 
         try {
             $dto = BobinGetListDTO::fromRequest($_GET);
-            $bobins = $this->bobinService->getListDetailBobinsForWindingEdit($dto) ?? [];
-            $totalRecords = $this->bobinService->countDetailBobinsForWindingEdit($dto);
+            $canViewAll = AuthHelper::canViewAllEditBobins('winding');
+            $bobins = $this->bobinService->getListDetailBobinsForWindingEdit($dto, '', 0, $canViewAll) ?? [];
+            $totalRecords = $this->bobinService->countDetailBobinsForWindingEdit($dto, '', 0, $canViewAll);
             $totalPages = (int)ceil($totalRecords / $dto->limit);
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
@@ -547,6 +728,16 @@ class BobinController extends Controller
                 exit;
             }
 
+            // Task-047: Kiểm tra quyền sở hữu Bobin tại công đoạn Đùn (hoặc có quyền extrusion_edit_view_all / Admin)
+            if (!AuthHelper::canViewAllEditBobins('extrusion') && !$this->bobinService->isBobinExtrusionCreatedByUser($dto->bobin_identification_code)) {
+                $this->json([
+                    'success' => false,
+                    'error'   => 'Bạn không phải là người đã xác nhận thông tin đùn của Bobin này nên không có quyền điều chỉnh.',
+                    'message' => 'Bạn không phải là người đã xác nhận thông tin đùn của Bobin này nên không có quyền điều chỉnh.'
+                ], 403);
+                exit;
+            }
+
             // Ghi nhận vết kiểm toán update_history
             $updateRecord = [
                 'stage'          => 'extrusion',
@@ -599,6 +790,17 @@ class BobinController extends Controller
 
             $dto = BobinExtDeleteDTO::fromRequest($input);
             $this->validFormExtrusionDelete($dto);
+
+            // Task-047: Kiểm tra quyền sở hữu Bobin tại công đoạn Đùn (hoặc có quyền extrusion_edit_view_all / Admin)
+            if (!AuthHelper::canViewAllEditBobins('extrusion') && !$this->bobinService->isBobinExtrusionCreatedByUser($dto->bobin_identification_code)) {
+                $this->json([
+                    'success' => false,
+                    'error'   => 'Bạn không phải là người đã xác nhận thông tin đùn của Bobin này nên không có quyền hủy từ trang Điều chỉnh đùn.',
+                    'message' => 'Bạn không phải là người đã xác nhận thông tin đùn của Bobin này nên không có quyền hủy từ trang Điều chỉnh đùn.'
+                ], 403);
+                exit;
+            }
+
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->extDeleteBobin($dto);
 
@@ -692,6 +894,16 @@ class BobinController extends Controller
 
             if (empty($dto->bobin_identification_code)) {
                 throw new Exception("Mã định danh Bobin không được để trống.");
+            }
+
+            // Task-047: Chỉ cho phép User đã xác nhận kiểm tra ngoại quan QC của Bobin này (hoặc có quyền qc_edit_view_all / Admin) được phép điều chỉnh
+            if (!AuthHelper::canViewAllEditBobins('qc') && !$this->bobinService->isBobinQcInspectedByUser($dto->bobin_identification_code)) {
+                $this->json([
+                    'success' => false,
+                    'error'   => 'Bạn không phải là người đã xác nhận kiểm tra ngoại quan QC của Bobin này nên không có quyền điều chỉnh.',
+                    'message' => 'Bạn không phải là người đã xác nhận kiểm tra ngoại quan QC của Bobin này nên không có quyền điều chỉnh.'
+                ], 403);
+                exit;
             }
 
             // Nếu người dùng chọn đổi loại Bobin (tùy chọn)
@@ -911,6 +1123,16 @@ class BobinController extends Controller
                 throw new Exception("Mã định danh Bobin không được để trống.");
             }
 
+            // Task-046 & Task-047: Chỉ cho phép User đã xác nhận thông tin cuộn trước đó của Bobin này (hoặc có quyền winding_edit_view_all / Admin) được phép điều chỉnh
+            if (!AuthHelper::canViewAllEditBobins('winding') && !$this->bobinService->isBobinWindingConfirmedByUser($dto->bobin_identification_code)) {
+                $this->json([
+                    'success' => false,
+                    'error'   => 'Bạn không phải là người đã xác nhận thông tin cuộn của Bobin này nên không có quyền điều chỉnh.',
+                    'message' => 'Bạn không phải là người đã xác nhận thông tin cuộn của Bobin này nên không có quyền điều chỉnh.'
+                ], 403);
+                exit;
+            }
+
             // Audit record
             $updateRecord = [
                 'stage'          => 'winding',
@@ -969,6 +1191,14 @@ class BobinController extends Controller
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
             $input = json_decode(file_get_contents('php://input'), true) ?? [];
             $dto = BobinWindingCancelDTO::fromRequest($input);
+            if ($dto->source === 'winding_edit' && !AuthHelper::canViewAllEditBobins('winding') && !$this->bobinService->isBobinWindingConfirmedByUser($dto->bobin_identification_code)) {
+                $this->json([
+                    'success' => false,
+                    'error'   => 'Bạn không phải là người đã xác nhận thông tin cuộn của Bobin này nên không có quyền hủy từ trang Điều chỉnh cuộn.',
+                    'message' => 'Bạn không phải là người đã xác nhận thông tin cuộn của Bobin này nên không có quyền hủy từ trang Điều chỉnh cuộn.'
+                ], 403);
+                exit;
+            }
             $this->validFormWinding_Cancel($dto);
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->windingCancelBobin($dto);

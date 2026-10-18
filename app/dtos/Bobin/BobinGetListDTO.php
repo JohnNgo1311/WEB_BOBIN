@@ -10,6 +10,9 @@ class BobinGetListDTO
     public ?string $bobinType;
     public ?string $rack;       // <-- Thêm lọc Rack
     public ?string $sort;       // <-- Thêm sắp xếp mới nhất
+    public ?string $employeeCode; // <-- Lọc theo mã nhân viên (Đùn / Cuộn / QC)
+    public ?string $productCode;  // <-- Lọc theo mã sản phẩm
+    public ?string $qcDefect;     // <-- Lọc theo tình trạng ngoại quan QC
     public int $page;
     public int $limit;
 
@@ -23,7 +26,10 @@ class BobinGetListDTO
         ?string $rack = 'all',
         ?string $sort = 'default',
         int $page = 1,
-        int $limit = 50
+        int $limit = 50,
+        ?string $employeeCode = '',
+        ?string $productCode = '',
+        ?string $qcDefect = 'all'
     ) {
         $this->keyword = $keyword;
         $this->fromDate = $fromDate;
@@ -35,6 +41,9 @@ class BobinGetListDTO
         $this->sort = $sort;
         $this->page = max(1, $page);
         $this->limit = max(1, min(100, $limit));
+        $this->employeeCode = trim((string)$employeeCode);
+        $this->productCode = trim((string)$productCode);
+        $this->qcDefect = trim((string)$qcDefect) !== '' ? trim((string)$qcDefect) : 'all';
     }
 
     public static function fromRequest(array $request): self
@@ -49,7 +58,10 @@ class BobinGetListDTO
             rack: $request['rack'] ?? 'all',
             sort: $request['sort'] ?? 'default',
             page: isset($request['page']) ? (int)$request['page'] : 1,
-            limit: isset($request['limit']) ? (int)$request['limit'] : 50
+            limit: isset($request['limit']) ? (int)$request['limit'] : 50,
+            employeeCode: $request['employee_code'] ?? '',
+            productCode: $request['product_code'] ?? '',
+            qcDefect: $request['qc_defect'] ?? 'all'
         );
     }
 }

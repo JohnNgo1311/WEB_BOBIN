@@ -96,7 +96,8 @@ class BobinRepository
                             WHERE updated_time BETWEEN :from_date AND :to_date
                               AND $keyTimeSubQueryExpr BETWEEN :from_date_key AND :to_date_key
                             GROUP BY bobin_key_code
-                        ) latest_key ON h.id = latest_key.max_id";
+                        ) latest_key ON h.id = latest_key.max_id
+                        WHERE 1=1";
 
                 $params[':from_date']     = $fromDateStr;
                 $params[':to_date']       = $toDateStr;
@@ -136,14 +137,15 @@ class BobinRepository
                             WHERE updated_time BETWEEN :from_date AND :to_date
                               AND bobin_current_status = 'Busy_Checked'
                             GROUP BY bobin_key_code
-                        ) latest_key ON h.id = latest_key.max_id";
+                        ) latest_key ON h.id = latest_key.max_id
+                        WHERE 1=1";
 
                 if ($statusFilter === 'Busy_Checked_InPeriod') {
-                    $sql .= " WHERE $keyTimeExpr BETWEEN :from_key AND :to_key";
+                    $sql .= " AND $keyTimeExpr BETWEEN :from_key AND :to_key";
                     $params[':from_key'] = $fromDateStr;
                     $params[':to_key']   = $toDateStr;
                 } elseif ($statusFilter === 'Busy_Checked_Before') {
-                    $sql .= " WHERE $keyTimeExpr < :from_key";
+                    $sql .= " AND $keyTimeExpr < :from_key";
                     $params[':from_key'] = $fromDateStr;
                 }
 
@@ -159,7 +161,8 @@ class BobinRepository
                             WHERE updated_time BETWEEN :from_date AND :to_date
                               AND bobin_current_status = 'Rolled'
                             GROUP BY bobin_key_code
-                        ) latest_key ON h.id = latest_key.max_id";
+                        ) latest_key ON h.id = latest_key.max_id
+                        WHERE 1=1";
 
                 $params[':from_date'] = $fromDateStr;
                 $params[':to_date']   = $toDateStr;
@@ -172,14 +175,15 @@ class BobinRepository
                             WHERE updated_time BETWEEN :from_date AND :to_date
                               AND bobin_current_status = 'Cancelled'
                             GROUP BY bobin_key_code
-                        ) latest_key ON h.id = latest_key.max_id";
+                        ) latest_key ON h.id = latest_key.max_id
+                        WHERE 1=1";
 
                 if ($statusFilter === 'Cancelled_InPeriod') {
-                    $sql .= " WHERE $keyTimeExpr BETWEEN :from_key AND :to_key";
+                    $sql .= " AND $keyTimeExpr BETWEEN :from_key AND :to_key";
                     $params[':from_key'] = $fromDateStr;
                     $params[':to_key']   = $toDateStr;
                 } elseif ($statusFilter === 'Cancelled_Before') {
-                    $sql .= " WHERE $keyTimeExpr < :from_key";
+                    $sql .= " AND $keyTimeExpr < :from_key";
                     $params[':from_key'] = $fromDateStr;
                 }
 
@@ -194,14 +198,15 @@ class BobinRepository
                             WHERE updated_time BETWEEN :from_date AND :to_date
                               AND bobin_current_status = 'Pending_Cancellation'
                             GROUP BY bobin_key_code
-                        ) latest_key ON h.id = latest_key.max_id";
+                        ) latest_key ON h.id = latest_key.max_id
+                        WHERE 1=1";
 
                 if ($statusFilter === 'Pending_Cancellation_InPeriod') {
-                    $sql .= " WHERE $keyTimeExpr BETWEEN :from_key AND :to_key";
+                    $sql .= " AND $keyTimeExpr BETWEEN :from_key AND :to_key";
                     $params[':from_key'] = $fromDateStr;
                     $params[':to_key']   = $toDateStr;
                 } elseif ($statusFilter === 'Pending_Cancellation_Before') {
-                    $sql .= " WHERE $keyTimeExpr < :from_key";
+                    $sql .= " AND $keyTimeExpr < :from_key";
                     $params[':from_key'] = $fromDateStr;
                 }
 
@@ -215,6 +220,9 @@ class BobinRepository
                 $params[':from_date'] = $fromDateStr;
                 $params[':to_date']   = $toDateStr;
             }
+
+            // Đảm bảo chỉ lọc các bản ghi có đầy đủ thông tin từ nhóm Đùn
+            $sql .= " AND " . $this->getExtrusionCompleteCondition('h');
 
             // NẾU CÓ CHỌN CỤ THỂ CÁC BẢN GHI QUA CHECKBOX
             if (!empty($selectedIds)) {
@@ -271,6 +279,9 @@ class BobinRepository
                 }
             }
 
+            // 5. Lọc nâng cao: Mã NV (Đùn/Cuộn/QC), Mã Sản phẩm, Tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters, 'h');
+
             $sql .= " ORDER BY h.updated_time DESC";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -288,8 +299,8 @@ class BobinRepository
             $fromDateStr = $filters['from_date'];
             $toDateStr   = $filters['to_date'];
 
-            // Đoạn phụ lọc thêm (bobin_size, bobin_type, rack, keyword)
-            $extraWhere = "";
+            // Đoạn phụ lọc thêm (bobin_size, bobin_type, rack, keyword) + đầy đủ thông tin từ nhóm Đùn
+            $extraWhere = " AND " . $this->getExtrusionCompleteCondition('h');
             $extraParams = [];
 
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
@@ -327,6 +338,9 @@ class BobinRepository
                     $extraParams[":kw$i"] = $searchStr;
                 }
             }
+
+            // Lọc nâng cao: Mã NV (Đùn/Cuộn/QC), Mã Sản phẩm, Tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($extraWhere, $extraParams, $filters, 'h');
 
             $keyTimeExpr = "STR_TO_DATE(SUBSTRING_INDEX(h.bobin_key_code, '_', -6), '%Y_%m_%d_%H_%i_%s')";
             $keyTimeSubQueryExpr = "STR_TO_DATE(SUBSTRING_INDEX(bobin_key_code, '_', -6), '%Y_%m_%d_%H_%i_%s')";
@@ -566,11 +580,464 @@ class BobinRepository
         )";
     }
 
+    /**
+     * Điều kiện SQL xác định Bobin đã có đầy đủ thông tin nhập từ nhóm Đùn
+     */
+    private function getExtrusionCompleteCondition(string $prefix = ''): string
+    {
+        $p = $prefix !== '' ? rtrim($prefix, '.') . '.' : '';
+        return "(
+            {$p}products IS NOT NULL AND TRIM({$p}products) NOT IN ('', 'null', '{}')
+            AND JSON_UNQUOTE(JSON_EXTRACT({$p}products, '$.product_code')) IS NOT NULL
+            AND TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}products, '$.product_code'))) NOT IN ('', 'Chưa cập nhật')
+            AND {$p}extrusion_employee IS NOT NULL AND TRIM({$p}extrusion_employee) NOT IN ('', 'null', '{}')
+            AND JSON_UNQUOTE(JSON_EXTRACT({$p}extrusion_employee, '$.employee_code')) IS NOT NULL
+            AND TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}extrusion_employee, '$.employee_code'))) NOT IN ('', 'Chưa cập nhật')
+            AND {$p}material_lot IS NOT NULL AND TRIM({$p}material_lot) NOT IN ('', 'null', '{}')
+            AND JSON_UNQUOTE(JSON_EXTRACT({$p}material_lot, '$.lot')) IS NOT NULL
+            AND TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}material_lot, '$.lot'))) NOT IN ('', 'Chưa cập nhật')
+            AND {$p}rack IS NOT NULL AND TRIM({$p}rack) NOT IN ('', 'null', '{}')
+            AND JSON_UNQUOTE(JSON_EXTRACT({$p}rack, '$.code')) IS NOT NULL
+            AND TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}rack, '$.code'))) NOT IN ('', 'Chưa cập nhật')
+            AND {$p}extrusion_check IS NOT NULL AND TRIM({$p}extrusion_check) NOT IN ('', 'null', '{}')
+            AND {$p}print_lot IS NOT NULL AND TRIM({$p}print_lot) NOT IN ('', 'Chưa cập nhật')
+            AND {$p}length_m > 0
+            AND {$p}shift IS NOT NULL AND TRIM({$p}shift) NOT IN ('', 'Chưa cập nhật')
+            AND {$p}extrusion_date IS NOT NULL
+            AND {$p}finish_time IS NOT NULL
+        )";
+    }
+
+    /**
+     * Chuẩn hóa giá trị lọc Mã nhân viên (hỗ trợ cả khi người dùng chọn dạng "02224428 - Lê Thị Lụa")
+     */
+    public function normalizeEmployeeCodeFilter(?string $raw): string
+    {
+        $val = trim((string)($raw ?? ''));
+        if ($val === '' || strtolower($val) === 'all') {
+            return '';
+        }
+        if (strpos($val, ' - ') !== false) {
+            $val = trim(explode(' - ', $val, 2)[0]);
+        }
+        return $val;
+    }
+
+    /**
+     * Chuẩn hóa giá trị lọc Mã sản phẩm (hỗ trợ cả khi người dùng chọn dạng "TIUB11BU-1MZ2 (25 Bobin)" hoặc "TIUB11BU-1MZ2 - ...")
+     */
+    public function normalizeProductCodeFilter(?string $raw): string
+    {
+        $val = trim((string)($raw ?? ''));
+        if ($val === '' || strtolower($val) === 'all') {
+            return '';
+        }
+        if (strpos($val, ' - ') !== false) {
+            $val = trim(explode(' - ', $val, 2)[0]);
+        }
+        if (preg_match('/^(.+?)\s*\(\d+\s*Bobin\)$/iu', $val, $m)) {
+            $val = trim($m[1]);
+        }
+        return $val;
+    }
+
+    /**
+     * Điều kiện SQL xác định Bobin đã được QC kiểm tra ngoại quan
+     */
+    private function getQcInspectedCondition(string $prefix = ''): string
+    {
+        $p = $prefix !== '' ? rtrim($prefix, '.') . '.' : '';
+        return "(
+            {$p}visual_inspection IS NOT NULL
+            AND TRIM({$p}visual_inspection) NOT IN ('', 'null', '{}')
+            AND COALESCE(TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.inspector_code'))), '') NOT IN ('', 'null', 'Chưa cập nhật')
+        )";
+    }
+
+    /**
+     * Biểu thức SQL kiểm tra 1 tiêu chí ngoại quan QC có bị NG (true) hay không (NULL-safe với COALESCE)
+     */
+    private function getSingleQcDefectNgExpr(string $field, string $prefix = ''): string
+    {
+        $p = $prefix !== '' ? rtrim($prefix, '.') . '.' : '';
+        return match ($field) {
+            'gel'            => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.gel')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_gel')), 'false') IN ('true', '1'))",
+            'foreign_object' => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.foreign_object')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_foreign_object')), 'false') IN ('true', '1'))",
+            'color_issue'    => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.color_issue')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_color_issue')), 'false') IN ('true', '1'))",
+            'print_quality'  => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.print_quality')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_print_quality')), 'false') IN ('true', '1'))",
+            'clump'          => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.clump')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.lump')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_clump')), 'false') IN ('true', '1'))",
+            'scratch'        => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.scratch')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_scratch')), 'false') IN ('true', '1'))",
+            'streak'         => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.streak')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.scuff')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_streak')), 'false') IN ('true', '1'))",
+            'deformation'    => "(COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.deformation')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defects.deformed')), 'false') IN ('true', '1') OR COALESCE(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.defect_deformation')), 'false') IN ('true', '1'))",
+            default          => "0=1"
+        };
+    }
+
+    /**
+     * Điều kiện SQL lọc theo tình trạng ngoại quan của nhóm QC
+     */
+    private function getQcDefectFilterCondition(string $qcDefect, string $prefix = ''): string
+    {
+        $qcDefect = trim($qcDefect);
+        if ($qcDefect === '' || $qcDefect === 'all') {
+            return '1=1';
+        }
+
+        $inspectedCond = $this->getQcInspectedCondition($prefix);
+        $defectFields  = ['gel', 'foreign_object', 'color_issue', 'print_quality', 'clump', 'scratch', 'streak', 'deformation'];
+
+        if (in_array($qcDefect, $defectFields, true)) {
+            return "(" . $inspectedCond . " AND " . $this->getSingleQcDefectNgExpr($qcDefect, $prefix) . ")";
+        }
+
+        $anyNgExpr = "(" . implode(' OR ', array_map(fn($f) => $this->getSingleQcDefectNgExpr($f, $prefix), $defectFields)) . ")";
+
+        if ($qcDefect === 'ng_any') {
+            return "(" . $inspectedCond . " AND " . $anyNgExpr . ")";
+        }
+
+        if ($qcDefect === 'ok_all') {
+            return "(" . $inspectedCond . " AND NOT " . $anyNgExpr . ")";
+        }
+
+        if ($qcDefect === 'uninspected') {
+            return "(NOT " . $inspectedCond . ")";
+        }
+
+        return '1=1';
+    }
+
+    /**
+     * Gắn đồng bộ 3 bộ lọc nâng cao:
+     * - 2a: employee_code (tra cứu cả 3 nhóm: Đùn / Cuộn / QC)
+     * - 2b: product_code (tra cứu theo mã sản phẩm)
+     * - 2c: qc_defect (tra cứu theo tình trạng ngoại quan QC)
+     */
+    private function appendAdvancedManagementFilters(
+        string &$sql,
+        array &$params,
+        array $filters,
+        string $prefix = '',
+        bool $skipQcDefect = false,
+        bool $skipProductCode = false
+    ): void {
+        $p = $prefix !== '' ? rtrim($prefix, '.') . '.' : '';
+
+        // 2a. Lọc theo mã số nhân viên trên cả 3 nhóm (Đùn OR Cuộn OR QC)
+        $empCode = $this->normalizeEmployeeCodeFilter($filters['employee_code'] ?? '');
+        if ($empCode !== '') {
+            $sql .= " AND (
+                TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}extrusion_employee, '$.employee_code'))) = :f_emp_ext
+                OR TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}winding_employee, '$.employee_code'))) = :f_emp_wnd
+                OR TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}visual_inspection, '$.inspector_code'))) = :f_emp_qc
+            )";
+            $params[':f_emp_ext'] = $empCode;
+            $params[':f_emp_wnd'] = $empCode;
+            $params[':f_emp_qc']  = $empCode;
+        }
+
+        // 2b. Lọc theo mã sản phẩm
+        if (!$skipProductCode) {
+            $prodCode = $this->normalizeProductCodeFilter($filters['product_code'] ?? '');
+            if ($prodCode !== '') {
+                $sql .= " AND TRIM(JSON_UNQUOTE(JSON_EXTRACT({$p}products, '$.product_code'))) = :f_prod_code";
+                $params[':f_prod_code'] = $prodCode;
+            }
+        }
+
+        // 2c. Lọc theo tình trạng ngoại quan QC
+        if (!$skipQcDefect) {
+            $qcDefect = trim((string)($filters['qc_defect'] ?? 'all'));
+            if ($qcDefect !== '' && $qcDefect !== 'all') {
+                $sql .= " AND " . $this->getQcDefectFilterCondition($qcDefect, $prefix);
+            }
+        }
+    }
+
+    /**
+     * Tính thống kê số lượng Bobin theo từng tình trạng ngoại quan QC từ tập bản ghi (dùng cho History, Chờ hủy, Đã hủy)
+     */
+    public function computeQcDefectStatsFromRows(array $rows): array
+    {
+        $stats = [
+            'total_bobins'    => count($rows),
+            'inspected_total' => 0,
+            'uninspected'     => 0,
+            'ok_all'          => 0,
+            'ng_any'          => 0,
+            'gel'             => 0,
+            'foreign_object'  => 0,
+            'color_issue'     => 0,
+            'print_quality'   => 0,
+            'clump'           => 0,
+            'scratch'         => 0,
+            'streak'          => 0,
+            'deformation'     => 0,
+        ];
+
+        foreach ($rows as $row) {
+            $viRaw = $row['visual_inspection'] ?? '';
+            $vi = is_string($viRaw) && $viRaw !== '' ? (json_decode($viRaw, true) ?: []) : (is_array($viRaw) ? $viRaw : []);
+            $inspCode = trim((string)($vi['inspector_code'] ?? ''));
+            if ($inspCode === '' || $inspCode === 'Chưa cập nhật') {
+                $stats['uninspected']++;
+                continue;
+            }
+
+            $stats['inspected_total']++;
+            $def = is_array($vi['defects'] ?? null) ? $vi['defects'] : [];
+
+            $isGel     = !empty($def['gel']) || !empty($vi['defect_gel']);
+            $isForeign = !empty($def['foreign_object']) || !empty($vi['defect_foreign_object']);
+            $isColor   = !empty($def['color_issue']) || !empty($vi['defect_color_issue']);
+            $isPrint   = !empty($def['print_quality']) || !empty($vi['defect_print_quality']);
+            $isClump   = !empty($def['clump']) || !empty($def['lump']) || !empty($vi['defect_clump']);
+            $isScratch = !empty($def['scratch']) || !empty($vi['defect_scratch']);
+            $isStreak  = !empty($def['streak']) || !empty($def['scuff']) || !empty($vi['defect_streak']);
+            $isDeform  = !empty($def['deformation']) || !empty($def['deformed']) || !empty($vi['defect_deformation']);
+
+            if ($isGel)     $stats['gel']++;
+            if ($isForeign) $stats['foreign_object']++;
+            if ($isColor)   $stats['color_issue']++;
+            if ($isPrint)   $stats['print_quality']++;
+            if ($isClump)   $stats['clump']++;
+            if ($isScratch) $stats['scratch']++;
+            if ($isStreak)  $stats['streak']++;
+            if ($isDeform)  $stats['deformation']++;
+
+            if ($isGel || $isForeign || $isColor || $isPrint || $isClump || $isScratch || $isStreak || $isDeform) {
+                $stats['ng_any']++;
+            } else {
+                $stats['ok_all']++;
+            }
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Tính thống kê số lượng Bobin theo từng Mã sản phẩm từ tập bản ghi
+     */
+    public function computeProductCountsFromRows(array $rows): array
+    {
+        $counts = [];
+        foreach ($rows as $row) {
+            $pRaw = $row['products'] ?? '';
+            $p = is_string($pRaw) && $pRaw !== '' ? (json_decode($pRaw, true) ?: []) : (is_array($pRaw) ? $pRaw : []);
+            $code = trim((string)($p['product_code'] ?? ''));
+            if ($code !== '' && $code !== 'Chưa cập nhật') {
+                $counts[$code] = ($counts[$code] ?? 0) + 1;
+            }
+        }
+        ksort($counts);
+        return $counts;
+    }
+
+    /**
+     * Thống kê số lượng Bobin của từng tình trạng ngoại quan QC trên trang Danh sách Bobin (toàn tập dữ liệu lọc, không giới hạn phân trang)
+     */
+    public function getDetailQcDefectStats(array $filters = []): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $baseTable   = $this->getActiveBaseTable();
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $inspCond    = $this->getQcInspectedCondition();
+
+            $gelExpr     = $this->getSingleQcDefectNgExpr('gel');
+            $foreignExpr = $this->getSingleQcDefectNgExpr('foreign_object');
+            $colorExpr   = $this->getSingleQcDefectNgExpr('color_issue');
+            $printExpr   = $this->getSingleQcDefectNgExpr('print_quality');
+            $clumpExpr   = $this->getSingleQcDefectNgExpr('clump');
+            $scratchExpr = $this->getSingleQcDefectNgExpr('scratch');
+            $streakExpr  = $this->getSingleQcDefectNgExpr('streak');
+            $deformExpr  = $this->getSingleQcDefectNgExpr('deformation');
+            $anyNgExpr   = "($gelExpr OR $foreignExpr OR $colorExpr OR $printExpr OR $clumpExpr OR $scratchExpr OR $streakExpr OR $deformExpr)";
+
+            $sql = "SELECT
+                        COUNT(*) AS total_bobins,
+                        COALESCE(SUM(CASE WHEN $inspCond THEN 1 ELSE 0 END), 0) AS inspected_total,
+                        COALESCE(SUM(CASE WHEN NOT $inspCond THEN 1 ELSE 0 END), 0) AS uninspected,
+                        COALESCE(SUM(CASE WHEN $inspCond AND NOT $anyNgExpr THEN 1 ELSE 0 END), 0) AS ok_all,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $anyNgExpr THEN 1 ELSE 0 END), 0) AS ng_any,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $gelExpr THEN 1 ELSE 0 END), 0) AS gel,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $foreignExpr THEN 1 ELSE 0 END), 0) AS foreign_object,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $colorExpr THEN 1 ELSE 0 END), 0) AS color_issue,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $printExpr THEN 1 ELSE 0 END), 0) AS print_quality,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $clumpExpr THEN 1 ELSE 0 END), 0) AS clump,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $scratchExpr THEN 1 ELSE 0 END), 0) AS scratch,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $streakExpr THEN 1 ELSE 0 END), 0) AS streak,
+                        COALESCE(SUM(CASE WHEN $inspCond AND $deformExpr THEN 1 ELSE 0 END), 0) AS deformation
+                    FROM $baseTable AS active_bobins WHERE 1=1";
+            $params = [];
+
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
+            }
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $statusVal = !empty($filters['status']) ? $filters['status'] : 'all';
+            if ($statusVal === 'Empty') {
+                $sql .= " AND NOT (bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked', 'Pending_Cancellation') AND {$extComplete})";
+            } else {
+                $sql .= " AND {$extComplete}";
+                if ($statusVal === 'Line') {
+                    $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
+                } elseif ($statusVal !== 'all') {
+                    $sql .= " AND bobin_current_status = :status";
+                    $params[':status'] = $statusVal;
+                }
+            }
+
+            // Áp dụng các bộ lọc nâng cao (employee_code, product_code, qc_defect)
+            $this->appendAdvancedManagementFilters($sql, $params, $filters);
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            return [
+                'total_bobins'    => (int)($row['total_bobins'] ?? 0),
+                'inspected_total' => (int)($row['inspected_total'] ?? 0),
+                'uninspected'     => (int)($row['uninspected'] ?? 0),
+                'ok_all'          => (int)($row['ok_all'] ?? 0),
+                'ng_any'          => (int)($row['ng_any'] ?? 0),
+                'gel'             => (int)($row['gel'] ?? 0),
+                'foreign_object'  => (int)($row['foreign_object'] ?? 0),
+                'color_issue'     => (int)($row['color_issue'] ?? 0),
+                'print_quality'   => (int)($row['print_quality'] ?? 0),
+                'clump'           => (int)($row['clump'] ?? 0),
+                'scratch'         => (int)($row['scratch'] ?? 0),
+                'streak'          => (int)($row['streak'] ?? 0),
+                'deformation'     => (int)($row['deformation'] ?? 0),
+            ];
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            return $this->computeQcDefectStatsFromRows([]);
+        }
+    }
+
+    /**
+     * Thống kê số lượng Bobin theo từng Mã sản phẩm trên trang Danh sách Bobin (phục vụ gợi ý và thống kê theo điều kiện lọc hiện tại)
+     */
+    public function getDetailProductCounts(array $filters = []): array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $baseTable   = $this->getActiveBaseTable();
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT TRIM(JSON_UNQUOTE(JSON_EXTRACT(products, '$.product_code'))) AS pcode, COUNT(*) AS cnt
+                    FROM $baseTable AS active_bobins WHERE 1=1";
+            $params = [];
+
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
+            }
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                    bobin_identification_code LIKE :kw1 OR  
+                    JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                    JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                    JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                    JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                    print_lot LIKE :kw6 OR
+                    winding_machine LIKE :kw7 OR
+                    bobin_type LIKE :kw8
+                )";
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $statusVal = !empty($filters['status']) ? $filters['status'] : 'all';
+            if ($statusVal === 'Empty') {
+                $sql .= " AND NOT (bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked', 'Pending_Cancellation') AND {$extComplete})";
+            } else {
+                $sql .= " AND {$extComplete}";
+                if ($statusVal === 'Line') {
+                    $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
+                } elseif ($statusVal !== 'all') {
+                    $sql .= " AND bobin_current_status = :status";
+                    $params[':status'] = $statusVal;
+                }
+            }
+
+            // Áp dụng employee_code và qc_defect (bỏ qua product_code để lấy đủ số lượng cho từng mã SP trong gợi ý)
+            $this->appendAdvancedManagementFilters($sql, $params, $filters, '', false, true);
+
+            $sql .= " GROUP BY pcode ORDER BY pcode ASC";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+            $result = [];
+            foreach ($rows as $code => $cnt) {
+                $clean = trim((string)$code);
+                if ($clean !== '' && $clean !== 'Chưa cập nhật') {
+                    $result[$clean] = (int)$cnt;
+                }
+            }
+            return $result;
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function countBobinListDetail(array $filters = []): int
     {
         $pdo = $this->db->pdo();
         try {
             $baseTable = $this->getActiveBaseTable();
+            $extComplete = $this->getExtrusionCompleteCondition();
             $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
 
@@ -611,14 +1078,21 @@ class BobinRepository
                 }
             }
 
-            if (!empty($filters['status'])) {
-                if ($filters['status'] === 'Line') {
+            $statusVal = !empty($filters['status']) ? $filters['status'] : 'all';
+            if ($statusVal === 'Empty') {
+                $sql .= " AND NOT (bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked', 'Pending_Cancellation') AND {$extComplete})";
+            } else {
+                $sql .= " AND {$extComplete}";
+                if ($statusVal === 'Line') {
                     $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
-                } elseif ($filters['status'] !== 'all') {
+                } elseif ($statusVal !== 'all') {
                     $sql .= " AND bobin_current_status = :status";
-                    $params[':status'] = $filters['status'];
+                    $params[':status'] = $statusVal;
                 }
             }
+
+            // Lọc nâng cao: Mã NV (Đùn/Cuộn/QC), Mã Sản phẩm, Tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters);
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
@@ -634,8 +1108,9 @@ class BobinRepository
         $pdo = $this->db->pdo();
         try {
             $baseTable = $this->getActiveBaseTable();
+            $extComplete = $this->getExtrusionCompleteCondition();
             $sql = "SELECT bobin_current_status, COUNT(*) AS total 
-                    FROM $baseTable AS active_bobins WHERE 1=1";
+                    FROM $baseTable AS active_bobins WHERE {$extComplete}";
             $params = [];
 
             if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
@@ -677,6 +1152,9 @@ class BobinRepository
                 }
             }
 
+            // Lọc nâng cao: Mã NV (Đùn/Cuộn/QC), Mã Sản phẩm, Tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters);
+
             $sql .= " GROUP BY bobin_current_status";
 
             $stmt = $pdo->prepare($sql);
@@ -708,6 +1186,7 @@ class BobinRepository
         $pdo = $this->db->pdo();
         try {
             $baseTable = $this->getActiveBaseTable();
+            $extComplete = $this->getExtrusionCompleteCondition();
             $sql = "SELECT * FROM $baseTable AS active_bobins WHERE 1=1";
             $params = [];
 
@@ -754,15 +1233,22 @@ class BobinRepository
                 }
             }
 
-            // 5. Lọc theo Trạng thái
-            if (!empty($filters['status'])) {
-                if ($filters['status'] === 'Line') {
+            // 5. Lọc theo Trạng thái và điều kiện đầy đủ thông tin từ nhóm Đùn
+            $statusVal = !empty($filters['status']) ? $filters['status'] : 'all';
+            if ($statusVal === 'Empty') {
+                $sql .= " AND NOT (bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked', 'Pending_Cancellation') AND {$extComplete})";
+            } else {
+                $sql .= " AND {$extComplete}";
+                if ($statusVal === 'Line') {
                     $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";
-                } elseif ($filters['status'] !== 'all') {
+                } elseif ($statusVal !== 'all') {
                     $sql .= " AND bobin_current_status = :status";
-                    $params[':status'] = $filters['status'];
+                    $params[':status'] = $statusVal;
                 }
             }
+
+            // 5b. Lọc nâng cao: Mã NV (Đùn/Cuộn/QC), Mã Sản phẩm, Tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters);
 
             // 6. SẮP XẾP (Đặt sau tất cả điều kiện WHERE)
             $sort = $filters['sort'] ?? 'default';
@@ -791,14 +1277,37 @@ class BobinRepository
         }
     }
 
-    public function getListDetailBobinsForEditting(array $filters = [])
+    public function getListDetailBobinsForEditting(array $filters = [], int $page = 1, int $limit = 50): array
     {
         $pdo = $this->db->pdo();
 
         try {
-            $sql = "SELECT * FROM bobin_list_detail" . " WHERE bobin_current_status IN ('Busy_UnChecked')";
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status IN ('Busy_Unchecked') AND {$extComplete}";
 
             $params = [];
+
+            if (empty($filters['view_all'])) {
+                $empCode = trim((string)($filters['extrusion_employee_code'] ?? ''));
+                $userId  = (int)($filters['extrusion_user_id'] ?? 0);
+
+                if ($empCode !== '' && $userId > 0) {
+                    $sql .= " AND (
+                        TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.employee_code')), '')) = :e_emp_code
+                        OR CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.id')), '0') AS UNSIGNED) = :e_user_id
+                    )";
+                    $params[':e_emp_code'] = $empCode;
+                    $params[':e_user_id']  = $userId;
+                } elseif ($empCode !== '') {
+                    $sql .= " AND TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.employee_code')), '')) = :e_emp_code";
+                    $params[':e_emp_code'] = $empCode;
+                } elseif ($userId > 0) {
+                    $sql .= " AND CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.id')), '0') AS UNSIGNED) = :e_user_id";
+                    $params[':e_user_id'] = $userId;
+                } else {
+                    return [];
+                }
+            }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -811,22 +1320,24 @@ class BobinRepository
                 print_lot LIKE :kw6 OR
                 winding_machine LIKE :kw7 OR
                 bobin_type LIKE :kw8
-
             )";
 
-                $params[':kw1'] = $searchStr;
-                $params[':kw2'] = $searchStr;
-                $params[':kw3'] = $searchStr;
-                $params[':kw4'] = $searchStr;
-                $params[':kw5'] = $searchStr;
-                $params[':kw6'] = $searchStr;
-                $params[':kw7'] = $searchStr;
-                $params[':kw8'] = $searchStr;
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
             }
-            $sql .= " ORDER BY bobin_identification_code ";
+            $sql .= " ORDER BY bobin_identification_code ASC";
+
+            $offset = ($page - 1) * $limit;
+            $sql .= " LIMIT :limit OFFSET :offset";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -835,13 +1346,122 @@ class BobinRepository
         }
     }
 
+    public function countDetailBobinsForEditting(array $filters = []): int
+    {
+        $pdo = $this->db->pdo();
+
+        try {
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status IN ('Busy_Unchecked') AND {$extComplete}";
+            $params = [];
+
+            if (empty($filters['view_all'])) {
+                $empCode = trim((string)($filters['extrusion_employee_code'] ?? ''));
+                $userId  = (int)($filters['extrusion_user_id'] ?? 0);
+
+                if ($empCode !== '' && $userId > 0) {
+                    $sql .= " AND (
+                        TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.employee_code')), '')) = :e_emp_code
+                        OR CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.id')), '0') AS UNSIGNED) = :e_user_id
+                    )";
+                    $params[':e_emp_code'] = $empCode;
+                    $params[':e_user_id']  = $userId;
+                } elseif ($empCode !== '') {
+                    $sql .= " AND TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.employee_code')), '')) = :e_emp_code";
+                    $params[':e_emp_code'] = $empCode;
+                } elseif ($userId > 0) {
+                    $sql .= " AND CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(extrusion_employee, '$.id')), '0') AS UNSIGNED) = :e_user_id";
+                    $params[':e_user_id'] = $userId;
+                } else {
+                    return 0;
+                }
+            }
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                bobin_identification_code LIKE :kw1 OR  
+                JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                print_lot LIKE :kw6 OR
+                winding_machine LIKE :kw7 OR
+                bobin_type LIKE :kw8
+            )";
+
+                for ($i = 1; $i <= 8; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Kiểm tra xem Bobin có được tạo thông tin đùn bởi đúng User hiện tại hay không
+     */
+    public function isBobinExtrusionCreatedByUser(string $identCode, string $empCode = '', int $userId = 0): bool
+    {
+        $identCode = trim($identCode);
+        $empCode   = trim($empCode);
+        if ($identCode === '' || ($empCode === '' && $userId <= 0)) {
+            return false;
+        }
+
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT extrusion_employee FROM bobin_list_detail WHERE bobin_identification_code = :ident AND bobin_current_status = 'Busy_Unchecked' LIMIT 1";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':ident' => $identCode]);
+            $rawExtEmp = $stmt->fetchColumn();
+            if (empty($rawExtEmp)) {
+                return false;
+            }
+            $eEmp = json_decode($rawExtEmp, true);
+            if (!is_array($eEmp)) {
+                return false;
+            }
+            $recordedCode = trim((string)($eEmp['employee_code'] ?? ''));
+            $recordedId   = (int)($eEmp['id'] ?? 0);
+
+            if ($empCode !== '' && $recordedCode !== '' && strcasecmp($empCode, $recordedCode) === 0) {
+                return true;
+            }
+            if ($userId > 0 && $recordedId > 0 && $userId === $recordedId) {
+                return true;
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("DB isBobinExtrusionCreatedByUser Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function getListDetailBobinsForQCEdit(array $filters = [], int $page = 1, int $limit = 50): array
     {
         $pdo = $this->db->pdo();
         try {
-            // Task-005: Chỉ lấy những Bobin có status là 'Busy_Checked'
-            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status = 'Busy_Checked'";
+            // Task-005 & Task-047: Chỉ lấy những Bobin có status là 'Busy_Checked' và đầy đủ thông tin từ nhóm đùn
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status = 'Busy_Checked' AND {$extComplete}";
             $params = [];
+
+            if (empty($filters['view_all'])) {
+                $empCode = trim((string)($filters['qc_employee_code'] ?? ''));
+                if ($empCode !== '') {
+                    $sql .= " AND TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(visual_inspection, '$.inspector_code')), '')) = :qc_emp_code";
+                    $params[':qc_emp_code'] = $empCode;
+                } else {
+                    return [];
+                }
+            }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -883,8 +1503,19 @@ class BobinRepository
     {
         $pdo = $this->db->pdo();
         try {
-            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Busy_Checked'";
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Busy_Checked' AND {$extComplete}";
             $params = [];
+
+            if (empty($filters['view_all'])) {
+                $empCode = trim((string)($filters['qc_employee_code'] ?? ''));
+                if ($empCode !== '') {
+                    $sql .= " AND TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(visual_inspection, '$.inspector_code')), '')) = :qc_emp_code";
+                    $params[':qc_emp_code'] = $empCode;
+                } else {
+                    return 0;
+                }
+            }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -913,13 +1544,70 @@ class BobinRepository
         }
     }
 
+    /**
+     * Kiểm tra xem Bobin có được xác nhận kiểm tra ngoại quan QC bởi đúng User hiện tại hay không
+     */
+    public function isBobinQcInspectedByUser(string $identCode, string $empCode = ''): bool
+    {
+        $identCode = trim($identCode);
+        $empCode   = trim($empCode);
+        if ($identCode === '' || $empCode === '') {
+            return false;
+        }
+
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT visual_inspection FROM bobin_list_detail WHERE bobin_identification_code = :ident AND bobin_current_status = 'Busy_Checked' LIMIT 1";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':ident' => $identCode]);
+            $rawVi = $stmt->fetchColumn();
+            if (empty($rawVi)) {
+                return false;
+            }
+            $vi = json_decode($rawVi, true);
+            if (!is_array($vi)) {
+                return false;
+            }
+            $recordedCode = trim((string)($vi['inspector_code'] ?? ''));
+            return ($recordedCode !== '' && strcasecmp($empCode, $recordedCode) === 0);
+        } catch (PDOException $e) {
+            error_log("DB isBobinQcInspectedByUser Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function getListDetailBobinsForWindingEdit(array $filters = [], int $page = 1, int $limit = 50): array
     {
         $pdo = $this->db->pdo();
         try {
-            // Task-006: Chỉ lấy những Bobin có status là 'Rolled' và updated_time trong 3 ngày gần nhất
-            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)";
+            // Task-046 & Task-047: Chỉ hiển thị các Bobin có status là 'Rolled', đầy đủ thông tin từ nhóm đùn
+            // Mặc định chỉ hiển thị Bobin do chính User hiện tại xác nhận cuộn, trừ khi có quyền winding_edit_view_all / admin
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status = 'Rolled' AND {$extComplete}";
             $params = [];
+
+            if (empty($filters['view_all'])) {
+                $empCode = trim((string)($filters['winding_employee_code'] ?? ''));
+                $userId  = (int)($filters['winding_user_id'] ?? 0);
+
+                if ($empCode !== '' && $userId > 0) {
+                    $sql .= " AND (
+                        TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.employee_code')), '')) = :w_emp_code
+                        OR CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.id')), '0') AS UNSIGNED) = :w_user_id
+                    )";
+                    $params[':w_emp_code'] = $empCode;
+                    $params[':w_user_id']  = $userId;
+                } elseif ($empCode !== '') {
+                    $sql .= " AND TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.employee_code')), '')) = :w_emp_code";
+                    $params[':w_emp_code'] = $empCode;
+                } elseif ($userId > 0) {
+                    $sql .= " AND CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.id')), '0') AS UNSIGNED) = :w_user_id";
+                    $params[':w_user_id'] = $userId;
+                } else {
+                    // Không có thông tin định danh nhân viên đang đăng nhập -> Không hiển thị Bobin nào
+                    return [];
+                }
+            }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -960,8 +1648,31 @@ class BobinRepository
     {
         $pdo = $this->db->pdo();
         try {
-            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 3 DAY)";
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Rolled' AND {$extComplete}";
             $params = [];
+
+            if (empty($filters['view_all'])) {
+                $empCode = trim((string)($filters['winding_employee_code'] ?? ''));
+                $userId  = (int)($filters['winding_user_id'] ?? 0);
+
+                if ($empCode !== '' && $userId > 0) {
+                    $sql .= " AND (
+                        TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.employee_code')), '')) = :w_emp_code
+                        OR CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.id')), '0') AS UNSIGNED) = :w_user_id
+                    )";
+                    $params[':w_emp_code'] = $empCode;
+                    $params[':w_user_id']  = $userId;
+                } elseif ($empCode !== '') {
+                    $sql .= " AND TRIM(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.employee_code')), '')) = :w_emp_code";
+                    $params[':w_emp_code'] = $empCode;
+                } elseif ($userId > 0) {
+                    $sql .= " AND CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.id')), '0') AS UNSIGNED) = :w_user_id";
+                    $params[':w_user_id'] = $userId;
+                } else {
+                    return 0;
+                }
+            }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -989,6 +1700,46 @@ class BobinRepository
         }
     }
 
+    /**
+     * Kiểm tra xem Bobin có được xác nhận thông tin cuộn bởi đúng User hiện tại hay không
+     */
+    public function isBobinWindingConfirmedByUser(string $identCode, string $empCode = '', int $userId = 0): bool
+    {
+        $identCode = trim($identCode);
+        $empCode   = trim($empCode);
+        if ($identCode === '' || ($empCode === '' && $userId <= 0)) {
+            return false;
+        }
+
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT winding_employee FROM bobin_list_detail WHERE bobin_identification_code = :ident AND bobin_current_status = 'Rolled' LIMIT 1";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':ident' => $identCode]);
+            $rawWindingEmp = $stmt->fetchColumn();
+            if (empty($rawWindingEmp)) {
+                return false;
+            }
+            $wEmp = json_decode($rawWindingEmp, true);
+            if (!is_array($wEmp)) {
+                return false;
+            }
+            $recordedCode = trim((string)($wEmp['employee_code'] ?? ''));
+            $recordedId   = (int)($wEmp['id'] ?? 0);
+
+            if ($empCode !== '' && $recordedCode !== '' && strcasecmp($empCode, $recordedCode) === 0) {
+                return true;
+            }
+            if ($userId > 0 && $recordedId > 0 && $userId === $recordedId) {
+                return true;
+            }
+            return false;
+        } catch (PDOException $e) {
+            error_log("DB isBobinWindingConfirmedByUser Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function adminUpdateQCBobin(string $identCode, string $keyCode, array $viData, ?string $newType, ?array $updateRecord): bool
     {
         $pdo = $this->db->pdo();
@@ -1012,6 +1763,7 @@ class BobinRepository
                 $stmtDetail = $pdo->prepare($sqlDetail);
                 $stmtDetail->execute([':visual' => $viJson, ':type' => $newType, ':uhist' => $histJson, ':ident' => $identCode]);
 
+                $sqlGen = "UPDATE bobin_list_detail SET bobin_type = :type WHERE bobin_identification_code = :ident";
                 $sqlGen = "UPDATE bobin_list_general SET bobin_type = :type WHERE bobin_identification_code = :ident";
                 $stmtGen = $pdo->prepare($sqlGen);
                 $stmtGen->execute([':type' => $newType, ':ident' => $identCode]);
@@ -1144,13 +1896,14 @@ class BobinRepository
         }
     }
 
-    public function getDetailBobinsForQC(array $filters = [])
+    public function getDetailBobinsForQC(array $filters = [], int $page = 1, int $limit = 50)
     {
         $pdo = $this->db->pdo();
 
         try {
+            $extComplete = $this->getExtrusionCompleteCondition();
             $sql = "SELECT * FROM bobin_list_detail 
-                WHERE bobin_current_status = 'Busy_Unchecked'";
+                WHERE bobin_current_status = 'Busy_Unchecked' AND {$extComplete}";
 
             $params = [];
 
@@ -1176,8 +1929,16 @@ class BobinRepository
             }
 
             $sql .= " ORDER BY updated_time DESC";
+            $offset = ($page - 1) * $limit;
+            $sql .= " LIMIT :limit OFFSET :offset";
+
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -1191,8 +1952,9 @@ class BobinRepository
         $pdo = $this->db->pdo();
 
         try {
+            $extComplete = $this->getExtrusionCompleteCondition();
             $sql = "SELECT COUNT(*) FROM bobin_list_detail 
-                WHERE bobin_current_status = 'Busy_Unchecked'";
+                WHERE bobin_current_status = 'Busy_Unchecked' AND {$extComplete}";
 
             $params = [];
 
@@ -1226,15 +1988,39 @@ class BobinRepository
             throw new Exception("Database error: " . $e->getMessage());
         }
     }
+
     public function getDetailBobinsForPendingCancellation(array $filters = [])
     {
         $pdo = $this->db->pdo();
 
         try {
+            $extComplete = $this->getExtrusionCompleteCondition();
             $sql = "SELECT * FROM bobin_list_detail 
-                WHERE bobin_current_status = 'Pending_Cancellation'";
+                WHERE bobin_current_status = 'Pending_Cancellation' AND {$extComplete}";
 
             $params = [];
+
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
+            }
 
             if (!empty($filters['keyword'])) {
                 $searchStr = '%' . trim($filters['keyword']) . '%';
@@ -1245,17 +2031,99 @@ class BobinRepository
                 JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
                 JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
                 print_lot LIKE :kw6 OR
-                bobin_type LIKE :kw7
+                bobin_type LIKE :kw7 OR
+                JSON_EXTRACT(winding_employee, '$.employee_code') LIKE :kw8 OR
+                JSON_EXTRACT(winding_employee, '$.employee_name') LIKE :kw9 OR
+                JSON_EXTRACT(visual_inspection, '$.inspector_code') LIKE :kw10 OR
+                JSON_EXTRACT(visual_inspection, '$.inspector_name') LIKE :kw11
             )";
 
-                $params[':kw1'] = $searchStr;
-                $params[':kw2'] = $searchStr;
-                $params[':kw3'] = $searchStr;
-                $params[':kw4'] = $searchStr;
-                $params[':kw5'] = $searchStr;
-                $params[':kw6'] = $searchStr;
-                $params[':kw7'] = $searchStr;
+                for ($i = 1; $i <= 11; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
             }
+
+            // Task-046: Lọc mã nhân viên (Đùn/Cuộn/QC), mã sản phẩm, tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters, '');
+
+            $sql .= " ORDER BY updated_time DESC";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            throw new Exception("Database error: " . $e->getMessage());
+        }
+    }
+
+    public function getDetailBobinsForCancelled(array $filters = []): array
+    {
+        $pdo = $this->db->pdo();
+
+        try {
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT * FROM bobin_list_detail 
+                WHERE bobin_current_status = 'Cancelled' AND {$extComplete}";
+
+            $params = [];
+
+            if (!empty($filters['bobin_size']) && $filters['bobin_size'] !== 'all') {
+                $sql .= " AND bobin_size = :bsize";
+                $params[':bsize'] = $filters['bobin_size'];
+            }
+
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
+            }
+
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
+            }
+
+            if (!empty($filters['from_date'])) {
+                $sql .= " AND DATE(updated_time) >= :from_date";
+                $params[':from_date'] = $filters['from_date'];
+            }
+            if (!empty($filters['to_date'])) {
+                $sql .= " AND DATE(updated_time) <= :to_date";
+                $params[':to_date'] = $filters['to_date'];
+            }
+
+            if (!empty($filters['keyword'])) {
+                $searchStr = '%' . trim($filters['keyword']) . '%';
+                $sql .= " AND (
+                bobin_identification_code LIKE :kw1 OR  
+                JSON_EXTRACT(extrusion_employee, '$.employee_code') LIKE :kw2 OR 
+                JSON_EXTRACT(extrusion_employee, '$.employee_name') LIKE :kw3 OR 
+                JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
+                JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
+                print_lot LIKE :kw6 OR
+                bobin_type LIKE :kw7 OR
+                JSON_EXTRACT(winding_employee, '$.employee_code') LIKE :kw8 OR
+                JSON_EXTRACT(winding_employee, '$.employee_name') LIKE :kw9 OR
+                JSON_EXTRACT(visual_inspection, '$.inspector_code') LIKE :kw10 OR
+                JSON_EXTRACT(visual_inspection, '$.inspector_name') LIKE :kw11 OR
+                JSON_EXTRACT(cancellation_info, '$.cancelled_by_code') LIKE :kw12 OR
+                JSON_EXTRACT(cancellation_info, '$.cancelled_by_name') LIKE :kw13
+            )";
+
+                for ($i = 1; $i <= 13; $i++) {
+                    $params[":kw$i"] = $searchStr;
+                }
+            }
+
+            // Task-046: Lọc mã nhân viên (Đùn/Cuộn/QC), mã sản phẩm, tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters, '');
 
             $sql .= " ORDER BY updated_time DESC";
             $stmt = $pdo->prepare($sql);
@@ -1274,9 +2142,10 @@ class BobinRepository
 
         try {
             $baseTable = $this->getActiveBaseTable();
-            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất
+            $extComplete = $this->getExtrusionCompleteCondition();
+            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất (có đầy đủ thông tin từ nhóm đùn)
             $sql = "SELECT * FROM $baseTable AS active_bobins 
-                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
+                    WHERE {$extComplete} AND (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -1326,9 +2195,10 @@ class BobinRepository
         $pdo = $this->db->pdo();
         try {
             $baseTable = $this->getActiveBaseTable();
-            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất
+            $extComplete = $this->getExtrusionCompleteCondition();
+            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất (có đầy đủ thông tin từ nhóm đùn)
             $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins 
-                    WHERE (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
+                    WHERE {$extComplete} AND (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -2575,7 +3445,8 @@ class BobinRepository
     {
         $pdo = $this->db->pdo();
         try {
-            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Pending_Cancellation'";
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status = 'Pending_Cancellation' AND {$extComplete}";
             $stmt = $pdo->query($sql);
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
@@ -2641,14 +3512,23 @@ class BobinRepository
                     JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
                     print_lot LIKE :kw6 OR
                     winding_machine LIKE :kw7 OR
-                    bobin_type LIKE :kw8
+                    bobin_type LIKE :kw8 OR
+                    JSON_EXTRACT(winding_employee, '$.employee_code') LIKE :kw9 OR
+                    JSON_EXTRACT(winding_employee, '$.employee_name') LIKE :kw10 OR
+                    JSON_EXTRACT(visual_inspection, '$.inspector_code') LIKE :kw11 OR
+                    JSON_EXTRACT(visual_inspection, '$.inspector_name') LIKE :kw12
                 )";
-                for ($i = 1; $i <= 8; $i++) {
+                for ($i = 1; $i <= 12; $i++) {
                     $params[":kw$i"] = $searchStr;
                 }
             }
 
-            // Lọc trạng thái
+            // Task-046: Lọc mã nhân viên (Đùn/Cuộn/QC), mã sản phẩm, tình trạng ngoại quan QC
+            $this->appendAdvancedManagementFilters($sql, $params, $filters, 'exp');
+
+            // Lọc trạng thái (Chỉ lấy những Bobin có đầy đủ thông tin nhập từ nhóm đùn)
+            $extComplete = $this->getExtrusionCompleteCondition();
+            $sql .= " AND ($extComplete)";
             if (!empty($filters['status'])) {
                 if ($filters['status'] === 'Line') {
                     $sql .= " AND bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked')";

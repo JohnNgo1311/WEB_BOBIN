@@ -573,29 +573,6 @@ CREATE TABLE `employee_list` (
     - Đảm bảo 100% hoạt động offline trong mạng cục bộ nội bộ (local intranet).
     - Toàn bộ 75 tệp mã nguồn PHP và toàn bộ tệp JavaScript đều vượt qua kiểm tra cú pháp linter đạt 100% thành công.
 
-### TASK-043:
-**Status:** DONE
-- Cải tiến ở các trang thuộc QC, Cuộn, Lịch sử và các trang Danh sách:
-  + Khi nhập đủ mã của Bobin (ví dụ: khi nhập đủ `C0001` vào search bar), dữ liệu tương ứng của Bobin đó sẽ hiện ra ngay lập tức, không cần phải thêm thao tác nhấn nút "Lọc".
-- **Chi tiết thực hiện:**
-  - **1. Xây dựng Module JavaScript Tự Động Lọc Tức Thì (`public/assets/js/autoSearchBobin.js`):**
-    - Nhận diện linh hoạt các thẻ tìm kiếm: `#searchKeyword`, `#searchInput`, `input[name="keyword"]` và các form chứa tương ứng (`#filterForm`, `#searchForm`).
-    - Nhận diện chuẩn xác mẫu mã Bobin xưởng: 1 chữ cái kèm 4 chữ số (`/^[A-Za-z][0-9]{4}$/` như `C0001`, `A0012`, `B0050`), tự động chuyển đổi chữ hoa đồng nhất (`c0001` -> `C0001`).
-    - Nhận diện và cắt ngắn thông minh mã QR barcode chứa nhãn thời gian (`/^[A-Za-z][0-9]{4}_/` như `C0001_2026_10_04_18_29_44` -> `C0001`).
-    - Debounce 150ms tối ưu cho thao tác gõ phím mượt mà và nộp tức thì khi máy quét mã QR/mã vạch bắn tín hiệu.
-    - Cơ chế chống lặp vô tận (Infinite Loop Guard): So sánh giá trị nhập liệu với `initialKeyword` trên URL, chỉ kích hoạt nộp form khi mã khác với từ khóa hiện tại.
-    - Bổ sung nút Xóa nhanh (Clear button `✕` - `.btn-clear-search`): Tự động hiển thị khi có ký tự trong ô tìm kiếm. Khi nhấn `✕`, xóa sạch input và nộp form rỗng để quay về danh sách gốc ngay lập tức nếu đang lọc.
-    - Tự động bôi đen toàn bộ văn bản (auto-select) khi ô tìm kiếm nhận focus hoặc khi vừa tải trang có từ khóa, hỗ trợ công nhân quét Bobin liên tiếp không cần nhấn phím xóa lùi (backspace).
-  - **2. Tích hợp trên Toàn Bộ 10 Trang Giao Diện Hệ Thống:**
-    - Nhóm QC: `qcView.php` (QC Kiểm tra), `qcEditBobinView.php` (Điều chỉnh QC).
-    - Nhóm Cuộn: `windingView.php` (Xác nhận hoàn thành cuộn), `windingEditBobinView.php` (Điều chỉnh Cuộn).
-    - Nhóm Lịch sử & Chi tiết: `listBobinHistoryView.php` (Lịch sử Bobin), `listBobinDetailView.php` (Chi tiết Bobin), `listPendingCancellationView.php` (Chờ hủy).
-    - Nhóm Danh sách tổng quan & Tra cứu: `listBobinView.php` (Danh sách tổng quan Bobin - bổ sung `id="filterForm"` & `id="searchKeyword"`), `extrusionEditBobinView.php` (Điều chỉnh Đùn), `scanQR.php` (Tra cứu mã QR).
-  - **3. Kiểm Thử & Đảm Bảo Tính Toàn Vẹn:**
-    - Kiểm thử unit test 13/13 trường hợp (các tiền tố chưa đủ độ dài, nhập thường, nhập hoa, quét QR có timestamp, ngăn chặn loop, từ khóa không phải mã Bobin).
-    - Bảo toàn 100% các bộ lọc khác (trạng thái, kệ, loại Bobin, ngày tháng) và phân trang.
-    - 100% tuân thủ môi trường mạng nội bộ xưởng (offline / local intranet), không phụ thuộc thư viện bên ngoài.
-
 ### TASK-044:
 **Status:** DONE
 - Tại trang "Danh sách Hiện tại" (`app/views/listBobinDetailView.php`), bổ sung và hoàn thiện tính năng lọc theo trạng thái "Đã hủy" (`Cancelled`):
@@ -609,7 +586,69 @@ CREATE TABLE `employee_list` (
     - Bổ sung cột "Đã hủy" vào biểu đồ trạng thái (`$chartLabels`, `$chartSeries`) và cập nhật mảng màu ApexCharts tương ứng (`#ef4444`).
   - **3. Đa ngôn ngữ (`i18n.js`):**
     - Bổ sung `{ vi: "❌ Đã hủy", en: "❌ Scrapped", ja: "❌ 廃棄済" }`, `{ vi: "Đã hủy", en: "Scrapped", ja: "廃棄済" }`, `{ vi: "ĐÃ HỦY", en: "SCRAPPED", ja: "廃棄済" }` vào `VALUE_TRANSLATIONS` trong `public/assets/js/i18n.js`.
+### TASK-045:
+**Status:** DONE
+- Tại trang danh sách Bobin (`app/views/listBobinDetailView.php`), tái định nghĩa lại hiển thị và lọc, đồng thời giả lập dữ liệu CSDL:
+  - **1. Cập nhật Database giả lập trường dữ liệu 500 Bobin để lấy mẫu test:**
+    - Bảo toàn nguyên vẹn các Bobin mẫu hiện có (`A0021..A0050`, `C0001`), bao gồm `A0028` (`Busy_Checked`, đủ thông tin đùn), `A0031` (`Rolled`, đủ thông tin đùn), `A0029` (`Rolled`, rỗng thông tin đùn) và `A0032` (`Rolled`, thiếu thông tin đùn).
+    - Khởi tạo đồng bộ thêm 473 Bobin mới (`A0051..A0204`, `B0001..B0160`, `C0002..C0160`) trên cả 3 bảng `bobin_list_detail`, `bobin_list_general`, `bobin_history` với dữ liệu danh mục thực tế từ `product_list`, `material_lot_list`, `employee_list`, `rack_list`, `winding_machine_list`.
+    - Tổng cộng có đúng **500 Bobin** có đầy đủ thông tin nhập từ nhóm đùn (`PL7-3`: 180, `PL4-7 (TU04.TU06)`: 160, `PL4-7 (TU08~)`: 160), phân bổ: `Rolled` (220), `Busy_Unchecked` (110), `Busy_Checked` (120), `Tồn line` (230), `Pending_Cancellation` (20), `Cancelled` (30) và `Bobin trống` (1,110 trên tổng dung lượng 1,360).
+  - **2. Tại `kpi-grid`, đối với tất cả các trạng thái lọc (`kpi-card`), chỉ đếm những Bobin có đầy đủ thông tin nhập từ nhóm đùn:**
+    - Bổ sung hàm `BobinRepository::getExtrusionCompleteCondition()` kiểm tra chặt chẽ các trường thông tin nhóm đùn (`products`, `extrusion_employee`, `material_lot`, `rack`, `extrusion_check`, `print_lot`, `length_m > 0`, `shift`, `extrusion_date`, `finish_time`).
+    - Áp dụng điều kiện đầy đủ thông tin đùn vào `getBobinStatusStats()`, đồng thời cập nhật `listBobinDetailView.php` lấy trực tiếp số lượng `Rolled` thực tế có đủ thông tin đùn từ `$statusCounts['Rolled']` (thay vì công thức trừ ngược từ tổng dung lượng trước đây làm đếm nhầm cả Bobin trống), giữ nguyên công thức tính `Bobin Trống` (`$emptyBobins = max(0, $totalRealBobins - $statusCounts['Line'] - $statusCounts['Pending_Cancellation'])`).
+    - Đảm bảo `A0028` (`Busy_Checked`, đủ thông tin đùn) được đếm vào "Đã QC" và "Tồn Line"; `A0031` (`Rolled`, đủ thông tin đùn) được đếm vào "Đã Cuộn"; `A0029` và `A0032` (`Rolled`, thiếu/rỗng thông tin đùn) không được liệt vào "Đã cuộn" mà chỉ thuộc "Bobin trống".
+  - **3. Tại `filter-dashboard`, đối với tất cả các chức năng lọc, chỉ lọc những Bobin có thông tin đầy đủ từ nhóm đùn (riêng filter Bobin trống vẫn giữ nguyên chức năng):**
+    - Cập nhật `getBobinListDetail()`, `countBobinListDetail()`, `getBobinListDetailForExport()` và các hàm truy vấn liên quan trong `BobinRepository.php` để mọi bộ lọc trạng thái (`all`, `Rolled`, `Busy_Unchecked`, `Busy_Checked`, `Line`, `Pending_Cancellation`, `Cancelled`), kích thước, loại Bobin, vị trí Rack và từ khóa chỉ trả về các Bobin có đầy đủ thông tin từ nhóm đùn, trong khi trạng thái `Empty` (Bobin trống) vẫn giữ nguyên logic.
+### TASK-046:
+**Status:** DONE
+- **Completed:** 2026-10-18
+- **Changes Made:**
+  - **1. Điều chỉnh quyền hiển thị và thao tác Bobin tại trang "Điều chỉnh cuộn" (`windingEditBobinView.php`):**
+    - Cập nhật `BobinRepository::getListDetailBobinsForWindingEdit()` và `BobinRepository::countDetailBobinsForWindingEdit()` để lọc chặt chẽ ở tầng Backend/SQL theo thông tin định danh của User đang đăng nhập (`JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.employee_code')) = :winding_emp_code` hoặc `JSON_UNQUOTE(JSON_EXTRACT(winding_employee, '$.id')) = :winding_user_id`), đồng thời bỏ giới hạn `INTERVAL 3 DAY` để đảm bảo các Bobin đã xác nhận cuộn trước đó (như `A0022` của nhân viên Lê Thị Lụa `02224428`) luôn hiển thị đúng cho người đã nhập và ẩn hoàn toàn với mọi User khác.
+    - Bổ sung phương thức kiểm tra quyền sở hữu `BobinRepository::isBobinWindingConfirmedByUser()` và `BobinServices::isBobinWindingConfirmedByUser()`, áp dụng chặn bảo mật cấp API (HTTP 403) trong `BobinController::updateWindingEditBobin()` và `BobinController::windingCancelBobin()` (khi `source === 'winding_edit'`).
+  - **2. Bổ sung 3 bộ lọc nâng cao và thống kê động đồng bộ tại cả 4 trang quản lý Bobin (`Danh sách Bobin`, `Lịch sử Bobin`, `Danh sách chờ hủy`, `Danh sách đã hủy`):**
+    - Mở rộng `BobinGetListDTO` với 3 thuộc tính `$employeeCode` (`employee_code`), `$productCode` (`product_code`), `$qcDefect` (`qc_defect`).
+    - Xây dựng các hàm xử lý truy vấn SQL & thống kê tại `BobinRepository`: `normalizeEmployeeCodeFilter()`, `normalizeProductCodeFilter()`, `getQcInspectedCondition()`, `getSingleQcDefectNgExpr()` (NULL-safe với `COALESCE`), `getQcDefectFilterCondition()`, `appendAdvancedManagementFilters()`, `getDetailQcDefectStats()`, `getDetailProductCounts()`, `computeQcDefectStatsFromRows()`, `computeProductCountsFromRows()` và `getDetailBobinsForCancelled()`.
+    - **2a. Filter theo mã số nhân viên (`employee_code`):** Ô nhập kèm Suggestion Dropdown từ danh mục nhân viên; truy vấn đồng thời trên cả **3 nhóm nhân viên** (`extrusion_employee -> $.employee_code` OR `winding_employee -> $.employee_code` OR `visual_inspection -> $.inspector_code`).
+    - **2b. Filter theo mã sản phẩm (`product_code`) và thống kê số lượng Bobin:** Ô nhập kèm Suggestion Dropdown hiển thị số lượng Bobin của từng mã sản phẩm, banner thống kê nổi bật khi đang chọn 1 mã sản phẩm và dải chip thống kê phân bổ số lượng Bobin theo từng mã sản phẩm.
+    - **2c. Filter theo tình trạng ngoại quan của nhóm QC (`qc_defect`) và thống kê số lượng:** Đồng bộ 8 trường ngoại quan QC (`gel`, `foreign_object`, `color_issue`, `print_quality`, `clump`, `scratch`, `streak`, `deformation`) cùng các bộ lọc tổng hợp (`all`, `ok_all` — Đạt 8/8 OK, `ng_any` — Có lỗi NG bất kỳ), hiển thị trực quan số lượng Bobin của từng tình trạng ngoại quan tương ứng với điều kiện lọc hiện tại.
+    - Xây dựng component dùng chung `app/views/components/advancedBobinFilterAndStats.php` và stylesheet `public/assets/css/advancedBobinFilter.css`, tích hợp vào `listBobinDetailView.php`, `listBobinHistoryView.php`, `listPendingCancellationView.php` và trang mới `listCancelledBobinView.php` (`bobin/listCancelledBobinView`, đăng ký trên `Router.php`, `AuthHelper.php`, `sidebar.php`).
+    - Cập nhật đầy đủ từ điển đa ngôn ngữ (`vi`, `en`, `ja`) trong `config/default_translations.json`.
 
+
+
+### TASK-047:
+**Status:** DONE
+- **Completed:** 2026-10-18
+- **Changes Made:**
+  - **1. Bổ sung tính năng phân trang (50 mục/trang) cho 5 trang chưa phân trang, giữ nguyên hoàn toàn 4 trang đã phân trang (`qcEditBobinView`, `windingEditBobinView`, `windingView`, `listBobinDetailView`):**
+    - **Danh sách điều chỉnh đùn (`extrusionEditBobinView.php`):** Cập nhật `BobinRepository::getListDetailBobinsForEditting()` hỗ trợ `LIMIT / OFFSET`, thêm `BobinRepository::countDetailBobinsForEditting()` & `BobinServices::countDetailBobinsForEditting()`, cập nhật `BobinController::extrusionEditBobinView()` và render thanh phân trang chuẩn kèm giữ nguyên toàn bộ bộ lọc tìm kiếm (`extrusionEditBobin.css`).
+    - **Nhóm QC (`qcView.php`):** Cập nhật `BobinRepository::getDetailBobinsForQC()` và `BobinServices::getDetailBobinsForQC()` hỗ trợ phân trang `LIMIT / OFFSET`, kết nối với `countDetailBobinsForQC()` sẵn có trong `BobinController::listBobinView_QC()` và bổ sung thanh phân trang (`listBobin_QC.css`).
+    - **Lịch sử Bobin (`listBobinHistoryView.php`):** Tính toán toàn bộ KPI, biểu đồ thống kê lý do hủy, hiệu suất máy cuộn, thống kê mã sản phẩm và ngoại quan QC trên toàn tập dữ liệu lọc (`$allBobins`), sau đó cắt trang 50 mục/trang (`$bobins`) để hiển thị bảng và thanh phân trang mà không ảnh hưởng đến số liệu thống kê hay xuất Excel.
+    - **Danh sách chờ hủy (`listPendingCancellationView.php`) & Danh sách đã hủy (`listCancelledBobinView.php`):** Sửa lỗi truyền bí danh bảng (`'pnd'` / `'can'` -> `''`) trong `appendAdvancedManagementFilters()`, tính toán thống kê trên toàn tập dữ liệu lọc và áp dụng phân trang 50 mục/trang kèm thanh điều hướng giữ nguyên mọi tham số lọc (`advancedBobinFilter.css`).
+  - **2. Điều chỉnh quyền hiển thị & thao tác Bobin theo người thực hiện tại "Điều chỉnh Đùn" và "Điều chỉnh QC" (đồng bộ với "Điều chỉnh Cuộn"):**
+    - **Điều chỉnh Đùn:** Lọc mặc định theo `extrusion_employee.employee_code` / `extrusion_employee.id` của User đang đăng nhập và bỏ giới hạn `INTERVAL 3 DAY`; bổ sung `isBobinExtrusionCreatedByUser()` để chặn bảo mật cấp API (HTTP 403) trong `BobinController::extrusionUpdateBobin()` và `BobinController::extrusionDeleteBobin()`.
+    - **Điều chỉnh QC:** Lọc mặc định theo `visual_inspection.inspector_code` / `visual_inspection.id` của User đang đăng nhập và bỏ giới hạn `INTERVAL 3 DAY`; bổ sung `isBobinQcInspectedByUser()` để chặn bảo mật cấp API (HTTP 403) trong `BobinController::updateQCEditBobin()` và `BobinController::qcCancelBobin()` (khi gửi từ `qc_edit`).
+  - **3. Bổ sung 3 quyền "Xem & điều chỉnh toàn bộ Bobin" theo từng nhóm tại trang Phân quyền (`employeePermissionsView.php`, `AuthHelper.php`, `EmployeeController.php`):**
+    - Thêm 3 quyền mới gắn ràng buộc `role_group`: `extrusion_edit_view_all` (chỉ áp dụng cho nhóm `extrusion` & `admin`), `qc_edit_view_all` (chỉ áp dụng cho nhóm `qc` & `admin`), `winding_edit_view_all` (chỉ áp dụng cho nhóm `winding` & `admin`).
+    - Bổ sung `AuthHelper::canViewAllEditBobins($stage, $user)`: mặc định tài khoản `admin` có toàn quyền xem và điều chỉnh tất cả 3 trang Điều chỉnh (Đùn / QC / Cuộn); nhân viên được cấp quyền `*_edit_view_all` tương ứng với nhóm của mình sẽ xem và điều chỉnh được toàn bộ Bobin của trang điều chỉnh thuộc nhóm đó.
+    - Cập nhật giao diện `employeePermissionsView.php` tự động khóa (disable) các quyền `*_edit_view_all` khác nhóm đối với nhân viên không phải `admin`, đồng thời kiểm tra chặt chẽ ở Backend `EmployeeController::updatePermissions()` và `AuthHelper::getUserPermissions()`.
+    - Bổ sung từ khóa đa ngôn ngữ (`vi`, `en`, `ja`) vào `config/default_translations.json`.
+
+
+### TASK-048:
+**Status:** DONE
+- **Completed:** 2026-10-19
+- **Changes Made:**
+  - **1. Thiết lập cấu hình và logic kiểm tra 4 mốc thời gian đăng xuất định kỳ cố định (`6:05 AM`, `2:05 PM`, `4:40 PM`, `10:05 PM`) cho toàn bộ User đã đăng nhập (`AuthHelper.php`, `AuthController.php`, `Router.php`):**
+    - Bổ sung hằng số `AuthHelper::PERIODIC_LOGOUT_SCHEDULES` (`06:05`, `14:05`, `16:40`, `22:05`), `AuthHelper::PERIODIC_LOGOUT_COUNTDOWN_SECONDS = 60`, cùng 2 phương thức `AuthHelper::getNextPeriodicLogoutCheckpoint()` và `AuthHelper::checkPeriodicLogoutStatus()`.
+    - Lưu dấu thời gian đăng nhập chuẩn `Asia/Ho_Chi_Minh` (`logged_at` và `logged_at_ts`) trong `AuthController::validateLogin()` và chuyển tiếp thông tin mốc đăng xuất (`logout_reason`, `cp`) trong `AuthController::logout()`.
+    - Tích hợp kiểm tra bảo mật cấp Server trong `Router::run()`: tự động hủy phiên đăng nhập và chuyển hướng về trang Login nếu đã quá 1 phút kể từ mốc kiểm soát cố định, đồng thời chặn mọi request ghi dữ liệu (`POST` API) khi đang trong thời gian chờ xác nhận đăng xuất để đảm bảo User 2 không thể thao tác bằng tài khoản của User 1.
+  - **2. Xây dựng Dialog Yêu cầu Đăng xuất Định kỳ kèm Counter đếm ngược 60 giây (`periodicLogoutModal.php`, `header.php`, `Controller.php`, `loginView.php`):**
+    - Tạo component `app/views/components/periodicLogoutModal.php` tự động nhúng trên mọi trang khi User đã đăng nhập (qua `header.php` và `Controller::view()`).
+    - Khi đến bất kỳ mốc thời gian nào trong 4 mốc (`6:05 AM`, `2:05 PM`, `4:40 PM`, `10:05 PM`), Dialog lập tức hiển thị nổi bật trên cùng màn hình (khóa đóng bằng phím `ESC` hoặc click ra ngoài), hiển thị thông tin tài khoản đang mở, mốc thời gian kiểm soát và **Counter đếm ngược 60 giây** (vòng tròn SVG tiến trình + số giây đếm ngược + thanh progress bar chuyển đỏ cảnh báo khi còn $\le 15$ giây).
+    - Khi User nhấn **"Xác nhận đăng xuất ngay"** hoặc khi Counter đếm ngược về `0` (sau 1 phút không xác nhận), hệ thống lập tức thực hiện đăng xuất và hiển thị thông báo trạng thái tương ứng trên trang đăng nhập (`loginView.php`).
+    - Cập nhật đầy đủ từ khóa đa ngôn ngữ (`vi`, `en`, `ja`) trong `config/default_translations.json`.
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

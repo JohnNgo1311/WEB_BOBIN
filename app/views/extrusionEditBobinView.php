@@ -109,12 +109,14 @@ foreach ($bobins as $b) {
                     <span data-i18n="ext_badge_stage"><?= __('ext_badge_stage') ?></span>
                 </div>
                 <?php if ($canCancelExtrusionBobin): ?>
-                    <div class="ext-hero-badge" style="background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.45); color: #ecfdf5;">
+                    <div class="ext-hero-badge"
+                        style="background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.45); color: #ecfdf5;">
                         <span>🛡️</span>
                         <span data-i18n="ext_perm_badge_edit_cancel"><?= __('ext_perm_badge_edit_cancel') ?></span>
                     </div>
                 <?php else: ?>
-                    <div class="ext-hero-badge" style="background: rgba(245, 158, 11, 0.22); border-color: rgba(245, 158, 11, 0.5); color: #fef3c7;">
+                    <div class="ext-hero-badge"
+                        style="background: rgba(245, 158, 11, 0.22); border-color: rgba(245, 158, 11, 0.5); color: #fef3c7;">
                         <span>🔒</span>
                         <span data-i18n="ext_perm_badge_edit_only"><?= __('ext_perm_badge_edit_only') ?></span>
                     </div>

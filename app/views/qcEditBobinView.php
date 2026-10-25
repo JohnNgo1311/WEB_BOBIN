@@ -107,10 +107,7 @@ foreach ($bobins as $b) {
                     <span data-i18n="page_qc_edit"><?= __('page_qc_edit') ?></span>
                 </h1>
             </div>
-            <div class="qc-hero-badge">
-                <span>🔍</span>
-                <span>QC INSPECTION EDIT</span>
-            </div>
+
         </header>
 
         <!-- 2. KPI STATS ROW -->
@@ -124,7 +121,7 @@ foreach ($bobins as $b) {
             </div>
 
             <div class="qc-stat-card stat-pass">
-                <div class="qc-stat-icon-wrap">✨</div>
+                <div class="qc-stat-icon-wrap">✅</div>
                 <div class="qc-stat-info">
                     <span class="qc-stat-val"><?= number_format($qcPassCount) ?></span>
                     <span class="qc-stat-label" data-i18n="qc_kpi_pass"><?= __('qc_kpi_pass') ?></span>
@@ -132,20 +129,13 @@ foreach ($bobins as $b) {
             </div>
 
             <div class="qc-stat-card stat-defect">
-                <div class="qc-stat-icon-wrap">⚠️</div>
+                <div class="qc-stat-icon-wrap">❌</div>
                 <div class="qc-stat-info">
                     <span class="qc-stat-val"><?= number_format($qcDefectCount) ?></span>
                     <span class="qc-stat-label" data-i18n="qc_kpi_defect"><?= __('qc_kpi_defect') ?></span>
                 </div>
             </div>
 
-            <div class="qc-stat-card stat-checked">
-                <div class="qc-stat-icon-wrap">🛡️</div>
-                <div class="qc-stat-info">
-                    <span class="qc-stat-val">BUSY_CHECKED</span>
-                    <span class="qc-stat-label" data-i18n="qc_kpi_checked"><?= __('qc_kpi_checked') ?></span>
-                </div>
-            </div>
         </section>
 
         <!-- QR SCANNER CONTAINER -->
@@ -324,6 +314,11 @@ foreach ($bobins as $b) {
                                     <div class="qc-val val-sub">
                                         <span class="qc-tag-rack val-rack"><?= htmlspecialchars($rackCode) ?></span>
                                     </div>
+                                </div>
+
+                                <div class="qc-field field-item">
+                                    <label class="qc-label" data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
+                                    <div class="qc-val val-sub"><?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?></div>
                                 </div>
 
                                 <div class="qc-field field-item">

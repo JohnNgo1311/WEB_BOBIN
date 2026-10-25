@@ -125,47 +125,196 @@ body {
 .page-header { max-width: 1200px; margin: 10px auto 12px; text-align: center; padding: 0 10px; }
 h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
 .page-subtitle { font-size: 12.5px; color: #64748b; font-weight: 500; }
-/* ================= CONTROL BAR ================= */
+/* ================= CONTROL BAR (TASK-051 UI/UX UPGRADE) ================= */
 .control-bar-modern {
   background: #ffffff;
-  padding: 10px 12px;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  border: 1px solid var(--border);
-  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+  margin-bottom: 16px;
 }
-.control-row { display: flex; gap: 8px; align-items: center; }
-.search-box-modern { position: relative; flex: 1; min-width: 160px; }
-.search-box-modern .icon-search { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); }
+.control-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search-box-modern {
+  position: relative;
+  flex: 1 1 200px;
+  min-width: 170px;
+}
+.search-box-modern .icon-search {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
 .search-box-modern input {
   width: 100%;
-  height: 38px;
-  padding: 0 12px 0 32px;
-  border: 1.5px solid var(--border);
+  height: 40px;
+  padding: 0 12px 0 34px;
+  border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   font-size: 13px;
-  color: #334155;
+  color: #1e293b;
+  background-color: #f8fafc;
   outline: none;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.search-box-modern input:focus {
+  border-color: #ea580c;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+
+.filter-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.filter-group-icon {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+  font-size: 13px;
+  z-index: 2;
+  color: #64748b;
+}
+
+.filter-select-modern,
+.filter-input-modern {
+  height: 40px;
+  padding: 0 12px 0 30px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background-color: #f8fafc;
+  outline: none;
+  box-sizing: border-box;
+  min-width: 155px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.filter-select-modern:focus,
+.filter-input-modern:focus {
+  border-color: #ea580c;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+
+.filter-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-modern {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  height: 38px;
+  gap: 6px;
+  height: 40px;
   padding: 0 14px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   border: none;
+  outline: none;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
-.btn-scan { background: linear-gradient(135deg, #0284c7, #2563eb) !important; color: #fff !important; }
+.btn-scan {
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+.btn-scan:hover {
+  background: linear-gradient(135deg, #0369a1, #1d4ed8) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
+}
 .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; }
-.btn-filter { background: #2563eb; color: #fff; }
+.btn-filter {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+}
+.btn-filter:hover {
+  background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(234, 88, 12, 0.28);
+}
+
+.btn-reset-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #be123c;
+  background: #fff1f2;
+  border: 1.5px solid #fecdd3;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.btn-reset-filter:hover {
+  background: #ffe4e6;
+  border-color: #fda4af;
+  color: #9f1239;
+  transform: translateY(-1px);
+}
+
+/* Active filter indicator chips */
+.active-filters-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  flex-wrap: wrap;
+}
+.active-filters-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.active-filter-chip .chip-remove {
+  color: #94a3b8;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 800;
+}
+.active-filter-chip .chip-remove:hover {
+  color: #dc2626;
+}
 
 #qr-reader {
   display: none;
@@ -701,15 +850,15 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
    TASK-022: CÁC THÔNG SỐ BOBIN NỔI BẬT (MÃ SP, RACK, LOẠI BOBIN, LOT IN)
 ========================================================================== */
 
-/* 1. MÃ SẢN PHẨM NỔI BẬT */
+/* 1. MÃ SẢN PHẨM NỔI BẬT THEO GIÁ TRỊ (TASK-051) */
 .bobin-highlight-product {
   display: inline-flex;
   align-items: center;
   font-size: 0.88rem;
   font-weight: 800;
-  color: #0369a1 !important;
-  background-color: #e0f2fe !important;
-  border: 1.5px solid #7dd3fc !important;
+  color: #0369a1;
+  background-color: #e0f2fe;
+  border: 1.5px solid #7dd3fc;
   padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.3px;
@@ -717,6 +866,28 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   word-break: break-all;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* 10 Bảng màu sắc nhận diện sản phẩm theo giá trị */
+.bobin-highlight-product.prod-theme-0 { color: #0369a1 !important; background-color: #e0f2fe !important; border: 1.5px solid #7dd3fc !important; box-shadow: 0 1px 3px rgba(3, 105, 161, 0.14); }
+.bobin-highlight-product.prod-theme-1 { color: #3730a3 !important; background-color: #e0e7ff !important; border: 1.5px solid #a5b4fc !important; box-shadow: 0 1px 3px rgba(55, 48, 163, 0.14); }
+.bobin-highlight-product.prod-theme-2 { color: #6b21a8 !important; background-color: #f3e8ff !important; border: 1.5px solid #d8b4fe !important; box-shadow: 0 1px 3px rgba(107, 33, 168, 0.14); }
+.bobin-highlight-product.prod-theme-3 { color: #115e59 !important; background-color: #ccfbf1 !important; border: 1.5px solid #5eead4 !important; box-shadow: 0 1px 3px rgba(17, 94, 89, 0.14); }
+.bobin-highlight-product.prod-theme-4 { color: #065f46 !important; background-color: #d1fae5 !important; border: 1.5px solid #6ee7b7 !important; box-shadow: 0 1px 3px rgba(6, 95, 70, 0.14); }
+.bobin-highlight-product.prod-theme-5 { color: #92400e !important; background-color: #fef3c7 !important; border: 1.5px solid #fcd34d !important; box-shadow: 0 1px 3px rgba(146, 64, 14, 0.14); }
+.bobin-highlight-product.prod-theme-6 { color: #9f1239 !important; background-color: #ffe4e6 !important; border: 1.5px solid #fda4af !important; box-shadow: 0 1px 3px rgba(159, 18, 57, 0.14); }
+.bobin-highlight-product.prod-theme-7 { color: #86198f !important; background-color: #fae8ff !important; border: 1.5px solid #f0abfc !important; box-shadow: 0 1px 3px rgba(134, 25, 143, 0.14); }
+.bobin-highlight-product.prod-theme-8 { color: #155e75 !important; background-color: #cffafe !important; border: 1.5px solid #67e8f9 !important; box-shadow: 0 1px 3px rgba(21, 94, 117, 0.14); }
+.bobin-highlight-product.prod-theme-9 { color: #9a3412 !important; background-color: #ffedd5 !important; border: 1.5px solid #fdba74 !important; box-shadow: 0 1px 3px rgba(154, 52, 18, 0.14); }
+
+.bobin-highlight-product.product-empty {
+  font-family: inherit;
+  color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none !important;
 }
 
 /* 2. VỊ TRÍ RACK NỔI BẬT (NẾU CÓ) */
@@ -750,8 +921,8 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   align-items: center;
   justify-content: center;
   font-size: 0.78rem;
-  font-weight: 800;
-  padding: 2.5px 7px;
+  font-weight: 700;
+  padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -762,49 +933,108 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   text-align: center;
   line-height: 1.25;
   box-sizing: border-box;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* 3.1. Sản xuất: Màu xanh lá đậm */
 .bobin-type-badge.type-san-xuat,
-.val-sub[data-type="Sản xuất"],
 [data-type="Sản xuất"].bobin-type-badge {
   color: #14532d !important;
   background-color: #dcfce7 !important;
-  border: 1.5px solid #16a34a !important;
+  border: 1.5px solid #22c55e !important;
 }
 
 /* 3.2. Bù: Màu xanh dương */
 .bobin-type-badge.type-bu,
-.val-sub[data-type="Bù"],
 [data-type="Bù"].bobin-type-badge {
   color: #1e40af !important;
   background-color: #dbeafe !important;
   border: 1.5px solid #3b82f6 !important;
 }
 
-/* 3.3. Các loại điều chỉnh: Màu cam đậm */
+/* 3.3. Điều chỉnh do CP: Cam hổ phách */
+.bobin-type-badge.type-dieu-chinh-cp,
+[data-type*="CP"].bobin-type-badge {
+  color: #c2410c !important;
+  background-color: #ffedd5 !important;
+  border: 1.5px solid #f97316 !important;
+}
+
+/* 3.4. Điều chỉnh ngoại quan: Phân biệt theo từng loại lỗi cụ thể */
+.bobin-type-badge.type-dieu-chinh-gel,
+[data-type*="Gel"].bobin-type-badge {
+  color: #6b21a8 !important;
+  background-color: #f3e8ff !important;
+  border: 1.5px solid #a855f7 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-di-vat,
+[data-type*="Dị vật"].bobin-type-badge {
+  color: #9f1239 !important;
+  background-color: #ffe4e6 !important;
+  border: 1.5px solid #f43f5e !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-tray,
+[data-type*="Trầy"].bobin-type-badge {
+  color: #92400e !important;
+  background-color: #fef3c7 !important;
+  border: 1.5px solid #f59e0b !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-bien-dang,
+[data-type*="Biến dạng"].bobin-type-badge {
+  color: #115e59 !important;
+  background-color: #ccfbf1 !important;
+  border: 1.5px solid #14b8a6 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-xuoc,
+[data-type*="Xước"].bobin-type-badge {
+  color: #86198f !important;
+  background-color: #fae8ff !important;
+  border: 1.5px solid #d946ef !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-chu-in,
+[data-type*="Chữ in"].bobin-type-badge {
+  color: #3730a3 !important;
+  background-color: #e0e7ff !important;
+  border: 1.5px solid #6366f1 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-von-cuc,
+[data-type*="Vón cục"].bobin-type-badge {
+  color: #5b21b6 !important;
+  background-color: #ede9fe !important;
+  border: 1.5px solid #8b5cf6 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-mau,
+[data-type*="Màu"].bobin-type-badge {
+  color: #991b1b !important;
+  background-color: #fee2e2 !important;
+  border: 1.5px solid #ef4444 !important;
+}
+
+/* 3.5. Fallback các loại điều chỉnh chung khác */
 .bobin-type-badge.type-dieu-chinh,
-.val-sub[data-type^="Điều chỉnh"],
-.val-sub[data-type="Gel"],
-.val-sub[data-type="Dị vật"],
-.val-sub[data-type="Trầy"],
-.val-sub[data-type="Biến dạng"],
-.val-sub[data-type="Xước"],
-.val-sub[data-type="Chữ in"],
-.val-sub[data-type="Vón cục"],
-.val-sub[data-type="Màu"],
-[data-type^="Điều chỉnh"].bobin-type-badge,
-[data-type="Gel"].bobin-type-badge,
-[data-type="Dị vật"].bobin-type-badge,
-[data-type="Trầy"].bobin-type-badge,
-[data-type="Biến dạng"].bobin-type-badge,
-[data-type="Xước"].bobin-type-badge,
-[data-type="Chữ in"].bobin-type-badge,
-[data-type="Vón cục"].bobin-type-badge,
-[data-type="Màu"].bobin-type-badge {
+[data-type^="Điều chỉnh"].bobin-type-badge {
   color: #9a3412 !important;
   background-color: #ffedd5 !important;
   border: 1.5px solid #ea580c !important;
+}
+
+/* 3.6. Chưa cập nhật / Trống: Màu xám viền nét đứt */
+.bobin-type-badge.type-empty,
+[data-type=""].bobin-type-badge,
+[data-type="Chưa cập nhật"].bobin-type-badge {
+  color: #64748b !important;
+  background-color: #f1f5f9 !important;
+  border: 1.5px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none !important;
 }
 
 /* 4. LOT IN NỔI BẬT */

@@ -53,6 +53,8 @@ class Router
                 'listcancelledbobinview',      // Xem danh sách đã hủy
                 'exportdetailexcel',           // Xuất file Excel chi tiết
                 'exporthistoryexcel',          // Xuất file Excel lịch sử
+                'exportpendingcancellationexcel', // Xuất file Excel chờ hủy
+                'exportcancelledexcel',        // Xuất file Excel đã hủy
                 'getspecificbobin',
                 'scanqr'                       // Trang quét mã QR Bobin
             ]

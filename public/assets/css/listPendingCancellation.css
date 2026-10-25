@@ -186,6 +186,8 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
 .btn-scan { background: linear-gradient(135deg, #0284c7, #2563eb) !important; color: #fff !important; }
 .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; }
 .btn-filter { background: #2563eb; color: #fff; }
+.btn-export { background: #10b981; color: #fff; border: 1px solid #059669; text-decoration: none; }
+.btn-export:hover { background: #059669; color: #fff; }
 
 #qr-reader {
   display: none;
@@ -541,4 +543,185 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
     text-align: center;
     max-width: none;
   }
+}
+
+/* ==========================================================================
+   TASK-051: CÁC THÔNG SỐ BOBIN NỔI BẬT DỰA TRÊN GIÁ TRỊ (MÃ SP & LOẠI BOBIN)
+========================================================================== */
+
+/* 1. MÃ SẢN PHẨM NỔI BẬT THEO GIÁ TRỊ */
+.bobin-highlight-product {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0369a1;
+  background-color: #e0f2fe;
+  border: 1.5px solid #7dd3fc;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 3px rgba(3, 105, 161, 0.12);
+  word-break: break-all;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.bobin-highlight-product.prod-theme-0 { color: #0369a1 !important; background-color: #e0f2fe !important; border: 1.5px solid #7dd3fc !important; box-shadow: 0 1px 3px rgba(3, 105, 161, 0.14); }
+.bobin-highlight-product.prod-theme-1 { color: #3730a3 !important; background-color: #e0e7ff !important; border: 1.5px solid #a5b4fc !important; box-shadow: 0 1px 3px rgba(55, 48, 163, 0.14); }
+.bobin-highlight-product.prod-theme-2 { color: #6b21a8 !important; background-color: #f3e8ff !important; border: 1.5px solid #d8b4fe !important; box-shadow: 0 1px 3px rgba(107, 33, 168, 0.14); }
+.bobin-highlight-product.prod-theme-3 { color: #115e59 !important; background-color: #ccfbf1 !important; border: 1.5px solid #5eead4 !important; box-shadow: 0 1px 3px rgba(17, 94, 89, 0.14); }
+.bobin-highlight-product.prod-theme-4 { color: #065f46 !important; background-color: #d1fae5 !important; border: 1.5px solid #6ee7b7 !important; box-shadow: 0 1px 3px rgba(6, 95, 70, 0.14); }
+.bobin-highlight-product.prod-theme-5 { color: #92400e !important; background-color: #fef3c7 !important; border: 1.5px solid #fcd34d !important; box-shadow: 0 1px 3px rgba(146, 64, 14, 0.14); }
+.bobin-highlight-product.prod-theme-6 { color: #9f1239 !important; background-color: #ffe4e6 !important; border: 1.5px solid #fda4af !important; box-shadow: 0 1px 3px rgba(159, 18, 57, 0.14); }
+.bobin-highlight-product.prod-theme-7 { color: #86198f !important; background-color: #fae8ff !important; border: 1.5px solid #f0abfc !important; box-shadow: 0 1px 3px rgba(134, 25, 143, 0.14); }
+.bobin-highlight-product.prod-theme-8 { color: #155e75 !important; background-color: #cffafe !important; border: 1.5px solid #67e8f9 !important; box-shadow: 0 1px 3px rgba(21, 94, 117, 0.14); }
+.bobin-highlight-product.prod-theme-9 { color: #9a3412 !important; background-color: #ffedd5 !important; border: 1.5px solid #fdba74 !important; box-shadow: 0 1px 3px rgba(154, 52, 18, 0.14); }
+
+.bobin-highlight-product.product-empty {
+  font-family: inherit;
+  color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none !important;
+}
+
+/* 2. LOẠI BOBIN NỔI BẬT THEO QUY ĐỊNH MÀU SẮC */
+.bobin-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+/* 3.1. Sản xuất: Màu xanh lá đậm */
+.bobin-type-badge.type-san-xuat,
+[data-type="Sản xuất"].bobin-type-badge {
+  color: #14532d !important;
+  background-color: #dcfce7 !important;
+  border: 1.5px solid #22c55e !important;
+}
+
+/* 3.2. Bù: Màu xanh dương */
+.bobin-type-badge.type-bu,
+[data-type="Bù"].bobin-type-badge {
+  color: #1e40af !important;
+  background-color: #dbeafe !important;
+  border: 1.5px solid #3b82f6 !important;
+}
+
+/* 3.3. Điều chỉnh do CP: Cam hổ phách */
+.bobin-type-badge.type-dieu-chinh-cp,
+[data-type*="CP"].bobin-type-badge {
+  color: #c2410c !important;
+  background-color: #ffedd5 !important;
+  border: 1.5px solid #f97316 !important;
+}
+
+/* 3.4. Điều chỉnh ngoại quan: Phân biệt theo từng loại lỗi cụ thể */
+.bobin-type-badge.type-dieu-chinh-gel,
+[data-type*="Gel"].bobin-type-badge {
+  color: #6b21a8 !important;
+  background-color: #f3e8ff !important;
+  border: 1.5px solid #a855f7 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-di-vat,
+[data-type*="Dị vật"].bobin-type-badge {
+  color: #9f1239 !important;
+  background-color: #ffe4e6 !important;
+  border: 1.5px solid #f43f5e !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-tray,
+[data-type*="Trầy"].bobin-type-badge {
+  color: #92400e !important;
+  background-color: #fef3c7 !important;
+  border: 1.5px solid #f59e0b !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-bien-dang,
+[data-type*="Biến dạng"].bobin-type-badge {
+  color: #115e59 !important;
+  background-color: #ccfbf1 !important;
+  border: 1.5px solid #14b8a6 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-xuoc,
+[data-type*="Xước"].bobin-type-badge {
+  color: #86198f !important;
+  background-color: #fae8ff !important;
+  border: 1.5px solid #d946ef !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-chu-in,
+[data-type*="Chữ in"].bobin-type-badge {
+  color: #3730a3 !important;
+  background-color: #e0e7ff !important;
+  border: 1.5px solid #6366f1 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-von-cuc,
+[data-type*="Vón cục"].bobin-type-badge {
+  color: #5b21b6 !important;
+  background-color: #ede9fe !important;
+  border: 1.5px solid #8b5cf6 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-mau,
+[data-type*="Màu"].bobin-type-badge {
+  color: #991b1b !important;
+  background-color: #fee2e2 !important;
+  border: 1.5px solid #ef4444 !important;
+}
+
+/* 3.5. Fallback các loại điều chỉnh chung khác */
+.bobin-type-badge.type-dieu-chinh,
+[data-type^="Điều chỉnh"].bobin-type-badge {
+  color: #9a3412 !important;
+  background-color: #ffedd5 !important;
+  border: 1.5px solid #ea580c !important;
+}
+
+/* 3.6. Chưa cập nhật / Trống: Màu xám viền nét đứt */
+.bobin-type-badge.type-empty,
+[data-type=""].bobin-type-badge,
+[data-type="Chưa cập nhật"].bobin-type-badge {
+  color: #64748b !important;
+  background-color: #f1f5f9 !important;
+  border: 1.5px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none !important;
+}
+
+.bobin-highlight-product,
+.bobin-type-badge {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.bobin-highlight-product:not(.product-empty):hover,
+.bobin-type-badge:not(.type-empty):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.filter-grid-row,
+.filter-grid-row.cols-3 {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)) !important;
+  gap: 8px !important;
 }

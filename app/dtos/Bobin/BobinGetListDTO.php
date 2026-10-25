@@ -12,6 +12,8 @@ class BobinGetListDTO
     public ?string $sort;       // <-- Thêm sắp xếp mới nhất
     public ?string $employeeCode; // <-- Lọc theo mã nhân viên (Đùn / Cuộn / QC)
     public ?string $productCode;  // <-- Lọc theo mã sản phẩm
+    public ?string $machine;      // <-- Lọc theo máy đùn
+    public ?string $windingMachine; // <-- Lọc theo máy cuộn
     public ?string $qcDefect;     // <-- Lọc theo tình trạng ngoại quan QC
     public int $page;
     public int $limit;
@@ -29,7 +31,9 @@ class BobinGetListDTO
         int $limit = 50,
         ?string $employeeCode = '',
         ?string $productCode = '',
-        ?string $qcDefect = 'all'
+        ?string $qcDefect = 'all',
+        ?string $machine = '',
+        ?string $windingMachine = ''
     ) {
         $this->keyword = $keyword;
         $this->fromDate = $fromDate;
@@ -44,6 +48,8 @@ class BobinGetListDTO
         $this->employeeCode = trim((string)$employeeCode);
         $this->productCode = trim((string)$productCode);
         $this->qcDefect = trim((string)$qcDefect) !== '' ? trim((string)$qcDefect) : 'all';
+        $this->machine = trim((string)$machine);
+        $this->windingMachine = trim((string)$windingMachine);
     }
 
     public static function fromRequest(array $request): self
@@ -61,7 +67,9 @@ class BobinGetListDTO
             limit: isset($request['limit']) ? (int)$request['limit'] : 50,
             employeeCode: $request['employee_code'] ?? '',
             productCode: $request['product_code'] ?? '',
-            qcDefect: $request['qc_defect'] ?? 'all'
+            qcDefect: $request['qc_defect'] ?? 'all',
+            machine: $request['machine'] ?? $request['extrusion_machine'] ?? '',
+            windingMachine: $request['winding_machine'] ?? ''
         );
     }
 }

@@ -175,6 +175,7 @@ class BobinServices
 
         $entity->size = $this->resolveSize($dto->bobin_identification_code);
         $entity->type = $dto->bobin_type;
+        $entity->extrusion_machine = !empty($dto->extrusion_machine) ? $dto->extrusion_machine : 'Chưa cập nhật';
         $entity->printLot = $dto->print_lot;
         $entity->length = $dto->length_m;
         $entity->shift = $dto->shift;
@@ -639,16 +640,18 @@ class BobinServices
         if ($to !== '' && !$isValidDate($to)) $to = '';
 
         $filters = [
-            'keyword'       => mb_substr($keyword, 0, 255),
-            'from_date'     => $from,
-            'to_date'       => $to,
-            'status'        => mb_substr($status, 0, 50),
-            'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-            'bobin_type'    => trim($dto->bobinType ?? 'all'),
-            'rack'          => trim($dto->rack ?? 'all'),
-            'employee_code' => trim($dto->employeeCode ?? ''),
-            'product_code'  => trim($dto->productCode ?? ''),
-            'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+            'keyword'         => mb_substr($keyword, 0, 255),
+            'from_date'       => $from,
+            'to_date'         => $to,
+            'status'          => mb_substr($status, 0, 50),
+            'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+            'bobin_type'      => trim($dto->bobinType ?? 'all'),
+            'rack'            => trim($dto->rack ?? 'all'),
+            'employee_code'   => trim($dto->employeeCode ?? ''),
+            'product_code'    => trim($dto->productCode ?? ''),
+            'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+            'machine'         => trim($dto->machine ?? ''),
+            'winding_machine' => trim($dto->windingMachine ?? ''),
         ];
 
         $listBobin = [];
@@ -694,15 +697,17 @@ class BobinServices
             if ($to !== '' && !$isValidDate($to)) $to = '';
 
             $filters = [
-                'keyword'       => mb_substr($keyword, 0, 255),
-                'from_date'     => $from,
-                'to_date'       => $to,
-                'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-                'bobin_type'    => trim($dto->bobinType ?? 'all'),
-                'rack'          => trim($dto->rack ?? 'all'),
-                'employee_code' => trim($dto->employeeCode ?? ''),
-                'product_code'  => trim($dto->productCode ?? ''),
-                'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+                'keyword'         => mb_substr($keyword, 0, 255),
+                'from_date'       => $from,
+                'to_date'         => $to,
+                'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+                'bobin_type'      => trim($dto->bobinType ?? 'all'),
+                'rack'            => trim($dto->rack ?? 'all'),
+                'employee_code'   => trim($dto->employeeCode ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
             ];
 
             if ($filters['from_date'] !== '' && $filters['to_date'] !== '') {
@@ -796,6 +801,8 @@ class BobinServices
         try {
             $filters = [
                 'keyword'       => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'from_date'     => trim($dto->fromDate ?? ''),
+                'to_date'       => trim($dto->toDate ?? ''),
                 'status'        => trim($dto->status ?? 'all'),
                 'bobin_size'    => trim($dto->bobinSize ?? 'all'),
                 'bobin_type'    => trim($dto->bobinType ?? 'all'),
@@ -814,6 +821,8 @@ class BobinServices
         try {
             $filters = [
                 'keyword'       => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'from_date'     => trim($dto->fromDate ?? ''),
+                'to_date'       => trim($dto->toDate ?? ''),
                 'status'        => trim($dto->status ?? 'all'),
                 'bobin_size'    => trim($dto->bobinSize ?? 'all'),
                 'bobin_type'    => trim($dto->bobinType ?? 'all'),
@@ -873,15 +882,19 @@ class BobinServices
     {
         try {
             $filters = [
-                'keyword'       => mb_substr(trim($dto->keyword ?? ''), 0, 255),
-                'status'        => trim($dto->status ?? 'all'),
-                'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-                'bobin_type'    => trim($dto->bobinType ?? 'all'),
-                'rack'          => trim($dto->rack ?? 'all'),
-                'sort'          => trim($dto->sort ?? 'default'),
-                'employee_code' => trim($dto->employeeCode ?? ''),
-                'product_code'  => trim($dto->productCode ?? ''),
-                'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+                'keyword'         => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'from_date'       => trim($dto->fromDate ?? ''),
+                'to_date'         => trim($dto->toDate ?? ''),
+                'status'          => trim($dto->status ?? 'all'),
+                'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+                'bobin_type'      => trim($dto->bobinType ?? 'all'),
+                'rack'            => trim($dto->rack ?? 'all'),
+                'sort'            => trim($dto->sort ?? 'default'),
+                'employee_code'   => trim($dto->employeeCode ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
             ];
             return $this->bobinRepo->getBobinListDetail($filters, $dto->page, $dto->limit);
         } catch (Exception $e) {
@@ -893,14 +906,18 @@ class BobinServices
     {
         try {
             $filters = [
-                'keyword'       => mb_substr(trim($dto->keyword ?? ''), 0, 255),
-                'status'        => trim($dto->status ?? 'all'),
-                'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-                'bobin_type'    => trim($dto->bobinType ?? 'all'),
-                'rack'          => trim($dto->rack ?? 'all'),
-                'employee_code' => trim($dto->employeeCode ?? ''),
-                'product_code'  => trim($dto->productCode ?? ''),
-                'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+                'keyword'         => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'from_date'       => trim($dto->fromDate ?? ''),
+                'to_date'         => trim($dto->toDate ?? ''),
+                'status'          => trim($dto->status ?? 'all'),
+                'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+                'bobin_type'      => trim($dto->bobinType ?? 'all'),
+                'rack'            => trim($dto->rack ?? 'all'),
+                'employee_code'   => trim($dto->employeeCode ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
             ];
             return $this->bobinRepo->countBobinListDetail($filters);
         } catch (Exception $e) {
@@ -915,7 +932,9 @@ class BobinServices
             $keyword    = trim($keywordRaw);
 
             $filters = [
-                'keyword' => mb_substr($keyword, 0, 255),
+                'keyword'      => mb_substr($keyword, 0, 255),
+                'machine'      => trim((string)($dto->machine ?? '')),
+                'product_code' => trim((string)($dto->productCode ?? '')),
             ];
 
             return $this->bobinRepo->getDetailBobinsForQC($filters, $dto->page, $dto->limit);
@@ -931,7 +950,9 @@ class BobinServices
             $keyword    = trim($keywordRaw);
 
             $filters = [
-                'keyword' => mb_substr($keyword, 0, 255),
+                'keyword'      => mb_substr($keyword, 0, 255),
+                'machine'      => trim((string)($dto->machine ?? '')),
+                'product_code' => trim((string)($dto->productCode ?? '')),
             ];
 
             return $this->bobinRepo->countDetailBobinsForQC($filters);
@@ -947,13 +968,15 @@ class BobinServices
             $keyword    = trim($keywordRaw);
 
             $filters = [
-                'keyword'       => mb_substr($keyword, 0, 255),
-                'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-                'bobin_type'    => trim($dto->bobinType ?? 'all'),
-                'rack'          => trim($dto->rack ?? 'all'),
-                'employee_code' => trim($dto->employeeCode ?? ''),
-                'product_code'  => trim($dto->productCode ?? ''),
-                'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+                'keyword'         => mb_substr($keyword, 0, 255),
+                'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+                'bobin_type'      => trim($dto->bobinType ?? 'all'),
+                'rack'            => trim($dto->rack ?? 'all'),
+                'employee_code'   => trim($dto->employeeCode ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
             ];
 
             return $this->bobinRepo->getDetailBobinsForPendingCancellation($filters);
@@ -969,15 +992,17 @@ class BobinServices
             $keyword    = trim($keywordRaw);
 
             $filters = [
-                'keyword'       => mb_substr($keyword, 0, 255),
-                'from_date'     => trim($dto->fromDate ?? ''),
-                'to_date'       => trim($dto->toDate ?? ''),
-                'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-                'bobin_type'    => trim($dto->bobinType ?? 'all'),
-                'rack'          => trim($dto->rack ?? 'all'),
-                'employee_code' => trim($dto->employeeCode ?? ''),
-                'product_code'  => trim($dto->productCode ?? ''),
-                'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+                'keyword'         => mb_substr($keyword, 0, 255),
+                'from_date'       => trim($dto->fromDate ?? ''),
+                'to_date'         => trim($dto->toDate ?? ''),
+                'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+                'bobin_type'      => trim($dto->bobinType ?? 'all'),
+                'rack'            => trim($dto->rack ?? 'all'),
+                'employee_code'   => trim($dto->employeeCode ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
             ];
 
             return $this->bobinRepo->getDetailBobinsForCancelled($filters);
@@ -1112,7 +1137,11 @@ class BobinServices
     {
         try {
             $filters = [
-                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'keyword'         => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'bobin_type'      => trim($dto->bobinType ?? ''),
             ];
             return $this->bobinRepo->getDetailBobinsForWinding($filters, $dto->page, $dto->limit);
         } catch (Exception $e) {
@@ -1124,7 +1153,11 @@ class BobinServices
     {
         try {
             $filters = [
-                'keyword' => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'keyword'         => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'bobin_type'      => trim($dto->bobinType ?? ''),
             ];
             return $this->bobinRepo->countDetailBobinsForWinding($filters);
         } catch (Exception $e) {
@@ -1151,15 +1184,19 @@ class BobinServices
     {
         try {
             $filters = [
-                'keyword'       => mb_substr(trim($dto->keyword ?? ''), 0, 255),
-                'status'        => trim($dto->status ?? 'all'),
-                'bobin_size'    => trim($dto->bobinSize ?? 'all'),
-                'bobin_type'    => trim($dto->bobinType ?? 'all'),
-                'rack'          => trim($dto->rack ?? 'all'),
-                'sort'          => trim($dto->sort ?? 'default'),
-                'employee_code' => trim($dto->employeeCode ?? ''),
-                'product_code'  => trim($dto->productCode ?? ''),
-                'qc_defect'     => trim($dto->qcDefect ?? 'all'),
+                'keyword'         => mb_substr(trim($dto->keyword ?? ''), 0, 255),
+                'from_date'       => trim($dto->fromDate ?? ''),
+                'to_date'         => trim($dto->toDate ?? ''),
+                'status'          => trim($dto->status ?? 'all'),
+                'bobin_size'      => trim($dto->bobinSize ?? 'all'),
+                'bobin_type'      => trim($dto->bobinType ?? 'all'),
+                'rack'            => trim($dto->rack ?? 'all'),
+                'sort'            => trim($dto->sort ?? 'default'),
+                'employee_code'   => trim($dto->employeeCode ?? ''),
+                'product_code'    => trim($dto->productCode ?? ''),
+                'qc_defect'       => trim($dto->qcDefect ?? 'all'),
+                'machine'         => trim($dto->machine ?? ''),
+                'winding_machine' => trim($dto->windingMachine ?? ''),
             ];
             return $this->bobinRepo->getBobinListDetailForExport($filters, $selectedCodes);
         } catch (Exception $e) {

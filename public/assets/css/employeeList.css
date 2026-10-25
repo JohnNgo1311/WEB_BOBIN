@@ -192,6 +192,28 @@ body {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
+.stat-card.active {
+  border-color: #2563eb;
+  background: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+.stat-card.stat-ext.active {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+.stat-card.stat-qc.active {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25);
+}
+.stat-card.stat-wind.active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+.stat-card.stat-admin.active {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
 .stat-icon {
   width: 48px;
   height: 48px;
@@ -249,7 +271,25 @@ body {
   flex-direction: column;
   gap: 8px;
 }
-.legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; color: #475569; }
+.legend-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.legend-item:hover {
+  background: #f1f5f9;
+}
+.legend-item.active {
+  background: #e2e8f0;
+  color: #0f172a;
+  font-weight: 700;
+}
 .legend-color { width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; }
 
 /* ================= 5. THANH CÔNG CỤ & BỘ LỌC ================= */

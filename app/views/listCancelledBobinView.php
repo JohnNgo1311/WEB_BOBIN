@@ -16,9 +16,14 @@ $currentQcDefect = trim((string)($_GET['qc_defect'] ?? 'all'));
 if ($currentQcDefect === '') {
     $currentQcDefect = 'all';
 }
+$currentMachine = trim((string)($_GET['machine'] ?? $_GET['extrusion_machine'] ?? ''));
+$currentWindingMachine = trim((string)($_GET['winding_machine'] ?? ''));
+
 $fromDateVal = trim((string)($_GET['from_date'] ?? ''));
 $toDateVal   = trim((string)($_GET['to_date'] ?? ''));
 $racks       = $data['racks'] ?? [];
+$machines        = $data['machines'] ?? (class_exists('GlobalData') ? (GlobalData::$listExtrusionMachineEntity ?? []) : []);
+$windingMachines = $data['windingMachines'] ?? (class_exists('GlobalData') ? (GlobalData::$listWindingMachineEntity ?? []) : []);
 
 $sizeOptions = [
     'all'               => 'Tất cả kích thước',
@@ -56,6 +61,106 @@ if (!function_exists('buildFilterUrl')) {
             }
         }
         return '/WEB_BOBIN/public/index.php?' . http_build_query($query);
+    }
+}
+
+if (!function_exists('getProductBadgeClass')) {
+    function getProductBadgeClass(?string $code): string
+    {
+        $code = trim((string)$code);
+        if ($code === '' || $code === 'Chưa cập nhật' || $code === '---') {
+            return 'product-empty';
+        }
+        $idx = abs(crc32($code)) % 10;
+        return 'prod-theme-' . $idx;
+    }
+}
+
+if (!function_exists('getBobinTypeBadgeClass')) {
+    function getBobinTypeBadgeClass(?string $type): string
+    {
+        $type = trim((string)$type);
+        if ($type === '' || $type === 'Chưa cập nhật' || $type === '---') {
+            return 'type-empty';
+        }
+        if ($type === 'Sản xuất') {
+            return 'type-san-xuat';
+        }
+        if ($type === 'Bù') {
+            return 'type-bu';
+        }
+        if ($type === 'Điều chỉnh (Do CP)') {
+            return 'type-dieu-chinh-cp';
+        }
+        if (str_contains($type, 'Gel')) {
+            return 'type-dieu-chinh-gel';
+        }
+        if (str_contains($type, 'Dị vật')) {
+            return 'type-dieu-chinh-di-vat';
+        }
+        if (str_contains($type, 'Trầy')) {
+            return 'type-dieu-chinh-tray';
+        }
+        if (str_contains($type, 'Biến dạng')) {
+            return 'type-dieu-chinh-bien-dang';
+        }
+        if (str_contains($type, 'Xước')) {
+            return 'type-dieu-chinh-xuoc';
+        }
+        if (str_contains($type, 'Chữ in')) {
+            return 'type-dieu-chinh-chu-in';
+        }
+        if (str_contains($type, 'Vón cục')) {
+            return 'type-dieu-chinh-von-cuc';
+        }
+        if (str_contains($type, 'Màu')) {
+            return 'type-dieu-chinh-mau';
+        }
+        return 'type-dieu-chinh';
+    }
+}
+
+if (!function_exists('getBobinTypeBadgeStyle')) {
+    function getBobinTypeBadgeStyle(?string $type): string
+    {
+        $type = trim((string)$type);
+        if ($type === '' || $type === 'Chưa cập nhật' || $type === '---') {
+            return 'color: #64748b; background-color: #f1f5f9; border: 1.5px dashed #cbd5e1; font-weight: 600; font-style: italic;';
+        }
+        if ($type === 'Sản xuất') {
+            return 'color: #14532d; background-color: #dcfce7; border: 1.5px solid #22c55e; font-weight: 700;';
+        }
+        if ($type === 'Bù') {
+            return 'color: #1e40af; background-color: #dbeafe; border: 1.5px solid #3b82f6; font-weight: 700;';
+        }
+        if ($type === 'Điều chỉnh (Do CP)') {
+            return 'color: #c2410c; background-color: #ffedd5; border: 1.5px solid #f97316; font-weight: 700;';
+        }
+        if (str_contains($type, 'Gel')) {
+            return 'color: #6b21a8; background-color: #f3e8ff; border: 1.5px solid #a855f7; font-weight: 700;';
+        }
+        if (str_contains($type, 'Dị vật')) {
+            return 'color: #9f1239; background-color: #ffe4e6; border: 1.5px solid #f43f5e; font-weight: 700;';
+        }
+        if (str_contains($type, 'Trầy')) {
+            return 'color: #92400e; background-color: #fef3c7; border: 1.5px solid #f59e0b; font-weight: 700;';
+        }
+        if (str_contains($type, 'Biến dạng')) {
+            return 'color: #115e59; background-color: #ccfbf1; border: 1.5px solid #14b8a6; font-weight: 700;';
+        }
+        if (str_contains($type, 'Xước')) {
+            return 'color: #86198f; background-color: #fae8ff; border: 1.5px solid #d946ef; font-weight: 700;';
+        }
+        if (str_contains($type, 'Chữ in')) {
+            return 'color: #3730a3; background-color: #e0e7ff; border: 1.5px solid #6366f1; font-weight: 700;';
+        }
+        if (str_contains($type, 'Vón cục')) {
+            return 'color: #5b21b6; background-color: #ede9fe; border: 1.5px solid #8b5cf6; font-weight: 700;';
+        }
+        if (str_contains($type, 'Màu')) {
+            return 'color: #991b1b; background-color: #fee2e2; border: 1.5px solid #ef4444; font-weight: 700;';
+        }
+        return 'color: #9a3412; background-color: #ffedd5; border: 1.5px solid #ea580c; font-weight: 700;';
     }
 }
 
@@ -160,6 +265,12 @@ if (!function_exists('decodeJsonObject')) {
                     <?php if ($currentQcDefect !== 'all'): ?>
                         <input type="hidden" name="qc_defect" value="<?= htmlspecialchars($currentQcDefect) ?>">
                     <?php endif; ?>
+                    <?php if ($currentMachine !== '' && $currentMachine !== 'all'): ?>
+                        <input type="hidden" name="machine" value="<?= htmlspecialchars($currentMachine) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentWindingMachine !== '' && $currentWindingMachine !== 'all'): ?>
+                        <input type="hidden" name="winding_machine" value="<?= htmlspecialchars($currentWindingMachine) ?>">
+                    <?php endif; ?>
 
                     <div class="control-row" style="flex-wrap: wrap;">
                         <div class="search-box-modern">
@@ -201,6 +312,23 @@ if (!function_exists('decodeJsonObject')) {
                             </svg>
                             Lọc
                         </button>
+
+                        <?php
+                        $exportParams = $_GET;
+                        unset($exportParams['page']);
+                        $exportParams['url'] = 'bobin/exportCancelledExcel';
+                        if (empty($exportParams['from_date']) && !empty($fromDateVal)) $exportParams['from_date'] = $fromDateVal;
+                        if (empty($exportParams['to_date']) && !empty($toDateVal)) $exportParams['to_date'] = $toDateVal;
+                        $exportUrl = '/WEB_BOBIN/public/index.php?' . http_build_query($exportParams);
+                        ?>
+                        <a href="<?= $exportUrl ?>" class="btn-modern btn-export" id="btnExportCancelledExcel" title="Xuất toàn bộ kết quả lọc ra file Excel">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                            <span data-i18n="btn_export_excel"><?= __('btn_export_excel') ?? 'Xuất Excel' ?></span>
+                        </a>
                     </div>
                 </form>
             </div>
@@ -210,13 +338,13 @@ if (!function_exists('decodeJsonObject')) {
         <div class="filter-dashboard">
             <div class="filter-dashboard-header">
                 <h2>Kết quả lọc danh sách đã hủy: <span><?= number_format($cancelledCount) ?></span> Bobin</h2>
-                <a href="<?= buildFilterUrl(['bobin_size' => 'all', 'bobin_type' => 'all', 'rack' => 'all', 'keyword' => null, 'from_date' => null, 'to_date' => null, 'employee_code' => null, 'product_code' => null, 'qc_defect' => 'all']) ?>"
+                <a href="<?= buildFilterUrl(['bobin_size' => 'all', 'bobin_type' => 'all', 'rack' => 'all', 'keyword' => null, 'from_date' => null, 'to_date' => null, 'employee_code' => null, 'product_code' => null, 'qc_defect' => 'all', 'machine' => null, 'winding_machine' => null]) ?>"
                     class="btn-reset-filter">
                     🔄 Đặt lại bộ lọc
                 </a>
             </div>
 
-            <div class="filter-grid-row cols-3">
+            <div class="filter-grid-row">
                 <div class="filter-col">
                     <div class="filter-label">📏 Kích thước:</div>
                     <select id="sizeFilter" class="filter-select" onchange="window.location.href = this.value;">
@@ -279,6 +407,46 @@ if (!function_exists('decodeJsonObject')) {
                                 <?php endforeach; ?>
                             </optgroup>
                         <?php endif; ?>
+                    </select>
+                </div>
+
+                <!-- LỌC THEO MÁY ĐÙN (TASK-051) -->
+                <div class="filter-col">
+                    <div class="filter-label"> Máy đùn:</div>
+                    <select id="machineFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <option value="<?= buildFilterUrl(['machine' => 'all', 'page' => 1]) ?>"
+                            <?= ($currentMachine === '' || $currentMachine === 'all') ? 'selected' : '' ?>>
+                            Tất cả máy đùn
+                        </option>
+                        <?php foreach ($machines as $m):
+                            $mName = is_object($m) ? ($m->machine_name ?? '') : ($m['machine_name'] ?? '');
+                            if (empty($mName)) continue;
+                        ?>
+                            <option value="<?= buildFilterUrl(['machine' => $mName, 'page' => 1]) ?>"
+                                <?= $currentMachine === $mName ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($mName) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- LỌC THEO MÁY CUỘN (TASK-051) -->
+                <div class="filter-col">
+                    <div class="filter-label"> Máy cuộn:</div>
+                    <select id="windingMachineFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <option value="<?= buildFilterUrl(['winding_machine' => 'all', 'page' => 1]) ?>"
+                            <?= ($currentWindingMachine === '' || $currentWindingMachine === 'all') ? 'selected' : '' ?>>
+                            Tất cả máy cuộn
+                        </option>
+                        <?php foreach ($windingMachines as $wm):
+                            $wmName = is_object($wm) ? ($wm->machine_name ?? '') : ($wm['machine_name'] ?? '');
+                            if (empty($wmName)) continue;
+                        ?>
+                            <option value="<?= buildFilterUrl(['winding_machine' => $wmName, 'page' => 1]) ?>"
+                                <?= $currentWindingMachine === $wmName ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($wmName) ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
             </div>
@@ -374,7 +542,9 @@ if (!function_exists('decodeJsonObject')) {
                             <div class="info-grid">
                                 <div class="field-item">
                                     <label>Mã sản phẩm</label>
-                                    <div class="val-sub font-bold-blue"><?= htmlspecialchars($productCode) ?></div>
+                                    <div class="val-sub">
+                                        <span class="bobin-highlight-product <?= getProductBadgeClass($productCode) ?>"><?= htmlspecialchars($productCode) ?></span>
+                                    </div>
                                 </div>
                                 <div class="field-item">
                                     <label>Mã nhân viên đùn</label>
@@ -393,6 +563,10 @@ if (!function_exists('decodeJsonObject')) {
                                     </div>
                                 </div>
                                 <div class="field-item">
+                                    <label data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
+                                    <div class="val-sub"><?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?></div>
+                                </div>
+                                <div class="field-item">
                                     <label>Ca làm việc</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
                                 </div>
@@ -402,8 +576,13 @@ if (!function_exists('decodeJsonObject')) {
                                 </div>
                                 <div class="field-item">
                                     <label>Loại Bobin</label>
-                                    <div class="val-sub" data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>">
-                                        <?= htmlspecialchars($item['bobin_type'] ?? 'Chưa cập nhật') ?>
+                                    <div class="val-sub">
+                                        <span class="bobin-type-badge <?= getBobinTypeBadgeClass($item['bobin_type'] ?? '') ?>"
+                                            data-type="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>"
+                                            title="<?= htmlspecialchars($item['bobin_type'] ?? '') ?>"
+                                            style="<?= getBobinTypeBadgeStyle($item['bobin_type'] ?? '') ?>">
+                                            <?= htmlspecialchars(!empty($item['bobin_type']) ? $item['bobin_type'] : 'Chưa cập nhật') ?>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="field-item">
@@ -601,4 +780,3 @@ if (!function_exists('decodeJsonObject')) {
 </body>
 
 </html>
-

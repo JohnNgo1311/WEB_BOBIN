@@ -33,6 +33,7 @@ class BobinEntity
 
     // Field này trong DB là JSON
     public VisualInspectionEntity $visualInspection;
+    public string $extrusion_machine;
     public string $winding_machine;
 
     public ?EmployeeEntity $winding_employee;
@@ -61,6 +62,7 @@ class BobinEntity
         ?DateTime $finishTime = null,
         string $currentStatus = 'Busy_Unchecked',
         ?VisualInspectionEntity $visualInspection = null,
+        string $extrusion_machine = 'Chưa cập nhật',
         string $winding_machine = 'Chưa cập nhật',
         ?EmployeeEntity $winding_employee = null,
         string $flow_test_result = 'Thất bại',
@@ -86,6 +88,7 @@ class BobinEntity
         $this->currentStatus = $currentStatus;
         $this->previousStatus = $previousStatus;
         $this->visualInspection = $visualInspection ?? new VisualInspectionEntity(new DeFectEntity());
+        $this->extrusion_machine = $extrusion_machine;
         $this->winding_machine = $winding_machine;
         $this->winding_employee = $winding_employee;
         $this->flow_test_result = $flow_test_result;
@@ -122,6 +125,7 @@ class BobinEntity
             finishTime: !empty($data['finishTime']) ? new DateTime($data['finishTime']) : new DateTime(),
             currentStatus: $data['bobin_current_status'] ?? '',
             visualInspection: isset($data['visual_inspection']) ? VisualInspectionEntity::fromJson($data['visual_inspection']) : new VisualInspectionEntity(new DeFectEntity()),
+            extrusion_machine: $data['extrusion_machine'] ?? 'Chưa cập nhật',
             winding_machine: $data['winding_machine'] ?? 'Chưa cập nhật',
             winding_employee: isset($data['winding_employee']) ? EmployeeEntity::fromJson($data['winding_employee']) : null,
             flow_test_result: $data['flow_test_result'] ?? 'Thất bại',

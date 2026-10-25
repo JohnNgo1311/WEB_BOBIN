@@ -116,28 +116,28 @@ class AuthHelper
                         'name_default' => 'Xem Danh sách Bobin chi tiết',
                         'desc_key' => 'perm_bobin_list_desc',
                         'desc_default' => 'Tra cứu danh sách Bobin tồn line, phân lọc theo vị trí và xuất Excel',
-                        'routes' => ['bobin/listbobindetailview', 'bobin/listcancelledbobinview', 'bobin/exportdetailexcel', 'bobin/getspecificbobin']
+                        'routes' => ['bobin/listbobindetailview', 'bobin/listcancelledbobinview', 'bobin/exportdetailexcel', 'bobin/exportcancelledexcel', 'bobin/getspecificbobin']
                     ],
                     'bobin_history' => [
                         'name_key' => 'perm_bobin_history',
                         'name_default' => 'Xem Lịch sử luân chuyển Bobin',
                         'desc_key' => 'perm_bobin_history_desc',
                         'desc_default' => 'Tra cứu dòng thời gian và dấu vết lịch sử thay đổi của Bobin',
-                        'routes' => ['bobin/listbobinhistoryview', 'bobin/listcancelledbobinview', 'bobin/exporthistoryexcel']
+                        'routes' => ['bobin/listbobinhistoryview', 'bobin/listcancelledbobinview', 'bobin/exporthistoryexcel', 'bobin/exportcancelledexcel']
                     ],
                     'pending_cancel_edit' => [
                         'name_key' => 'perm_pending_cancel_edit',
                         'name_default' => 'Danh sách chờ Hủy: Được xem và được chỉnh sửa thông tin',
                         'desc_key' => 'perm_pending_cancel_edit_desc',
                         'desc_default' => 'Được xem danh sách Bobin chờ hủy và thực hiện khôi phục hoặc xác nhận hủy Bobin hoàn toàn',
-                        'routes' => ['bobin/listpendingcancellationview', 'bobin/listcancelledbobinview', 'bobin/deletebobin', 'bobin/restorebobin']
+                        'routes' => ['bobin/listpendingcancellationview', 'bobin/listcancelledbobinview', 'bobin/exportpendingcancellationexcel', 'bobin/exportcancelledexcel', 'bobin/deletebobin', 'bobin/restorebobin']
                     ],
                     'pending_cancel_view' => [
                         'name_key' => 'perm_pending_cancel_view',
                         'name_default' => 'Danh sách chờ Hủy: Chỉ được xem nhưng không được chỉnh sửa',
                         'desc_key' => 'perm_pending_cancel_view_desc',
                         'desc_default' => 'Chỉ được xem danh sách Bobin chờ hủy, không có quyền khôi phục hoặc xác nhận hủy',
-                        'routes' => ['bobin/listpendingcancellationview', 'bobin/listcancelledbobinview']
+                        'routes' => ['bobin/listpendingcancellationview', 'bobin/listcancelledbobinview', 'bobin/exportpendingcancellationexcel', 'bobin/exportcancelledexcel']
                     ],
                 ]
             ],

@@ -104,10 +104,7 @@ foreach ($bobins as $b) {
                 </h1>
             </div>
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                <div class="ext-hero-badge">
-                    <span>⚙️</span>
-                    <span data-i18n="ext_badge_stage"><?= __('ext_badge_stage') ?></span>
-                </div>
+
                 <?php if ($canCancelExtrusionBobin): ?>
                     <div class="ext-hero-badge"
                         style="background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.45); color: #ecfdf5;">
@@ -135,7 +132,7 @@ foreach ($bobins as $b) {
             </div>
 
             <div class="ext-stat-card stat-ok">
-                <div class="ext-stat-icon-wrap">✨</div>
+                <div class="ext-stat-icon-wrap">✅</div>
                 <div class="ext-stat-info">
                     <span class="ext-stat-val"><?= number_format($extCheckOkCount) ?></span>
                     <span class="ext-stat-label" data-i18n="ext_kpi_check_ok"><?= __('ext_kpi_check_ok') ?></span>
@@ -143,20 +140,14 @@ foreach ($bobins as $b) {
             </div>
 
             <div class="ext-stat-card stat-ng">
-                <div class="ext-stat-icon-wrap">⚠️</div>
+                <div class="ext-stat-icon-wrap">❌</div>
                 <div class="ext-stat-info">
                     <span class="ext-stat-val"><?= number_format($extCheckNgCount) ?></span>
                     <span class="ext-stat-label" data-i18n="ext_kpi_check_ng"><?= __('ext_kpi_check_ng') ?></span>
                 </div>
             </div>
 
-            <div class="ext-stat-card stat-status">
-                <div class="ext-stat-icon-wrap">🏭</div>
-                <div class="ext-stat-info">
-                    <span class="ext-stat-val">BUSY_UNCHECKED</span>
-                    <span class="ext-stat-label" data-i18n="ext_kpi_unchecked"><?= __('ext_kpi_unchecked') ?></span>
-                </div>
-            </div>
+
         </section>
 
         <!-- QR SCANNER CONTAINER -->
@@ -344,6 +335,7 @@ foreach ($bobins as $b) {
                                 <div class="ext-field field-item suggestion-wrapper">
                                     <label class="ext-label" data-i18n="field_machine"><?= __('field_machine') ?></label>
                                     <input type="text" id="extrusion_machine" class="ext-input-control input-field"
+                                        value="<?= htmlspecialchars($item['extrusion_machine'] ?? '') ?>"
                                         placeholder="<?= __('ph_input_machine') ?>" data-i18n-ph="ph_input_machine"
                                         data-i18n="[placeholder]ph_input_machine" autocomplete="off" disabled>
                                     <div id="machine_suggestions" class="suggestion-box"></div>

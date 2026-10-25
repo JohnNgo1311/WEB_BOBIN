@@ -752,6 +752,20 @@ class BobinRepository
                 $sql .= " AND " . $this->getQcDefectFilterCondition($qcDefect, $prefix);
             }
         }
+
+        // 2d. Lọc theo máy đùn (TASK-051)
+        $extMachine = trim((string)($filters['machine'] ?? $filters['extrusion_machine'] ?? ''));
+        if ($extMachine !== '' && $extMachine !== 'all') {
+            $sql .= " AND {$p}extrusion_machine = :f_ext_machine";
+            $params[':f_ext_machine'] = $extMachine;
+        }
+
+        // 2e. Lọc theo máy cuộn (TASK-051)
+        $windMachine = trim((string)($filters['winding_machine'] ?? ''));
+        if ($windMachine !== '' && $windMachine !== 'all') {
+            $sql .= " AND {$p}winding_machine = :f_wind_machine";
+            $params[':f_wind_machine'] = $windMachine;
+        }
     }
 
     /**
@@ -1759,16 +1773,15 @@ class BobinRepository
             $histJson = !empty($histArr) ? $this->json_utf8($histArr) : null;
 
             if (!empty($newType)) {
-                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, bobin_type = :type, update_history = :uhist WHERE bobin_identification_code = :ident";
+                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, bobin_type = :type, update_history = :uhist, updated_time = NOW() WHERE bobin_identification_code = :ident";
                 $stmtDetail = $pdo->prepare($sqlDetail);
                 $stmtDetail->execute([':visual' => $viJson, ':type' => $newType, ':uhist' => $histJson, ':ident' => $identCode]);
 
-                $sqlGen = "UPDATE bobin_list_detail SET bobin_type = :type WHERE bobin_identification_code = :ident";
-                $sqlGen = "UPDATE bobin_list_general SET bobin_type = :type WHERE bobin_identification_code = :ident";
+                $sqlGen = "UPDATE bobin_list_general SET bobin_type = :type, updated_time = NOW() WHERE bobin_identification_code = :ident";
                 $stmtGen = $pdo->prepare($sqlGen);
                 $stmtGen->execute([':type' => $newType, ':ident' => $identCode]);
             } else {
-                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, update_history = :uhist WHERE bobin_identification_code = :ident";
+                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, update_history = :uhist, updated_time = NOW() WHERE bobin_identification_code = :ident";
                 $stmtDetail = $pdo->prepare($sqlDetail);
                 $stmtDetail->execute([':visual' => $viJson, ':uhist' => $histJson, ':ident' => $identCode]);
             }
@@ -1792,13 +1805,13 @@ class BobinRepository
                 }
                 $histHistJson = !empty($histArrHist) ? $this->json_utf8($histArrHist) : null;
 
-                $sqlHistory = "UPDATE bobin_history SET visual_inspection = :visual, update_history = :uhist WHERE id = :hist_id";
+                $sqlHistory = "UPDATE bobin_history SET visual_inspection = :visual, update_history = :uhist, updated_time = NOW() WHERE id = :hist_id";
                 $stmtHistory = $pdo->prepare($sqlHistory);
                 $stmtHistory->execute([':visual' => $viJson, ':uhist' => $histHistJson, ':hist_id' => $histRow['id']]);
             }
 
             // Đồng bộ visual_inspection cho các bản ghi sau QC của cùng chu kỳ (nếu có)
-            $sqlSyncVi = "UPDATE bobin_history SET visual_inspection = :visual WHERE bobin_key_code = :key AND bobin_current_status != 'Busy_Unchecked'";
+            $sqlSyncVi = "UPDATE bobin_history SET visual_inspection = :visual, updated_time = NOW() WHERE bobin_key_code = :key AND bobin_current_status != 'Busy_Unchecked'";
             $stmtSyncVi = $pdo->prepare($sqlSyncVi);
             $stmtSyncVi->execute([':visual' => $viJson, ':key' => $keyCode]);
 
@@ -1842,7 +1855,8 @@ class BobinRepository
                             winding_employee = :emp, 
                             flow_test_result = :flow, 
                             winding_note = :note, 
-                            update_history = :uhist 
+                            update_history = :uhist,
+                            updated_time = NOW() 
                           WHERE bobin_identification_code = :ident";
             $stmtDetail = $pdo->prepare($sqlDetail);
             $stmtDetail->execute([
@@ -1872,7 +1886,8 @@ class BobinRepository
                                 winding_employee = :emp, 
                                 flow_test_result = :flow, 
                                 winding_note = :note, 
-                                update_history = :uhist 
+                                update_history = :uhist,
+                                updated_time = NOW() 
                               WHERE id = :hist_id";
                 $stmtHistory = $pdo->prepare($sqlHistory);
                 $stmtHistory->execute([
@@ -1916,7 +1931,8 @@ class BobinRepository
                 JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
                 JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
                 print_lot LIKE :kw6 OR
-                bobin_type LIKE :kw7
+                bobin_type LIKE :kw7 OR
+                extrusion_machine LIKE :kw8
             )";
 
                 $params[':kw1'] = $searchStr;
@@ -1926,6 +1942,22 @@ class BobinRepository
                 $params[':kw5'] = $searchStr;
                 $params[':kw6'] = $searchStr;
                 $params[':kw7'] = $searchStr;
+                $params[':kw8'] = $searchStr;
+            }
+
+            if (!empty($filters['machine']) && $filters['machine'] !== 'all') {
+                $sql .= " AND extrusion_machine = :machine";
+                $params[':machine'] = trim($filters['machine']);
+            }
+
+            if (!empty($filters['product_code']) && $filters['product_code'] !== 'all') {
+                $pVal = trim($filters['product_code']);
+                $sql .= " AND (
+                    JSON_UNQUOTE(JSON_EXTRACT(products, '$.product_code')) = :pcode1
+                    OR JSON_UNQUOTE(JSON_EXTRACT(products, '$.production_order_code')) = :pcode2
+                )";
+                $params[':pcode1'] = $pVal;
+                $params[':pcode2'] = $pVal;
             }
 
             $sql .= " ORDER BY updated_time DESC";
@@ -1967,7 +1999,8 @@ class BobinRepository
                 JSON_EXTRACT(products, '$.product_code') LIKE :kw4 OR 
                 JSON_EXTRACT(products, '$.production_order_code') LIKE :kw5 OR 
                 print_lot LIKE :kw6 OR
-                bobin_type LIKE :kw7
+                bobin_type LIKE :kw7 OR
+                extrusion_machine LIKE :kw8
             )";
 
                 $params[':kw1'] = $searchStr;
@@ -1977,6 +2010,22 @@ class BobinRepository
                 $params[':kw5'] = $searchStr;
                 $params[':kw6'] = $searchStr;
                 $params[':kw7'] = $searchStr;
+                $params[':kw8'] = $searchStr;
+            }
+
+            if (!empty($filters['machine']) && $filters['machine'] !== 'all') {
+                $sql .= " AND extrusion_machine = :machine";
+                $params[':machine'] = trim($filters['machine']);
+            }
+
+            if (!empty($filters['product_code']) && $filters['product_code'] !== 'all') {
+                $pVal = trim($filters['product_code']);
+                $sql .= " AND (
+                    JSON_UNQUOTE(JSON_EXTRACT(products, '$.product_code')) = :pcode1
+                    OR JSON_UNQUOTE(JSON_EXTRACT(products, '$.production_order_code')) = :pcode2
+                )";
+                $params[':pcode1'] = $pVal;
+                $params[':pcode2'] = $pVal;
             }
 
             $stmt = $pdo->prepare($sql);
@@ -2143,9 +2192,9 @@ class BobinRepository
         try {
             $baseTable = $this->getActiveBaseTable();
             $extComplete = $this->getExtrusionCompleteCondition();
-            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất (có đầy đủ thông tin từ nhóm đùn)
+            // AI_CONTEXT & TASK-050: Busy_Checked hoặc Rolled trong vòng 7 ngày gần nhất (có đầy đủ thông tin từ nhóm đùn)
             $sql = "SELECT * FROM $baseTable AS active_bobins 
-                    WHERE {$extComplete} AND (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
+                    WHERE {$extComplete} AND (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -2162,6 +2211,25 @@ class BobinRepository
                 for ($i = 1; $i <= 7; $i++) {
                     $params[":kw$i"] = $searchStr;
                 }
+            }
+
+            // TASK-051: Bộ lọc tương tự QC cho trang Cuộn (Máy đùn, Máy cuộn, Mã sản phẩm, Loại Bobin)
+            if (!empty($filters['machine']) && $filters['machine'] !== 'all') {
+                $sql .= " AND extrusion_machine = :machine";
+                $params[':machine'] = $filters['machine'];
+            }
+            if (!empty($filters['winding_machine']) && $filters['winding_machine'] !== 'all') {
+                $sql .= " AND winding_machine = :wind_machine";
+                $params[':wind_machine'] = $filters['winding_machine'];
+            }
+            if (!empty($filters['product_code']) && $filters['product_code'] !== 'all') {
+                $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(products, '$.product_code')) = :pcode1 OR JSON_UNQUOTE(JSON_EXTRACT(products, '$.production_order_code')) = :pcode2)";
+                $params[':pcode1'] = $filters['product_code'];
+                $params[':pcode2'] = $filters['product_code'];
+            }
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
             }
 
             $sql .= " ORDER BY 
@@ -2196,9 +2264,9 @@ class BobinRepository
         try {
             $baseTable = $this->getActiveBaseTable();
             $extComplete = $this->getExtrusionCompleteCondition();
-            // TASK-040: Busy_Checked hoặc Rolled trong vòng 24 tiếng gần nhất (có đầy đủ thông tin từ nhóm đùn)
+            // AI_CONTEXT & TASK-050: Busy_Checked hoặc Rolled trong vòng 7 ngày gần nhất (có đầy đủ thông tin từ nhóm đùn)
             $sql = "SELECT COUNT(*) FROM $baseTable AS active_bobins 
-                    WHERE {$extComplete} AND (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 24 HOUR)))";
+                    WHERE {$extComplete} AND (bobin_current_status = 'Busy_Checked' OR (bobin_current_status = 'Rolled' AND updated_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)))";
             $params = [];
 
             if (!empty($filters['keyword'])) {
@@ -2215,6 +2283,25 @@ class BobinRepository
                 for ($i = 1; $i <= 7; $i++) {
                     $params[":kw$i"] = $searchStr;
                 }
+            }
+
+            // TASK-051: Bộ lọc tương tự QC cho trang Cuộn (Máy đùn, Máy cuộn, Mã sản phẩm, Loại Bobin)
+            if (!empty($filters['machine']) && $filters['machine'] !== 'all') {
+                $sql .= " AND extrusion_machine = :machine";
+                $params[':machine'] = $filters['machine'];
+            }
+            if (!empty($filters['winding_machine']) && $filters['winding_machine'] !== 'all') {
+                $sql .= " AND winding_machine = :wind_machine";
+                $params[':wind_machine'] = $filters['winding_machine'];
+            }
+            if (!empty($filters['product_code']) && $filters['product_code'] !== 'all') {
+                $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(products, '$.product_code')) = :pcode1 OR JSON_UNQUOTE(JSON_EXTRACT(products, '$.production_order_code')) = :pcode2)";
+                $params[':pcode1'] = $filters['product_code'];
+                $params[':pcode2'] = $filters['product_code'];
+            }
+            if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all') {
+                $sql .= " AND bobin_type = :btype";
+                $params[':btype'] = $filters['bobin_type'];
             }
 
             $stmt = $pdo->prepare($sql);
@@ -2328,11 +2415,11 @@ class BobinRepository
 
         $sql = "INSERT INTO bobin_history (
                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
+                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m,
                 shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                 winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, update_history, updated_time
             ) VALUES (
-                :key, :ident, :size, :type, :extrusionemp, :ext_check, :rack, :prod, :mat, :plot, :len,
+                :key, :ident, :size, :type, :extrusionemp, :ext_check, :extrusion_machine, :rack, :prod, :mat, :plot, :len,
                 :shift, :edate, :ftime, :visual, :winding_machine, :winding_employee,
                 :flow_test_result, :status, :prev_status, :note, :uhist, {$timeExpression}
             )";
@@ -2354,11 +2441,11 @@ class BobinRepository
     {
         $sql = "INSERT INTO bobin_list_detail (
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
+                    extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                     winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, updated_time
                 ) VALUES (
-                    :key, :ident, :size, :type, :extrusionemp, :ext_check, :rack, :prod, :mat, :plot, :len,
+                    :key, :ident, :size, :type, :extrusionemp, :ext_check, :extrusion_machine, :rack, :prod, :mat, :plot, :len,
                     :shift, :edate, :ftime, :visual, :winding_machine, :winding_employee,
                     :flow_test_result, :status, :prev_status, :note, :updated
                 ) ON DUPLICATE KEY UPDATE
@@ -2366,6 +2453,7 @@ class BobinRepository
                     bobin_size = VALUES(bobin_size),
                     bobin_type = VALUES(bobin_type),
                     extrusion_check = VALUES(extrusion_check),
+                    extrusion_machine = VALUES(extrusion_machine),
                     rack = VALUES(rack),
                     extrusion_employee = VALUES(extrusion_employee),
                     products = VALUES(products),
@@ -2427,6 +2515,7 @@ class BobinRepository
 
             ':extrusionemp' => $this->json_utf8($entity->extrusion_employee),
             ':ext_check' => $entity->extrusion_check ? $this->json_utf8($entity->extrusion_check) : null, // Mới thêm
+            ':extrusion_machine' => $entity->extrusion_machine,
             ':rack' => $entity->rack ? $this->json_utf8($entity->rack) : null, // Mới thêm
             ':prod' => $this->json_utf8($entity->product),
             ':mat' => $this->json_utf8($entity->materialLot),
@@ -2471,11 +2560,12 @@ class BobinRepository
 
     private function extUpdateBobinDetail(PDO $pdo, BobinEntity $entity, ?array $updateRecord = null): void
     {
-        // Khi nhân viên đùn update, không cập nhật updated_time (Req VII)
+        // AI_CONTEXT: Cập nhật updated_time khi có bất kì thay đổi gì
         $sql = "UPDATE bobin_list_detail SET
                     bobin_type = :type,
                     extrusion_employee = :extrusionemp,
                     extrusion_check = :ext_check,
+                    extrusion_machine = :extrusion_machine,
                     rack = :rack,
                     products = :prod,
                     material_lot = :mat,
@@ -2485,7 +2575,8 @@ class BobinRepository
                     extrusion_date = :edate,
                     finish_time = :ftime,
                     bobin_current_status = :status,
-                    update_history = :uhist
+                    update_history = :uhist,
+                    updated_time = NOW()
                 WHERE bobin_identification_code = :ident";
 
         // Lấy lịch sử cập nhật hiện tại và nối thêm bản ghi mới
@@ -2506,10 +2597,11 @@ class BobinRepository
 
     private function extUpdateBobinGeneral(PDO $pdo, BobinEntity $entity): void
     {
-        // Khi nhân viên đùn update, không cập nhật updated_time (Req VII)
+        // AI_CONTEXT: Cập nhật updated_time khi có bất kì thay đổi gì
         $sql = "UPDATE bobin_list_general SET
                     bobin_type = :type,
-                    bobin_current_status = :status
+                    bobin_current_status = :status,
+                    updated_time = NOW()
                 WHERE bobin_identification_code = :ident";
 
         $stmt = $pdo->prepare($sql);
@@ -2526,11 +2618,12 @@ class BobinRepository
             return;
         }
 
-        // Tìm đến bobin_key_code tương ứng để update dữ liệu, không cập nhật updated_time (Req VI & VII)
+        // Tìm đến bobin_key_code tương ứng để update dữ liệu, cập nhật updated_time (AI_CONTEXT)
         $sql = "UPDATE bobin_history SET
                     bobin_type = :type,
                     extrusion_employee = :extrusionemp,
                     extrusion_check = :ext_check,
+                    extrusion_machine = :extrusion_machine,
                     rack = :rack,
                     products = :prod,
                     material_lot = :mat,
@@ -2540,7 +2633,8 @@ class BobinRepository
                     extrusion_date = :edate,
                     finish_time = :ftime,
                     bobin_current_status = :status,
-                    update_history = :uhist
+                    update_history = :uhist,
+                    updated_time = NOW()
                 WHERE bobin_key_code = :key";
 
         $currStmt = $pdo->prepare("SELECT update_history FROM bobin_history WHERE bobin_key_code = :key LIMIT 1");
@@ -2567,6 +2661,7 @@ class BobinRepository
             ':type' => $entity->type,
             ':extrusionemp' => $this->json_utf8($entity->extrusion_employee),
             ':ext_check' => $entity->extrusion_check ? $this->json_utf8($entity->extrusion_check) : null, // Mới thêm
+            ':extrusion_machine' => $entity->extrusion_machine,
             ':rack' => $entity->rack ? $this->json_utf8($entity->rack) : null, // Mới thêm
             ':prod' => $this->json_utf8($entity->product),
             ':mat' => $this->json_utf8($entity->materialLot),
@@ -2634,13 +2729,13 @@ class BobinRepository
             ]);
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
@@ -2815,13 +2910,13 @@ class BobinRepository
             // 3. Chèn bản ghi snapshot mới vào bobin_history
             $sqlInsertHistory = "INSERT INTO bobin_history (
                                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                    extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                     shift, extrusion_date, finish_time, visual_inspection, 
                                     winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                                 )
                                 SELECT 
                                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                    extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                     shift, extrusion_date, finish_time, visual_inspection, 
                                     winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                                 FROM bobin_list_detail
@@ -2935,12 +3030,12 @@ class BobinRepository
     {
         $sql = "INSERT INTO bobin_history (
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
-                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m,
+                    extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
                     winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, update_history, updated_time
                 ) SELECT 
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                    extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                    extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                     shift, extrusion_date, finish_time, visual_inspection, 
                     winding_machine, winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, update_history, updated_time
                 FROM bobin_list_detail
@@ -3006,13 +3101,13 @@ class BobinRepository
 
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
@@ -3086,13 +3181,13 @@ class BobinRepository
             // 3. Chèn một dòng lịch sử mới ghi nhận kết quả kiểm tra QC kèm loại Type mới
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, :type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, NOW()
                             FROM bobin_list_detail
@@ -3187,13 +3282,13 @@ class BobinRepository
             ]);
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
@@ -3283,13 +3378,13 @@ class BobinRepository
 
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
@@ -3400,13 +3495,13 @@ class BobinRepository
             ]);
             $sqlHistory = "INSERT INTO bobin_history (
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
-                                extrusion_employee, extrusion_check, rack, products, material_lot, print_lot, length_m, 
+                                extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
                                 winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
                             FROM bobin_list_detail
@@ -3516,15 +3611,26 @@ class BobinRepository
                     JSON_EXTRACT(winding_employee, '$.employee_code') LIKE :kw9 OR
                     JSON_EXTRACT(winding_employee, '$.employee_name') LIKE :kw10 OR
                     JSON_EXTRACT(visual_inspection, '$.inspector_code') LIKE :kw11 OR
-                    JSON_EXTRACT(visual_inspection, '$.inspector_name') LIKE :kw12
+                    JSON_EXTRACT(visual_inspection, '$.inspector_name') LIKE :kw12 OR
+                    extrusion_machine LIKE :kw13
                 )";
-                for ($i = 1; $i <= 12; $i++) {
+                for ($i = 1; $i <= 13; $i++) {
                     $params[":kw$i"] = $searchStr;
                 }
             }
 
+            // Lọc theo khoảng thời gian nếu có (hỗ trợ trang Đã hủy / Lọc thời gian)
+            if (!empty($filters['from_date'])) {
+                $sql .= " AND DATE(updated_time) >= :from_date";
+                $params[':from_date'] = substr($filters['from_date'], 0, 10);
+            }
+            if (!empty($filters['to_date'])) {
+                $sql .= " AND DATE(updated_time) <= :to_date";
+                $params[':to_date'] = substr($filters['to_date'], 0, 10);
+            }
+
             // Task-046: Lọc mã nhân viên (Đùn/Cuộn/QC), mã sản phẩm, tình trạng ngoại quan QC
-            $this->appendAdvancedManagementFilters($sql, $params, $filters, 'exp');
+            $this->appendAdvancedManagementFilters($sql, $params, $filters, '');
 
             // Lọc trạng thái (Chỉ lấy những Bobin có đầy đủ thông tin nhập từ nhóm đùn)
             $extComplete = $this->getExtrusionCompleteCondition();

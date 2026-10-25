@@ -35,6 +35,7 @@ class EmployeeController extends Controller
         $filters = [
             'keyword'     => trim($_GET['keyword'] ?? ''),
             'cost_center' => trim($_GET['cost_center'] ?? 'all'),
+            'role'        => trim($_GET['role'] ?? 'all'),
         ];
 
         // Lấy danh sách các mã bộ phận (cost_center) duy nhất để hiển thị bộ lọc
@@ -54,6 +55,10 @@ class EmployeeController extends Controller
         if ($filters['cost_center'] !== 'all') {
             $sql .= " AND cost_center = ?";
             $params[] = $filters['cost_center'];
+        }
+        if ($filters['role'] !== 'all' && in_array($filters['role'], ['extrusion', 'qc', 'winding', 'admin'], true)) {
+            $sql .= " AND role = ?";
+            $params[] = $filters['role'];
         }
         $sql .= " ORDER BY id DESC";
 
@@ -266,6 +271,7 @@ class EmployeeController extends Controller
         $filters = [
             'keyword'     => trim($_GET['keyword'] ?? ''),
             'cost_center' => trim($_GET['cost_center'] ?? 'all'),
+            'role'        => trim($_GET['role'] ?? 'all'),
         ];
 
         $pdo = Database::getInstance()->pdo();
@@ -281,6 +287,10 @@ class EmployeeController extends Controller
         if ($filters['cost_center'] !== 'all') {
             $sql .= " AND cost_center = ?";
             $params[] = $filters['cost_center'];
+        }
+        if ($filters['role'] !== 'all' && in_array($filters['role'], ['extrusion', 'qc', 'winding', 'admin'], true)) {
+            $sql .= " AND role = ?";
+            $params[] = $filters['role'];
         }
         $sql .= " ORDER BY id DESC";
 
@@ -306,7 +316,7 @@ class EmployeeController extends Controller
                 'admin' => 'Quản trị viên (Admin)',
                 default => $emp['role']
             };
-            $firstLoginLabel = ($emp['is_first_login'] == 1) ? 'Chưa đổi (123)' : 'Đã đổi riêng';
+            $firstLoginLabel = ($emp['is_first_login'] == 1) ? '123' : 'Đã đổi riêng';
 
             fputcsv($output, [
                 $stt++,

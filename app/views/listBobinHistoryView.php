@@ -13,6 +13,22 @@ $defaultStatus = [
     'Cancelled'            => 0
 ];
 $statusCounts = array_merge($defaultStatus, $data['statusCounts'] ?? []);
+$defaultQcStats = [
+    'total_bobins'    => 0,
+    'inspected_total' => 0,
+    'uninspected'     => 0,
+    'ok_all'          => 0,
+    'ng_any'          => 0,
+    'gel'             => 0,
+    'foreign_object'  => 0,
+    'color_issue'     => 0,
+    'print_quality'   => 0,
+    'clump'           => 0,
+    'scratch'         => 0,
+    'streak'          => 0,
+    'deformation'     => 0,
+];
+$qcDefectStats = array_merge($defaultQcStats, $data['qcDefectStats'] ?? []);
 
 $statusOptions = [
     'all'                            => '📦 Tất cả trạng thái',
@@ -40,7 +56,12 @@ $currentQcDefect = trim((string)($_GET['qc_defect'] ?? 'all'));
 if ($currentQcDefect === '') {
     $currentQcDefect = 'all';
 }
-$racks         = $data['racks'] ?? [];
+$currentMachine = trim((string)($_GET['machine'] ?? $_GET['extrusion_machine'] ?? ''));
+$currentWindingMachine = trim((string)($_GET['winding_machine'] ?? ''));
+
+$racks           = $data['racks'] ?? [];
+$machines        = $data['machines'] ?? (class_exists('GlobalData') ? (GlobalData::$listExtrusionMachineEntity ?? []) : []);
+$windingMachines = $data['windingMachines'] ?? (class_exists('GlobalData') ? (GlobalData::$listWindingMachineEntity ?? []) : []);
 
 $defaultToDate   = date('Y-m-d');
 $defaultFromDate = date('Y-m-d', strtotime('-7 days'));
@@ -130,6 +151,106 @@ if (!function_exists('buildFilterUrl')) {
             }
         }
         return '/WEB_BOBIN/public/index.php?' . http_build_query($query);
+    }
+}
+
+if (!function_exists('getProductBadgeClass')) {
+    function getProductBadgeClass(?string $code): string
+    {
+        $code = trim((string)$code);
+        if ($code === '' || $code === 'Chưa cập nhật' || $code === '---') {
+            return 'product-empty';
+        }
+        $idx = abs(crc32($code)) % 10;
+        return 'prod-theme-' . $idx;
+    }
+}
+
+if (!function_exists('getBobinTypeBadgeClass')) {
+    function getBobinTypeBadgeClass(?string $type): string
+    {
+        $type = trim((string)$type);
+        if ($type === '' || $type === 'Chưa cập nhật' || $type === '---') {
+            return 'type-empty';
+        }
+        if ($type === 'Sản xuất') {
+            return 'type-san-xuat';
+        }
+        if ($type === 'Bù') {
+            return 'type-bu';
+        }
+        if ($type === 'Điều chỉnh (Do CP)') {
+            return 'type-dieu-chinh-cp';
+        }
+        if (str_contains($type, 'Gel')) {
+            return 'type-dieu-chinh-gel';
+        }
+        if (str_contains($type, 'Dị vật')) {
+            return 'type-dieu-chinh-di-vat';
+        }
+        if (str_contains($type, 'Trầy')) {
+            return 'type-dieu-chinh-tray';
+        }
+        if (str_contains($type, 'Biến dạng')) {
+            return 'type-dieu-chinh-bien-dang';
+        }
+        if (str_contains($type, 'Xước')) {
+            return 'type-dieu-chinh-xuoc';
+        }
+        if (str_contains($type, 'Chữ in')) {
+            return 'type-dieu-chinh-chu-in';
+        }
+        if (str_contains($type, 'Vón cục')) {
+            return 'type-dieu-chinh-von-cuc';
+        }
+        if (str_contains($type, 'Màu')) {
+            return 'type-dieu-chinh-mau';
+        }
+        return 'type-dieu-chinh';
+    }
+}
+
+if (!function_exists('getBobinTypeBadgeStyle')) {
+    function getBobinTypeBadgeStyle(?string $type): string
+    {
+        $type = trim((string)$type);
+        if ($type === '' || $type === 'Chưa cập nhật' || $type === '---') {
+            return 'color: #64748b; background-color: #f1f5f9; border: 1.5px dashed #cbd5e1; font-weight: 600; font-style: italic;';
+        }
+        if ($type === 'Sản xuất') {
+            return 'color: #14532d; background-color: #dcfce7; border: 1.5px solid #22c55e; font-weight: 700;';
+        }
+        if ($type === 'Bù') {
+            return 'color: #1e40af; background-color: #dbeafe; border: 1.5px solid #3b82f6; font-weight: 700;';
+        }
+        if ($type === 'Điều chỉnh (Do CP)') {
+            return 'color: #c2410c; background-color: #ffedd5; border: 1.5px solid #f97316; font-weight: 700;';
+        }
+        if (str_contains($type, 'Gel')) {
+            return 'color: #6b21a8; background-color: #f3e8ff; border: 1.5px solid #a855f7; font-weight: 700;';
+        }
+        if (str_contains($type, 'Dị vật')) {
+            return 'color: #9f1239; background-color: #ffe4e6; border: 1.5px solid #f43f5e; font-weight: 700;';
+        }
+        if (str_contains($type, 'Trầy')) {
+            return 'color: #92400e; background-color: #fef3c7; border: 1.5px solid #f59e0b; font-weight: 700;';
+        }
+        if (str_contains($type, 'Biến dạng')) {
+            return 'color: #115e59; background-color: #ccfbf1; border: 1.5px solid #14b8a6; font-weight: 700;';
+        }
+        if (str_contains($type, 'Xước')) {
+            return 'color: #86198f; background-color: #fae8ff; border: 1.5px solid #d946ef; font-weight: 700;';
+        }
+        if (str_contains($type, 'Chữ in')) {
+            return 'color: #3730a3; background-color: #e0e7ff; border: 1.5px solid #6366f1; font-weight: 700;';
+        }
+        if (str_contains($type, 'Vón cục')) {
+            return 'color: #5b21b6; background-color: #ede9fe; border: 1.5px solid #8b5cf6; font-weight: 700;';
+        }
+        if (str_contains($type, 'Màu')) {
+            return 'color: #991b1b; background-color: #fee2e2; border: 1.5px solid #ef4444; font-weight: 700;';
+        }
+        return 'color: #9a3412; background-color: #ffedd5; border: 1.5px solid #ea580c; font-weight: 700;';
     }
 }
 
@@ -237,6 +358,12 @@ if (!function_exists('decodeJsonObject')) {
                     <?php if ($currentQcDefect !== 'all'): ?>
                         <input type="hidden" name="qc_defect" value="<?= htmlspecialchars($currentQcDefect) ?>">
                     <?php endif; ?>
+                    <?php if ($currentMachine !== '' && $currentMachine !== 'all'): ?>
+                        <input type="hidden" name="machine" value="<?= htmlspecialchars($currentMachine) ?>">
+                    <?php endif; ?>
+                    <?php if ($currentWindingMachine !== '' && $currentWindingMachine !== 'all'): ?>
+                        <input type="hidden" name="winding_machine" value="<?= htmlspecialchars($currentWindingMachine) ?>">
+                    <?php endif; ?>
 
                     <div class="control-row">
                         <!-- TÌM KIẾM KEYWORD -->
@@ -320,20 +447,53 @@ if (!function_exists('decodeJsonObject')) {
         <!-- DASHBOARD THỐNG KÊ (BIỂU ĐỒ 220PX + LƯỚI 2 CỘT KPI) -->
         <div class="analytics-wrapper">
             <div class="analytics-left">
-                <div class="analytics-title-box">
-                    <div class="badge-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="18" y="4" width="4" height="16" fill="#38bdf8" stroke="none"></rect>
-                            <rect x="10" y="9" width="4" height="11" fill="#818cf8" stroke="none"></rect>
-                            <rect x="2" y="14" width="4" height="6" fill="#34d399" stroke="none"></rect>
-                        </svg>
-                    </div>
-                    <h3 data-i18n="chart_history_status_stats">Thống kê lịch sử cập nhật trạng thái Bobin</h3>
-                </div>
+                <div class="analytics-charts-grid">
+                    <!-- BIỂU ĐỒ 1: THỐNG KÊ LỊCH SỬ CẬP NHẬT TRẠNG THÁI BOBIN -->
+                    <div class="chart-panel">
+                        <div class="analytics-title-box">
+                            <div class="badge-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="18" y="4" width="4" height="16" fill="#38bdf8" stroke="none"></rect>
+                                    <rect x="10" y="9" width="4" height="11" fill="#818cf8" stroke="none"></rect>
+                                    <rect x="2" y="14" width="4" height="6" fill="#34d399" stroke="none"></rect>
+                                </svg>
+                            </div>
+                            <h3 data-i18n="chart_history_status_stats">Thống kê lịch sử cập nhật trạng thái Bobin</h3>
+                        </div>
 
-                <div class="chart-box">
-                    <div id="statusPieChart"></div>
+                        <div class="chart-box">
+                            <div id="statusPieChart"></div>
+                        </div>
+                    </div>
+
+                    <!-- BIỂU ĐỒ 2: THỐNG KÊ NGOẠI QUAN BOBIN (TASK-052) -->
+                    <div class="chart-panel">
+                        <div class="analytics-title-box qc-chart-title-box">
+                            <div class="title-left">
+                                <div class="badge-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed"
+                                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M9 11l3 3L22 4"></path>
+                                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                    </svg>
+                                </div>
+                                <h3 data-i18n="chart_qc_defect_stats">Thống kê ngoại quan Bobin</h3>
+                            </div>
+                            <div class="qc-stat-badges">
+                                <span class="qc-badge-pill qc-pill-ok" title="Đạt toàn bộ tiêu chuẩn ngoại quan">
+                                    <span class="dot">●</span> <span data-i18n="qc_defect_ok">Đạt</span>: <strong><?= number_format($qcDefectStats['ok_all'] ?? 0) ?></strong>
+                                </span>
+                                <span class="qc-badge-pill qc-pill-ng" title="Có ít nhất một lỗi ngoại quan">
+                                    <span class="dot">●</span> <span data-i18n="qc_defect_ng">Có lỗi</span>: <strong><?= number_format($qcDefectStats['ng_any'] ?? 0) ?></strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="chart-box">
+                            <div id="qcDefectChart"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -391,8 +551,12 @@ if (!function_exists('decodeJsonObject')) {
                             <div class="kpi-title-wrap">
                                 <span class="kpi-name">ĐÃ KT QC</span>
                                 <div class="kpi-sub-breakdown">
-                                    <span class="sub-pill in-period" title="Bobin được đùn trong khoảng thời gian tra cứu">Trong: <strong><?= number_format($statusCounts['Busy_Checked_InPeriod'] ?? 0) ?></strong></span>
-                                    <span class="sub-pill before" title="Bobin được đùn trước khoảng thời gian tra cứu">Trước: <strong><?= number_format($statusCounts['Busy_Checked_Before'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill in-period"
+                                        title="Bobin được đùn trong khoảng thời gian tra cứu">Trong:
+                                        <strong><?= number_format($statusCounts['Busy_Checked_InPeriod'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill before"
+                                        title="Bobin được đùn trước khoảng thời gian tra cứu">Trước:
+                                        <strong><?= number_format($statusCounts['Busy_Checked_Before'] ?? 0) ?></strong></span>
                                 </div>
                             </div>
                         </div>
@@ -417,13 +581,18 @@ if (!function_exists('decodeJsonObject')) {
                             <div class="kpi-title-wrap">
                                 <span class="kpi-name">CHỜ HỦY</span>
                                 <div class="kpi-sub-breakdown">
-                                    <span class="sub-pill in-period" title="Bobin được đùn trong khoảng thời gian tra cứu">Trong: <strong><?= number_format($statusCounts['Pending_Cancellation_InPeriod'] ?? 0) ?></strong></span>
-                                    <span class="sub-pill before" title="Bobin được đùn trước khoảng thời gian tra cứu">Trước: <strong><?= number_format($statusCounts['Pending_Cancellation_Before'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill in-period"
+                                        title="Bobin được đùn trong khoảng thời gian tra cứu">Trong:
+                                        <strong><?= number_format($statusCounts['Pending_Cancellation_InPeriod'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill before"
+                                        title="Bobin được đùn trước khoảng thời gian tra cứu">Trước:
+                                        <strong><?= number_format($statusCounts['Pending_Cancellation_Before'] ?? 0) ?></strong></span>
                                 </div>
                             </div>
                         </div>
                         <div class="kpi-right">
-                            <strong class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation'] ?? 0) ?></strong>
+                            <strong
+                                class="kpi-val"><?= number_format($statusCounts['Pending_Cancellation'] ?? 0) ?></strong>
                         </div>
                     </div>
 
@@ -433,8 +602,12 @@ if (!function_exists('decodeJsonObject')) {
                             <div class="kpi-title-wrap">
                                 <span class="kpi-name">ĐÃ HỦY</span>
                                 <div class="kpi-sub-breakdown">
-                                    <span class="sub-pill in-period" title="Bobin được đùn trong khoảng thời gian tra cứu">Trong: <strong><?= number_format($statusCounts['Cancelled_InPeriod'] ?? 0) ?></strong></span>
-                                    <span class="sub-pill before" title="Bobin được đùn trước khoảng thời gian tra cứu">Trước: <strong><?= number_format($statusCounts['Cancelled_Before'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill in-period"
+                                        title="Bobin được đùn trong khoảng thời gian tra cứu">Trong:
+                                        <strong><?= number_format($statusCounts['Cancelled_InPeriod'] ?? 0) ?></strong></span>
+                                    <span class="sub-pill before"
+                                        title="Bobin được đùn trước khoảng thời gian tra cứu">Trước:
+                                        <strong><?= number_format($statusCounts['Cancelled_Before'] ?? 0) ?></strong></span>
                                 </div>
                             </div>
                         </div>
@@ -448,8 +621,14 @@ if (!function_exists('decodeJsonObject')) {
                 <div class="conservation-banner">
                     <span class="banner-icon">⚖️</span>
                     <div class="banner-text">
-                        <strong>Bảo toàn số lượng ĐÃ ĐÙN (<?= number_format($statusCounts['Extruded'] ?? 0) ?>):</strong>
-                        <span>Đã QC (<?= number_format($statusCounts['Conserved_Busy_Checked'] ?? 0) ?>) + Chưa QC (<?= number_format($statusCounts['Conserved_Busy_Unchecked'] ?? 0) ?>) + Đã cuộn (<?= number_format($statusCounts['Conserved_Rolled'] ?? 0) ?>) + Chờ hủy (<?= number_format($statusCounts['Conserved_Pending_Cancellation'] ?? 0) ?>) + Đã hủy (<?= number_format($statusCounts['Conserved_Cancelled'] ?? 0) ?>) = <strong><?= number_format(($statusCounts['Conserved_Busy_Checked'] ?? 0) + ($statusCounts['Conserved_Busy_Unchecked'] ?? 0) + ($statusCounts['Conserved_Rolled'] ?? 0) + ($statusCounts['Conserved_Pending_Cancellation'] ?? 0) + ($statusCounts['Conserved_Cancelled'] ?? 0)) ?></strong></span>
+                        <strong>Bảo toàn số lượng ĐÃ ĐÙN
+                            (<?= number_format($statusCounts['Extruded'] ?? 0) ?>):</strong>
+                        <span>Đã QC (<?= number_format($statusCounts['Conserved_Busy_Checked'] ?? 0) ?>) + Chưa QC
+                            (<?= number_format($statusCounts['Conserved_Busy_Unchecked'] ?? 0) ?>) + Đã cuộn
+                            (<?= number_format($statusCounts['Conserved_Rolled'] ?? 0) ?>) + Chờ hủy
+                            (<?= number_format($statusCounts['Conserved_Pending_Cancellation'] ?? 0) ?>) + Đã hủy
+                            (<?= number_format($statusCounts['Conserved_Cancelled'] ?? 0) ?>) =
+                            <strong><?= number_format(($statusCounts['Conserved_Busy_Checked'] ?? 0) + ($statusCounts['Conserved_Busy_Unchecked'] ?? 0) + ($statusCounts['Conserved_Rolled'] ?? 0) + ($statusCounts['Conserved_Pending_Cancellation'] ?? 0) + ($statusCounts['Conserved_Cancelled'] ?? 0)) ?></strong></span>
                     </div>
                 </div>
             </div>
@@ -567,6 +746,93 @@ if (!function_exists('decodeJsonObject')) {
                     }
                 });
                 statusChart.render();
+
+                // BIỂU ĐỒ 2: THỐNG KÊ NGOẠI QUAN BOBIN (TASK-052)
+                const qcDefectData = [
+                    <?= (int)($qcDefectStats['gel'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['foreign_object'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['color_issue'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['print_quality'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['clump'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['scratch'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['streak'] ?? 0) ?>,
+                    <?= (int)($qcDefectStats['deformation'] ?? 0) ?>
+                ];
+                const qcLabelsRaw = ['Gel', 'Dị vật', 'Lỗi màu', 'Chữ in', 'Vón cục', 'Trầy', 'Xước', 'Biến dạng'];
+                const qcTranslatedLabels = qcLabelsRaw.map(function(lbl) {
+                    if (typeof window.t !== 'function') return lbl;
+                    if (lbl === 'Gel') return window.t('qc_defect_gel', 'Gel');
+                    if (lbl === 'Dị vật') return window.t('qc_defect_foreign', 'Dị vật');
+                    if (lbl === 'Lỗi màu') return window.t('qc_defect_color', 'Lỗi màu');
+                    if (lbl === 'Chữ in') return window.t('qc_defect_print', 'Chữ in');
+                    if (lbl === 'Vón cục') return window.t('qc_defect_clump', 'Vón cục');
+                    if (lbl === 'Trầy') return window.t('qc_defect_scratch', 'Trầy');
+                    if (lbl === 'Xước') return window.t('qc_defect_streak', 'Xước');
+                    if (lbl === 'Biến dạng') return window.t('qc_defect_deform', 'Biến dạng');
+                    return lbl;
+                });
+                const qcTotalNg = <?= (int)($qcDefectStats['ng_any'] ?? 0) ?>;
+                const qcMaxVal = Math.max(...qcDefectData, 0);
+
+                const qcChart = new BaseChart('#qcDefectChart', {
+                    chart: {
+                        type: 'bar',
+                        height: 240,
+                        fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        toolbar: { show: false },
+                        animations: { enabled: true, speed: 300 }
+                    },
+                    series: [{
+                        name: (typeof window.t === 'function' ? window.t('chart_defect_count', 'Số lỗi') : 'Số lỗi'),
+                        data: qcDefectData
+                    }],
+                    colors: ['#a855f7', '#f43f5e', '#f97316', '#6366f1', '#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6'],
+                    plotOptions: {
+                        bar: {
+                            horizontal: true,
+                            borderRadius: 4,
+                            barHeight: '62%',
+                            distributed: true,
+                            dataLabels: { position: 'top' }
+                        }
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        textAnchor: 'start',
+                        offsetX: 8,
+                        formatter: function(val) {
+                            if (val === 0) return '0';
+                            const percent = qcTotalNg > 0 ? ((val / qcTotalNg) * 100).toFixed(1) : 0;
+                            return `${val.toLocaleString('vi-VN')} (${percent}%)`;
+                        },
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            colors: ["#475569"]
+                        }
+                    },
+                    grid: {
+                        borderColor: '#f1f5f9',
+                        strokeDashArray: 3,
+                        padding: { top: -12, right: 35, bottom: -10, left: 15 }
+                    },
+                    xaxis: {
+                        categories: qcTranslatedLabels,
+                        min: 0,
+                        max: qcMaxVal === 0 ? 5 : Math.ceil(qcMaxVal * 1.3),
+                        labels: {
+                            style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+                            formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: { colors: '#1e293b', fontSize: '12px', fontWeight: 700 }
+                        }
+                    },
+                    legend: { show: false }
+                });
+                qcChart.render();
             })();
         </script>
 
@@ -579,7 +845,7 @@ if (!function_exists('decodeJsonObject')) {
                         <input type="checkbox" id="selectAllCheckbox"> Chọn tất cả trang này
                     </label>
                 </div>
-                <a href="<?= buildFilterUrl(['status' => 'all', 'bobin_size' => 'all', 'bobin_type' => 'all', 'rack' => 'all', 'keyword' => null, 'employee_code' => null, 'product_code' => null, 'qc_defect' => 'all']) ?>"
+                <a href="<?= buildFilterUrl(['status' => 'all', 'bobin_size' => 'all', 'bobin_type' => 'all', 'rack' => 'all', 'keyword' => null, 'employee_code' => null, 'product_code' => null, 'qc_defect' => 'all', 'machine' => null, 'winding_machine' => null]) ?>"
                     class="btn-reset-filter">
                     🔄 Đặt lại bộ lọc
                 </a>
@@ -637,6 +903,46 @@ if (!function_exists('decodeJsonObject')) {
                                     📍 Rack: <?= htmlspecialchars($rCode) ?>
                                 </option>
                             <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- LỌC THEO MÁY ĐÙN (TASK-051) -->
+                <div class="filter-col">
+                    <div class="filter-label"> Máy đùn:</div>
+                    <select id="machineFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <option value="<?= buildFilterUrl(['machine' => 'all']) ?>"
+                            <?= ($currentMachine === '' || $currentMachine === 'all') ? 'selected' : '' ?>>
+                            Tất cả máy đùn
+                        </option>
+                        <?php foreach ($machines as $m):
+                            $mName = is_object($m) ? ($m->machine_name ?? '') : ($m['machine_name'] ?? '');
+                            if (empty($mName)) continue;
+                        ?>
+                            <option value="<?= buildFilterUrl(['machine' => $mName]) ?>"
+                                <?= $currentMachine === $mName ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($mName) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- LỌC THEO MÁY CUỘN (TASK-051) -->
+                <div class="filter-col">
+                    <div class="filter-label"> Máy cuộn:</div>
+                    <select id="windingMachineFilter" class="filter-select" onchange="window.location.href = this.value;">
+                        <option value="<?= buildFilterUrl(['winding_machine' => 'all']) ?>"
+                            <?= ($currentWindingMachine === '' || $currentWindingMachine === 'all') ? 'selected' : '' ?>>
+                            Tất cả máy cuộn
+                        </option>
+                        <?php foreach ($windingMachines as $wm):
+                            $wmName = is_object($wm) ? ($wm->machine_name ?? '') : ($wm['machine_name'] ?? '');
+                            if (empty($wmName)) continue;
+                        ?>
+                            <option value="<?= buildFilterUrl(['winding_machine' => $wmName]) ?>"
+                                <?= $currentWindingMachine === $wmName ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($wmName) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -772,7 +1078,7 @@ if (!function_exists('decodeJsonObject')) {
                                 <div class="field-item">
                                     <label>Mã sản phẩm</label>
                                     <div class="val-sub">
-                                        <span class="bobin-highlight-product"><?= htmlspecialchars($productCode) ?></span>
+                                        <span class="bobin-highlight-product <?= getProductBadgeClass($productCode) ?>"><?= htmlspecialchars($productCode) ?></span>
                                     </div>
                                 </div>
                                 <div class="field-item">
@@ -792,6 +1098,10 @@ if (!function_exists('decodeJsonObject')) {
                                     </div>
                                 </div>
                                 <div class="field-item">
+                                    <label data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
+                                    <div class="val-sub"><?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?></div>
+                                </div>
+                                <div class="field-item">
                                     <label>Ca làm việc</label>
                                     <div class="val-sub"><?= htmlspecialchars($item['shift'] ?? 'Chưa cập nhật') ?></div>
                                 </div>
@@ -803,14 +1113,13 @@ if (!function_exists('decodeJsonObject')) {
                                     <label>Loại Bobin</label>
                                     <?php
                                     $rawBobinType = trim($item['bobin_type'] ?? '');
-                                    $typeBadgeClass = match (true) {
-                                        $rawBobinType === 'Sản xuất' => 'type-san-xuat',
-                                        $rawBobinType === 'Bù'       => 'type-bu',
-                                        default                     => 'type-dieu-chinh'
-                                    };
+                                    $typeBadgeClass = getBobinTypeBadgeClass($rawBobinType);
                                     ?>
                                     <div class="val-sub">
-                                        <span class="bobin-type-badge <?= $typeBadgeClass ?>" data-type="<?= htmlspecialchars($rawBobinType) ?>" title="<?= htmlspecialchars($rawBobinType) ?>">
+                                        <span class="bobin-type-badge <?= $typeBadgeClass ?>"
+                                            data-type="<?= htmlspecialchars($rawBobinType) ?>"
+                                            title="<?= htmlspecialchars($rawBobinType) ?>"
+                                            style="<?= getBobinTypeBadgeStyle($rawBobinType) ?>">
                                             <?= htmlspecialchars(!empty($rawBobinType) ? $rawBobinType : 'Chưa cập nhật') ?>
                                         </span>
                                     </div>
@@ -822,7 +1131,8 @@ if (!function_exists('decodeJsonObject')) {
                                 <div class="field-item">
                                     <label>Lot in</label>
                                     <div class="val-sub">
-                                        <span class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                        <span
+                                            class="bobin-highlight-printlot <?= empty($item['print_lot']) || $item['print_lot'] === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
                                             <?= htmlspecialchars($item['print_lot'] ?? 'Chưa cập nhật') ?>
                                         </span>
                                     </div>
@@ -981,11 +1291,14 @@ if (!function_exists('decodeJsonObject')) {
                                 $auditList = decodeJsonObject($rawAudit);
                                 if (!empty($auditList) && is_array($auditList)):
                                 ?>
-                                    <div class="audit-history-box" style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 12px; width: 100%;">
-                                        <div style="font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                                    <div class="audit-history-box"
+                                        style="margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px; font-size: 12px; width: 100%;">
+                                        <div
+                                            style="font-weight: 700; color: #475569; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
                                             <span>📝</span>
                                             <span data-i18n="audit_trail_title"><?= __('audit_trail_title') ?></span>
-                                            <span class="badge" style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px; font-size: 11px;"><?= count($auditList) ?></span>
+                                            <span class="badge"
+                                                style="background: #e2e8f0; color: #334155; padding: 1px 6px; border-radius: 10px; font-size: 11px;"><?= count($auditList) ?></span>
                                         </div>
                                         <div style="display: flex; flex-direction: column; gap: 4px;">
                                             <?php foreach ($auditList as $audit): ?>
@@ -1019,15 +1332,19 @@ if (!function_exists('decodeJsonObject')) {
                                                     $noteDisplay = htmlspecialchars($rawNote);
                                                 }
                                                 ?>
-                                                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                                <div
+                                                    style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #fff; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
                                                     <div>
                                                         <strong style="color: #2563eb;">[<?= $stageName ?>]</strong>
                                                         <span style="color: #1e293b; font-weight: 600;"><?= $empDisplay ?></span>
                                                         <?php if ($noteDisplay !== ''): ?>
-                                                            <span style="color: <?= $noteColor ?>; font-weight: 600; font-style: italic;">(<span <?= $noteI18nAttr ?>><?= $noteDisplay ?></span>)</span>
+                                                            <span
+                                                                style="color: <?= $noteColor ?>; font-weight: 600; font-style: italic;">(<span
+                                                                    <?= $noteI18nAttr ?>><?= $noteDisplay ?></span>)</span>
                                                         <?php endif; ?>
                                                     </div>
-                                                    <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒 <?= $timeDisplay ?></span>
+                                                    <span style="color: #64748b; font-family: monospace; font-size: 11.5px;">🕒
+                                                        <?= $timeDisplay ?></span>
                                                 </div>
                                             <?php endforeach; ?>
                                         </div>
@@ -1161,7 +1478,8 @@ if (!function_exists('decodeJsonObject')) {
                         .map(cb => cb.value);
 
                     if (selectedIds.length === 0) {
-                        const warnMsg = window.t ? window.t('warn_select_history_first') : "Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!";
+                        const warnMsg = window.t ? window.t('warn_select_history_first') :
+                            "Vui lòng tích chọn ít nhất 1 bản ghi lịch sử trước khi xuất!";
                         if (window.Toast && window.Toast.show) {
                             window.Toast.show(warnMsg, "warning");
                         } else if (typeof Toast !== 'undefined' && Toast.show) {

@@ -649,6 +649,72 @@ CREATE TABLE `employee_list` (
     - Khi đến bất kỳ mốc thời gian nào trong 4 mốc (`6:05 AM`, `2:05 PM`, `4:40 PM`, `10:05 PM`), Dialog lập tức hiển thị nổi bật trên cùng màn hình (khóa đóng bằng phím `ESC` hoặc click ra ngoài), hiển thị thông tin tài khoản đang mở, mốc thời gian kiểm soát và **Counter đếm ngược 60 giây** (vòng tròn SVG tiến trình + số giây đếm ngược + thanh progress bar chuyển đỏ cảnh báo khi còn $\le 15$ giây).
     - Khi User nhấn **"Xác nhận đăng xuất ngay"** hoặc khi Counter đếm ngược về `0` (sau 1 phút không xác nhận), hệ thống lập tức thực hiện đăng xuất và hiển thị thông báo trạng thái tương ứng trên trang đăng nhập (`loginView.php`).
     - Cập nhật đầy đủ từ khóa đa ngôn ngữ (`vi`, `en`, `ja`) trong `config/default_translations.json`.
+
+
+### TASK-049
+**Status:** DONE
+1. **Sửa lỗi hiển thị trùng lặp 2 bảng suggestion tại textfield "👤 Mã số nhân viên:":**
+   - Đã loại bỏ thuộc tính `list="advEmployeeDatalist"` và phần tử `<datalist id="advEmployeeDatalist">` trong `app/views/components/advancedBobinFilterAndStats.php`, đồng thời loại bỏ `<datalist id="advProductDatalist">`.
+   - Giờ chỉ còn menu gợi ý tuỳ chỉnh chuyên nghiệp (`#advEmployeeSuggestMenu` / `#advProductSuggestMenu`) điều khiển bằng JavaScript, khắc phục hoàn toàn hiện tượng cả browser native suggestion và custom dropdown cùng bật lên đồng thời.
+2. **Sửa lỗi nút nhấn Export Excel:**
+   - Khắc phục lỗi SQL cú pháp nghiêm trọng trong `BobinRepository::getBobinListDetailForExport()` (tiền tố bảng `'exp'` bị sai lệch so với alias `active_bobins`).
+   - Bổ sung bộ lọc khoảng thời gian (`from_date`, `to_date`) và đồng bộ chuẩn hóa tham số lọc nâng cao.
+   - Thêm cột và dữ liệu "Máy đùn" (`extrusion_machine`) vào file Excel/CSV xuất ra cho Lịch sử (`outputEnhancedCsvHistory`) và Chi tiết (`outputEnhancedCsvDetail`).
+3. **Thêm nút Export Excel ở trang "Đã hủy" và "Chờ hủy":**
+   - Đã triển khai action `exportPendingCancellationExcel()` và `exportCancelledExcel()` trong `app/controllers/BobinController.php`.
+   - Đăng ký routing và cấp quyền bảo mật trong `app/core/Router.php` và `app/core/AuthHelper.php`.
+   - Bổ sung nút "Xuất Excel" chuẩn giao diện hiện đại kèm icon SVG và đa ngôn ngữ (`data-i18n="btn_export_excel"`) trên cả 2 view `listPendingCancellationView.php` và `listCancelledBobinView.php`.
+   - Tối ưu CSS `.btn-export` đồng bộ giao diện trong `public/assets/css/listPendingCancellation.css`.
+4. **Tối ưu trang "Danh sách nhân viên" (`employeeListView.php`):**
+   - Khắc phục lỗi `ReferenceError: filterByRole is not defined` khi nhấn vào các thẻ thống kê vai trò hoặc các mục chú giải của Donut Chart.
+   - Bổ sung hàm `filterByRole(role)` và `applyEmployeeTableFilter()` lọc nhanh tức thì theo vai trò (`extrusion`, `qc`, `winding`, `admin`, `all`) kết hợp với ô tìm kiếm từ khóa và mã bộ phận.
+   - Tự động đánh số lại STT (cột 1, 2, 3...) và cập nhật huy hiệu số lượng nhân viên hiển thị (`#empCounter`).
+   - Đồng bộ trạng thái active của các stat-card và legend item với hiệu ứng nổi bật trong `public/assets/css/employeeList.css`.
+   - Tự động cập nhật URL nút "📤 Xuất Excel" theo đúng tham số lọc hiện hành (`keyword`, `cost_center`, `role`) để xuất đúng tập dữ liệu đang lọc.
+   - Chuẩn hóa toàn bộ URL với biến `$baseUrl` linh hoạt thay vì hardcode `/WEB_BOBIN/public`.
+5. **Thêm trường "Máy đùn" (`extrusion_machine`) vào database và cập nhật toàn bộ dự án:**
+   - **Database Migration:** Đã thêm cột `extrusion_machine VARCHAR(50) DEFAULT NULL AFTER extrusion_check` vào cả 2 bảng `bobin_list_detail` và `bobin_history`.
+   - **DATABASE_SCHEMA.md:** Đã cập nhật định dạng schema mới nhất cho cả 2 bảng.
+   - **DTOs & Entities:** Cập nhật `BobinCreateDTO`, `BobinExtUpdateDTO` (nhận diện `extrusion_machine` hoặc `machine`), và `BobinEntity` (`public string $extrusion_machine`).
+   - **Services & Repositories:** Cập nhật `BobinServices` và `BobinRepository` (insert, update, copy history `SELECT ... FROM bobin_list_detail`, keyword search).
+   - **Views & UI hiển thị:** Đã hiển thị trường "Máy đùn" trên toàn bộ các trang:
+     - `extrusionEditBobinView.php` (nhập/chỉnh sửa máy đùn) + `public/assets/js/Extrusion/edit_submit.js`
+     - `listBobinDetailView.php` (thẻ chi tiết Bobin)
+     - `listBobinHistoryView.php` (thẻ chi tiết lịch sử Bobin)
+     - `listPendingCancellationView.php` (danh sách chờ hủy)
+     - `listCancelledBobinView.php` (danh sách đã hủy)
+     - `qcView.php` & `qcEditBobinView.php` (giao diện QC và Điều chỉnh QC)
+     - `windingView.php` & `windingEditBobinView.php` (giao diện Cuộn và Điều chỉnh Cuộn)
+   - **Đa ngôn ngữ (i18n):** Bổ sung đầy đủ bản dịch 3 thứ tiếng (`vi`, `en`, `ja`) trong `config/default_translations.json`.
+
+### TASK-050
+**Status:** DONE
+- Đọc lại `AI_preference/AI_CONTEXT.md` và kiểm tra toàn bộ các yêu cầu chức năng chưa thực thi. Đã báo cáo đầy đủ cho người dùng và nhận chỉ đạo triển khai các mục 1, 2, 3:
+  1. **Bổ sung bộ lọc "Mã máy đùn" và "Mã sản phẩm" cho trang QC (`bobin/qcView`):**
+     - Mở rộng `BobinGetListDTO` hỗ trợ thuộc tính `$machine`.
+     - Cập nhật `BobinServices::getDetailBobinsForQC()` và `countDetailBobinsForQC()`.
+     - Cập nhật `BobinRepository::getDetailBobinsForQC()` và `countDetailBobinsForQC()` lọc chính xác theo `extrusion_machine` và `products.product_code`, đồng thời hỗ trợ tìm kiếm máy đùn trong từ khóa (`keyword`).
+     - Bổ sung giao diện select máy đùn (`#filterMachine`), input mã sản phẩm (`#filterProductCode` kèm datalist gợi ý), nút xóa lọc (`.btn-reset-filter`) và style CSS responsive trên `qcView.php` & `listBobin_QC.css`.
+     - Bổ sung các từ khóa dịch thuật `opt_all_machines`, `ph_product_code` vào `config/default_translations.json`.
+  2. **Mở rộng phạm vi lấy Bobin dang dở ở Nhóm Cuộn thành 7 ngày:**
+     - Cập nhật trong `BobinRepository::getDetailBobinsForWinding()` và `countDetailBobinsForWinding()` chuyển từ `INTERVAL 24 HOUR` thành `INTERVAL 7 DAY` theo đúng quy định tại Mục 2.3 của `AI_CONTEXT.md`.
+  3. **Bổ sung cập nhật `updated_time = NOW()` khi điều chỉnh thông tin Bobin:**
+     - Cập nhật các câu lệnh `UPDATE` trong `extUpdateBobinDetail()`, `extUpdateBobinGeneral()`, và `extUpdateBobinHistory()` ở công đoạn Đùn.
+     - Cập nhật các câu lệnh `UPDATE` trong `adminUpdateQCBobin()` ở công đoạn QC.
+     - Cập nhật các câu lệnh `UPDATE` trong `adminUpdateWindingBobin()` ở công đoạn Cuộn.
+     - Đảm bảo toàn bộ các thay đổi điều chỉnh đều lưu vết thời gian cập nhật mới nhất theo đúng yêu cầu bắt buộc của `AI_CONTEXT.md`.
+
+### TASK-051
+**Status:** DONE
+1. Kiểm tra lại các trang danh sách, QC, Cuộn: "Loại Bobin" VÀ "Mã sản phẩm" chưa được làm nổi bật dựa trên giá trị -> **DONE** (Áp dụng palette 10 màu giá trị cố định và badge phân loại chuẩn trên tất cả các trang: Danh sách, Lịch sử, QC, Cuộn, Chờ hủy, Đã hủy).
+2. Thêm chức năng filter tương tự ở mục 1 cho trang thông tin Cuộn -> **DONE** (Trang Cuộn `windingView` đã có bộ lọc: máy đùn, máy cuộn, mã sản phẩm, loại Bobin, tích hợp nút Quét QR, Reset bộ lọc và active filter chips).
+3. Thêm chức năng lọc theo máy đùn, máy cuộn cho trang Danh sách và Lịch sử -> **DONE** (Bổ sung bộ lọc máy đùn, máy cuộn xuyên suốt DTO, Repository, Service và Controller cho các trang `listBobinDetailView`, `listBobinHistoryView`, `listPendingCancellationView`, `listCancelledBobinView`).
+4. Update UI/UX Filter của trang QC -> **USER SELF-ADJUST** (Người dùng tự điều chỉnh câu chữ nhầm lẫn; hệ thống đã sẵn sàng khung giao diện & palette đồng bộ).
+### TASK-052
+**Status:** DONE
+1. Đang có lỗi ở trang qcView.php -> **DONE** (Khắc phục Fatal Error gọi hàm `buildQcFilterUrl()` tại các chip active filter và xóa khối CSS dư thừa gây mất cân bằng ngoặc `{}` tại `public/assets/css/listBobin_QC.css`).
+2. Giá trị Loại Bobin vẫn chưa được làm nổi bật ở các trang, giao diện không hiển thị màu -> **DONE** (Phân loại chi tiết và định nghĩa bộ màu nhận diện nổi bật, tương phản cao đạt chuẩn WCAG AA cho toàn bộ các loại Bobin: Sản xuất, Bù, Điều chỉnh CP và 8 loại Điều chỉnh ngoại quan. Bổ sung helper `getBobinTypeBadgeStyle()` sinh inline fallback style cùng đồng bộ CSS trên toàn bộ 6 trang: Danh sách, Lịch sử, QC, Cuộn, Chờ hủy, Đã hủy).
+3. Đề xuất thêm biểu đồ ở trang danh sách Bobin và trang lịch sử Bobin, tiêu đề là: Thống kê ngoại quan Bobin -> **DONE** (Xây dựng panel biểu đồ "Thống kê ngoại quan Bobin" với BaseChart/ApexCharts thể hiện 8 tiêu chí lỗi ngoại quan từ `qcDefectStats`, nhãn dữ liệu tỷ lệ %, cùng bộ badge thống kê Đạt/Có lỗi trên header, hỗ trợ đầy đủ 3 ngôn ngữ `vi`, `en`, `ja`).
 ## 🟡 RULES
 
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:

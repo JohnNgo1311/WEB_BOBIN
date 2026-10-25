@@ -6,6 +6,7 @@ class BobinExtUpdateDTO
     public string $bobin_identification_code;
     public string $bobin_type;
     public string $extrusion_employee_code;
+    public string $extrusion_machine;
     public string $production_order_code;
     public string $product_code;
     public string $material_lot;
@@ -38,6 +39,7 @@ class BobinExtUpdateDTO
         $dto->bobin_identification_code = trim($request['bobin_identification_code'] ?? '');
         $dto->bobin_type = $request['bobin_type'] ?? '';
         $dto->extrusion_employee_code = trim($request['extrusion_employee_code'] ?? '');
+        $dto->extrusion_machine = trim($request['extrusion_machine'] ?? $request['machine'] ?? '');
         $dto->production_order_code = trim($request['production_order_code'] ?? '');
         $dto->product_code = trim($request['product_code'] ?? '');
         $dto->material_lot = trim($request['material_lot'] ?? '');

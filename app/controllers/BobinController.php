@@ -196,6 +196,8 @@ class BobinController extends Controller
             'productCountsMap' => $productCountsMap,
             'employees'        => GlobalData::$listEmployeeEntity ?? [],
             'products'         => GlobalData::$listProductEntity ?? [],
+            'machines'         => GlobalData::$listExtrusionMachineEntity ?? [],
+            'windingMachines'  => GlobalData::$listWindingMachineEntity ?? [],
             'pendingCount'     => $this->bobinService->countPendingBobins(),
             'error'            => $errorMsg,
             'success'          => empty($errorMsg),
@@ -227,11 +229,23 @@ class BobinController extends Controller
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
 
+        $filters = [
+            'keyword'         => $dto->keyword ?? '',
+            'machine'         => $dto->machine ?? '',
+            'winding_machine' => $dto->windingMachine ?? '',
+            'product_code'    => $dto->productCode ?? '',
+            'bobin_type'      => $dto->bobinType ?? '',
+        ];
+
         $this->view('windingView', data: [
-            'bobins'       => $bobins,
-            'capacityMap'  => $capacityMap, // <-- Truyền xuống View
-            'pendingCount' => $this->bobinService->countPendingBobins(),
-            'pagination'   => [
+            'bobins'          => $bobins,
+            'capacityMap'     => $capacityMap, // <-- Truyền xuống View
+            'pendingCount'    => $this->bobinService->countPendingBobins(),
+            'machines'        => GlobalData::$listExtrusionMachineEntity ?? [],
+            'windingMachines' => GlobalData::$listWindingMachineEntity ?? [],
+            'products'        => GlobalData::$listProductEntity ?? [],
+            'filters'         => $filters,
+            'pagination'      => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
                 'totalRecords' => $totalRecords,
@@ -276,6 +290,8 @@ class BobinController extends Controller
             'racks'            => $racks,
             'employees'        => GlobalData::$listEmployeeEntity ?? [],
             'products'         => GlobalData::$listProductEntity ?? [],
+            'machines'         => GlobalData::$listExtrusionMachineEntity ?? [],
+            'windingMachines'  => GlobalData::$listWindingMachineEntity ?? [],
             'pendingCount'     => $this->bobinService->countPendingBobins(),
             'pagination'       => [
                 'currentPage'  => $dto->page,
@@ -317,6 +333,13 @@ class BobinController extends Controller
                 'totalPages'   => $totalPages,
                 'totalRecords' => $totalWaiting ?? count($bobins),
                 'limit'        => $dto->limit
+            ],
+            'machines'     => GlobalData::$listExtrusionMachineEntity ?? [],
+            'products'     => GlobalData::$listProductEntity ?? [],
+            'filters'      => [
+                'keyword'      => $dto->keyword ?? '',
+                'machine'      => $dto->machine ?? '',
+                'product_code' => $dto->productCode ?? ''
             ]
         ]);
     }
@@ -385,6 +408,8 @@ class BobinController extends Controller
             'racks'            => $racks ?? [],
             'employees'        => GlobalData::$listEmployeeEntity ?? [],
             'products'         => GlobalData::$listProductEntity ?? [],
+            'machines'         => GlobalData::$listExtrusionMachineEntity ?? [],
+            'windingMachines'  => GlobalData::$listWindingMachineEntity ?? [],
             'pendingCount'     => $this->bobinService->countPendingBobins(),
         ]);
     }
@@ -459,6 +484,8 @@ class BobinController extends Controller
             'racks'            => $racks ?? [],
             'employees'        => GlobalData::$listEmployeeEntity ?? [],
             'products'         => GlobalData::$listProductEntity ?? [],
+            'machines'         => GlobalData::$listExtrusionMachineEntity ?? [],
+            'windingMachines'  => GlobalData::$listWindingMachineEntity ?? [],
             'pendingCount'     => $this->bobinService->countPendingBobins(),
         ]);
     }
@@ -484,10 +511,22 @@ class BobinController extends Controller
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
 
+        $filters = [
+            'keyword'         => $dto->keyword ?? '',
+            'machine'         => $dto->machine ?? '',
+            'winding_machine' => $dto->windingMachine ?? '',
+            'product_code'    => $dto->productCode ?? '',
+            'bobin_type'      => $dto->bobinType ?? '',
+        ];
+
         $this->view('windingView', data: [
-            'pendingCount' => $pendingCount,
-            'bobins'     => $bobins,
-            'pagination' => [
+            'pendingCount'    => $pendingCount,
+            'bobins'          => $bobins,
+            'machines'        => GlobalData::$listExtrusionMachineEntity ?? [],
+            'windingMachines' => GlobalData::$listWindingMachineEntity ?? [],
+            'products'        => GlobalData::$listProductEntity ?? [],
+            'filters'         => $filters,
+            'pagination'      => [
                 'currentPage'  => $dto->page,
                 'totalPages'   => $totalPages,
                 'totalRecords' => $totalRecords,
@@ -1378,6 +1417,7 @@ class BobinController extends Controller
             'Mã Sản phẩm',
             'Mã NV Đùn',
             'Họ tên NV Đùn',
+            'Máy đùn',
             'Ca sản xuất',
             'Lot vật liệu',
             'Lot in (Print Lot)',
@@ -1475,6 +1515,7 @@ class BobinController extends Controller
             $products['product_code'] ?? 'Chưa cập nhật',
             $extEmp['employee_code'] ?? 'Chưa cập nhật',
             $extEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['extrusion_machine'] ?? 'Chưa cập nhật',
             $row['shift'] ?? 'Chưa cập nhật',
             $matLot['lot'] ?? 'Chưa cập nhật',
             $row['print_lot'] ?? 'Chưa cập nhật',
@@ -1538,6 +1579,7 @@ class BobinController extends Controller
             $products['product_code'] ?? 'Chưa cập nhật',
             $extEmp['employee_code'] ?? 'Chưa cập nhật',
             $extEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['extrusion_machine'] ?? 'Chưa cập nhật',
             $row['shift'] ?? 'Chưa cập nhật',
             $matLot['lot'] ?? 'Chưa cập nhật',
             $row['print_lot'] ?? 'Chưa cập nhật',
@@ -1599,6 +1641,79 @@ class BobinController extends Controller
         }
     }
 
+    //? Xuất Excel danh sách Bobin chờ hủy
+    public function exportPendingCancellationExcel()
+    {
+        if (isset($_SESSION['user']) && !AuthHelper::hasPermission('pending_cancel_view')) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Bạn không có quyền xuất danh sách Bobin chờ hủy.', 'message' => 'Bạn không có quyền xuất danh sách Bobin chờ hủy.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        try {
+            $dto = BobinGetListDTO::fromRequest($_REQUEST);
+            $dto->status = 'Pending_Cancellation';
+
+            $selectedCodes = [];
+            if (!empty($_REQUEST['selected_codes'])) {
+                if (is_array($_REQUEST['selected_codes'])) {
+                    $selectedCodes = $_REQUEST['selected_codes'];
+                } else {
+                    $selectedCodes = explode(',', $_REQUEST['selected_codes']);
+                }
+                $selectedCodes = array_filter(array_map('trim', $selectedCodes));
+            }
+
+            $bobins = $this->bobinService->getDetailBobinsForExport($dto, $selectedCodes);
+
+            $filename = "Danh_Sach_Bobin_Cho_Huy_" . date('Y-m-d_H_i') . ".csv";
+            $this->outputEnhancedCsvDetail($filename, $bobins);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
+        }
+    }
+
+    //? Xuất Excel danh sách Bobin đã hủy
+    public function exportCancelledExcel()
+    {
+        if (
+            isset($_SESSION['user'])
+            && !AuthHelper::hasPermission('bobin_list')
+            && !AuthHelper::hasPermission('bobin_history')
+            && !AuthHelper::hasPermission('pending_cancel_view')
+        ) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Bạn không có quyền xuất danh sách Bobin đã hủy.', 'message' => 'Bạn không có quyền xuất danh sách Bobin đã hủy.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        try {
+            $dto = BobinGetListDTO::fromRequest($_REQUEST);
+            $dto->status = 'Cancelled';
+
+            $selectedCodes = [];
+            if (!empty($_REQUEST['selected_codes'])) {
+                if (is_array($_REQUEST['selected_codes'])) {
+                    $selectedCodes = $_REQUEST['selected_codes'];
+                } else {
+                    $selectedCodes = explode(',', $_REQUEST['selected_codes']);
+                }
+                $selectedCodes = array_filter(array_map('trim', $selectedCodes));
+            }
+
+            $bobins = $this->bobinService->getDetailBobinsForExport($dto, $selectedCodes);
+
+            $filename = "Danh_Sach_Bobin_Da_Huy_" . date('Y-m-d_H_i') . ".csv";
+            $this->outputEnhancedCsvDetail($filename, $bobins);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            exit;
+        }
+    }
+
     private function outputEnhancedCsvDetail(string $filename, array $bobins): void
     {
         if (ob_get_level()) {
@@ -1624,6 +1739,7 @@ class BobinController extends Controller
             'Mã Sản phẩm',
             'Mã NV Đùn',
             'Họ tên NV Đùn',
+            'Máy đùn',
             'Ca sản xuất',
             'Lot vật liệu',
             'Lot in (Print Lot)',
@@ -1724,6 +1840,7 @@ class BobinController extends Controller
             $products['product_code'] ?? 'Chưa cập nhật',
             $extEmp['employee_code'] ?? 'Chưa cập nhật',
             $extEmp['employee_name'] ?? 'Chưa cập nhật',
+            $row['extrusion_machine'] ?? 'Chưa cập nhật',
             $row['shift'] ?? 'Chưa cập nhật',
             $matLot['lot'] ?? 'Chưa cập nhật',
             $row['print_lot'] ?? 'Chưa cập nhật',

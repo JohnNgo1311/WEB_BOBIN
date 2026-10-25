@@ -334,6 +334,7 @@ async function handleConfirm(buttonElement, bobinCode) {
         const empName = container.querySelector('#extrusion_employee_name')?.value.trim() || '';
         const bobinType = container.querySelector('#bobin_type')?.value || '';
         const materialLot = container.querySelector('#material_lot')?.value.trim() || '';
+        const machine = container.querySelector('#extrusion_machine')?.value.trim() || '';
         const material = container.querySelector('#material')?.value.trim() || '';
         const printLot = container.querySelector('#print_lot')?.value.trim() || '';
         const lengthM = container.querySelector('#length_m')?.value || 0;
@@ -369,6 +370,7 @@ async function handleConfirm(buttonElement, bobinCode) {
             extrusion_employee_name: empName,
             bobin_type: bobinType,
             material_lot: materialLot,
+            extrusion_machine: machine,
             material: material,
             print_lot: printLot,
             length_m: lengthM,

@@ -251,6 +251,21 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+}
+
+.analytics-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  min-width: 0;
+}
+
+.chart-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .analytics-title-box {
@@ -260,13 +275,75 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.analytics-title-box.qc-chart-title-box {
+  background: linear-gradient(90deg, #f5f3ff 0%, #ede9fe 100%);
+  justify-content: space-between;
+}
+
+.analytics-title-box .title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .analytics-title-box h3 {
   margin: 0;
-  font-size: 14.5px;
+  font-size: 14px;
   font-weight: 700;
   color: #0f172a;
+  white-space: nowrap;
+}
+
+.qc-chart-title-box h3 {
+  color: #4c1d95;
+}
+
+.qc-stat-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.qc-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  white-space: nowrap;
+}
+
+.qc-badge-pill .dot {
+  font-size: 9px;
+  line-height: 1;
+}
+
+.qc-pill-ok {
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.qc-pill-ok .dot {
+  color: #16a34a;
+}
+
+.qc-pill-ng {
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.qc-pill-ng .dot {
+  color: #dc2626;
 }
 
 .badge-icon {
@@ -276,6 +353,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .chart-box {
@@ -284,6 +362,7 @@ h1 {
   border: 1px solid #e2e8f0;
   padding: 8px 12px 0;
   flex: 1;
+  min-width: 0;
 }
 
 .analytics-right {
@@ -409,7 +488,7 @@ h1 {
 
 .filter-grid-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   gap: 8px;
 }
 
@@ -741,6 +820,12 @@ h1 {
 /* =========================================================
    RESPONSIVE BREAKPOINTS (TABLET & MOBILE)
 ========================================================= */
+@media (max-width: 1400px) {
+  .analytics-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* TABLET (Màn hình < 992px) */
 @media (max-width: 992px) {
   .analytics-wrapper {
@@ -870,15 +955,15 @@ h1 {
    TASK-022: CÁC THÔNG SỐ BOBIN NỔI BẬT (MÃ SP, RACK, LOẠI BOBIN, LOT IN)
 ========================================================================== */
 
-/* 1. MÃ SẢN PHẨM NỔI BẬT */
+/* 1. MÃ SẢN PHẨM NỔI BẬT THEO GIÁ TRỊ (TASK-051) */
 .bobin-highlight-product {
   display: inline-flex;
   align-items: center;
   font-size: 0.88rem;
   font-weight: 800;
-  color: #0369a1 !important;
-  background-color: #e0f2fe !important;
-  border: 1.5px solid #7dd3fc !important;
+  color: #0369a1;
+  background-color: #e0f2fe;
+  border: 1.5px solid #7dd3fc;
   padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.3px;
@@ -886,6 +971,28 @@ h1 {
   word-break: break-all;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* 10 Bảng màu sắc nhận diện sản phẩm theo giá trị */
+.bobin-highlight-product.prod-theme-0 { color: #0369a1 !important; background-color: #e0f2fe !important; border: 1.5px solid #7dd3fc !important; box-shadow: 0 1px 3px rgba(3, 105, 161, 0.14); }
+.bobin-highlight-product.prod-theme-1 { color: #3730a3 !important; background-color: #e0e7ff !important; border: 1.5px solid #a5b4fc !important; box-shadow: 0 1px 3px rgba(55, 48, 163, 0.14); }
+.bobin-highlight-product.prod-theme-2 { color: #6b21a8 !important; background-color: #f3e8ff !important; border: 1.5px solid #d8b4fe !important; box-shadow: 0 1px 3px rgba(107, 33, 168, 0.14); }
+.bobin-highlight-product.prod-theme-3 { color: #115e59 !important; background-color: #ccfbf1 !important; border: 1.5px solid #5eead4 !important; box-shadow: 0 1px 3px rgba(17, 94, 89, 0.14); }
+.bobin-highlight-product.prod-theme-4 { color: #065f46 !important; background-color: #d1fae5 !important; border: 1.5px solid #6ee7b7 !important; box-shadow: 0 1px 3px rgba(6, 95, 70, 0.14); }
+.bobin-highlight-product.prod-theme-5 { color: #92400e !important; background-color: #fef3c7 !important; border: 1.5px solid #fcd34d !important; box-shadow: 0 1px 3px rgba(146, 64, 14, 0.14); }
+.bobin-highlight-product.prod-theme-6 { color: #9f1239 !important; background-color: #ffe4e6 !important; border: 1.5px solid #fda4af !important; box-shadow: 0 1px 3px rgba(159, 18, 57, 0.14); }
+.bobin-highlight-product.prod-theme-7 { color: #86198f !important; background-color: #fae8ff !important; border: 1.5px solid #f0abfc !important; box-shadow: 0 1px 3px rgba(134, 25, 143, 0.14); }
+.bobin-highlight-product.prod-theme-8 { color: #155e75 !important; background-color: #cffafe !important; border: 1.5px solid #67e8f9 !important; box-shadow: 0 1px 3px rgba(21, 94, 117, 0.14); }
+.bobin-highlight-product.prod-theme-9 { color: #9a3412 !important; background-color: #ffedd5 !important; border: 1.5px solid #fdba74 !important; box-shadow: 0 1px 3px rgba(154, 52, 18, 0.14); }
+
+.bobin-highlight-product.product-empty {
+  font-family: inherit;
+  color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none !important;
 }
 
 /* 2. VỊ TRÍ RACK NỔI BẬT (NẾU CÓ) */
@@ -919,8 +1026,8 @@ h1 {
   align-items: center;
   justify-content: center;
   font-size: 0.78rem;
-  font-weight: 800;
-  padding: 2.5px 7px;
+  font-weight: 700;
+  padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -931,49 +1038,108 @@ h1 {
   text-align: center;
   line-height: 1.25;
   box-sizing: border-box;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* 3.1. Sản xuất: Màu xanh lá đậm */
 .bobin-type-badge.type-san-xuat,
-.val-sub[data-type="Sản xuất"],
 [data-type="Sản xuất"].bobin-type-badge {
   color: #14532d !important;
   background-color: #dcfce7 !important;
-  border: 1.5px solid #16a34a !important;
+  border: 1.5px solid #22c55e !important;
 }
 
 /* 3.2. Bù: Màu xanh dương */
 .bobin-type-badge.type-bu,
-.val-sub[data-type="Bù"],
 [data-type="Bù"].bobin-type-badge {
   color: #1e40af !important;
   background-color: #dbeafe !important;
   border: 1.5px solid #3b82f6 !important;
 }
 
-/* 3.3. Các loại điều chỉnh: Màu cam đậm */
+/* 3.3. Điều chỉnh do CP: Cam hổ phách */
+.bobin-type-badge.type-dieu-chinh-cp,
+[data-type*="CP"].bobin-type-badge {
+  color: #c2410c !important;
+  background-color: #ffedd5 !important;
+  border: 1.5px solid #f97316 !important;
+}
+
+/* 3.4. Điều chỉnh ngoại quan: Phân biệt theo từng loại lỗi cụ thể */
+.bobin-type-badge.type-dieu-chinh-gel,
+[data-type*="Gel"].bobin-type-badge {
+  color: #6b21a8 !important;
+  background-color: #f3e8ff !important;
+  border: 1.5px solid #a855f7 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-di-vat,
+[data-type*="Dị vật"].bobin-type-badge {
+  color: #9f1239 !important;
+  background-color: #ffe4e6 !important;
+  border: 1.5px solid #f43f5e !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-tray,
+[data-type*="Trầy"].bobin-type-badge {
+  color: #92400e !important;
+  background-color: #fef3c7 !important;
+  border: 1.5px solid #f59e0b !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-bien-dang,
+[data-type*="Biến dạng"].bobin-type-badge {
+  color: #115e59 !important;
+  background-color: #ccfbf1 !important;
+  border: 1.5px solid #14b8a6 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-xuoc,
+[data-type*="Xước"].bobin-type-badge {
+  color: #86198f !important;
+  background-color: #fae8ff !important;
+  border: 1.5px solid #d946ef !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-chu-in,
+[data-type*="Chữ in"].bobin-type-badge {
+  color: #3730a3 !important;
+  background-color: #e0e7ff !important;
+  border: 1.5px solid #6366f1 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-von-cuc,
+[data-type*="Vón cục"].bobin-type-badge {
+  color: #5b21b6 !important;
+  background-color: #ede9fe !important;
+  border: 1.5px solid #8b5cf6 !important;
+}
+
+.bobin-type-badge.type-dieu-chinh-mau,
+[data-type*="Màu"].bobin-type-badge {
+  color: #991b1b !important;
+  background-color: #fee2e2 !important;
+  border: 1.5px solid #ef4444 !important;
+}
+
+/* 3.5. Fallback các loại điều chỉnh chung khác */
 .bobin-type-badge.type-dieu-chinh,
-.val-sub[data-type^="Điều chỉnh"],
-.val-sub[data-type="Gel"],
-.val-sub[data-type="Dị vật"],
-.val-sub[data-type="Trầy"],
-.val-sub[data-type="Biến dạng"],
-.val-sub[data-type="Xước"],
-.val-sub[data-type="Chữ in"],
-.val-sub[data-type="Vón cục"],
-.val-sub[data-type="Màu"],
-[data-type^="Điều chỉnh"].bobin-type-badge,
-[data-type="Gel"].bobin-type-badge,
-[data-type="Dị vật"].bobin-type-badge,
-[data-type="Trầy"].bobin-type-badge,
-[data-type="Biến dạng"].bobin-type-badge,
-[data-type="Xước"].bobin-type-badge,
-[data-type="Chữ in"].bobin-type-badge,
-[data-type="Vón cục"].bobin-type-badge,
-[data-type="Màu"].bobin-type-badge {
+[data-type^="Điều chỉnh"].bobin-type-badge {
   color: #9a3412 !important;
   background-color: #ffedd5 !important;
   border: 1.5px solid #ea580c !important;
+}
+
+/* 3.6. Chưa cập nhật / Trống: Màu xám viền nét đứt */
+.bobin-type-badge.type-empty,
+[data-type=""].bobin-type-badge,
+[data-type="Chưa cập nhật"].bobin-type-badge {
+  color: #64748b !important;
+  background-color: #f1f5f9 !important;
+  border: 1.5px dashed #cbd5e1 !important;
+  font-weight: 500 !important;
+  font-style: italic;
+  box-shadow: none !important;
 }
 
 /* 4. LOT IN NỔI BẬT */

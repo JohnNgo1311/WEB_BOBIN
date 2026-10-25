@@ -142,7 +142,7 @@ $qcFilterSelectOptions = [
                     data-i18n="filter_emp_scope_badge"><?= __('filter_emp_scope_badge') ?></span>
             </div>
             <div class="adv-input-group <?= $currentEmployeeCode !== '' ? 'has-value' : '' ?>">
-                <input type="text" id="advEmployeeCodeInput" class="adv-filter-input" list="advEmployeeDatalist"
+                <input type="text" id="advEmployeeCodeInput" class="adv-filter-input"
                     autocomplete="off" placeholder="<?= htmlspecialchars(__('filter_ph_employee_code')) ?>"
                     data-i18n-ph="filter_ph_employee_code" value="<?= htmlspecialchars($currentEmployeeCode) ?>">
                 <?php if ($currentEmployeeCode !== ''): ?>
@@ -153,13 +153,6 @@ $qcFilterSelectOptions = [
                     <?= __('btn_apply_filter') ?>
                 </button>
             </div>
-            <datalist id="advEmployeeDatalist">
-                <?php foreach ($employeeSuggestions as $empItem): ?>
-                <option value="<?= htmlspecialchars($empItem['code']) ?>">
-                    <?= htmlspecialchars($empItem['name'] . ' (' . $empItem['role_label'] . ')') ?>
-                </option>
-                <?php endforeach; ?>
-            </datalist>
             <div class="adv-suggest-menu" id="advEmployeeSuggestMenu"></div>
         </div>
 
@@ -182,7 +175,7 @@ $qcFilterSelectOptions = [
             </div>
             <div
                 class="adv-input-group <?= ($currentProductCode !== '' && $currentProductCode !== 'all') ? 'has-value' : '' ?>">
-                <input type="text" id="advProductCodeInput" class="adv-filter-input" list="advProductDatalist"
+                <input type="text" id="advProductCodeInput" class="adv-filter-input"
                     autocomplete="off" placeholder="<?= htmlspecialchars(__('filter_ph_product_code')) ?>"
                     data-i18n-ph="filter_ph_product_code"
                     value="<?= htmlspecialchars($currentProductCode === 'all' ? '' : $currentProductCode) ?>">
@@ -194,13 +187,6 @@ $qcFilterSelectOptions = [
                     <?= __('btn_apply_filter') ?>
                 </button>
             </div>
-            <datalist id="advProductDatalist">
-                <?php foreach ($productSuggestions as $prodItem): ?>
-                <option value="<?= htmlspecialchars($prodItem['code']) ?>">
-                    <?= htmlspecialchars(($prodItem['order_code'] ? "Lệnh: {$prodItem['order_code']} | " : '') . "SL: {$prodItem['count']} Bobin") ?>
-                </option>
-                <?php endforeach; ?>
-            </datalist>
             <div class="adv-suggest-menu" id="advProductSuggestMenu"></div>
         </div>
 

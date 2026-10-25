@@ -83,16 +83,13 @@ foreach ($bobins as $b) {
                     <span data-i18n="page_winding_edit"><?= __('page_winding_edit') ?></span>
                 </h1>
             </div>
-            <div class="wnd-hero-badge">
-                <span>⚡</span>
-                <span>WINDING PROCESS EDIT</span>
-            </div>
+
         </header>
 
         <!-- 2. KPI STATS ROW -->
         <section class="wnd-stats-grid">
             <div class="wnd-stat-card stat-total">
-                <div class="wnd-stat-icon-wrap">📦</div>
+                <div class="wnd-stat-icon-wrap">📊</div>
                 <div class="wnd-stat-info">
                     <span class="wnd-stat-val"><?= number_format($totalRecords) ?></span>
                     <span class="wnd-stat-label" data-i18n="winding_kpi_total"><?= __('winding_kpi_total') ?></span>
@@ -100,7 +97,7 @@ foreach ($bobins as $b) {
             </div>
 
             <div class="wnd-stat-card stat-flow-ok">
-                <div class="wnd-stat-icon-wrap">💨</div>
+                <div class="wnd-stat-icon-wrap">✅</div>
                 <div class="wnd-stat-info">
                     <span class="wnd-stat-val"><?= number_format($flowOkCount) ?></span>
                     <span class="wnd-stat-label" data-i18n="winding_kpi_flow_ok"><?= __('winding_kpi_flow_ok') ?></span>
@@ -108,20 +105,14 @@ foreach ($bobins as $b) {
             </div>
 
             <div class="wnd-stat-card stat-flow-ng">
-                <div class="wnd-stat-icon-wrap">⚠️</div>
+                <div class="wnd-stat-icon-wrap">❌</div>
                 <div class="wnd-stat-info">
                     <span class="wnd-stat-val"><?= number_format($flowNgCount) ?></span>
                     <span class="wnd-stat-label" data-i18n="winding_kpi_flow_ng"><?= __('winding_kpi_flow_ng') ?></span>
                 </div>
             </div>
 
-            <div class="wnd-stat-card stat-recent">
-                <div class="wnd-stat-icon-wrap">🕒</div>
-                <div class="wnd-stat-info">
-                    <span class="wnd-stat-val">ROLLED</span>
-                    <span class="wnd-stat-label" data-i18n="winding_kpi_recent"><?= __('winding_kpi_recent') ?></span>
-                </div>
-            </div>
+
         </section>
 
         <!-- QR SCANNER CONTAINER -->
@@ -129,8 +120,8 @@ foreach ($bobins as $b) {
 
         <!-- 3. CONTROL TOOLBAR -->
         <section class="wnd-toolbar">
-            <?php 
-                $backUrl = AuthHelper::hasPermission('winding_confirm') ? '/WEB_BOBIN/public/index.php?url=bobin/windingView' : ($userHomeUrl ?? '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView');
+            <?php
+            $backUrl = AuthHelper::hasPermission('winding_confirm') ? '/WEB_BOBIN/public/index.php?url=bobin/windingView' : ($userHomeUrl ?? '/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView');
             ?>
             <a href="<?= $backUrl ?>" class="wnd-back-btn" title="Quay lại">
                 <svg viewBox="0 0 24 24">
@@ -143,17 +134,18 @@ foreach ($bobins as $b) {
 
                 <div class="wnd-search-wrap">
                     <svg class="wnd-search-icon" viewBox="0 0 24 24">
-                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
+                        <path
+                            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19z" />
                     </svg>
                     <input type="text" name="keyword" id="searchKeyword" class="wnd-search-input"
-                        placeholder="<?= __('ph_scan_bobin') ?>"
-                        data-i18n-ph="ph_scan_bobin"
-                        data-i18n="[placeholder]ph_scan_bobin"
-                        value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>" autocomplete="off">
+                        placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
+                        data-i18n="[placeholder]ph_scan_bobin" value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>"
+                        autocomplete="off">
                 </div>
 
                 <button type="button" id="btnScanQR" class="wnd-btn-action wnd-btn-scan">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
                         <rect x="14" y="14" width="7" height="7"></rect>
@@ -204,11 +196,12 @@ foreach ($bobins as $b) {
                     ?>
                     <div class="wnd-card bobin-item status_rolled"
                         data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>">
-                        
+
                         <!-- Card Header -->
                         <div class="wnd-card-header card-top">
                             <div class="wnd-id-group key-info">
-                                <span class="wnd-id-badge id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
+                                <span
+                                    class="wnd-id-badge id-code">#<?= htmlspecialchars($item['bobin_identification_code']) ?></span>
                                 <span class="wnd-key-code key-code"><?= htmlspecialchars($item['bobin_key_code']) ?></span>
                             </div>
                             <div class="wnd-status-badge status-badge">
@@ -224,14 +217,16 @@ foreach ($bobins as $b) {
                                 <div class="wnd-field field-item">
                                     <label class="wnd-label" data-i18n="field_product"><?= __('field_product') ?></label>
                                     <div class="wnd-val val-sub">
-                                        <span class="wnd-tag-product font-bold-blue"><?= htmlspecialchars($productCode) ?></span>
+                                        <span
+                                            class="wnd-tag-product font-bold-blue"><?= htmlspecialchars($productCode) ?></span>
                                     </div>
                                 </div>
 
                                 <div class="wnd-field field-item">
                                     <label class="wnd-label" data-i18n="field_print_lot"><?= __('field_print_lot') ?></label>
                                     <div class="wnd-val val-sub">
-                                        <span class="wnd-tag-printlot highlight-printlot-text"><?= htmlspecialchars($printLot) ?></span>
+                                        <span
+                                            class="wnd-tag-printlot highlight-printlot-text"><?= htmlspecialchars($printLot) ?></span>
                                     </div>
                                 </div>
 
@@ -248,52 +243,68 @@ foreach ($bobins as $b) {
                                         <span class="wnd-tag-rack val-rack"><?= htmlspecialchars($rackCode) ?></span>
                                     </div>
                                 </div>
+
+                                <div class="wnd-field field-item">
+                                    <label class="wnd-label" data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
+                                    <div class="wnd-val val-sub">
+                                        <?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Right: Winding Parameters Panel -->
                             <div class="wnd-params-panel">
                                 <div class="wnd-params-header">
                                     <span>⚙️</span>
-                                    <span data-i18n="sidebar_nav_title_winding_stage"><?= __('sidebar_nav_title_winding_stage') ?></span>
+                                    <span
+                                        data-i18n="sidebar_nav_title_winding_stage"><?= __('sidebar_nav_title_winding_stage') ?></span>
                                 </div>
 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                     <div class="wnd-field field-item suggestion-wrapper">
-                                        <label class="wnd-label" data-i18n="field_winding_machine"><?= __('field_winding_machine') ?></label>
-                                        <input class="wnd-input-control input-field input-winding-machine font-bold-cyan wnd-machine-badge" type="text" autocomplete="off"
-                                            value="<?= htmlspecialchars($machine) ?>" disabled>
+                                        <label class="wnd-label"
+                                            data-i18n="field_winding_machine"><?= __('field_winding_machine') ?></label>
+                                        <input
+                                            class="wnd-input-control input-field input-winding-machine font-bold-cyan wnd-machine-badge"
+                                            type="text" autocomplete="off" value="<?= htmlspecialchars($machine) ?>" disabled>
                                     </div>
 
                                     <div class="wnd-field field-item">
-                                        <label class="wnd-label" data-i18n="field_flow_test"><?= __('field_flow_test') ?></label>
-                                        <select class="wnd-input-control input-field select-flow-result wnd-flow-select" disabled>
-                                            <option value="Thành công" <?= $flowResult === 'Thành công' ? 'selected' : '' ?>>💨 Thành công (Pass)</option>
-                                            <option value="Thất bại" <?= $flowResult === 'Thất bại' ? 'selected' : '' ?>>⚠️ Thất bại (Fail)</option>
+                                        <label class="wnd-label"
+                                            data-i18n="field_flow_test"><?= __('field_flow_test') ?></label>
+                                        <select class="wnd-input-control input-field select-flow-result wnd-flow-select"
+                                            disabled>
+                                            <option value="Thành công" <?= $flowResult === 'Thành công' ? 'selected' : '' ?>>✅
+                                                Thành công</option>
+                                            <option value="Thất bại" <?= $flowResult === 'Thất bại' ? 'selected' : '' ?>>❌ Thất
+                                                bại</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                     <div class="wnd-field field-item suggestion-wrapper">
-                                        <label class="wnd-label" data-i18n="field_winding_emp_code"><?= __('field_winding_emp_code') ?></label>
-                                        <input class="wnd-input-control input-field input-winding-employee-code" type="text" autocomplete="off"
-                                            value="<?= htmlspecialchars($windingEmpCode) ?>" disabled>
+                                        <label class="wnd-label"
+                                            data-i18n="field_winding_emp_code"><?= __('field_winding_emp_code') ?></label>
+                                        <input class="wnd-input-control input-field input-winding-employee-code" type="text"
+                                            autocomplete="off" value="<?= htmlspecialchars($windingEmpCode) ?>" disabled>
                                     </div>
 
                                     <div class="wnd-field field-item">
-                                        <label class="wnd-label" data-i18n="field_winding_emp_name"><?= __('field_winding_emp_name') ?></label>
-                                        <input class="wnd-input-control input-field input-readonly input-winding-employee-name" type="text"
-                                            value="<?= htmlspecialchars($windingEmpName) ?>" readonly tabindex="-1">
+                                        <label class="wnd-label"
+                                            data-i18n="field_winding_emp_name"><?= __('field_winding_emp_name') ?></label>
+                                        <input class="wnd-input-control input-field input-readonly input-winding-employee-name"
+                                            type="text" value="<?= htmlspecialchars($windingEmpName) ?>" readonly tabindex="-1">
                                     </div>
                                 </div>
 
                                 <div class="wnd-field field-item">
-                                    <label class="wnd-label" data-i18n="field_winding_note"><?= __('field_winding_note') ?></label>
+                                    <label class="wnd-label"
+                                        data-i18n="field_winding_note"><?= __('field_winding_note') ?></label>
                                     <input class="wnd-input-control input-field input-winding-note" type="text"
-                                        placeholder="<?= __('winding_note_ph') ?>"
-                                        data-i18n-ph="winding_note_ph"
-                                        data-i18n="[placeholder]winding_note_ph"
-                                        value="<?= htmlspecialchars($windingNote) ?>" disabled>
+                                        placeholder="<?= __('winding_note_ph') ?>" data-i18n-ph="winding_note_ph"
+                                        data-i18n="[placeholder]winding_note_ph" value="<?= htmlspecialchars($windingNote) ?>"
+                                        disabled>
                                 </div>
                             </div>
                         </div>
@@ -350,7 +361,8 @@ foreach ($bobins as $b) {
                     for ($p = $start; $p <= $end; $p++):
                         $isActive = ($p === (int)$pagination['currentPage']);
                     ?>
-                        <a href="<?= buildFilterUrl(['page' => $p]) ?>" class="wnd-page-btn page-btn <?= $isActive ? 'active' : '' ?>">
+                        <a href="<?= buildFilterUrl(['page' => $p]) ?>"
+                            class="wnd-page-btn page-btn <?= $isActive ? 'active' : '' ?>">
                             <?= $p ?>
                         </a>
                     <?php endfor; ?>
@@ -362,7 +374,8 @@ foreach ($bobins as $b) {
                     <?php endif; ?>
 
                     <span class="wnd-page-info page-info">
-                        Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng <?= number_format($totalRecords) ?> Bobin)
+                        Trang <?= $pagination['currentPage'] ?> / <?= $pagination['totalPages'] ?> (Tổng
+                        <?= number_format($totalRecords) ?> Bobin)
                     </span>
                 </nav>
             <?php endif; ?>

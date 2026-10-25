@@ -1,7 +1,8 @@
 <?php
+$baseUrl     = defined('BASE_URL') ? BASE_URL : '/WEB_BOBIN/public';
 $employees   = $data['employees'] ?? [];
 $stats       = $data['stats'] ?? ['total' => 0, 'extrusion' => 0, 'qc' => 0, 'winding' => 0, 'admin' => 0];
-$filters     = $data['filters'] ?? ['keyword' => '', 'cost_center' => 'all'];
+$filters     = $data['filters'] ?? ['keyword' => '', 'cost_center' => 'all', 'role' => 'all'];
 $costCenters = $data['costCenters'] ?? [];
 $userRole    = $_SESSION['user']['role'] ?? '';
 $currentUrl  = $_GET['url'] ?? 'employee/index';
@@ -19,13 +20,13 @@ $totalFiltered = count($employees);
     <meta charset="UTF-8">
     <title><?= __('page_employee_list') ?? 'Quản lý nhân viên' ?> | SMC</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/i18n.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/sidebar.css?v=<?= time() ?>">
-    <link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/employeeList.css?v=<?= time() ?>">
-    <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
-    <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
-    <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
-    <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/i18n.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/sidebar.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="<?= $baseUrl ?>/assets/css/employeeList.css?v=<?= time() ?>">
+    <link rel="icon" type="image/png" href="<?= $baseUrl ?>/assets/images/favicon.png?v=2">
+    <link rel="shortcut icon" href="<?= $baseUrl ?>/favicon.ico?v=2">
+    <link rel="apple-touch-icon" href="<?= $baseUrl ?>/assets/images/favicon.png?v=2">
+    <script src="<?= $baseUrl ?>/assets/js/i18n.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -121,8 +122,9 @@ $totalFiltered = count($employees);
         </div>
 
         <div class="emp-toolbar">
-            <form method="GET" action="/WEB_BOBIN/public/index.php" class="filter-form" id="filterForm">
+            <form method="GET" action="<?= $baseUrl ?>/index.php" class="filter-form" id="filterForm">
                 <input type="hidden" name="url" value="employee/index">
+                <input type="hidden" name="role" id="filterRole" value="<?= htmlspecialchars($filters['role'] ?? 'all') ?>">
                 <div class="search-box">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -147,8 +149,8 @@ $totalFiltered = count($employees);
                     </select>
                 </div>
                 <button type="submit" class="btn-filter" data-i18n="filter">🔍 <?= __('filter') ?></button>
-                <?php if ($filters['keyword'] !== '' || ($filters['cost_center'] ?? 'all') !== 'all'): ?>
-                    <a href="/WEB_BOBIN/public/index.php?url=employee/index" class="btn-reset-filter"
+                <?php if ($filters['keyword'] !== '' || ($filters['cost_center'] ?? 'all') !== 'all' || ($filters['role'] ?? 'all') !== 'all'): ?>
+                    <a href="<?= $baseUrl ?>/index.php?url=employee/index" class="btn-reset-filter"
                         data-i18n="reset_filter">✕ <?= __('reset_filter') ?></a>
                 <?php endif; ?>
                 <div class="emp-counter-badge" id="empCounter">
@@ -159,8 +161,16 @@ $totalFiltered = count($employees);
             <div class="btn-action-group">
                 <button type="button" class="btn-action-primary" onclick="openAddModal()" data-i18n="emp_btn_add">➕ <?= __('emp_btn_add') ?></button>
                 <button type="button" class="btn-action-success" onclick="openImportModal()" data-i18n="emp_btn_import">📥 <?= __('emp_btn_import') ?></button>
-                <a href="/WEB_BOBIN/public/index.php?url=employee/exportExcel" class="btn-action-info" data-i18n="emp_btn_export">📤 <?= __('emp_btn_export') ?></a>
-                <a href="/WEB_BOBIN/public/index.php?url=employee/downloadTemplate" class="btn-action-secondary" data-i18n="emp_btn_template">📋 <?= __('emp_btn_template') ?></a>
+                <?php
+                $exportQuery = http_build_query([
+                    'url'         => 'employee/exportExcel',
+                    'keyword'     => $filters['keyword'] ?? '',
+                    'cost_center' => $filters['cost_center'] ?? 'all',
+                    'role'        => $filters['role'] ?? 'all'
+                ]);
+                ?>
+                <a href="<?= $baseUrl ?>/index.php?<?= $exportQuery ?>" id="btnExportExcel" class="btn-action-info" data-i18n="emp_btn_export">📤 <?= __('emp_btn_export') ?></a>
+                <a href="<?= $baseUrl ?>/index.php?url=employee/downloadTemplate" class="btn-action-secondary" data-i18n="emp_btn_template">📋 <?= __('emp_btn_template') ?></a>
             </div>
         </div>
 
@@ -285,7 +295,7 @@ $totalFiltered = count($employees);
                 <h3 data-i18n="emp_modal_add_title">➕ <?= __('emp_modal_add_title') ?></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalAddEmp')">✕</button>
             </div>
-            <form method="POST" action="/WEB_BOBIN/public/index.php?url=employee/create" id="formAddEmp">
+            <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/create" id="formAddEmp">
                 <div class="modal-body">
                     <div class="auto-notice-box">
                         <div class="notice-icon">💡</div>
@@ -341,7 +351,7 @@ $totalFiltered = count($employees);
                 <h3 data-i18n="emp_modal_edit_title">✏️ <?= __('emp_modal_edit_title') ?></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalEditEmp')">✕</button>
             </div>
-            <form method="POST" action="/WEB_BOBIN/public/index.php?url=employee/update" id="formEditEmp">
+            <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/update" id="formEditEmp">
                 <input type="hidden" name="id" id="edit_id" value="">
                 <div class="modal-body">
                     <div class="emp-profile-header">
@@ -386,7 +396,7 @@ $totalFiltered = count($employees);
                 <h3 data-i18n="emp_modal_reset_title">🔑 <?= __('emp_modal_reset_title') ?></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalResetPwd')">✕</button>
             </div>
-            <form method="POST" action="/WEB_BOBIN/public/index.php?url=employee/resetPassword" id="formResetPwd">
+            <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/resetPassword" id="formResetPwd">
                 <input type="hidden" name="id" id="reset_id" value="">
                 <div class="modal-body">
                     <div class="reset-target-card">
@@ -414,7 +424,7 @@ $totalFiltered = count($employees);
                 <h3 data-i18n="emp_modal_import_title">📥 <?= __('emp_modal_import_title') ?></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalImportExcel')">✕</button>
             </div>
-            <form method="POST" action="/WEB_BOBIN/public/index.php?url=employee/importExcel"
+            <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/importExcel"
                 enctype="multipart/form-data" id="formImportExcel">
                 <div class="modal-body">
                     <div class="import-hint-box" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; font-size:12.5px; line-height:1.6; color:#475569;">
@@ -440,7 +450,7 @@ $totalFiltered = count($employees);
         </div>
     </div>
 
-    <form id="formDeleteEmp" method="POST" action="/WEB_BOBIN/public/index.php?url=employee/delete" style="display:none;">
+    <form id="formDeleteEmp" method="POST" action="<?= $baseUrl ?>/index.php?url=employee/delete" style="display:none;">
         <input type="hidden" name="id" id="delete_id" value="">
     </form>
 
@@ -543,37 +553,132 @@ $totalFiltered = count($employees);
             });
         }
 
+        const BASE_URL = <?= json_encode($baseUrl) ?>;
+        let currentRoleFilter = <?= json_encode($filters['role'] ?? 'all') ?>;
         const searchInput = document.getElementById('searchInput');
+        const filterRoleInput = document.getElementById('filterRole');
+        const filterCostCenter = document.getElementById('filterCostCenter');
+        const btnExportExcel = document.getElementById('btnExportExcel');
         const empRows = document.querySelectorAll('#employeeTableBody .emp-row');
         const empCounter = document.getElementById('empCounter');
         const totalBase = <?= (int)$stats['total'] ?>;
 
-        if (searchInput && empRows.length > 0) {
-            searchInput.addEventListener('input', function() {
-                const q = this.value.trim().toLowerCase();
-                let vis = 0, stt = 1;
-                empRows.forEach(r => {
-                    const c = r.getAttribute('data-code') || '';
-                    const n = r.getAttribute('data-name') || '';
-                    const cc = r.getAttribute('data-cost-center') || '';
-                    if (q === '' || c.includes(q) || n.includes(q) || cc.includes(q)) {
-                        r.style.display = '';
-                        vis++;
-                        const sttCell = r.querySelector('.col-stt');
-                        if (sttCell) sttCell.textContent = stt++;
-                    } else {
-                        r.style.display = 'none';
-                    }
-                });
-                if (empCounter) {
-                    const prefix = window.t ? window.t('showing') : 'Hiển thị:';
-                    empCounter.innerHTML = `${prefix} <strong>${vis}</strong> / ${totalBase} NV`;
-                }
+        function updateExportUrl() {
+            if (!btnExportExcel) return;
+            const q = searchInput ? searchInput.value.trim() : '';
+            const cc = filterCostCenter ? filterCostCenter.value : 'all';
+            const role = currentRoleFilter || 'all';
+            const params = new URLSearchParams({
+                url: 'employee/exportExcel',
+                keyword: q,
+                cost_center: cc,
+                role: role
             });
+            btnExportExcel.href = BASE_URL + '/index.php?' + params.toString();
         }
 
-        // Donut Chart logic
+        function filterByRole(role) {
+            currentRoleFilter = (currentRoleFilter === role && role !== 'all') ? 'all' : role;
+            if (filterRoleInput) {
+                filterRoleInput.value = currentRoleFilter;
+            }
+            updateStatCardsActive();
+            applyEmployeeTableFilter();
+        }
+
+        function updateStatCardsActive() {
+            // Update stat cards
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            if (currentRoleFilter === 'all') {
+                const totalCard = document.querySelector('.stat-card.stat-total');
+                if (totalCard) totalCard.classList.add('active');
+            } else {
+                const roleClassMap = {
+                    'extrusion': 'stat-ext',
+                    'qc': 'stat-qc',
+                    'winding': 'stat-wind',
+                    'admin': 'stat-admin'
+                };
+                const cls = roleClassMap[currentRoleFilter];
+                if (cls) {
+                    const matchedCard = document.querySelector('.stat-card.' + cls);
+                    if (matchedCard) matchedCard.classList.add('active');
+                }
+            }
+
+            // Update legend items
+            document.querySelectorAll('.legend-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (currentRoleFilter !== 'all') {
+                const matchedLegend = document.querySelector(`.legend-item[onclick*="'${currentRoleFilter}'"]`);
+                if (matchedLegend) matchedLegend.classList.add('active');
+            }
+        }
+
+        function applyEmployeeTableFilter() {
+            const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            let vis = 0, stt = 1;
+
+            empRows.forEach(r => {
+                const c = r.getAttribute('data-code') || '';
+                const n = r.getAttribute('data-name') || '';
+                const cc = r.getAttribute('data-cost-center') || '';
+                const role = (r.getAttribute('data-role') || '').toLowerCase();
+
+                const matchesSearch = (q === '' || c.includes(q) || n.includes(q) || cc.includes(q));
+                const matchesRole = (currentRoleFilter === 'all' || role === currentRoleFilter);
+
+                if (matchesSearch && matchesRole) {
+                    r.style.display = '';
+                    vis++;
+                    const sttCell = r.querySelector('.col-stt');
+                    if (sttCell) sttCell.textContent = stt++;
+                } else {
+                    r.style.display = 'none';
+                }
+            });
+
+            // Update empty state if all rows hidden
+            let emptyRow = document.querySelector('#employeeTableBody .empty-state-dynamic');
+            if (vis === 0 && empRows.length > 0) {
+                if (!emptyRow) {
+                    emptyRow = document.createElement('tr');
+                    emptyRow.className = 'empty-state-dynamic';
+                    emptyRow.innerHTML = `
+                        <td colspan="7" class="text-center empty-state" style="padding: 40px; color: #94a3b8;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">📭</div>
+                            <div style="font-weight: 600; font-size: 15px;" data-i18n="no_data_found">${window.t ? window.t('no_data_found') : 'Không tìm thấy nhân viên nào phù hợp.'}</div>
+                        </td>`;
+                    const tbody = document.getElementById('employeeTableBody');
+                    if (tbody) tbody.appendChild(emptyRow);
+                } else {
+                    emptyRow.style.display = '';
+                }
+            } else if (emptyRow) {
+                emptyRow.style.display = 'none';
+            }
+
+            if (empCounter) {
+                const prefix = window.t ? (window.t('emp_showing') || window.t('showing') || 'Hiển thị') : 'Hiển thị';
+                const staffLabel = window.t ? (window.t('emp_staff') || 'nhân viên') : 'nhân viên';
+                empCounter.innerHTML = `<span data-i18n="emp_showing">${prefix}</span>: <strong>${vis}</strong> / ${totalBase} <span data-i18n="emp_staff">${staffLabel}</span>`;
+            }
+
+            updateExportUrl();
+        }
+
+        if (searchInput && empRows.length > 0) {
+            searchInput.addEventListener('input', applyEmployeeTableFilter);
+        }
+
+        // Donut Chart logic and initial filter state
         document.addEventListener('DOMContentLoaded', () => {
+            updateStatCardsActive();
+            applyEmployeeTableFilter();
+
             const total = <?= (int)$stats['total'] ?>;
             if (total === 0) return;
 

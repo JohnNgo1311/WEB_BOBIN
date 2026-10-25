@@ -34,6 +34,7 @@ Bảng lưu trữ thông tin trạng thái hoạt động hiện thời của t�
 | `bobin_type` | `ENUM` | NO | Loại Bobin: `'Sản xuất'`, `'Bù'`, các loại điều chỉnh ngoại quan (`Gel`, `Dị vật`, `Trầy`, `Biến dạng`, `Xước`, `Chữ in`, `Vón cục`, `Màu`), hoặc `'Điều chỉnh (Do CP)'`. |
 | `extrusion_employee` | `TEXT (JSON)` | YES | Thông tin NV đùn: `{"employee_code": "02619486", "employee_name": "Nguyễn Văn A"}`. |
 | `extrusion_check` | `LONGTEXT (JSON)` | YES | Kết quả Đùn Check 5 tiêu chuẩn: `{"diameter": true, "gel": true, "foreign_object": true, "color": true, "print": true}`. |
+| `extrusion_machine` | `VARCHAR(50)` | YES | Máy đùn thực hiện công đoạn đùn (ví dụ `'PL13'`, `'PL12'`). |
 | `rack` | `LONGTEXT (JSON)` | YES | Thông tin vị trí lưu trữ: `{"code": "Rack_B021_01"}`. |
 | `products` | `TEXT (JSON)` | YES | Thông tin sản phẩm: `{"production_order_code": "PO123", "product_code": "PROD456"}`. |
 | `material_lot` | `TEXT (JSON)` | YES | Lô nguyên vật liệu: `{"lot": "MAT_LOT_99"}`. |
@@ -57,7 +58,7 @@ Bảng lưu trữ thông tin trạng thái hoạt động hiện thời của t�
 ### 2.2. Bảng `bobin_history` (Nhật Ký Lịch Sử Luân Chuyển Bobin)
 Lưu trữ toàn bộ các phiên bản trạng thái liên tục trong vòng đời Bobin. Dùng để tra cứu lịch sử, kiểm toán và thống kê KPI sản xuất.
 
-- **Cấu trúc:** Tương đồng với bảng `bobin_list_detail` (gồm đầy đủ các cột thông tin từ `bobin_key_code`, `bobin_identification_code`, `extrusion_check`, `rack`, `products`, `bobin_current_status`, `previous_status`, `visual_inspection`, `winding_*`, `updated_time`).
+- **Cấu trúc:** Tương đồng với bảng `bobin_list_detail` (gồm đầy đủ các cột thông tin từ `bobin_key_code`, `bobin_identification_code`, `extrusion_check`, `extrusion_machine`, `rack`, `products`, `bobin_current_status`, `previous_status`, `visual_inspection`, `winding_*`, `updated_time`).
 - **Quy tắc ghi dữ liệu:**
   - Khi đùn tạo mới $\rightarrow$ `INSERT` bản ghi lịch sử đầu tiên (`Busy_Unchecked`).
   - Khi QC xác nhận $\rightarrow$ `INSERT` bản ghi trạng thái mới (`Busy_Checked`).

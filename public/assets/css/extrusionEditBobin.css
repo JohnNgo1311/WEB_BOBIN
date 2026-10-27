@@ -256,6 +256,27 @@ body {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
+.ext-status-filter-select {
+  height: 40px;
+  padding: 0 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #fdfdfd;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 220px;
+}
+
+.ext-status-filter-select:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
 .ext-btn-action {
   height: 40px;
   padding: 0 16px;
@@ -403,6 +424,51 @@ body {
   letter-spacing: 0.04em;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
   white-space: nowrap;
+}
+
+/* Status Header Variants (Busy_Checked / Rolled) */
+.ext-card.status_busy_checked .ext-card-header {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+.ext-card.status_busy_checked .ext-key-code {
+  color: #e0f2fe;
+}
+.ext-card.status_busy_checked .ext-status-badge {
+  color: #0369a1;
+}
+
+.ext-card.status_rolled .ext-card-header {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+.ext-card.status_rolled .ext-key-code {
+  color: #d1fae5;
+}
+.ext-card.status_rolled .ext-status-badge {
+  color: #047857;
+}
+
+/* Image-Only Mode Lock Notice Banner */
+.ext-img-only-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  background: #eff6ff;
+  border-bottom: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.ext-img-only-banner-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ext-card.is-image-only-card.is-editing .bobin-image-picker.stage-extrusion {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
 }
 
 /* Card Body - 3 Columns Section Architecture */
@@ -747,6 +813,10 @@ body {
   }
   .ext-search-form {
     flex-direction: column;
+    width: 100%;
+  }
+  .ext-search-wrap,
+  .ext-status-filter-select {
     width: 100%;
   }
   .ext-checks-group {

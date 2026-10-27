@@ -32,6 +32,8 @@ class BobinExtUpdateDTO
     public bool $ext_check_scratch;
     public bool $ext_check_streak;
     public bool $ext_check_deformation;
+    public ?string $extrusion_chart_image = null;
+    public string $extrusion_image_action = 'keep';
 
     public static function fromRequest(array $request): self
     {
@@ -62,6 +64,7 @@ class BobinExtUpdateDTO
         $dto->ext_check_scratch        = filter_var($request['ext_check_scratch'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $dto->ext_check_streak         = filter_var($request['ext_check_streak'] ?? $request['ext_check_scuff'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $dto->ext_check_deformation    = filter_var($request['ext_check_deformation'] ?? $request['ext_check_deformed'] ?? true, FILTER_VALIDATE_BOOLEAN);
+        $dto->extrusion_image_action   = strtolower(trim((string)($request['extrusion_image_action'] ?? 'keep')));
 
         return $dto;
     }

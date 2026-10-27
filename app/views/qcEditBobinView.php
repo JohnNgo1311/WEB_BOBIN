@@ -359,6 +359,9 @@ foreach ($bobins as $b) {
                                             </span>
                                         <?php endforeach; ?>
                                     </div>
+                                    <div style="margin-top: 6px;">
+                                        <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <div class="qc-field span-2 field-item">
@@ -448,6 +451,8 @@ foreach ($bobins as $b) {
                                         data-i18n="[placeholder]qc_note_ph" value="<?= htmlspecialchars($defectNote) ?>"
                                         disabled>
                                 </div>
+
+                                <?= BobinImageHelper::renderPickerWidget('qc', 'qc_visual_image', $item['qc_visual_image'] ?? null, true, (string)($item['bobin_identification_code'] ?? ''), 'edit') ?>
                             </div>
                         </div>
 

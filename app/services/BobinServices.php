@@ -6,6 +6,7 @@ require_once ROOT_PATH . '/app/repositories/EmployeeRepository.php';    // <--- 
 require_once ROOT_PATH . '/app/repositories/ListDataRepository.php';    // <--- Load Repo Mới
 require_once ROOT_PATH . '/app/repositories/WindingMachineRepository.php'; // <--- Load Repo Mới
 require_once ROOT_PATH . '/app/repositories/ExtrusionMachineRepository.php'; // <--- Load Repo Mới
+require_once ROOT_PATH . '/app/core/BobinImageHelper.php';
 
 
 class BobinServices
@@ -94,6 +95,8 @@ class BobinServices
         $entity->winding_employee = null;
         $entity->winding_machine = "Chưa cập nhật";
         $entity->winding_note = "Chưa cập nhật";
+        $entity->qc_visual_image = null;
+        $entity->winding_chart_image = null;
 
         // Hàm resolveStatus bên dưới sẽ tự động biến Rolled -> Busy_Unchecked
         $this->resolveStatus($entity, $dto->bobin_identification_code);
@@ -112,6 +115,23 @@ class BobinServices
         $entity = $this->buildBaseEntity($dto, 'extUpdate');
         $this->bobinRepo->extrusionUpdateBobin($entity, $updateRecord);
         return $entity;
+    }
+
+    public function updateExtrusionChartImageOnly(
+        string $identCode,
+        string $keyCode,
+        ?string $extImagePath,
+        ?array $updateRecord = null
+    ): bool {
+        $identCode = trim($identCode);
+        $keyCode   = trim($keyCode);
+        if ($identCode === '') {
+            throw new Exception("Vui lòng nhập Mã định danh Bobin.");
+        }
+        if ($keyCode === '') {
+            throw new Exception(__('err_ext_img_cycle_not_found'));
+        }
+        return $this->bobinRepo->updateExtrusionChartImageOnly($identCode, $keyCode, $extImagePath, $updateRecord);
     }
     public function extDeleteBobin(BobinExtDeleteDTO $dto): BobinEntity
     {
@@ -186,6 +206,7 @@ class BobinServices
         $entity->extrusion_employee = $this->resolveEmployee(
             $dto->extrusion_employee_code
         );
+        $entity->extrusion_chart_image = $dto->extrusion_chart_image ?? null;
         return $entity;
     }
     private function parseDate($date): DateTime
@@ -339,6 +360,7 @@ class BobinServices
         $entity->identificationCode = $dto->bobin_identification_code;
         $entity->bobinKeyCode = $dto->bobin_key_code;
         $entity->currentStatus = "Busy_Checked";
+        $entity->qc_visual_image = $dto->qc_visual_image ?? null;
         $entity->visualInspection = $this->createVisualInspection(
             $dto->inspector_code,
             $dto->inspector_name,
@@ -368,6 +390,7 @@ class BobinServices
         $entity->identificationCode = $dto->bobin_identification_code;
         $entity->bobinKeyCode = $dto->bobin_key_code;
         $entity->currentStatus = "Pending_Cancellation";
+        $entity->qc_visual_image = $dto->qc_visual_image ?? null;
         $entity->visualInspection = $this->createVisualInspection(
             $dto->inspector_code,
             $dto->inspector_name,
@@ -461,6 +484,7 @@ class BobinServices
         $entity->identificationCode = $identCode;
         $entity->bobinKeyCode        = $keyCode;
         $entity->currentStatus       = "Busy_Checked";
+        $entity->qc_visual_image     = !empty($data['qc_visual_image']) ? (string)$data['qc_visual_image'] : null;
 
         $entity->visualInspection = $this->createVisualInspection(
             $inspectorCode,
@@ -515,6 +539,7 @@ class BobinServices
         $entity->flow_test_result = 'Thành công';
 
         $entity->winding_note = $dto->winding_note ?? "Không có ghi chú";
+        $entity->winding_chart_image = $dto->winding_chart_image ?? null;
 
         $this->bobinRepo->updateWindingBobinInfor($entity);
 
@@ -536,6 +561,7 @@ class BobinServices
         $entity->currentStatus = "Pending_Cancellation";
 
         $entity->winding_machine = $dto->winding_machine;
+        $entity->winding_chart_image = $dto->winding_chart_image ?? null;
 
 
         $empCodeToLookup = !empty($dto->winding_employee_code) ? $dto->winding_employee_code : ($_SESSION['user']['employee_code'] ?? '');
@@ -773,11 +799,22 @@ class BobinServices
         }
     }
 
-    public function isBobinExtrusionCreatedByUser(string $identCode, string $empCode = '', int $userId = 0): bool
-    {
+    public function isBobinExtrusionCreatedByUser(
+        string $identCode,
+        string $empCode = '',
+        int $userId = 0,
+        ?array $allowedStatuses = null,
+        ?string $keyCode = null
+    ): bool {
         $resolvedEmpCode = trim($empCode !== '' ? $empCode : (string)($_SESSION['user']['employee_code'] ?? ''));
         $resolvedUserId  = $userId > 0 ? $userId : (int)($_SESSION['user']['id'] ?? 0);
-        return $this->bobinRepo->isBobinExtrusionCreatedByUser($identCode, $resolvedEmpCode, $resolvedUserId);
+        return $this->bobinRepo->isBobinExtrusionCreatedByUser(
+            $identCode,
+            $resolvedEmpCode,
+            $resolvedUserId,
+            $allowedStatuses,
+            $keyCode
+        );
     }
     public function getBobinStatusStats(BobinGetListDTO $dto): array
     {
@@ -1094,8 +1131,25 @@ class BobinServices
         return $this->bobinRepo->isBobinWindingConfirmedByUser($identCode, $resolvedEmpCode, $resolvedUserId);
     }
 
-    public function adminUpdateQCBobin(string $identCode, string $keyCode, array $viData, ?string $newType, ?array $updateRecord): bool
+    public function getBobinCurrentImages(string $identCode, ?string $keyCode = null): ?array
     {
+        return $this->bobinRepo->getBobinCurrentImages($identCode, $keyCode);
+    }
+
+    public function cleanupUnreferencedImage(?string $relativePath): void
+    {
+        BobinImageHelper::deletePhysicalFileIfUnreferenced($this->bobinRepo->getPdo(), $relativePath);
+    }
+
+    public function adminUpdateQCBobin(
+        string $identCode,
+        string $keyCode,
+        array $viData,
+        ?string $newType,
+        ?array $updateRecord,
+        bool $updateQcImage = false,
+        ?string $qcImagePath = null
+    ): bool {
         if (empty($identCode)) {
             throw new Exception("Mã định danh Bobin không tồn tại.");
         }
@@ -1108,11 +1162,20 @@ class BobinServices
             $viData['inspector_code'] = $foundQcEmp->employee_code;
             $viData['inspector_name'] = $foundQcEmp->employee_name;
         }
-        return $this->bobinRepo->adminUpdateQCBobin($identCode, $keyCode, $viData, $newType, $updateRecord);
+        return $this->bobinRepo->adminUpdateQCBobin($identCode, $keyCode, $viData, $newType, $updateRecord, $updateQcImage, $qcImagePath);
     }
 
-    public function adminUpdateWindingBobin(string $identCode, string $keyCode, string $machine, ?string $empCode, string $flowResult, string $note, ?array $updateRecord): bool
-    {
+    public function adminUpdateWindingBobin(
+        string $identCode,
+        string $keyCode,
+        string $machine,
+        ?string $empCode,
+        string $flowResult,
+        string $note,
+        ?array $updateRecord,
+        bool $updateWndImage = false,
+        ?string $wndImagePath = null
+    ): bool {
         if (empty($identCode)) {
             throw new Exception("Mã định danh Bobin không tồn tại.");
         }
@@ -1133,7 +1196,7 @@ class BobinServices
             }
         }
 
-        return $this->bobinRepo->adminUpdateWindingBobin($identCode, $keyCode, $machineName, $empData, $flowResult, $note, $updateRecord);
+        return $this->bobinRepo->adminUpdateWindingBobin($identCode, $keyCode, $machineName, $empData, $flowResult, $note, $updateRecord, $updateWndImage, $wndImagePath);
     }
     public function getDetailBobinsForWindingPaginated(BobinGetListDTO $dto): array
     {

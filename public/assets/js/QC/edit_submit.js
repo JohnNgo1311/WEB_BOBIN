@@ -145,6 +145,11 @@ function startQCEdit(btnElement) {
     const inputs = container.querySelectorAll('.input-inspector-code, .qc-note-input, .select-bobin-type');
     inputs.forEach(input => input.disabled = false);
 
+    if (window.BobinImagePicker) {
+        window.BobinImagePicker.backupState(container, 'qc');
+        window.BobinImagePicker.setEditable(container, true, 'qc');
+    }
+
     // Chuyển nút bấm
     container.querySelector('.btn-edit').style.display = 'none';
     container.querySelector('.btn-cancel-edit').style.display = 'inline-flex';
@@ -189,6 +194,11 @@ function cancelQCEdit(btnElement) {
 
     const inputs = container.querySelectorAll('.input-inspector-code, .qc-note-input, .select-bobin-type');
     inputs.forEach(input => input.disabled = true);
+
+    if (window.BobinImagePicker) {
+        window.BobinImagePicker.restoreState(container, 'qc');
+        window.BobinImagePicker.setEditable(container, false, 'qc');
+    }
 
     container.querySelector('.btn-edit').style.display = 'inline-flex';
     container.querySelector('.btn-cancel-edit').style.display = 'none';
@@ -265,12 +275,17 @@ async function handleQCConfirm(buttonElement, bobinCode, bobinKeyCode) {
         });
         checksHTML += '</div>';
 
+        const imgStatusLine = window.BobinImagePicker
+            ? `<li style="margin-top: 5px; border-top: 1px dashed #ccc; padding-top: 4px; display: flex; justify-content: space-between;"><strong>🖼️ ${window.t ? window.t('lbl_qc_visual_image', 'Ảnh ngoại quan Bobin (QC)') : 'Ảnh ngoại quan Bobin (QC)'}:</strong> <span style="color: #0369a1; font-weight: 700;">${window.BobinImagePicker.getStatusSummaryText(container, 'qc')}</span></li>`
+            : '';
+
         const reviewHTML = `
             <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #0056b3; font-weight: bold;">${bobinCode}</span></li>
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Loại Bobin:</strong> <span>${bobinType}</span></li>
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Nhân viên QC:</strong> <span>${inspectorCode} - ${inspectorName}</span></li>
                 <li style="display: flex; justify-content: space-between;"><strong>Ghi chú:</strong> <span>${note || 'Không có'}</span></li>
+                ${imgStatusLine}
             </ul>
             <div style="margin-top:10px;text-align:left;padding:8px 10px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
                 <strong style="font-size:12.5px;color:#0369a1;">🛡️ Kết quả ngoại quan QC:</strong>
@@ -295,14 +310,21 @@ async function handleQCConfirm(buttonElement, bobinCode, bobinKeyCode) {
 
                 try {
                     const apiUrl = `${API_BASE_URL}bobin/updateQCEditBobin`;
-                    const response = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const reqInit = window.BobinImagePicker
+                        ? window.BobinImagePicker.buildRequestInit(payload, container, 'qc')
+                        : {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(payload)
+                        };
+                    const response = await fetch(apiUrl, reqInit);
 
                     const res = await response.json();
                     if (res.success) {
+                        if (window.BobinImagePicker) {
+                            window.BobinImagePicker.commitServerUrl(container, res.image_url || '', 'qc');
+                            window.BobinImagePicker.setEditable(container, false, 'qc');
+                        }
                         if (window.Toast && window.Toast.flash) {
                             window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
                         }

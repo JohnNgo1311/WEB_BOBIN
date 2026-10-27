@@ -50,6 +50,9 @@ Bảng lưu trữ thông tin trạng thái hoạt động hiện thời của t�
 | `winding_employee` | `TEXT (JSON)` | YES | Thông tin NV cuộn: `{"employee_code": "NVC01", "employee_name": "Lê C"}`. |
 | `flow_test_result` | `ENUM` | YES | Kết quả test thông khí công đoạn cuộn: `'Thành công'`, `'Thất bại'`. |
 | `winding_note` | `VARCHAR(100)` | YES | Ghi chú từ nhóm cuộn. |
+| `extrusion_chart_image` | `VARCHAR(255)` | YES | Đường dẫn tương đối hình ảnh biểu đồ dữ liệu đo nhóm Đùn (mặc định `NULL`, ví dụ `'uploads/bobin_images/BB_A0001_ext_...jpg'`). |
+| `qc_visual_image` | `VARCHAR(255)` | YES | Đường dẫn tương đối hình ảnh ngoại quan nhóm QC (mặc định `NULL`, ví dụ `'uploads/bobin_images/BB_A0001_qc_...jpg'`). |
+| `winding_chart_image` | `VARCHAR(255)` | YES | Đường dẫn tương đối hình ảnh biểu đồ dữ liệu đo nhóm Cuộn (mặc định `NULL`, ví dụ `'uploads/bobin_images/BB_A0001_wnd_...jpg'`). |
 | `update_history` | `LONGTEXT (JSON)` | YES | Mảng JSON lưu vết lịch sử điều chỉnh: `[{"stage": "extrusion|qc|winding|pending_cancel", "action": "edit|restore", "employee_code": "...", "employee_name": "...", "updated_at": "YYYY-MM-DD HH:mm:ss", "note": "..."}]`. |
 | `updated_time` | `DATETIME` | YES | Thời điểm cập nhật trạng thái gần nhất. **LƯU Ý:** Không thay đổi khi nhân viên đùn chỉ chỉnh sửa thông tin. |
 

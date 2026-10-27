@@ -10,6 +10,8 @@ class BobinUpdateWindingDTO
     public string $flow_test_result; // 'Thành công' hoặc 'Thất bại'
     public ?string $winding_note; // Ghi chú có thể null
     public string $confirm_password;
+    public ?string $winding_chart_image = null;
+    public string $winding_image_action = 'keep';
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self
@@ -22,6 +24,7 @@ class BobinUpdateWindingDTO
         $dto->flow_test_result = $request["flow_test_result"] ?? 'Thất bại';
         $dto->winding_note = $request["winding_note"] ?? '';
         $dto->confirm_password = trim($request['confirm_password'] ?? '');
+        $dto->winding_image_action = strtolower(trim((string)($request['winding_image_action'] ?? 'keep')));
         return $dto;
     }
 }

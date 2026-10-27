@@ -42,6 +42,10 @@ class BobinEntity
 
     public string $winding_note;
 
+    public ?string $extrusion_chart_image = null;
+    public ?string $qc_visual_image = null;
+    public ?string $winding_chart_image = null;
+
     public DateTime $updatedTime;
 
     public function __construct(
@@ -68,7 +72,10 @@ class BobinEntity
         string $flow_test_result = 'Thất bại',
         string $winding_note = 'Chưa cập nhật',
         ?DateTime $updatedTime = null,
-        ?string $previousStatus = null
+        ?string $previousStatus = null,
+        ?string $extrusion_chart_image = null,
+        ?string $qc_visual_image = null,
+        ?string $winding_chart_image = null
     ) {
         $this->id = $id ?? 1;
         $this->bobinKeyCode = $bobinKeyCode;
@@ -93,6 +100,9 @@ class BobinEntity
         $this->winding_employee = $winding_employee;
         $this->flow_test_result = $flow_test_result;
         $this->winding_note = $winding_note;
+        $this->extrusion_chart_image = $extrusion_chart_image;
+        $this->qc_visual_image = $qc_visual_image;
+        $this->winding_chart_image = $winding_chart_image;
         $this->updatedTime = $updatedTime ?? new DateTime();
     }
 
@@ -131,7 +141,10 @@ class BobinEntity
             flow_test_result: $data['flow_test_result'] ?? 'Thất bại',
             winding_note: $data['winding_note'] ?? 'Chưa cập nhật',
             updatedTime: !empty($data['updatedTime']) ? new DateTime($data['updatedTime']) : new DateTime(),
-            previousStatus: $data['previous_status'] ?? null
+            previousStatus: $data['previous_status'] ?? null,
+            extrusion_chart_image: !empty($data['extrusion_chart_image']) ? (string)$data['extrusion_chart_image'] : null,
+            qc_visual_image: !empty($data['qc_visual_image']) ? (string)$data['qc_visual_image'] : null,
+            winding_chart_image: !empty($data['winding_chart_image']) ? (string)$data['winding_chart_image'] : null
         );
     }
 }

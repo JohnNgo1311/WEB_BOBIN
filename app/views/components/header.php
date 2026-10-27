@@ -7,6 +7,7 @@
 
 require_once ROOT_PATH . '/app/core/Language.php';
 require_once ROOT_PATH . '/app/core/AuthHelper.php';
+require_once ROOT_PATH . '/app/core/BobinImageHelper.php';
 
 $user         = $_SESSION['user'] ?? [];
 $userRole     = strtolower($user['role'] ?? '');
@@ -320,4 +321,6 @@ if (!$matchedRoute) {
         <?php endif; ?>
     </div>
 </header>
+<link rel="stylesheet" href="/WEB_BOBIN/public/assets/css/bobinImage.css?v=<?= time() ?>">
+<script src="/WEB_BOBIN/public/assets/js/bobinImageModal.js?v=<?= time() ?>"></script>
 <?php require ROOT_PATH . '/app/views/components/periodicLogoutModal.php'; ?>

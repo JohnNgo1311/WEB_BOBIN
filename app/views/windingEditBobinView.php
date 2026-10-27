@@ -253,6 +253,19 @@ foreach ($bobins as $b) {
                                         <?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?>
                                     </div>
                                 </div>
+
+                                <div class="wnd-field span-2 field-item" style="grid-column: 1 / -1;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span class="wnd-label" style="margin: 0;" data-i18n="lbl_ext_chart_image"><?= __('lbl_ext_chart_image') ?>:</span>
+                                            <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <span class="wnd-label" style="margin: 0;" data-i18n="lbl_qc_visual_image"><?= __('lbl_qc_visual_image') ?>:</span>
+                                            <?= BobinImageHelper::renderViewButton('qc', $item['qc_visual_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Right: Winding Parameters Panel -->
@@ -309,6 +322,8 @@ foreach ($bobins as $b) {
                                         data-i18n="[placeholder]winding_note_ph" value="<?= htmlspecialchars($windingNote) ?>"
                                         disabled>
                                 </div>
+
+                                <?= BobinImageHelper::renderPickerWidget('winding', 'winding_chart_image', $item['winding_chart_image'] ?? null, true, (string)($item['bobin_identification_code'] ?? ''), 'edit') ?>
                             </div>
                         </div>
 

@@ -2,6 +2,28 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [TASK-054] - 2026-10-28 - Cải Tiến Bổ Sung / Thay Đổi / Xóa Hình Ảnh Biểu Đồ Nhóm Đùn Cho Bobin Đã Qua QC & Cuộn (Cô Lập Tuyệt Đối Dữ Liệu Nghiệp Vụ)
+
+### 1. Bối cảnh & Yêu cầu:
+- Cho phép nhân sự Nhóm Đùn (`extrusion` hoặc `admin` có quyền `extrusion_edit`) thực hiện thêm / đổi / xóa ảnh biểu đồ dữ liệu đo (`extrusion_chart_image`) ngay cả khi Bobin đã được Nhóm QC (`Busy_Checked`) hoặc Nhóm Cuộn (`Rolled`) xác nhận.
+- Cô lập tuyệt đối phạm vi thao tác: chỉ thay đổi duy nhất dữ liệu hình ảnh `extrusion_chart_image` (và ghi vết kiểm toán `update_history`), tuyệt đối không chỉnh sửa, ghi đè hay xóa bất kỳ trường nghiệp vụ nào khác, không thay đổi trạng thái Bobin (`bobin_current_status`, `previous_status`), không chạm thông tin QC, thông tin Cuộn hay `updated_time`.
+- Nghiêm cấm bổ sung/thay đổi hình ảnh đối với các Bobin ở trạng thái chờ hủy (`Pending_Cancellation`) hoặc đã hủy (`Cancelled`).
+
+### 2. Các thay đổi kỹ thuật:
+1. **Repository & Truy vấn an toàn (`app/repositories/BobinRepository.php`):**
+   - Bổ sung `buildExtrusionEditStatusCondition()` và mở rộng `getListDetailBobinsForEditting()` / `countDetailBobinsForEditting()` hỗ trợ lọc trạng thái trong tập hợp lệ `('Busy_Unchecked', 'Busy_Checked', 'Rolled')`, ưu tiên hiển thị `Busy_Unchecked` trước rồi đến `Busy_Checked` và `Rolled` mới nhất, loại trừ tuyệt đối `Pending_Cancellation` và `Cancelled`.
+   - Mở rộng `getBobinCurrentImages()` trả về thêm `bobin_current_status` và nâng cấp `isBobinExtrusionCreatedByUser()` hỗ trợ kiểm tra quyền sở hữu theo tập trạng thái hợp lệ và `bobin_key_code` (giữ mặc định `['Busy_Unchecked']` cho luồng sửa/hủy đầy đủ).
+   - Bổ sung hàm cô lập `updateExtrusionChartImageOnly()` sử dụng `SELECT ... FOR UPDATE`, chỉ cập nhật duy nhất cột `extrusion_chart_image` (kèm `update_history`) trên `bobin_list_detail` và đồng bộ `extrusion_chart_image` trên các bản ghi cùng `bobin_key_code` trong `bobin_history`, không chạm `bobin_list_general` và không thay đổi `updated_time`.
+2. **Service & Controller API (`app/services/BobinServices.php`, `app/controllers/BobinController.php`):**
+   - Bổ sung endpoint độc lập `POST/PUT bobin/extrusionUpdateChartImage`: kiểm tra quyền nhóm Đùn (`BobinImageHelper::canManageStageImage('extrusion', 'edit')`), xác thực mật khẩu, kiểm tra quyền sở hữu người tạo đùn, chặn tuyệt đối `Pending_Cancellation` / `Cancelled`, và chỉ đọc duy nhất `bobin_identification_code`, `bobin_key_code`, `confirm_password`, `extrusion_image_action` cùng file `extrusion_chart_image`.
+   - Gia cố bảo vệ tại `extrusionUpdateBobin()` và `extrusionDeleteBobin()` bắt buộc `bobin_current_status === 'Busy_Unchecked'` ngay ở tầng API.
+3. **Giao diện, CSS, JS & Đa ngôn ngữ (`app/views/extrusionEditBobinView.php`, `public/assets/css/extrusionEditBobin.css`, `public/assets/js/Extrusion/edit_submit.js`, `config/default_translations.json`):**
+   - Bổ sung dropdown lọc trạng thái, thẻ KPI thứ 4 thống kê Bobin đã qua QC/Cuộn, phân biệt màu header và badge theo từng trạng thái (`Busy_Unchecked`, `Busy_Checked`, `Rolled`), hiển thị banner khóa bảo vệ `.ext-img-only-banner` và ẩn nút Hủy Bobin trên các thẻ đã qua QC/Cuộn.
+   - Tách riêng chế độ mở khóa chỉ bộ chọn ảnh trong `startEdit()` / `cancelEdit()` và hàm lưu `handleImageOnlyConfirm()`.
+   - Bổ sung đồng bộ các khóa dịch thuật mới cho cả 3 ngôn ngữ `vi`, `en`, `ja` (`731` khóa mỗi ngôn ngữ).
+
+---
+
 ## [TASK-052] - 2026-10-25 - Khắc Phục Lỗi Trang QC, Nâng Cấp Hệ Thống Màu Sắc Nhận Diện "Loại Bobin" Chống Cache Trình Duyệt, Thêm Biểu Đồ "Thống Kê Ngoại Quan Bobin" Trang Danh Sách & Lịch Sử
 
 ### 1. Bối cảnh & Yêu cầu:

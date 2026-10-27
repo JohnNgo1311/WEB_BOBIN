@@ -49,6 +49,7 @@ class BobinCreateDTO
 
 
     public string $winding_note; // Ghi chú thêm cho phía cuộn
+    public ?string $extrusion_chart_image = null;
 
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO

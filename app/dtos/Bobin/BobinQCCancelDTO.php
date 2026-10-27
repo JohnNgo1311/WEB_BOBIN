@@ -17,6 +17,7 @@ class BobinQCCancelDTO
     public bool $defect_streak;
     public bool $defect_deformation;
     public string $defect_note;
+    public ?string $qc_visual_image = null;
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self

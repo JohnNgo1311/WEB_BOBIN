@@ -148,6 +148,9 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
         <div style="margin-top: 6px; padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12.5px; display: flex; justify-content: space-between;">
             <strong>Ghi chú:</strong> <span style="color: #334155;">${note || "Không có"}</span>
         </div>
+        ${window.BobinImagePicker ? `<div style="margin-top: 6px; padding: 6px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12.5px; display: flex; justify-content: space-between;">
+            <strong>🖼️ ${tVal("lbl_qc_visual_image", "Ảnh ngoại quan Bobin (QC)")}:</strong> <span style="color: #0369a1; font-weight: 700;">${window.BobinImagePicker.getStatusSummaryText(container, "qc")}</span>
+        </div>` : ""}
   `;
 
   ConfirmDialog.show(
@@ -166,14 +169,17 @@ function handleConfirm(btnElement, bobinCode, bobinKeyCode) {
       btnElement.disabled = true;
 
       try {
-        const response = await fetch(requestUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        });
+        const reqInit = window.BobinImagePicker
+          ? window.BobinImagePicker.buildRequestInit(bodyData, container, "qc")
+          : {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(bodyData),
+            };
+        const response = await fetch(requestUrl, reqInit);
 
         const data = await response.json();
         if (data.success) {
@@ -345,6 +351,9 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
         <div style="margin-top: 6px; padding: 6px 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 12.5px; display: flex; justify-content: space-between;">
             <strong>Lý do hủy:</strong> <span style="color: #dc2626; font-weight: 700;">${note}</span>
         </div>
+        ${window.BobinImagePicker ? `<div style="margin-top: 6px; padding: 6px 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; font-size: 12.5px; display: flex; justify-content: space-between;">
+            <strong>🖼️ ${tVal("lbl_qc_visual_image", "Ảnh ngoại quan Bobin (QC)")}:</strong> <span style="color: #0369a1; font-weight: 700;">${window.BobinImagePicker.getStatusSummaryText(container, "qc")}</span>
+        </div>` : ""}
   `;
 
   ConfirmDialog.show(
@@ -363,14 +372,17 @@ function handleCancel(btnElement, bobinCode, bobinKeyCode) {
       btnElement.disabled = true;
 
       try {
-        const response = await fetch(requestUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        });
+        const reqInit = window.BobinImagePicker
+          ? window.BobinImagePicker.buildRequestInit(bodyData, container, "qc")
+          : {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(bodyData),
+            };
+        const response = await fetch(requestUrl, reqInit);
         const data = await response.json();
         if (data.success) {
           if (window.Toast && window.Toast.flash) {
@@ -481,6 +493,7 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
       <div style="background-color: #fffbeb; color: #b45309; padding: 10px 12px; border-radius: 6px; margin-bottom: 12px; border-left: 4px solid #f59e0b;">
           Chuyển đổi Bobin <strong>${bobinCode}</strong> sang hàng ĐIỀU CHỈNH.<br>
           <div style="margin-top: 4px; font-size: 12.5px;"><strong>📝 Ghi chú:</strong> ${note}</div>
+          ${window.BobinImagePicker ? `<div style="margin-top: 4px; font-size: 12.5px;"><strong>🖼️ ${window.t ? window.t("lbl_qc_visual_image", "Ảnh ngoại quan Bobin (QC)") : "Ảnh ngoại quan Bobin (QC)"}:</strong> ${window.BobinImagePicker.getStatusSummaryText(container, "qc")}</div>` : ""}
       </div>
       
       <div class="type-toggle-group">
@@ -563,14 +576,17 @@ function handleChangeType(btnElement, bobinCode, bobinKeyCode) {
       btnElement.disabled = true;
 
       try {
-        const response = await fetch(requestUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        });
+        const reqInit = window.BobinImagePicker
+          ? window.BobinImagePicker.buildRequestInit(bodyData, container, "qc")
+          : {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(bodyData),
+            };
+        const response = await fetch(requestUrl, reqInit);
 
         const data = await response.json();
         if (data.success) {

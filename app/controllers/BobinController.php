@@ -15,6 +15,7 @@ require_once ROOT_PATH . '/app/dtos/Bobin/BobinGetSpecificDTO.php';
 //! Services
 require_once ROOT_PATH . '/app/services/BobinServices.php';
 require_once ROOT_PATH . '/app/core/AuthHelper.php';
+require_once ROOT_PATH . '/app/core/BobinImageHelper.php';
 
 /*==========================================*/
 //! BobinController – CHỈ LÀM 3 VIỆC
@@ -686,11 +687,19 @@ class BobinController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
             $dto = BobinCreateDTO::fromRequest($_POST);
             $this->validFormExtrusion($dto);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'extrusion_chart_image',
+                'extrusion',
+                $dto->bobin_identification_code,
+                'create'
+            );
+            $dto->extrusion_chart_image = $uploadedPath;
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->createBobin($dto);
 
@@ -700,8 +709,10 @@ class BobinController extends Controller
                 'message' =>  "Tạo mới chu kỳ - Cập nhật thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
                 'bobin_key_code' => $entity->bobinKeyCode,
+                'image_url' => BobinImageHelper::toPublicUrl($entity->extrusion_chart_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -749,14 +760,15 @@ class BobinController extends Controller
             exit;
         }
 
-        //TODO 1. Chỉ chấp nhận PUT
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        // Chấp nhận PUT (JSON) và POST (FormData khi đính kèm file ảnh)
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
 
             $dto = BobinExtUpdateDTO::fromRequest($input);
             $this->validFormExtrusionEdit($dto);
@@ -766,6 +778,17 @@ class BobinController extends Controller
                 $this->json([
                     'success' => false,
                     'message' => 'Mật khẩu xác nhận không chính xác. Thao tác điều chỉnh bị từ chối.'
+                ], 403);
+                exit;
+            }
+
+            // Bắt buộc kiểm tra Bobin phải đang ở trạng thái Busy_Unchecked mới được sửa thông tin nghiệp vụ Đùn
+            $currImgs = $this->bobinService->getBobinCurrentImages($dto->bobin_identification_code);
+            if (!$currImgs || trim((string)($currImgs['bobin_current_status'] ?? '')) !== 'Busy_Unchecked') {
+                $this->json([
+                    'success' => false,
+                    'error'   => __('err_ext_full_edit_locked'),
+                    'message' => __('err_ext_full_edit_locked')
                 ], 403);
                 exit;
             }
@@ -780,6 +803,22 @@ class BobinController extends Controller
                 exit;
             }
 
+            // Xử lý hình ảnh biểu đồ nhóm Đùn (keep / replace / delete)
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'extrusion_chart_image',
+                'extrusion',
+                $dto->bobin_identification_code,
+                'edit'
+            );
+            $imgResolution = BobinImageHelper::resolveEditImageValue(
+                'extrusion',
+                $currImgs['extrusion_chart_image'] ?? null,
+                $dto->extrusion_image_action,
+                $uploadedPath,
+                'edit'
+            );
+            $dto->extrusion_chart_image = $imgResolution['final_path'];
+
             // Ghi nhận vết kiểm toán update_history
             $updateRecord = [
                 'stage'          => 'extrusion',
@@ -793,13 +832,154 @@ class BobinController extends Controller
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->extUpdateBobin($dto, $updateRecord);
 
+            if (!empty($imgResolution['old_path'])) {
+                $this->bobinService->cleanupUnreferencedImage($imgResolution['old_path']);
+            }
+
             //TODO 4. Trả về kết quả thành công
             $this->json([
                 'success' => true,
                 'message' =>  "Cập nhật thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
+                'image_url' => BobinImageHelper::toPublicUrl($entity->extrusion_chart_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
+            $this->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
+        exit;
+    }
+
+    /**
+     * TASK-054: Endpoint cô lập chỉ cho phép nhóm Đùn thêm / đổi / xóa ảnh biểu đồ dữ liệu đo (extrusion_chart_image)
+     * kể cả khi Bobin đã được QC (Busy_Checked) hoặc Cuộn (Rolled) xác nhận, tuyệt đối không chạm các trường nghiệp vụ khác.
+     * Nghiêm cấm thao tác trên trạng thái Pending_Cancellation và Cancelled.
+     */
+    public function extrusionUpdateChartImage(): void
+    {
+        if (!BobinImageHelper::canManageStageImage('extrusion', 'edit')) {
+            $this->json([
+                'success' => false,
+                'error'   => __('err_img_permission_denied'),
+                'message' => __('err_img_permission_denied')
+            ], 403);
+            exit;
+        }
+
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
+            $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
+        }
+
+        $uploadedPath = null;
+        try {
+            header('Content-Type: application/json; charset=utf-8');
+
+            // Chỉ đọc duy nhất định danh chu kỳ, mật khẩu xác nhận và hành động ảnh — phớt lờ mọi trường nghiệp vụ khác
+            $input = BobinImageHelper::parseRequestData();
+            $identCode       = strtoupper(trim((string)($input['bobin_identification_code'] ?? '')));
+            $keyCode         = trim((string)($input['bobin_key_code'] ?? ''));
+            $confirmPassword = trim((string)($input['confirm_password'] ?? ''));
+            $imageAction     = strtolower(trim((string)($input['extrusion_image_action'] ?? 'keep')));
+
+            if ($identCode === '') {
+                throw new Exception('Vui lòng cung cấp Mã định danh Bobin.');
+            }
+            if ($keyCode === '') {
+                throw new Exception(__('err_ext_img_cycle_not_found'));
+            }
+
+            if ($confirmPassword === '' || !$this->verifyCurrentUserPassword($confirmPassword)) {
+                $this->json([
+                    'success' => false,
+                    'message' => 'Mật khẩu xác nhận không chính xác. Thao tác điều chỉnh bị từ chối.'
+                ], 403);
+                exit;
+            }
+
+            $currImgs = $this->bobinService->getBobinCurrentImages($identCode, $keyCode);
+            if (!$currImgs) {
+                throw new Exception(__('err_ext_img_cycle_not_found'));
+            }
+
+            $currStatus = trim((string)($currImgs['bobin_current_status'] ?? ''));
+            $allowedStatuses = ['Busy_Unchecked', 'Busy_Checked', 'Rolled'];
+            if (!in_array($currStatus, $allowedStatuses, true)) {
+                $this->json([
+                    'success' => false,
+                    'error'   => __('err_ext_img_status_not_allowed'),
+                    'message' => __('err_ext_img_status_not_allowed')
+                ], 403);
+                exit;
+            }
+
+            if (
+                !AuthHelper::canViewAllEditBobins('extrusion')
+                && !$this->bobinService->isBobinExtrusionCreatedByUser($identCode, '', 0, $allowedStatuses, $keyCode)
+            ) {
+                $this->json([
+                    'success' => false,
+                    'error'   => 'Bạn không phải là người đã xác nhận thông tin đùn của Bobin này nên không có quyền cập nhật ảnh biểu đồ.',
+                    'message' => 'Bạn không phải là người đã xác nhận thông tin đùn của Bobin này nên không có quyền cập nhật ảnh biểu đồ.'
+                ], 403);
+                exit;
+            }
+
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'extrusion_chart_image',
+                'extrusion',
+                $identCode,
+                'edit'
+            );
+            $imgResolution = BobinImageHelper::resolveEditImageValue(
+                'extrusion',
+                $currImgs['extrusion_chart_image'] ?? null,
+                $imageAction,
+                $uploadedPath,
+                'edit'
+            );
+
+            if (empty($imgResolution['changed'])) {
+                throw new Exception(__('err_ext_img_no_change'));
+            }
+
+            $actionDetailNote = match (true) {
+                $imgResolution['final_path'] === null => 'Xóa hình ảnh biểu đồ Đùn',
+                !empty($currImgs['extrusion_chart_image']) => 'Thay đổi hình ảnh biểu đồ Đùn',
+                default => 'Bổ sung hình ảnh biểu đồ Đùn',
+            };
+
+            $updateRecord = [
+                'stage'         => 'extrusion',
+                'action'        => 'update_chart_image',
+                'employee_code' => $_SESSION['user']['employee_code'] ?? 'Unknown',
+                'employee_name' => $_SESSION['user']['employee_name'] ?? 'Unknown',
+                'updated_at'    => date('Y-m-d H:i:s'),
+                'note'          => $actionDetailNote,
+            ];
+
+            $this->bobinService->updateExtrusionChartImageOnly(
+                $identCode,
+                $keyCode,
+                $imgResolution['final_path'],
+                $updateRecord
+            );
+
+            if (!empty($imgResolution['old_path'])) {
+                $this->bobinService->cleanupUnreferencedImage($imgResolution['old_path']);
+            }
+
+            $this->json([
+                'success' => true,
+                'message' => sprintf(__('toast_ext_img_updated'), $identCode),
+                'bobin_identification_code' => $identCode,
+                'bobin_key_code' => $keyCode,
+                'image_url' => BobinImageHelper::toPublicUrl($imgResolution['final_path']),
+            ]);
+        } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -832,6 +1012,17 @@ class BobinController extends Controller
 
             $dto = BobinExtDeleteDTO::fromRequest($input);
             $this->validFormExtrusionDelete($dto);
+
+            // Chỉ cho phép hủy từ công đoạn Đùn khi Bobin đang ở trạng thái Busy_Unchecked
+            $currImgs = $this->bobinService->getBobinCurrentImages($dto->bobin_identification_code);
+            if (!$currImgs || trim((string)($currImgs['bobin_current_status'] ?? '')) !== 'Busy_Unchecked') {
+                $this->json([
+                    'success' => false,
+                    'error'   => __('err_ext_full_edit_locked'),
+                    'message' => __('err_ext_full_edit_locked')
+                ], 403);
+                exit;
+            }
 
             // Task-047: Kiểm tra quyền sở hữu Bobin tại công đoạn Đùn (hoặc có quyền extrusion_edit_view_all / Admin)
             if (!AuthHelper::canViewAllEditBobins('extrusion') && !$this->bobinService->isBobinExtrusionCreatedByUser($dto->bobin_identification_code)) {
@@ -876,16 +1067,24 @@ class BobinController extends Controller
             exit;
         }
 
-        //TODO 1. Chỉ chấp nhận PUT
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        // Chấp nhận PUT (JSON) và POST (FormData khi đính kèm file ảnh)
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
             $dto = BobinQCUpdateDTO::fromRequest($input);
             $this->validFormQC($dto);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'qc_visual_image',
+                'qc',
+                $dto->bobin_identification_code,
+                'check'
+            );
+            $dto->qc_visual_image = $uploadedPath;
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->updateQCBobin($dto);
             //TODO 4. Trả về kết quả thành công
@@ -893,8 +1092,10 @@ class BobinController extends Controller
                 'success' => true,
                 'message' =>  "Kiểm tra QC - Cập nhật thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
+                'image_url' => BobinImageHelper::toPublicUrl($entity->qc_visual_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -915,13 +1116,14 @@ class BobinController extends Controller
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
 
             $dto = BobinQCUpdateDTO::fromRequest($input);
 
@@ -947,6 +1149,22 @@ class BobinController extends Controller
                 ], 403);
                 exit;
             }
+
+            // Xử lý hình ảnh ngoại quan nhóm QC (keep / replace / delete)
+            $currImgs = $this->bobinService->getBobinCurrentImages($dto->bobin_identification_code, $dto->bobin_key_code);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'qc_visual_image',
+                'qc',
+                $dto->bobin_identification_code,
+                'edit'
+            );
+            $imgResolution = BobinImageHelper::resolveEditImageValue(
+                'qc',
+                $currImgs['qc_visual_image'] ?? null,
+                $dto->qc_image_action,
+                $uploadedPath,
+                'edit'
+            );
 
             // Nếu người dùng chọn đổi loại Bobin (tùy chọn)
             $newType = !empty($input['bobin_type']) ? trim($input['bobin_type']) : null;
@@ -996,19 +1214,26 @@ class BobinController extends Controller
                 $dto->bobin_key_code,
                 $viData,
                 $newType,
-                $updateRecord
+                $updateRecord,
+                $imgResolution['changed'],
+                $imgResolution['final_path']
             );
 
             if ($res) {
+                if (!empty($imgResolution['old_path'])) {
+                    $this->bobinService->cleanupUnreferencedImage($imgResolution['old_path']);
+                }
                 $this->json([
                     'success' => true,
                     'message' => "Điều chỉnh thông tin QC cho Bobin {$dto->bobin_identification_code} thành công!",
-                    'bobin_identification_code' => $dto->bobin_identification_code
+                    'bobin_identification_code' => $dto->bobin_identification_code,
+                    'image_url' => BobinImageHelper::toPublicUrl($imgResolution['final_path'])
                 ]);
             } else {
                 throw new Exception("Cập nhật thông tin QC thất bại.");
             }
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -1028,16 +1253,24 @@ class BobinController extends Controller
             exit;
         }
 
-        //TODO 1. Chỉ chấp nhận PUT
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        // Chấp nhận PUT (JSON) và POST (FormData khi đính kèm file ảnh)
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
             $dto = BobinQCCancelDTO::fromRequest($input);
             $this->validFormQC_Cancel($dto);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'qc_visual_image',
+                'qc',
+                $dto->bobin_identification_code,
+                'any'
+            );
+            $dto->qc_visual_image = $uploadedPath;
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->qcCancelBobin($dto);
 
@@ -1046,8 +1279,10 @@ class BobinController extends Controller
                 'success' => true,
                 'message' =>  "Kiểm tra QC - Hủy thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
+                'image_url' => BobinImageHelper::toPublicUrl($entity->qc_visual_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -1066,21 +1301,32 @@ class BobinController extends Controller
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
+            $identCode = trim((string)($input['bobin_identification_code'] ?? ''));
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'qc_visual_image',
+                'qc',
+                $identCode,
+                'check'
+            );
+            $input['qc_visual_image'] = $uploadedPath;
 
             // Gọi Service xử lý
             $entity = $this->bobinService->updateQCAndChangeTypeBobin($input);
 
             $this->json([
                 'success' => true,
-                'message' => "Kiểm tra QC và đổi loại thành công cho Bobin {$entity->identificationCode}!"
+                'message' => "Kiểm tra QC và đổi loại thành công cho Bobin {$entity->identificationCode}!",
+                'image_url' => BobinImageHelper::toPublicUrl($entity->qc_visual_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -1101,16 +1347,24 @@ class BobinController extends Controller
             exit;
         }
 
-        //TODO 1. Chỉ chấp nhận PUT
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        // Chấp nhận PUT (JSON) và POST (FormData khi đính kèm file ảnh)
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
             $dto = BobinUpdateWindingDTO::fromRequest($input);
             $this->validFormWinding($dto);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'winding_chart_image',
+                'winding',
+                $dto->bobin_identification_code,
+                'confirm'
+            );
+            $dto->winding_chart_image = $uploadedPath;
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->updateWindingBobin($dto);
 
@@ -1120,8 +1374,10 @@ class BobinController extends Controller
                 'message' =>  "Hoàn thành chu kỳ - Cập nhật thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
                 'bobin_key_code' => $entity->bobinKeyCode,
+                'image_url' => BobinImageHelper::toPublicUrl($entity->winding_chart_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -1142,13 +1398,14 @@ class BobinController extends Controller
             exit;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
 
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
 
             $dto = BobinUpdateWindingDTO::fromRequest($input);
 
@@ -1175,6 +1432,22 @@ class BobinController extends Controller
                 exit;
             }
 
+            // Xử lý hình ảnh biểu đồ dữ liệu đo nhóm Cuộn (keep / replace / delete)
+            $currImgs = $this->bobinService->getBobinCurrentImages($dto->bobin_identification_code, $dto->bobin_key_code);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'winding_chart_image',
+                'winding',
+                $dto->bobin_identification_code,
+                'edit'
+            );
+            $imgResolution = BobinImageHelper::resolveEditImageValue(
+                'winding',
+                $currImgs['winding_chart_image'] ?? null,
+                $dto->winding_image_action,
+                $uploadedPath,
+                'edit'
+            );
+
             // Audit record
             $updateRecord = [
                 'stage'          => 'winding',
@@ -1192,19 +1465,26 @@ class BobinController extends Controller
                 $dto->winding_employee_code,
                 $dto->flow_test_result,
                 $dto->winding_note ?? '',
-                $updateRecord
+                $updateRecord,
+                $imgResolution['changed'],
+                $imgResolution['final_path']
             );
 
             if ($res) {
+                if (!empty($imgResolution['old_path'])) {
+                    $this->bobinService->cleanupUnreferencedImage($imgResolution['old_path']);
+                }
                 $this->json([
                     'success' => true,
                     'message' => "Điều chỉnh thông tin Cuộn cho Bobin {$dto->bobin_identification_code} thành công!",
-                    'bobin_identification_code' => $dto->bobin_identification_code
+                    'bobin_identification_code' => $dto->bobin_identification_code,
+                    'image_url' => BobinImageHelper::toPublicUrl($imgResolution['final_path'])
                 ]);
             } else {
                 throw new Exception("Cập nhật thông tin Cuộn thất bại.");
             }
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -1224,14 +1504,15 @@ class BobinController extends Controller
             exit;
         }
 
-        //TODO 1. Chỉ chấp nhận PUT
-        if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        // Chấp nhận PUT (JSON) và POST (FormData khi đính kèm file ảnh)
+        if (!BobinImageHelper::isWriteMethodAllowed()) {
             $this->jsonResponse(['success' => false, 'message' => 'Method not allowed'], 405);
         }
+        $uploadedPath = null;
         try {
             header('Content-Type: application/json; charset=utf-8');
             //TODO 2. Chuyển đổi dữ liệu thô thành DTO
-            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $input = BobinImageHelper::parseRequestData();
             $dto = BobinWindingCancelDTO::fromRequest($input);
             if ($dto->source === 'winding_edit' && !AuthHelper::canViewAllEditBobins('winding') && !$this->bobinService->isBobinWindingConfirmedByUser($dto->bobin_identification_code)) {
                 $this->json([
@@ -1242,6 +1523,13 @@ class BobinController extends Controller
                 exit;
             }
             $this->validFormWinding_Cancel($dto);
+            $uploadedPath = BobinImageHelper::handleUploadedFile(
+                'winding_chart_image',
+                'winding',
+                $dto->bobin_identification_code,
+                'any'
+            );
+            $dto->winding_chart_image = $uploadedPath;
             //TODO 3. Gọi Service xử lý
             $entity = $this->bobinService->windingCancelBobin($dto);
 
@@ -1251,8 +1539,10 @@ class BobinController extends Controller
                 'message' =>  "Hủy thành công Bobin {$entity->identificationCode}!",
                 'bobin_identification_code' => $entity->identificationCode,
                 'bobin_key_code' => $entity->bobinKeyCode,
+                'image_url' => BobinImageHelper::toPublicUrl($entity->winding_chart_image),
             ]);
         } catch (Throwable $e) {
+            BobinImageHelper::cleanupUploadedFileOnError($uploadedPath);
             $this->json([
                 'success' => false,
                 'message' => $e->getMessage()

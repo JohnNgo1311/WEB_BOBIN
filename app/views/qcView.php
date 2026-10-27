@@ -434,6 +434,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
+                                <div class="pipeline-col-image-bar" style="margin-top: 6px;">
+                                    <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                </div>
                             </div>
 
                             <!-- KHU VỰC THAO TÁC CỦA QC -->
@@ -493,6 +496,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                                     <input type="text" class="note-field" placeholder="<?= __('qc_note_explain_ph') ?>"
                                         data-i18n-ph="qc_note_explain_ph">
                                 </div>
+
+                                <?= BobinImageHelper::renderPickerWidget('qc', 'qc_visual_image', null, false, (string)($item['bobin_identification_code'] ?? ''), 'check') ?>
                             </div>
 
                             <div class="card-footer-simple">

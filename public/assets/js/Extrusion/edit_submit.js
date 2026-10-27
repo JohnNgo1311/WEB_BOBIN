@@ -110,6 +110,14 @@ function toggleExtCheck(btn) {
     btn.textContent = isActive ? 'OK' : 'NG';
 }
 
+function trExt(key, fallback) {
+    if (typeof window.t === 'function') {
+        const val = window.t(key);
+        if (val && val !== key) return val;
+    }
+    return fallback;
+}
+
 // 1. BẮT ĐẦU CHỈNH SỬA
 function startEdit(btnElement) {
     const container = btnElement.closest('.bobin-item');
@@ -123,9 +131,49 @@ function startEdit(btnElement) {
     }
 
     currentEditingContainer = container;
+    const isImageOnly = container.dataset.imageOnly === '1';
 
-    // SAO LƯU DỮ LIỆU BAN ĐẦU ĐỂ PHỤC HỒI NẾU HỦY
+    if (isImageOnly) {
+        // Chế độ chỉ cập nhật ảnh biểu đồ Đùn (Bobin đã qua QC / Cuộn):
+        // Giữ khóa tuyệt đối toàn bộ ô nhập liệu & nút ngoại quan nghiệp vụ
+        originalDataBackup = { isImageOnly: true };
+
+        container.querySelectorAll(
+            '#product_code, #extrusion_employee_code, #bobin_type, #material_lot, #extrusion_machine, #material, #grinding_time, #length_m, #rack_code, #shift, #extrusion_date, #finish_time'
+        ).forEach(input => {
+            input.disabled = true;
+        });
+        container.querySelectorAll('.ext-toggle-btn').forEach(b => {
+            b.disabled = true;
+        });
+
+        if (window.BobinImagePicker) {
+            window.BobinImagePicker.backupState(container, 'extrusion');
+            window.BobinImagePicker.setEditable(container, true, 'extrusion');
+        }
+
+        container.querySelector('.btn-edit').style.display = 'none';
+        container.querySelector('.btn-cancel-edit').style.display = 'inline-flex';
+        container.querySelector('.btn-confirm').style.display = 'inline-flex';
+        container.classList.add('is-editing');
+
+        document.querySelectorAll('.bobin-item').forEach(item => {
+            if (item !== container) {
+                item.classList.add('is-locked');
+            }
+        });
+
+        const pickerEl = container.querySelector('.bobin-image-picker.stage-extrusion');
+        if (pickerEl) {
+            pickerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            pickerEl.querySelector('.bip-btn-choose')?.focus();
+        }
+        return;
+    }
+
+    // SAO LƯU DỮ LIỆU BAN ĐẦU ĐỂ PHỤC HỒI NẾU HỦY (Chế độ Busy_Unchecked đầy đủ)
     originalDataBackup = {
+        isImageOnly: false,
         product_code: container.querySelector('#product_code')?.value || '',
         production_order_code: container.querySelector('#production_order_code')?.value || '',
         extrusion_employee_code: container.querySelector('#extrusion_employee_code')?.value || '',
@@ -164,6 +212,12 @@ function startEdit(btnElement) {
     // Mở khóa các nút toggle ngoại quan
     container.querySelectorAll('.ext-toggle-btn').forEach(b => b.disabled = false);
 
+    // Sao lưu & mở khóa bộ chọn hình ảnh nhóm Đùn
+    if (window.BobinImagePicker) {
+        window.BobinImagePicker.backupState(container, 'extrusion');
+        window.BobinImagePicker.setEditable(container, true, 'extrusion');
+    }
+
     // Thay đổi trạng thái nút bấm
     container.querySelector('.btn-edit').style.display = 'none';
     container.querySelector('.btn-cancel-edit').style.display = 'inline-flex';
@@ -188,21 +242,27 @@ function cancelEdit(btnElement) {
     const container = btnElement.closest('.bobin-item');
     if (!container || !originalDataBackup) return;
 
-    // PHỤC HỒI TOÀN BỘ GIÁ TRỊ GỐC
-    for (const [key, val] of Object.entries(originalDataBackup)) {
-        if (key === 'extChecks') continue;
-        const el = container.querySelector('#' + key);
-        if (el) el.value = val;
-    }
+    const isImageOnly = container.dataset.imageOnly === '1' || Boolean(originalDataBackup.isImageOnly);
 
-    // Phục hồi 5 nút ngoại quan
-    for (const [field, state] of Object.entries(originalDataBackup.extChecks)) {
-        const b = container.querySelector(`[data-field="${field}"]`);
-        if (b) {
-            b.setAttribute('data-value', state.value);
-            b.textContent = state.text;
-            if (state.active) b.classList.add('active');
-            else b.classList.remove('active');
+    if (!isImageOnly) {
+        // PHỤC HỒI TOÀN BỘ GIÁ TRỊ GỐC
+        for (const [key, val] of Object.entries(originalDataBackup)) {
+            if (key === 'extChecks' || key === 'isImageOnly') continue;
+            const el = container.querySelector('#' + key);
+            if (el) el.value = val;
+        }
+
+        // Phục hồi các nút ngoại quan
+        if (originalDataBackup.extChecks) {
+            for (const [field, state] of Object.entries(originalDataBackup.extChecks)) {
+                const b = container.querySelector(`[data-field="${field}"]`);
+                if (b) {
+                    b.setAttribute('data-value', state.value);
+                    b.textContent = state.text;
+                    if (state.active) b.classList.add('active');
+                    else b.classList.remove('active');
+                }
+            }
         }
     }
 
@@ -215,6 +275,12 @@ function cancelEdit(btnElement) {
     });
 
     container.querySelectorAll('.ext-toggle-btn').forEach(b => b.disabled = true);
+
+    // Khôi phục & khóa lại bộ chọn hình ảnh nhóm Đùn
+    if (window.BobinImagePicker) {
+        window.BobinImagePicker.restoreState(container, 'extrusion');
+        window.BobinImagePicker.setEditable(container, false, 'extrusion');
+    }
 
     // Đổi lại nút bấm
     container.querySelector('.btn-edit').style.display = 'inline-flex';
@@ -328,6 +394,10 @@ async function handleConfirm(buttonElement, bobinCode) {
         const container = buttonElement.closest('.bobin-item');
         if (!container) throw new Error("Không tìm thấy dòng Bobin tương ứng.");
 
+        if (container.dataset.imageOnly === '1') {
+            return handleImageOnlyConfirm(buttonElement, bobinCode, container.dataset.bobinKey || '');
+        }
+
         const productCode = container.querySelector('#product_code')?.value.trim() || '';
         const orderCode = container.querySelector('#production_order_code')?.value.trim() || '';
         const empCode = container.querySelector('#extrusion_employee_code')?.value.trim() || '';
@@ -421,6 +491,10 @@ async function handleConfirm(buttonElement, bobinCode) {
         const lblExtDate = window.t ? (window.t('field_ext_date') || 'Ngày đùn') : 'Ngày đùn';
         const lblFinishTime = window.t ? (window.t('field_finish_time') || 'Thời gian hoàn thành') : 'Thời gian hoàn thành';
         const lblChecksHeader = window.t ? (window.t('ext_criteria_title') || '🏭 Ngoại quan Đùn Check:') : '🏭 Ngoại quan Đùn Check:';
+        const lblExtImg = window.t ? (window.t('lbl_ext_chart_image') || 'Hình ảnh biểu đồ Đùn') : 'Hình ảnh biểu đồ Đùn';
+        const extImgSummary = window.BobinImagePicker
+            ? window.BobinImagePicker.getStatusSummaryText(container, 'extrusion')
+            : '---';
 
         const reviewHTML = `
             <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
@@ -431,7 +505,8 @@ async function handleConfirm(buttonElement, bobinCode) {
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblRack}</strong> <span style="color: #0284c7; font-weight: 800;">${rackCode || '---'}</span></li>
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblLength}</strong> <span>${lengthM} m</span></li>
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblExtDate}</strong> <span>${extrusionDate}</span></li>
-                <li style="display: flex; justify-content: space-between;"><strong>${lblFinishTime}</strong> <span>${finishTime}</span></li>
+                <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>${lblFinishTime}</strong> <span>${finishTime}</span></li>
+                <li style="display: flex; justify-content: space-between;"><strong>${lblExtImg}:</strong> <span style="color: #1d4ed8; font-weight: 700;">${extImgSummary}</span></li>
             </ul>
             <div style="margin-top:10px;text-align:left;padding:8px 10px;background:#f0f9ff;border-radius:6px;border:1px solid #bae6fd;">
                 <strong style="font-size:12.5px;color:#0369a1;">${lblChecksHeader}</strong>
@@ -456,14 +531,21 @@ async function handleConfirm(buttonElement, bobinCode) {
 
                 try {
                     const apiUrl = `${API_BASE_URL}bobin/extrusionUpdateBobin`;
-                    const response = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const reqInit = window.BobinImagePicker
+                        ? window.BobinImagePicker.buildRequestInit(payload, container, 'extrusion')
+                        : {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(payload)
+                        };
+                    const response = await fetch(apiUrl, reqInit);
 
                     const res = await response.json();
                     if (res.success) {
+                        if (window.BobinImagePicker) {
+                            window.BobinImagePicker.commitServerUrl(container, res.image_url || '', 'extrusion');
+                            window.BobinImagePicker.setEditable(container, false, 'extrusion');
+                        }
                         if (window.Toast && window.Toast.flash) {
                             window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
                         }
@@ -479,6 +561,128 @@ async function handleConfirm(buttonElement, bobinCode) {
                 } catch (err) {
                     Toast.show(`❌ ${err.message}`, 'error');
                     buttonElement.innerText = originalText;
+                    buttonElement.disabled = false;
+                }
+            },
+            true // requirePassword = true
+        );
+    } catch (err) {
+        Toast.show(`❌ ${err.message}`, 'error');
+    }
+}
+
+/* =========================================
+    HÀM XỬ LÝ: Chỉ cập nhật hình ảnh biểu đồ Đùn (TASK-054)
+    Áp dụng cho Bobin đã được QC (Busy_Checked) hoặc Cuộn (Rolled) xác nhận
+========================================= */
+async function handleImageOnlyConfirm(buttonElement, bobinCode, bobinKeyCode) {
+    try {
+        const container = buttonElement.closest('.bobin-item');
+        if (!container) throw new Error("Không tìm thấy dòng Bobin tương ứng.");
+
+        const resolvedKeyCode = (bobinKeyCode || container.dataset.bobinKey || '').trim();
+        if (!resolvedKeyCode) {
+            throw new Error(trExt('err_ext_img_cycle_not_found', 'Không xác định được mã chu kỳ Bobin.'));
+        }
+
+        const imgState = window.BobinImagePicker
+            ? window.BobinImagePicker.getState(container, 'extrusion')
+            : { file: null, action: 'keep' };
+
+        const hasNewFile = Boolean(imgState.file);
+        const isDeleting = (imgState.action === 'delete');
+
+        if (!hasNewFile && !isDeleting) {
+            Toast.show('⚠️ ' + trExt('err_ext_img_no_change', 'Chưa có thay đổi hình ảnh nào được chọn (thêm, đổi hoặc xóa ảnh)!'), 'error');
+            return;
+        }
+
+        const currentStatus = (container.dataset.currentStatus || 'Busy_Checked').trim();
+        const statusLabel = currentStatus === 'Rolled'
+            ? trExt('status_rolled', 'ĐÃ CUỘN')
+            : (currentStatus === 'Busy_Checked'
+                ? trExt('status_busy_checked', 'ĐÃ KIỂM TRA QC')
+                : trExt('status_busy_unchecked', 'CHƯA KIỂM TRA QC'));
+
+        const lblBobinCode = trExt('lbl_bobin_id_code', 'Mã Bobin');
+        const lblStatusKept = trExt('lbl_current_status_kept', 'Trạng thái hiện tại (Giữ nguyên)');
+        const lblExtImg = trExt('lbl_ext_chart_image', 'Ảnh biểu đồ dữ liệu đo (Đùn)');
+        const extImgSummary = window.BobinImagePicker
+            ? window.BobinImagePicker.getStatusSummaryText(container, 'extrusion')
+            : '---';
+
+        const reviewHTML = `
+            <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
+                <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;">
+                    <strong>${lblBobinCode}:</strong>
+                    <span style="color: #1d4ed8; font-family: monospace; font-weight: 800;">${bobinCode}</span>
+                </li>
+                <li style="margin-bottom: 6px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px; display: flex; justify-content: space-between;">
+                    <strong>${lblStatusKept}:</strong>
+                    <span style="color: #047857; font-weight: 800;">${statusLabel}</span>
+                </li>
+                <li style="display: flex; justify-content: space-between; gap: 8px;">
+                    <strong>${lblExtImg}:</strong>
+                    <span style="color: #1d4ed8; font-weight: 700; text-align: right;">${extImgSummary}</span>
+                </li>
+            </ul>
+            <div style="margin-top: 10px; padding: 8px 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; color: #1e40af; font-size: 12px; line-height: 1.45; text-align: left;">
+                🔒 ${trExt('ext_img_only_lock_notice', 'Chỉ cập nhật ảnh biểu đồ Đùn — Giữ nguyên 100% trạng thái Bobin, thông tin sản xuất, thông tin QC và thông tin Cuộn.')}
+            </div>
+        `;
+
+        ConfirmDialog.show(
+            trExt('confirm_ext_img_only_title', 'Xác nhận cập nhật ảnh biểu đồ Đùn'),
+            `
+            <div style="background-color: #e0f2fe; color: #0369a1; padding: 8px 12px; border-radius: 4px; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #0284c7;">
+                🖼️ ${trExt('confirm_ext_img_only_sub', 'Xác nhận lưu thay đổi hình ảnh biểu đồ dữ liệu đo cho Bobin này:')}
+            </div>
+            ${reviewHTML}
+            `,
+            async (confirmedPassword) => {
+                const originalHTML = buttonElement.innerHTML;
+                buttonElement.textContent = trExt('saving', 'Đang lưu...');
+                buttonElement.disabled = true;
+
+                const payload = {
+                    bobin_identification_code: bobinCode,
+                    bobin_key_code: resolvedKeyCode,
+                    confirm_password: confirmedPassword || ''
+                };
+
+                try {
+                    const apiUrl = `${API_BASE_URL}bobin/extrusionUpdateChartImage`;
+                    const reqInit = window.BobinImagePicker
+                        ? window.BobinImagePicker.buildRequestInit(payload, container, 'extrusion')
+                        : {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(payload)
+                        };
+
+                    const response = await fetch(apiUrl, reqInit);
+                    const res = await response.json();
+
+                    if (res.success) {
+                        if (window.BobinImagePicker) {
+                            window.BobinImagePicker.commitServerUrl(container, res.image_url || '', 'extrusion');
+                            window.BobinImagePicker.setEditable(container, false, 'extrusion');
+                        }
+                        if (window.Toast && window.Toast.flash) {
+                            window.Toast.flash(res.message || trExt('toast_updated_success', 'Cập nhật thành công!'), 'success');
+                        }
+                        buttonElement.textContent = trExt('saved', 'Đã lưu ✔️');
+                        currentEditingContainer = null;
+                        originalDataBackup = null;
+                        setTimeout(() => window.location.reload(), 450);
+                    } else {
+                        Toast.show(`❌ ${res.message || trExt('save_failed', 'Lưu thất bại')}`, 'error');
+                        buttonElement.innerHTML = originalHTML;
+                        buttonElement.disabled = false;
+                    }
+                } catch (err) {
+                    Toast.show(`❌ ${err.message}`, 'error');
+                    buttonElement.innerHTML = originalHTML;
                     buttonElement.disabled = false;
                 }
             },

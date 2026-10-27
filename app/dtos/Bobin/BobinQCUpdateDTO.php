@@ -18,6 +18,8 @@ class BobinQCUpdateDTO
     public bool $defect_deformation;
     public string $defect_note;
     public string $confirm_password;
+    public ?string $qc_visual_image = null;
+    public string $qc_image_action = 'keep';
 
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
@@ -31,22 +33,27 @@ class BobinQCUpdateDTO
         $dto->inspector_code = $request['inspector_code'] ?? 'Chưa cập nhật';
         $dto->inspector_name = $request['inspector_name'] ?? 'Chưa cập nhật';
 
-        // Filter boolean (checkbox HTML gửi 'on' hoặc không gửi gì, hoặc string 'true'/'false')
-        $dto->defect_gel = filter_var($request['defect_gel'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_foreign_object = filter_var($request['defect_foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_color_issue = filter_var($request['defect_color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_print_quality = filter_var($request['defect_print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_clump = filter_var($request['defect_clump'] ?? $request['defect_lump'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_scratch = filter_var($request['defect_scratch'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_streak = filter_var($request['defect_streak'] ?? $request['defect_scuff'] ?? false, FILTER_VALIDATE_BOOLEAN);
-        $dto->defect_deformation = filter_var($request['defect_deformation'] ?? $request['defect_deformed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        // Hỗ trợ cả cấu trúc phẳng (defect_gel) và cấu trúc lồng nhau (defects.gel từ trang Điều chỉnh QC)
+        $defectsNested = (isset($request['defects']) && is_array($request['defects'])) ? $request['defects'] : [];
 
-        if (isset($request['defect_note']) && !empty(trim($request['defect_note']))) {
-            $dto->defect_note = trim($request['defect_note']);
+        // Filter boolean (checkbox HTML gửi 'on' hoặc không gửi gì, hoặc string 'true'/'false')
+        $dto->defect_gel = filter_var($request['defect_gel'] ?? $defectsNested['gel'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_foreign_object = filter_var($request['defect_foreign_object'] ?? $defectsNested['foreign_object'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_color_issue = filter_var($request['defect_color_issue'] ?? $defectsNested['color_issue'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_print_quality = filter_var($request['defect_print_quality'] ?? $defectsNested['print_quality'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_clump = filter_var($request['defect_clump'] ?? $request['defect_lump'] ?? $defectsNested['clump'] ?? $defectsNested['lump'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_scratch = filter_var($request['defect_scratch'] ?? $defectsNested['scratch'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_streak = filter_var($request['defect_streak'] ?? $request['defect_scuff'] ?? $defectsNested['streak'] ?? $defectsNested['scuff'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $dto->defect_deformation = filter_var($request['defect_deformation'] ?? $request['defect_deformed'] ?? $defectsNested['deformation'] ?? $defectsNested['deformed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        $rawNote = $request['defect_note'] ?? ($defectsNested['note'] ?? '');
+        if (is_string($rawNote) && !empty(trim($rawNote))) {
+            $dto->defect_note = trim($rawNote);
         } else {
             $dto->defect_note = 'Chưa cập nhật';
         }
         $dto->confirm_password = trim($request['confirm_password'] ?? '');
+        $dto->qc_image_action = strtolower(trim((string)($request['qc_image_action'] ?? 'keep')));
         return $dto;
     }
 }

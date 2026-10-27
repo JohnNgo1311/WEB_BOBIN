@@ -278,6 +278,23 @@ function buildReviewHTML(form, fd) {
   }
 
   html += `</div></div>`;
+
+  if (window.BobinImagePicker) {
+    const imgLbl = window.t
+      ? window.t("lbl_ext_chart_image", "Ảnh biểu đồ giá trị đo (Đùn)")
+      : "Ảnh biểu đồ giá trị đo (Đùn)";
+    const imgStatus = window.BobinImagePicker.getStatusSummaryText(
+      form,
+      "extrusion",
+    );
+    html += `
+      <div style="margin-top: 8px; padding: 8px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
+        <strong style="color: #0f172a;">🖼️ ${imgLbl}:</strong>
+        <span style="color: #0369a1; font-weight: 700;">${imgStatus}</span>
+      </div>
+    `;
+  }
+
   return html;
 }
 
@@ -293,10 +310,25 @@ function registerAjaxForm(
   const form = document.querySelector(formSelector);
   if (!form) return;
 
+  form.addEventListener("reset", () => {
+    if (window.BobinImagePicker) {
+      window.BobinImagePicker.reset(form, "extrusion");
+    }
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const fd = new FormData(form);
+
+    if (window.BobinImagePicker) {
+      const pState = window.BobinImagePicker.getState(form, "extrusion");
+      if (pState && pState.file) {
+        fd.set("extrusion_chart_image", pState.file);
+      } else {
+        fd.delete("extrusion_chart_image");
+      }
+    }
 
     // 1. Gom dữ liệu từ 5 nút toggle Ngoại quan Đùn
     form.querySelectorAll(".ext-toggle-btn").forEach((btn) => {
@@ -370,6 +402,9 @@ async function submitForm(form, apiUrl, method, formData, onSuccessCallback) {
       const rackInput = form.querySelector('input[name="rack_code"]');
       if (rackInput) rackInput.value = "";
 
+      if (window.BobinImagePicker) {
+        window.BobinImagePicker.reset(form, "extrusion");
+      }
 
       onSuccessCallback?.(res, form);
     } else {

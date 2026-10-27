@@ -48,7 +48,12 @@ if (!function_exists('decodeJsonObject')) {
 // Thống kê nhanh KPI theo tập bản ghi hiện tại
 $extCheckOkCount = 0;
 $extCheckNgCount = 0;
+$imageOnlyCount  = 0;
 foreach ($bobins as $b) {
+    $bStatus = trim((string)($b['bobin_current_status'] ?? 'Busy_Unchecked'));
+    if (in_array($bStatus, ['Busy_Checked', 'Rolled'], true)) {
+        $imageOnlyCount++;
+    }
     $chk = decodeJsonObject($b['extrusion_check'] ?? '');
     $isAllOk = ($chk['diameter'] ?? true) &&
         ($chk['gel'] ?? true) &&
@@ -65,6 +70,7 @@ foreach ($bobins as $b) {
         $extCheckNgCount++;
     }
 }
+$selectedStatus = trim((string)($_GET['status'] ?? 'all'));
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -147,7 +153,13 @@ foreach ($bobins as $b) {
                 </div>
             </div>
 
-
+            <div class="ext-stat-card stat-status">
+                <div class="ext-stat-icon-wrap">🖼️</div>
+                <div class="ext-stat-info">
+                    <span class="ext-stat-val"><?= number_format($imageOnlyCount) ?></span>
+                    <span class="ext-stat-label" data-i18n="ext_kpi_image_only"><?= __('ext_kpi_image_only') ?></span>
+                </div>
+            </div>
         </section>
 
         <!-- QR SCANNER CONTAINER -->
@@ -177,6 +189,21 @@ foreach ($bobins as $b) {
                         data-i18n="[placeholder]ph_scan_bobin" value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>"
                         autocomplete="off">
                 </div>
+
+                <select name="status" id="statusFilter" class="ext-status-filter-select" onchange="this.form.submit()">
+                    <option value="all" data-i18n="ext_filter_status_all" <?= ($selectedStatus === '' || $selectedStatus === 'all') ? 'selected' : '' ?>>
+                        <?= __('ext_filter_status_all') ?>
+                    </option>
+                    <option value="Busy_Unchecked" data-i18n="ext_filter_status_unchecked" <?= $selectedStatus === 'Busy_Unchecked' ? 'selected' : '' ?>>
+                        <?= __('ext_filter_status_unchecked') ?>
+                    </option>
+                    <option value="Busy_Checked" data-i18n="ext_filter_status_checked" <?= $selectedStatus === 'Busy_Checked' ? 'selected' : '' ?>>
+                        <?= __('ext_filter_status_checked') ?>
+                    </option>
+                    <option value="Rolled" data-i18n="ext_filter_status_rolled" <?= $selectedStatus === 'Rolled' ? 'selected' : '' ?>>
+                        <?= __('ext_filter_status_rolled') ?>
+                    </option>
+                </select>
 
                 <button type="button" id="btnScanQR" class="ext-btn-action ext-btn-scan">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -252,10 +279,25 @@ foreach ($bobins as $b) {
                         $ts = strtotime($finishTimeRaw);
                         if ($ts) $finishTimeVal = date('Y-m-d\TH:i:s', $ts);
                     }
+
+                    $rawStatus = trim((string)($item['bobin_current_status'] ?? 'Busy_Unchecked'));
+                    $isImageOnlyMode = in_array($rawStatus, ['Busy_Checked', 'Rolled'], true);
+                    $statusCardClass = match ($rawStatus) {
+                        'Busy_Checked' => 'status_busy_checked',
+                        'Rolled'       => 'status_rolled',
+                        default        => 'status_busy_unchecked',
+                    };
+                    [$statusIcon, $statusI18nKey] = match ($rawStatus) {
+                        'Busy_Checked' => ['🛡️', 'status_busy_checked'],
+                        'Rolled'       => ['✅', 'status_rolled'],
+                        default        => ['🏭', 'status_busy_unchecked'],
+                    };
                     ?>
-                    <div class="ext-card bobin-item status_busy_unchecked"
+                    <div class="ext-card bobin-item <?= $statusCardClass ?> <?= $isImageOnlyMode ? 'is-image-only-card' : '' ?>"
                         data-bobin-code="<?= htmlspecialchars($item['bobin_identification_code']) ?>"
-                        data-bobin-key="<?= htmlspecialchars($item['bobin_key_code']) ?>">
+                        data-bobin-key="<?= htmlspecialchars($item['bobin_key_code']) ?>"
+                        data-current-status="<?= htmlspecialchars($rawStatus) ?>"
+                        data-image-only="<?= $isImageOnlyMode ? '1' : '0' ?>">
 
                         <!-- Card Header -->
                         <div class="ext-card-header card-top">
@@ -265,10 +307,17 @@ foreach ($bobins as $b) {
                                 <span class="ext-key-code key-code"><?= $displayKey ?></span>
                             </div>
                             <div class="ext-status-badge status-badge">
-                                <span>🏭</span>
-                                <span data-i18n="status_busy_unchecked"><?= __('status_busy_unchecked') ?></span>
+                                <span><?= $statusIcon ?></span>
+                                <span data-i18n="<?= $statusI18nKey ?>"><?= __($statusI18nKey) ?></span>
                             </div>
                         </div>
+
+                        <?php if ($isImageOnlyMode): ?>
+                            <div class="ext-img-only-banner">
+                                <span class="ext-img-only-banner-icon">🔒</span>
+                                <span data-i18n="ext_img_only_lock_notice"><?= __('ext_img_only_lock_notice') ?></span>
+                            </div>
+                        <?php endif; ?>
 
                         <!-- Card Body (3 Columns Section Architecture) -->
                         <div class="ext-card-body info-grid">
@@ -459,6 +508,8 @@ foreach ($bobins as $b) {
                                     </div>
                                 <?php endforeach; ?>
                             </div>
+
+                            <?= BobinImageHelper::renderPickerWidget('extrusion', 'extrusion_chart_image', $item['extrusion_chart_image'] ?? null, true, (string)($item['bobin_identification_code'] ?? ''), 'edit') ?>
                         </div>
 
                         <!-- Card Footer -->
@@ -474,31 +525,50 @@ foreach ($bobins as $b) {
                             <?php endif; ?>
 
                             <div class="ext-btn-group button-group">
-                                <!-- Nút Sửa ban đầu -->
-                                <button type="button" class="ext-btn btn-primary-edit btn-edit" onclick="startEdit(this)">
-                                    <span>✏️</span>
-                                    <span data-i18n="ext_btn_edit"><?= __('ext_btn_edit') ?></span>
-                                </button>
-
-                                <!-- Nút Hủy và Lưu (chỉ hiện khi bấm Chỉnh sửa) -->
-                                <button type="button" class="ext-btn btn-cancel btn-cancel-edit" style="display: none;"
-                                    onclick="cancelEdit(this)">
-                                    <span>✕</span>
-                                    <span data-i18n="ext_btn_cancel"><?= __('ext_btn_cancel') ?></span>
-                                </button>
-                                <button type="button" class="ext-btn btn-save btn-confirm" style="display: none;"
-                                    onclick="handleConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
-                                    <span>💾</span>
-                                    <span data-i18n="ext_btn_save"><?= __('ext_btn_save') ?></span>
-                                </button>
-
-                                <!-- Nút Hủy Bobin (chỉ hiển thị khi có quyền extrusion_edit_cancel) -->
-                                <?php if ($canCancelExtrusionBobin): ?>
-                                    <button type="button" class="ext-btn btn-delete-scrap btn-delete"
-                                        onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
-                                        <span>🗑️</span>
-                                        <span data-i18n="ext_btn_delete"><?= __('ext_btn_delete') ?></span>
+                                <?php if ($isImageOnlyMode): ?>
+                                    <!-- Chế độ chỉ cập nhật ảnh biểu đồ Đùn (Bobin đã qua QC / Cuộn) -->
+                                    <button type="button" class="ext-btn btn-primary-edit btn-edit" onclick="startEdit(this)">
+                                        <span>🖼️</span>
+                                        <span data-i18n="btn_ext_manage_chart_img"><?= __('btn_ext_manage_chart_img') ?></span>
                                     </button>
+
+                                    <button type="button" class="ext-btn btn-cancel btn-cancel-edit" style="display: none;"
+                                        onclick="cancelEdit(this)">
+                                        <span>✕</span>
+                                        <span data-i18n="ext_btn_cancel"><?= __('ext_btn_cancel') ?></span>
+                                    </button>
+                                    <button type="button" class="ext-btn btn-save btn-confirm" style="display: none;"
+                                        onclick="handleImageOnlyConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
+                                        <span>💾</span>
+                                        <span data-i18n="btn_ext_save_chart_img"><?= __('btn_ext_save_chart_img') ?></span>
+                                    </button>
+                                <?php else: ?>
+                                    <!-- Nút Sửa đầy đủ (Bobin đang ở trạng thái Busy_Unchecked) -->
+                                    <button type="button" class="ext-btn btn-primary-edit btn-edit" onclick="startEdit(this)">
+                                        <span>✏️</span>
+                                        <span data-i18n="ext_btn_edit"><?= __('ext_btn_edit') ?></span>
+                                    </button>
+
+                                    <!-- Nút Hủy và Lưu (chỉ hiện khi bấm Chỉnh sửa) -->
+                                    <button type="button" class="ext-btn btn-cancel btn-cancel-edit" style="display: none;"
+                                        onclick="cancelEdit(this)">
+                                        <span>✕</span>
+                                        <span data-i18n="ext_btn_cancel"><?= __('ext_btn_cancel') ?></span>
+                                    </button>
+                                    <button type="button" class="ext-btn btn-save btn-confirm" style="display: none;"
+                                        onclick="handleConfirm(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>')">
+                                        <span>💾</span>
+                                        <span data-i18n="ext_btn_save"><?= __('ext_btn_save') ?></span>
+                                    </button>
+
+                                    <!-- Nút Hủy Bobin (chỉ hiển thị khi có quyền extrusion_edit_cancel và trạng thái Busy_Unchecked) -->
+                                    <?php if ($canCancelExtrusionBobin): ?>
+                                        <button type="button" class="ext-btn btn-delete-scrap btn-delete"
+                                            onclick="handleDelete(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
+                                            <span>🗑️</span>
+                                            <span data-i18n="ext_btn_delete"><?= __('ext_btn_delete') ?></span>
+                                        </button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>

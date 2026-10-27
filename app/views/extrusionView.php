@@ -296,6 +296,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <?= BobinImageHelper::renderPickerWidget('extrusion', 'extrusion_chart_image', null, false, '', 'create') ?>
             </div>
 
             <!-- ================= NÚT BẤM HÀNH ĐỘNG ================= -->

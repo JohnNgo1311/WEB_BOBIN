@@ -860,6 +860,10 @@ function handleWindingCancel(
                     ${escapeHtml(initialCombinedNote || 'Chưa chọn hạng mục lỗi NG')}
                 </div>
             </li>
+            ${window.BobinImagePicker ? `<li style="margin-top:6px; padding-top:4px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between;">
+                <strong>🖼️ ${window.t ? window.t('lbl_wnd_chart_image', 'Ảnh biểu đồ giá trị đo (Cuộn)') : 'Ảnh biểu đồ giá trị đo (Cuộn)'}:</strong>
+                <span style="color:#0369a1; font-weight:700;">${escapeHtml(window.BobinImagePicker.getStatusSummaryText(container, 'winding'))}</span>
+            </li>` : ''}
         </ul>
     `;
 
@@ -959,14 +963,17 @@ function handleWindingCancel(
             btnElement.disabled = true;
 
             try {
-                const response = await fetch(requestUrl, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(bodyData)
-                });
+                const reqInit = window.BobinImagePicker
+                    ? window.BobinImagePicker.buildRequestInit(bodyData, container, 'winding')
+                    : {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(bodyData)
+                    };
+                const response = await fetch(requestUrl, reqInit);
 
                 const data = await response.json();
 
@@ -1326,6 +1333,10 @@ function handleWindingConfirm(
                 </span>
 
             </li>
+            ${window.BobinImagePicker ? `<li style="margin-top:6px; padding-top:4px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between;">
+                <strong>🖼️ ${window.t ? window.t('lbl_wnd_chart_image', 'Ảnh biểu đồ giá trị đo (Cuộn)') : 'Ảnh biểu đồ giá trị đo (Cuộn)'}:</strong>
+                <span style="color:#0369a1; font-weight:700;">${escapeHtml(window.BobinImagePicker.getStatusSummaryText(container, 'winding'))}</span>
+            </li>` : ''}
 
         </ul>
 
@@ -1378,25 +1389,21 @@ function handleWindingConfirm(
 
             try {
 
+                const reqInit = window.BobinImagePicker
+                    ? window.BobinImagePicker.buildRequestInit(bodyData, container, 'winding')
+                    : {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(bodyData)
+                    };
+
                 const response =
                     await fetch(
                         requestUrl,
-                        {
-                            method: 'PUT',
-
-                            headers: {
-                                'Content-Type':
-                                    'application/json',
-
-                                'Accept':
-                                    'application/json'
-                            },
-
-                            body:
-                                JSON.stringify(
-                                    bodyData
-                                )
-                        }
+                        reqInit
                     );
 
 

@@ -126,6 +126,11 @@ function startWindingEdit(btnElement) {
     const inputs = container.querySelectorAll('.input-winding-machine, .input-winding-employee-code, .select-flow-result, .input-winding-note');
     inputs.forEach(input => input.disabled = false);
 
+    if (window.BobinImagePicker) {
+        window.BobinImagePicker.backupState(container, 'winding');
+        window.BobinImagePicker.setEditable(container, true, 'winding');
+    }
+
     container.querySelector('.btn-edit').style.display = 'none';
     if (container.querySelector('.btn-cancel-bobin')) {
         container.querySelector('.btn-cancel-bobin').style.display = 'none';
@@ -164,6 +169,11 @@ function cancelWindingEdit(btnElement) {
 
     const inputs = container.querySelectorAll('.input-winding-machine, .input-winding-employee-code, .select-flow-result, .input-winding-note');
     inputs.forEach(input => input.disabled = true);
+
+    if (window.BobinImagePicker) {
+        window.BobinImagePicker.restoreState(container, 'winding');
+        window.BobinImagePicker.setEditable(container, false, 'winding');
+    }
 
     container.querySelector('.btn-edit').style.display = 'inline-flex';
     if (container.querySelector('.btn-cancel-bobin')) {
@@ -207,6 +217,10 @@ async function handleWindingConfirm(buttonElement, bobinCode, bobinKeyCode) {
             winding_note: note
         };
 
+        const imgStatusLine = window.BobinImagePicker
+            ? `<li style="margin-top: 5px; border-top: 1px dashed #ccc; padding-top: 4px; display: flex; justify-content: space-between;"><strong>🖼️ ${window.t ? window.t('lbl_wnd_chart_image', 'Ảnh biểu đồ giá trị đo (Cuộn)') : 'Ảnh biểu đồ giá trị đo (Cuộn)'}:</strong> <span style="color: #0369a1; font-weight: 700;">${window.BobinImagePicker.getStatusSummaryText(container, 'winding')}</span></li>`
+            : '';
+
         const reviewHTML = `
             <ul style="list-style: none; padding: 10px 12px; background: #f8fafc; border-radius: 6px; text-align: left; border: 1px solid #e2e8f0; margin: 0;">
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Mã Bobin:</strong> <span style="color: #0056b3; font-weight: bold;">${bobinCode}</span></li>
@@ -214,6 +228,7 @@ async function handleWindingConfirm(buttonElement, bobinCode, bobinKeyCode) {
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Nhân viên cuộn:</strong> <span>${employeeCode} - ${employeeName}</span></li>
                 <li style="margin-bottom: 5px; border-bottom: 1px dashed #ccc; padding-bottom: 3px; display: flex; justify-content: space-between;"><strong>Thông khí:</strong> <span class="${flowResult === 'Thành công' ? 'vi-badge-ok' : 'vi-badge-ng'}">${flowResult}</span></li>
                 <li style="display: flex; justify-content: space-between;"><strong>Ghi chú:</strong> <span>${note || 'Không có'}</span></li>
+                ${imgStatusLine}
             </ul>
         `;
 
@@ -234,14 +249,21 @@ async function handleWindingConfirm(buttonElement, bobinCode, bobinKeyCode) {
 
                 try {
                     const apiUrl = `${API_BASE_URL}bobin/updateWindingEditBobin`;
-                    const response = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
+                    const reqInit = window.BobinImagePicker
+                        ? window.BobinImagePicker.buildRequestInit(payload, container, 'winding')
+                        : {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(payload)
+                        };
+                    const response = await fetch(apiUrl, reqInit);
 
                     const res = await response.json();
                     if (res.success) {
+                        if (window.BobinImagePicker) {
+                            window.BobinImagePicker.commitServerUrl(container, res.image_url || '', 'winding');
+                            window.BobinImagePicker.setEditable(container, false, 'winding');
+                        }
                         if (window.Toast && window.Toast.flash) {
                             window.Toast.flash(res.message || (window.t ? window.t('toast_updated_success') : 'Cập nhật thành công!'), 'success');
                         }
@@ -541,14 +563,17 @@ async function handleWindingEditCancel(btnElement, bobinCode, bobinKeyCode) {
         };
 
         try {
-            const response = await fetch(API_BASE_URL + 'bobin/windingCancelBobin', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
+            const reqInit = window.BobinImagePicker
+                ? window.BobinImagePicker.buildRequestInit(payload, container, 'winding')
+                : {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                };
+            const response = await fetch(API_BASE_URL + 'bobin/windingCancelBobin', reqInit);
 
             const data = await response.json();
             if (data.success) {

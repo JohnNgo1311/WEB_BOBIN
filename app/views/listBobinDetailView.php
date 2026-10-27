@@ -1198,6 +1198,9 @@ $typeOptions = [
                                             ?>
                                         </div>
                                     <?php endif; ?>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- CỘT 2: QC CHECK -->
@@ -1242,6 +1245,9 @@ $typeOptions = [
                                             <div class="qc-note">📝 <?= htmlspecialchars($defects['note']) ?></div>
                                         <?php endif; ?>
                                     <?php endif; ?>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('qc', $item['qc_visual_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- CỘT 3: THÔNG TIN CUỘN -->
@@ -1278,6 +1284,9 @@ $typeOptions = [
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('winding', $item['winding_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
                             </div>
 

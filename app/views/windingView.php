@@ -477,6 +477,9 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
+                                    <div style="margin-top: 6px;">
+                                        <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- QC ĐÁNH GIÁ -->
@@ -528,6 +531,9 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                             <span>Ghi chú QC:</span> <?= htmlspecialchars($defects['note']) ?>
                                         </div>
                                     <?php endif; ?>
+                                    <div style="margin-top: 6px;">
+                                        <?= BobinImageHelper::renderViewButton('qc', $item['qc_visual_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
                             </div>
 
@@ -592,6 +598,15 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                             data-i18n-ph="ph_winding_note_explain">
                                     </div>
                                 </div>
+
+                                <?= BobinImageHelper::renderPickerWidget(
+                                    'winding',
+                                    'winding_chart_image',
+                                    strtolower((string)($item['bobin_current_status'] ?? '')) === 'rolled' ? ($item['winding_chart_image'] ?? null) : null,
+                                    false,
+                                    (string)($item['bobin_identification_code'] ?? ''),
+                                    'confirm'
+                                ) ?>
                             </div>
 
                             <!-- CARD FOOTER & NÚT BẤM HOÀN TẤT -->

@@ -718,17 +718,28 @@ CREATE TABLE `employee_list` (
 ## 🟡 RULES
 
 ### TASK-053
-**Status:** TODO
+**Status:** DONE
 Thêm trường dữ liệu "Hình ảnh biểu đồ" cho Bobin, cần đồng bộ dữ liệu ở tất cả các trang, trường này có kiểu dữ liệu sẽ là hình ảnh. 
 Quy trình như sau:
 + Tính năng thêm/xóa/đổi ảnh được dùng cho cả 3 nhóm Đùn/QC/Cuộn
-+ Nhóm Đùn: Nhập thông tin Bobin, có thể thêm hình ảnh biểu đồ dữ liệu đo hoặc không (Biểu đồ riêng của nhóm đùn). Tại trang điều chỉnh của nhóm đùn, nhóm đùn cũng có thể bổ sung/xóa/thay đổi ảnh tương ứng. 
-+ Nhóm QC: Có thể bổ sung hình ảnh ngoại quan nếu cần thiết. Tại trang điều chỉnh của nhóm QC, nhóm QC cũng có thể bổ sung/xóa/ thay đổi ảnh tương ứng
-+ Nhóm Cuộn: có thể thêm hình ảnh biểu đồ dữ liệu đo hoặc không (Biểu đồ riêng của nhóm Cuộn). Tại trang điều chỉnh của nhóm cuộn, nhóm cuộn cũng có thể bổ sung/xóa/thay đổi ảnh tương ứng. 
++ Nhóm Đùn: Nhập thông tin Bobin, có thể thêm hình ảnh biểu đồ dữ liệu đo hoặc không (Biểu đồ riêng của nhóm đùn), nếu không có thì mặc định là null. Tại trang điều chỉnh của nhóm đùn, nhóm đùn cũng có thể bổ sung/xóa/thay đổi ảnh tương ứng. 
++ Nhóm QC: Có thể bổ sung hình ảnh ngoại quan nếu cần thiết, nếu không có thì mặc định là null. Tại trang điều chỉnh của nhóm QC, nhóm QC cũng có thể bổ sung/xóa/ thay đổi ảnh tương ứng
++ Nhóm Cuộn: có thể thêm hình ảnh biểu đồ dữ liệu đo hoặc không (Biểu đồ riêng của nhóm Cuộn), nếu không thì giá trị mặc định là null. Tại trang điều chỉnh của nhóm cuộn, nhóm cuộn cũng có thể bổ sung/xóa/thay đổi ảnh tương ứng. 
 + 3 loại hình ảnh trên của 3 nhóm là khác nhau, cần phân biệt rõ rệt theo Nhóm mà user thuộc về để phân quyền
 + Tại toàn bộ trang danh sách, khi render danh sách, không cần render hình ảnh ngay lặp tức. Tương ứng với dữ liệu từng nhóm sẽ có 1 nút "Xem hình ảnh", khi nhấn vào nút này thì hình ảnh sẽ hiển thị ra như dạng Dialog giữa màn hình.
++ Trong trường hợp dữ liệu không có hình ảnh => "Không có hình ảnh đi kèm"
 + Hình ảnh có thể được thêm vào bằng cách chụp/lấy từ thư viện (Đối với điện thoại), hoặc chọn mục hình ảnh (Đối với máy tính desktop)
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:
+### TASK-054
+**Status:** DONE
+Hiện tại, cần cải tiến chức năng bổ sung hình ảnh của nhóm Đùn trong hệ thống WEB_BOBIN.
+Yêu cầu nghiệp vụ:
+Nhóm Đùn được phép bổ sung hình ảnh cho Bobin ngay cả khi Bobin đó đã có thông tin được xác nhận hoặc cập nhật bởi nhóm QC và nhóm Cuộn.
+Khi bổ sung hình ảnh, nhóm Đùn chỉ được phép thay đổi dữ liệu hình ảnh.
+Nhóm Đùn không được phép chỉnh sửa, ghi đè, xóa hoặc làm thay đổi bất kỳ thông tin nghiệp vụ nào khác của Bobin ngoài phạm vi hình ảnh được cho phép.
+Việc bổ sung hình ảnh không được làm thay đổi trạng thái Bobin, thông tin QC, thông tin Cuộn
+Hãy đưua ra phương pháp cải tiến để tôi xác nhận trước khi thực hiện
+
 
 ## 0. Security
 

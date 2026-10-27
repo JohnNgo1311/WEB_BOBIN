@@ -420,20 +420,23 @@ if (!function_exists('decodeJsonObject')) {
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                 </svg>
-                                <span data-i18n="btn_export_excel_dropdown"><?= __('btn_export_excel_dropdown') ?? 'Xuất Excel ▾' ?></span>
+                                <span
+                                    data-i18n="btn_export_excel_dropdown"><?= __('btn_export_excel_dropdown') ?? 'Xuất Excel ▾' ?></span>
                             </button>
                             <div class="export-dropdown-menu" id="exportMenuBox">
                                 <a href="<?= $exportUrl ?>" class="export-menu-item">
                                     <span class="menu-item-icon">📄</span>
                                     <div class="menu-item-text">
-                                        <strong data-i18n="export_all_results"><?= __('export_all_results') ?? 'Xuất toàn bộ kết quả lọc' ?></strong>
+                                        <strong
+                                            data-i18n="export_all_results"><?= __('export_all_results') ?? 'Xuất toàn bộ kết quả lọc' ?></strong>
                                         <small>Tất cả <?= number_format($totalRecords) ?> lượt cập nhật</small>
                                     </div>
                                 </a>
                                 <button type="button" class="export-menu-item" id="btnExportSelectedItems">
                                     <span class="menu-item-icon">☑️</span>
                                     <div class="menu-item-text">
-                                        <strong data-i18n="export_selected_bobins"><?= __('export_selected_bobins') ?? 'Xuất các bản ghi đã chọn' ?></strong>
+                                        <strong
+                                            data-i18n="export_selected_bobins"><?= __('export_selected_bobins') ?? 'Xuất các bản ghi đã chọn' ?></strong>
                                         <small id="selectedCountText">Đã chọn: 0 bản ghi</small>
                                     </div>
                                 </button>
@@ -1228,6 +1231,9 @@ if (!function_exists('decodeJsonObject')) {
                                             ?>
                                         </div>
                                     <?php endif; ?>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- CỘT 2: QC CHECK -->
@@ -1272,6 +1278,9 @@ if (!function_exists('decodeJsonObject')) {
                                             <div class="qc-note">📝 <?= htmlspecialchars($defects['note']) ?></div>
                                         <?php endif; ?>
                                     <?php endif; ?>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('qc', $item['qc_visual_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- CỘT 3: THÔNG TIN CUỘN -->
@@ -1308,6 +1317,9 @@ if (!function_exists('decodeJsonObject')) {
                                             <?php endif; ?>
                                         </div>
                                     <?php endif; ?>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('winding', $item['winding_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
                             </div>
 

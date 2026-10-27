@@ -15,6 +15,7 @@ class BobinWindingCancelDTO
     public ?string $source = null;
     public ?string $finished_product_qty = null;
     public ?string $cancel_reason = null;
+    public ?string $winding_chart_image = null;
 
     // Hàm static để map dữ liệu từ Request (Form) sang DTO
     public static function fromRequest(array $request): self

@@ -11,6 +11,34 @@ class BobinRepository
     {
         $this->db = Database::getInstance();
     }
+
+    public function getPdo(): PDO
+    {
+        return $this->db->pdo();
+    }
+
+    public function getBobinCurrentImages(string $identCode, ?string $keyCode = null): ?array
+    {
+        $pdo = $this->db->pdo();
+        try {
+            $sql = "SELECT bobin_key_code, bobin_current_status, extrusion_chart_image, qc_visual_image, winding_chart_image
+                    FROM bobin_list_detail
+                    WHERE bobin_identification_code = :ident";
+            $params = [':ident' => $identCode];
+            if (!empty($keyCode)) {
+                $sql .= " AND bobin_key_code = :key";
+                $params[':key'] = $keyCode;
+            }
+            $sql .= " LIMIT 1";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ?: null;
+        } catch (PDOException $e) {
+            error_log("DB getBobinCurrentImages Error: " . $e->getMessage());
+            return null;
+        }
+    }
     private ?array $cachedRacks = null;
     private ?array $cachedCapacities = null;
 
@@ -1291,13 +1319,26 @@ class BobinRepository
         }
     }
 
+    private function buildExtrusionEditStatusCondition(string $statusFilter): string
+    {
+        $statusFilter = trim($statusFilter);
+        return match ($statusFilter) {
+            'Busy_Unchecked' => "bobin_current_status = 'Busy_Unchecked'",
+            'Busy_Checked'   => "bobin_current_status = 'Busy_Checked'",
+            'Rolled'         => "bobin_current_status = 'Rolled'",
+            'post_qc'        => "bobin_current_status IN ('Busy_Checked', 'Rolled')",
+            default          => "bobin_current_status IN ('Busy_Unchecked', 'Busy_Checked', 'Rolled')",
+        };
+    }
+
     public function getListDetailBobinsForEditting(array $filters = [], int $page = 1, int $limit = 50): array
     {
         $pdo = $this->db->pdo();
 
         try {
             $extComplete = $this->getExtrusionCompleteCondition();
-            $sql = "SELECT * FROM bobin_list_detail WHERE bobin_current_status IN ('Busy_Unchecked') AND {$extComplete}";
+            $statusCond  = $this->buildExtrusionEditStatusCondition((string)($filters['status'] ?? 'all'));
+            $sql = "SELECT * FROM bobin_list_detail WHERE {$statusCond} AND {$extComplete}";
 
             $params = [];
 
@@ -1340,7 +1381,12 @@ class BobinRepository
                     $params[":kw$i"] = $searchStr;
                 }
             }
-            $sql .= " ORDER BY bobin_identification_code ASC";
+            $sql .= " ORDER BY CASE bobin_current_status
+                WHEN 'Busy_Unchecked' THEN 1
+                WHEN 'Busy_Checked' THEN 2
+                WHEN 'Rolled' THEN 3
+                ELSE 4
+            END ASC, updated_time DESC, bobin_identification_code ASC";
 
             $offset = ($page - 1) * $limit;
             $sql .= " LIMIT :limit OFFSET :offset";
@@ -1366,7 +1412,8 @@ class BobinRepository
 
         try {
             $extComplete = $this->getExtrusionCompleteCondition();
-            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE bobin_current_status IN ('Busy_Unchecked') AND {$extComplete}";
+            $statusCond  = $this->buildExtrusionEditStatusCondition((string)($filters['status'] ?? 'all'));
+            $sql = "SELECT COUNT(*) FROM bobin_list_detail WHERE {$statusCond} AND {$extComplete}";
             $params = [];
 
             if (empty($filters['view_all'])) {
@@ -1421,19 +1468,48 @@ class BobinRepository
     /**
      * Kiểm tra xem Bobin có được tạo thông tin đùn bởi đúng User hiện tại hay không
      */
-    public function isBobinExtrusionCreatedByUser(string $identCode, string $empCode = '', int $userId = 0): bool
-    {
+    public function isBobinExtrusionCreatedByUser(
+        string $identCode,
+        string $empCode = '',
+        int $userId = 0,
+        ?array $allowedStatuses = null,
+        ?string $keyCode = null
+    ): bool {
         $identCode = trim($identCode);
         $empCode   = trim($empCode);
         if ($identCode === '' || ($empCode === '' && $userId <= 0)) {
             return false;
         }
 
+        // Chỉ cho phép các trạng thái hợp lệ (không bao giờ cho phép Pending_Cancellation / Cancelled)
+        $permittedPool = ['Busy_Unchecked', 'Busy_Checked', 'Rolled'];
+        $statuses = !empty($allowedStatuses)
+            ? array_values(array_intersect($allowedStatuses, $permittedPool))
+            : ['Busy_Unchecked'];
+
+        if (empty($statuses)) {
+            return false;
+        }
+
         $pdo = $this->db->pdo();
         try {
-            $sql = "SELECT extrusion_employee FROM bobin_list_detail WHERE bobin_identification_code = :ident AND bobin_current_status = 'Busy_Unchecked' LIMIT 1";
+            $statusPlaceholders = [];
+            $params = [':ident' => $identCode];
+            foreach ($statuses as $idx => $st) {
+                $ph = ":st_{$idx}";
+                $statusPlaceholders[] = $ph;
+                $params[$ph] = $st;
+            }
+            $inClause = implode(', ', $statusPlaceholders);
+            $sql = "SELECT extrusion_employee FROM bobin_list_detail WHERE bobin_identification_code = :ident AND bobin_current_status IN ({$inClause})";
+            if ($keyCode !== null && trim($keyCode) !== '') {
+                $sql .= " AND bobin_key_code = :key";
+                $params[':key'] = trim($keyCode);
+            }
+            $sql .= " LIMIT 1";
+
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([':ident' => $identCode]);
+            $stmt->execute($params);
             $rawExtEmp = $stmt->fetchColumn();
             if (empty($rawExtEmp)) {
                 return false;
@@ -1754,8 +1830,15 @@ class BobinRepository
         }
     }
 
-    public function adminUpdateQCBobin(string $identCode, string $keyCode, array $viData, ?string $newType, ?array $updateRecord): bool
-    {
+    public function adminUpdateQCBobin(
+        string $identCode,
+        string $keyCode,
+        array $viData,
+        ?string $newType,
+        ?array $updateRecord,
+        bool $updateQcImage = false,
+        ?string $qcImagePath = null
+    ): bool {
         $pdo = $this->db->pdo();
         try {
             $pdo->beginTransaction();
@@ -1772,18 +1855,28 @@ class BobinRepository
             }
             $histJson = !empty($histArr) ? $this->json_utf8($histArr) : null;
 
+            $imgSqlPart = $updateQcImage ? ", qc_visual_image = :qc_img" : "";
+
             if (!empty($newType)) {
-                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, bobin_type = :type, update_history = :uhist, updated_time = NOW() WHERE bobin_identification_code = :ident";
+                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, bobin_type = :type, update_history = :uhist{$imgSqlPart}, updated_time = NOW() WHERE bobin_identification_code = :ident";
                 $stmtDetail = $pdo->prepare($sqlDetail);
-                $stmtDetail->execute([':visual' => $viJson, ':type' => $newType, ':uhist' => $histJson, ':ident' => $identCode]);
+                $detailParams = [':visual' => $viJson, ':type' => $newType, ':uhist' => $histJson, ':ident' => $identCode];
+                if ($updateQcImage) {
+                    $detailParams[':qc_img'] = $qcImagePath;
+                }
+                $stmtDetail->execute($detailParams);
 
                 $sqlGen = "UPDATE bobin_list_general SET bobin_type = :type, updated_time = NOW() WHERE bobin_identification_code = :ident";
                 $stmtGen = $pdo->prepare($sqlGen);
                 $stmtGen->execute([':type' => $newType, ':ident' => $identCode]);
             } else {
-                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, update_history = :uhist, updated_time = NOW() WHERE bobin_identification_code = :ident";
+                $sqlDetail = "UPDATE bobin_list_detail SET visual_inspection = :visual, update_history = :uhist{$imgSqlPart}, updated_time = NOW() WHERE bobin_identification_code = :ident";
                 $stmtDetail = $pdo->prepare($sqlDetail);
-                $stmtDetail->execute([':visual' => $viJson, ':uhist' => $histJson, ':ident' => $identCode]);
+                $detailParams = [':visual' => $viJson, ':uhist' => $histJson, ':ident' => $identCode];
+                if ($updateQcImage) {
+                    $detailParams[':qc_img'] = $qcImagePath;
+                }
+                $stmtDetail->execute($detailParams);
             }
 
             // Cập nhật bobin_history (chỉ cập nhật bản ghi QC mới nhất, không ghi đè visual_inspection lên bản ghi Busy_Unchecked)
@@ -1805,15 +1898,23 @@ class BobinRepository
                 }
                 $histHistJson = !empty($histArrHist) ? $this->json_utf8($histArrHist) : null;
 
-                $sqlHistory = "UPDATE bobin_history SET visual_inspection = :visual, update_history = :uhist, updated_time = NOW() WHERE id = :hist_id";
+                $sqlHistory = "UPDATE bobin_history SET visual_inspection = :visual, update_history = :uhist{$imgSqlPart}, updated_time = NOW() WHERE id = :hist_id";
                 $stmtHistory = $pdo->prepare($sqlHistory);
-                $stmtHistory->execute([':visual' => $viJson, ':uhist' => $histHistJson, ':hist_id' => $histRow['id']]);
+                $histParams = [':visual' => $viJson, ':uhist' => $histHistJson, ':hist_id' => $histRow['id']];
+                if ($updateQcImage) {
+                    $histParams[':qc_img'] = $qcImagePath;
+                }
+                $stmtHistory->execute($histParams);
             }
 
-            // Đồng bộ visual_inspection cho các bản ghi sau QC của cùng chu kỳ (nếu có)
-            $sqlSyncVi = "UPDATE bobin_history SET visual_inspection = :visual, updated_time = NOW() WHERE bobin_key_code = :key AND bobin_current_status != 'Busy_Unchecked'";
+            // Đồng bộ visual_inspection (và qc_visual_image nếu đổi) cho các bản ghi sau QC của cùng chu kỳ (nếu có)
+            $sqlSyncVi = "UPDATE bobin_history SET visual_inspection = :visual{$imgSqlPart}, updated_time = NOW() WHERE bobin_key_code = :key AND bobin_current_status != 'Busy_Unchecked'";
             $stmtSyncVi = $pdo->prepare($sqlSyncVi);
-            $stmtSyncVi->execute([':visual' => $viJson, ':key' => $keyCode]);
+            $syncParams = [':visual' => $viJson, ':key' => $keyCode];
+            if ($updateQcImage) {
+                $syncParams[':qc_img'] = $qcImagePath;
+            }
+            $stmtSyncVi->execute($syncParams);
 
             if (!empty($newType)) {
                 $sqlTypeHist = "UPDATE bobin_history SET bobin_type = :type WHERE bobin_key_code = :key";
@@ -1832,8 +1933,17 @@ class BobinRepository
         }
     }
 
-    public function adminUpdateWindingBobin(string $identCode, string $keyCode, string $machine, ?array $empData, string $flowResult, string $note, ?array $updateRecord): bool
-    {
+    public function adminUpdateWindingBobin(
+        string $identCode,
+        string $keyCode,
+        string $machine,
+        ?array $empData,
+        string $flowResult,
+        string $note,
+        ?array $updateRecord,
+        bool $updateWndImage = false,
+        ?string $wndImagePath = null
+    ): bool {
         $pdo = $this->db->pdo();
         try {
             $pdo->beginTransaction();
@@ -1850,23 +1960,29 @@ class BobinRepository
             }
             $histJson = !empty($histArr) ? $this->json_utf8($histArr) : null;
 
+            $imgSqlPart = $updateWndImage ? ", winding_chart_image = :wnd_img" : "";
+
             $sqlDetail = "UPDATE bobin_list_detail SET 
                             winding_machine = :machine, 
                             winding_employee = :emp, 
                             flow_test_result = :flow, 
                             winding_note = :note, 
-                            update_history = :uhist,
+                            update_history = :uhist{$imgSqlPart},
                             updated_time = NOW() 
                           WHERE bobin_identification_code = :ident";
             $stmtDetail = $pdo->prepare($sqlDetail);
-            $stmtDetail->execute([
+            $detailParams = [
                 ':machine' => $machine,
                 ':emp'     => $empJson,
                 ':flow'    => $flowResult,
                 ':note'    => $note,
                 ':uhist'   => $histJson,
                 ':ident'   => $identCode
-            ]);
+            ];
+            if ($updateWndImage) {
+                $detailParams[':wnd_img'] = $wndImagePath;
+            }
+            $stmtDetail->execute($detailParams);
 
             // Cập nhật bobin_history (chỉ cập nhật bản ghi Rolled mới nhất của chu kỳ này)
             $currHistStmt = $pdo->prepare("SELECT id, update_history FROM bobin_history WHERE bobin_key_code = :key ORDER BY id DESC LIMIT 1");
@@ -1886,18 +2002,22 @@ class BobinRepository
                                 winding_employee = :emp, 
                                 flow_test_result = :flow, 
                                 winding_note = :note, 
-                                update_history = :uhist,
+                                update_history = :uhist{$imgSqlPart},
                                 updated_time = NOW() 
                               WHERE id = :hist_id";
                 $stmtHistory = $pdo->prepare($sqlHistory);
-                $stmtHistory->execute([
+                $histParams = [
                     ':machine' => $machine,
                     ':emp'     => $empJson,
                     ':flow'    => $flowResult,
                     ':note'    => $note,
                     ':uhist'   => $histHistJson,
                     ':hist_id' => $histRow['id']
-                ]);
+                ];
+                if ($updateWndImage) {
+                    $histParams[':wnd_img'] = $wndImagePath;
+                }
+                $stmtHistory->execute($histParams);
             }
 
             $pdo->commit();
@@ -2441,11 +2561,15 @@ class BobinRepository
                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m,
                 shift, extrusion_date, finish_time, visual_inspection, winding_machine,
-                winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, update_history, updated_time
+                winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note,
+                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                update_history, updated_time
             ) VALUES (
                 :key, :ident, :size, :type, :extrusionemp, :ext_check, :extrusion_machine, :rack, :prod, :mat, :plot, :len,
                 :shift, :edate, :ftime, :visual, :winding_machine, :winding_employee,
-                :flow_test_result, :status, :prev_status, :note, :uhist, {$timeExpression}
+                :flow_test_result, :status, :prev_status, :note,
+                :ext_img, :qc_img, :wnd_img,
+                :uhist, {$timeExpression}
             )";
 
         $stmt = $pdo->prepare($sql);
@@ -2467,11 +2591,15 @@ class BobinRepository
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
                     extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
-                    winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, updated_time
+                    winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note,
+                    extrusion_chart_image, qc_visual_image, winding_chart_image,
+                    updated_time
                 ) VALUES (
                     :key, :ident, :size, :type, :extrusionemp, :ext_check, :extrusion_machine, :rack, :prod, :mat, :plot, :len,
                     :shift, :edate, :ftime, :visual, :winding_machine, :winding_employee,
-                    :flow_test_result, :status, :prev_status, :note, :updated
+                    :flow_test_result, :status, :prev_status, :note,
+                    :ext_img, :qc_img, :wnd_img,
+                    :updated
                 ) ON DUPLICATE KEY UPDATE
                     bobin_key_code = VALUES(bobin_key_code),
                     bobin_size = VALUES(bobin_size),
@@ -2494,6 +2622,9 @@ class BobinRepository
                     winding_employee = VALUES(winding_employee),
                     flow_test_result = VALUES(flow_test_result),
                     winding_note = VALUES(winding_note),
+                    extrusion_chart_image = VALUES(extrusion_chart_image),
+                    qc_visual_image = NULL,
+                    winding_chart_image = NULL,
                     update_history = NULL,
                     updated_time = VALUES(updated_time)";
 
@@ -2554,7 +2685,10 @@ class BobinRepository
             ':winding_machine' => $entity->winding_machine,
             ':winding_employee' => $entity->winding_employee ? $this->json_utf8($entity->winding_employee) : null,
             ':flow_test_result' => $entity->flow_test_result,
-            ':note' => $entity->winding_note
+            ':note' => $entity->winding_note,
+            ':ext_img' => $entity->extrusion_chart_image,
+            ':qc_img' => $entity->qc_visual_image,
+            ':wnd_img' => $entity->winding_chart_image,
         ];
     }
     #region Ext PUT
@@ -2598,6 +2732,7 @@ class BobinRepository
                     shift = :shift,
                     extrusion_date = :edate,
                     finish_time = :ftime,
+                    extrusion_chart_image = :ext_img,
                     bobin_current_status = :status,
                     update_history = :uhist,
                     updated_time = NOW()
@@ -2656,6 +2791,7 @@ class BobinRepository
                     shift = :shift,
                     extrusion_date = :edate,
                     finish_time = :ftime,
+                    extrusion_chart_image = :ext_img,
                     bobin_current_status = :status,
                     update_history = :uhist,
                     updated_time = NOW()
@@ -2694,7 +2830,137 @@ class BobinRepository
             ':shift' => $entity->shift,
             ':edate' => $entity->extrusionDate->format('Y-m-d'),
             ':ftime' => $entity->finishTime->format('Y-m-d H:i:s'),
+            ':ext_img' => $entity->extrusion_chart_image,
         ];
+    }
+
+    /**
+     * TASK-054: Chỉ cập nhật hình ảnh biểu đồ dữ liệu đo của nhóm Đùn (extrusion_chart_image)
+     * mà KHÔNG làm thay đổi bất kỳ thông tin nghiệp vụ nào khác, KHÔNG đổi trạng thái Bobin,
+     * KHÔNG chạm thông tin QC, thông tin Cuộn, bảng bobin_list_general hay cột updated_time.
+     */
+    public function updateExtrusionChartImageOnly(
+        string $identCode,
+        string $keyCode,
+        ?string $extImagePath,
+        ?array $updateRecord = null
+    ): bool {
+        $identCode = trim($identCode);
+        $keyCode   = trim($keyCode);
+        if ($identCode === '' || $keyCode === '') {
+            throw new Exception(__('err_ext_img_cycle_not_found'));
+        }
+
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+
+            $lockStmt = $pdo->prepare(
+                "SELECT bobin_current_status, update_history
+                 FROM bobin_list_detail
+                 WHERE bobin_identification_code = :ident
+                   AND bobin_key_code = :key
+                 LIMIT 1
+                 FOR UPDATE"
+            );
+            $lockStmt->execute([
+                ':ident' => $identCode,
+                ':key'   => $keyCode,
+            ]);
+            $detailRow = $lockStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$detailRow) {
+                throw new Exception(__('err_ext_img_cycle_not_found'));
+            }
+
+            $currentStatus = trim((string)($detailRow['bobin_current_status'] ?? ''));
+            $allowedStatuses = ['Busy_Unchecked', 'Busy_Checked', 'Rolled'];
+            if (!in_array($currentStatus, $allowedStatuses, true)) {
+                throw new Exception(__('err_ext_img_status_not_allowed'));
+            }
+
+            $rawHist = $detailRow['update_history'] ?? null;
+            $histArr = (!empty($rawHist)) ? (json_decode($rawHist, true) ?: []) : [];
+            if ($updateRecord !== null) {
+                $histArr[] = $updateRecord;
+            }
+            $histJson = !empty($histArr) ? $this->json_utf8($histArr) : null;
+
+            // 1. Chỉ cập nhật duy nhất extrusion_chart_image và vết kiểm toán update_history trên bobin_list_detail
+            $stmtDetail = $pdo->prepare(
+                "UPDATE bobin_list_detail
+                 SET extrusion_chart_image = :ext_img,
+                     update_history = :uhist
+                 WHERE bobin_identification_code = :ident
+                   AND bobin_key_code = :key"
+            );
+            $stmtDetail->execute([
+                ':ext_img' => $extImagePath,
+                ':uhist'   => $histJson,
+                ':ident'   => $identCode,
+                ':key'     => $keyCode,
+            ]);
+
+            // 2. Đồng bộ duy nhất cột extrusion_chart_image cho các bản ghi lịch sử của đúng chu kỳ bobin_key_code
+            $stmtHistImg = $pdo->prepare(
+                "UPDATE bobin_history
+                 SET extrusion_chart_image = :ext_img
+                 WHERE bobin_identification_code = :ident
+                   AND bobin_key_code = :key"
+            );
+            $stmtHistImg->execute([
+                ':ext_img' => $extImagePath,
+                ':ident'   => $identCode,
+                ':key'     => $keyCode,
+            ]);
+
+            // 3. Ghi vết kiểm toán update_history vào dòng lịch sử mới nhất của chu kỳ mà không chạm updated_time hay cột khác
+            if ($updateRecord !== null) {
+                $latestHistStmt = $pdo->prepare(
+                    "SELECT id, update_history
+                     FROM bobin_history
+                     WHERE bobin_identification_code = :ident
+                       AND bobin_key_code = :key
+                     ORDER BY id DESC
+                     LIMIT 1"
+                );
+                $latestHistStmt->execute([
+                    ':ident' => $identCode,
+                    ':key'   => $keyCode,
+                ]);
+                $latestHistRow = $latestHistStmt->fetch(PDO::FETCH_ASSOC);
+                if ($latestHistRow) {
+                    $rawLatestHist = $latestHistRow['update_history'] ?? null;
+                    $latestHistArr = (!empty($rawLatestHist)) ? (json_decode($rawLatestHist, true) ?: []) : [];
+                    $latestHistArr[] = $updateRecord;
+                    $latestHistJson = $this->json_utf8($latestHistArr);
+
+                    $updHistAuditStmt = $pdo->prepare(
+                        "UPDATE bobin_history
+                         SET update_history = :uhist
+                         WHERE id = :hist_id"
+                    );
+                    $updHistAuditStmt->execute([
+                        ':uhist'   => $latestHistJson,
+                        ':hist_id' => $latestHistRow['id'],
+                    ]);
+                }
+            }
+
+            $pdo->commit();
+            return true;
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log("DB updateExtrusionChartImageOnly Error: " . $e->getMessage());
+            throw new Exception("Lỗi Database: " . $e->getMessage());
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
     #endregion
 
@@ -2755,13 +3021,17 @@ class BobinRepository
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident";
@@ -2859,8 +3129,11 @@ class BobinRepository
             $newWEmp         = $row['winding_employee'];
             $newWNote        = $row['winding_note'];
             $newFlowResult   = $row['flow_test_result'];
+            $newQcImg        = $row['qc_visual_image'] ?? null;
+            $newWndImg       = $row['winding_chart_image'] ?? null;
 
             if ($targetStatus === 'Busy_Unchecked' && $isFromQC) {
+                $newQcImg = null;
                 if (isset($viData['defects']) && is_array($viData['defects'])) {
                     $cleanedNote = trim(preg_replace('/^Yêu cầu hủy QC:\s*/u', '', $viData['defects']['note'] ?? ''));
                     $viData['defects']['gel']            = false;
@@ -2879,6 +3152,7 @@ class BobinRepository
                     $newWEmp       = null;
                     $newWNote      = $cleanedWNote !== '' ? $cleanedWNote : 'Chưa cập nhật';
                     $newFlowResult = 'Thất bại';
+                    $newWndImg     = null;
                 } else {
                     $newWNote      = $cleanedWNote !== '' ? $cleanedWNote : 'Không có ghi chú';
                     $newFlowResult = 'Thành công';
@@ -2902,6 +3176,8 @@ class BobinRepository
                                     winding_employee = :wemp,
                                     winding_note = :wnote,
                                     flow_test_result = :flow,
+                                    qc_visual_image = :qc_img,
+                                    winding_chart_image = :wnd_img,
                                     update_history = :uhist,
                                     updated_time = NOW()
                                 WHERE bobin_identification_code = :ident
@@ -2914,6 +3190,8 @@ class BobinRepository
                 ':wemp'          => $newWEmp,
                 ':wnote'         => $newWNote,
                 ':flow'          => $newFlowResult,
+                ':qc_img'        => $newQcImg,
+                ':wnd_img'       => $newWndImg,
                 ':uhist'         => $histJson,
                 ':ident'         => $identCode,
                 ':key'           => $actualKeyCode
@@ -2936,13 +3214,17 @@ class BobinRepository
                                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                     extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                     shift, extrusion_date, finish_time, visual_inspection, 
-                                    winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                    winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                    extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                    update_history, updated_time
                                 )
                                 SELECT 
                                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                     extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                     shift, extrusion_date, finish_time, visual_inspection, 
-                                    winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                    winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                    extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                    update_history, updated_time
                                 FROM bobin_list_detail
                                 WHERE bobin_key_code = :key 
                                   AND bobin_identification_code = :ident";
@@ -3056,12 +3338,16 @@ class BobinRepository
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type,
                     extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m,
                     shift, extrusion_date, finish_time, visual_inspection, winding_machine,
-                    winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, update_history, updated_time
+                    winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note,
+                    extrusion_chart_image, qc_visual_image, winding_chart_image,
+                    update_history, updated_time
                 ) SELECT 
                     bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                     extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                     shift, extrusion_date, finish_time, visual_inspection, 
-                    winding_machine, winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note, update_history, updated_time
+                    winding_machine, winding_employee, flow_test_result, bobin_current_status, previous_status, winding_note,
+                    extrusion_chart_image, qc_visual_image, winding_chart_image,
+                    update_history, updated_time
                 FROM bobin_list_detail
                 WHERE bobin_key_code = :key 
                 AND bobin_identification_code = :ident";
@@ -3095,6 +3381,7 @@ class BobinRepository
                     previous_status = 'Busy_Unchecked',
                     bobin_current_status = :status,
                     visual_inspection = :visual,
+                    qc_visual_image = :qc_img,
                     updated_time = :updated
                 WHERE bobin_key_code = :key
                     AND bobin_identification_code = :ident";
@@ -3104,6 +3391,7 @@ class BobinRepository
             $stmt->execute([
                 ':status'   => $entity->currentStatus,
                 ':visual'   => $this->json_utf8($entity->visualInspection),
+                ':qc_img'   => $entity->qc_visual_image,
                 ':updated'  => $entity->updatedTime->format('Y-m-d H:i:s'),
                 ':key'      => $entity->bobinKeyCode,
                 ':ident'    => $entity->identificationCode
@@ -3127,13 +3415,17 @@ class BobinRepository
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident";
@@ -3172,6 +3464,7 @@ class BobinRepository
                     previous_status = 'Busy_Unchecked',
                     bobin_current_status = :status,
                     visual_inspection = :visual,
+                    qc_visual_image = :qc_img,
                     updated_time = NOW()
                 WHERE bobin_key_code = :key
                     AND bobin_identification_code = :ident";
@@ -3181,6 +3474,7 @@ class BobinRepository
                 ':type'     => $newType,
                 ':status'   => $entity->currentStatus,
                 ':visual'   => $this->json_utf8($entity->visualInspection),
+                ':qc_img'   => $entity->qc_visual_image,
                 ':key'      => $entity->bobinKeyCode,
                 ':ident'    => $entity->identificationCode
             ]);
@@ -3207,13 +3501,17 @@ class BobinRepository
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, :type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, NOW()
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, NOW()
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident";
@@ -3274,6 +3572,7 @@ class BobinRepository
                 previous_status = 'Busy_Unchecked',
                 bobin_current_status = :status,
                 visual_inspection = :visual,
+                qc_visual_image = COALESCE(:qc_img, qc_visual_image),
                 update_history = :uhist,
                 updated_time = :updated
             WHERE bobin_key_code = :key
@@ -3287,6 +3586,7 @@ class BobinRepository
                 ':updated'  => $entity->updatedTime->format('Y-m-d H:i:s'),
                 ':key'      => $entity->bobinKeyCode,
                 ':visual'   => $this->json_utf8($entity->visualInspection),
+                ':qc_img'   => $entity->qc_visual_image,
                 ':ident'    => $entity->identificationCode
             ]);
 
@@ -3308,13 +3608,17 @@ class BobinRepository
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident
@@ -3367,6 +3671,7 @@ class BobinRepository
                     winding_employee = :winding_employee,
                     winding_note = :winding_note,
                     flow_test_result = :flow_test_result,
+                    winding_chart_image = COALESCE(:wnd_img, winding_chart_image),
                     updated_time = :updated
                 WHERE bobin_key_code = :key
                     AND bobin_identification_code = :ident";
@@ -3380,6 +3685,7 @@ class BobinRepository
                 ':winding_employee' => $this->json_utf8($entity->winding_employee),
                 ':winding_note' => $entity->winding_note,
                 ':flow_test_result' => $entity->flow_test_result,
+                ':wnd_img'  => $entity->winding_chart_image,
                 ':updated'  => $entity->updatedTime->format('Y-m-d H:i:s'),
                 ':key'      => $entity->bobinKeyCode,
                 ':ident'    => $entity->identificationCode
@@ -3404,13 +3710,17 @@ class BobinRepository
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident
@@ -3483,7 +3793,8 @@ class BobinRepository
                 winding_machine = :winding_machine,
                 winding_employee = :winding_employee,
                 flow_test_result = :flow_test_result,
-                winding_note = :winding_note
+                winding_note = :winding_note,
+                winding_chart_image = COALESCE(:wnd_img, winding_chart_image)
             WHERE bobin_key_code = :key
                 AND bobin_identification_code = :ident";
 
@@ -3499,7 +3810,8 @@ class BobinRepository
                 ':winding_machine' => $entity->winding_machine,
                 ':winding_employee' => $this->json_utf8($entity->winding_employee),
                 ':flow_test_result' => $entity->flow_test_result,
-                ':winding_note' => $entity->winding_note ?? "Không có ghi chú (Yêu cầu hủy phía cuộn)"
+                ':winding_note' => $entity->winding_note ?? "Không có ghi chú (Yêu cầu hủy phía cuộn)",
+                ':wnd_img'  => $entity->winding_chart_image
             ]);
 
             $sqlGeneral = "UPDATE bobin_list_general SET
@@ -3521,13 +3833,17 @@ class BobinRepository
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             )
                             SELECT 
                                 bobin_key_code, bobin_identification_code, bobin_size, bobin_type, 
                                 extrusion_employee, extrusion_check, extrusion_machine, rack, products, material_lot, print_lot, length_m, 
                                 shift, extrusion_date, finish_time, visual_inspection, 
-                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result, update_history, updated_time
+                                winding_machine, winding_employee, bobin_current_status, previous_status, winding_note, flow_test_result,
+                                extrusion_chart_image, qc_visual_image, winding_chart_image,
+                                update_history, updated_time
                             FROM bobin_list_detail
                             WHERE bobin_key_code = :key 
                                 AND bobin_identification_code = :ident

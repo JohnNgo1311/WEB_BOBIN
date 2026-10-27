@@ -646,6 +646,9 @@ if (!function_exists('decodeJsonObject')) {
                                         <?= extCheckBadge('Xước', $extCheck['streak'] ?? $extCheck['scuff'] ?? true) ?>
                                         <?= extCheckBadge('Biến dạng', $extCheck['deformation'] ?? $extCheck['deformed'] ?? true) ?>
                                     </div>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('extrusion', $item['extrusion_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- CỘT 2: QC CHECK -->
@@ -669,6 +672,9 @@ if (!function_exists('decodeJsonObject')) {
                                         📝
                                         <?= htmlspecialchars(trim($defects['note'] ?? '') === '' ? 'Không có ghi chú' : $defects['note']) ?>
                                     </div>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('qc', $item['qc_visual_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
+                                    </div>
                                 </div>
 
                                 <!-- CỘT 3: THÔNG TIN CUỘN -->
@@ -685,6 +691,9 @@ if (!function_exists('decodeJsonObject')) {
                                     <div class="winding-note-text">
                                         📝
                                         <?= htmlspecialchars(trim($winding_note) === '' ? 'Không có ghi chú' : $winding_note) ?>
+                                    </div>
+                                    <div class="pipeline-col-image-bar">
+                                        <?= BobinImageHelper::renderViewButton('winding', $item['winding_chart_image'] ?? null, (string)($item['bobin_identification_code'] ?? '')) ?>
                                     </div>
                                 </div>
                             </div>

@@ -189,9 +189,12 @@ foreach ($bobins as $b) {
                     <span data-i18n="btn_scan_qr"><?= __('btn_scan_qr') ?></span>
                 </button>
 
-                <button type="submit" class="ext-btn-action ext-btn-filter" id="btnFilter" data-i18n="filter">
-                    <span>🔍</span>
-                    <span><?= __('filter') ?></span>
+                <button type="submit" class="ext-btn-action ext-btn-filter" id="btnFilter">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span data-i18n="filter"><?= __('filter') ?? 'Lọc' ?></span>
                 </button>
             </form>
         </section>

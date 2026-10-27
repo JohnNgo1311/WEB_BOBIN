@@ -935,6 +935,7 @@ class BobinServices
                 'keyword'      => mb_substr($keyword, 0, 255),
                 'machine'      => trim((string)($dto->machine ?? '')),
                 'product_code' => trim((string)($dto->productCode ?? '')),
+                'rack'         => trim((string)($dto->rack ?? '')),
             ];
 
             return $this->bobinRepo->getDetailBobinsForQC($filters, $dto->page, $dto->limit);
@@ -953,6 +954,7 @@ class BobinServices
                 'keyword'      => mb_substr($keyword, 0, 255),
                 'machine'      => trim((string)($dto->machine ?? '')),
                 'product_code' => trim((string)($dto->productCode ?? '')),
+                'rack'         => trim((string)($dto->rack ?? '')),
             ];
 
             return $this->bobinRepo->countDetailBobinsForQC($filters);

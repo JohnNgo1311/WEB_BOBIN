@@ -371,7 +371,7 @@ $typeOptions = [
                                 <rect x="14" y="14" width="7" height="7"></rect>
                                 <path d="M3 14h7v7H3z"></path>
                             </svg>
-                            <span>Quét QR</span>
+                            <span data-i18n="btn_scan_qr"><?= __('btn_scan_qr') ?? 'Quét QR' ?></span>
                         </button>
 
                         <button type="submit" class="btn-modern btn-filter" id="btnFilter">
@@ -379,7 +379,7 @@ $typeOptions = [
                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                             </svg>
-                            Lọc
+                            <span data-i18n="filter"><?= __('filter') ?? 'Lọc' ?></span>
                         </button>
 
                         <?php
@@ -396,20 +396,20 @@ $typeOptions = [
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                 </svg>
-                                <span>Xuất Excel ▾</span>
+                                <span data-i18n="btn_export_excel_dropdown"><?= __('btn_export_excel_dropdown') ?? 'Xuất Excel ▾' ?></span>
                             </button>
                             <div class="export-dropdown-menu" id="exportMenuBox">
                                 <a href="<?= $exportUrl ?>" class="export-menu-item">
                                     <span class="menu-item-icon">📄</span>
                                     <div class="menu-item-text">
-                                        <strong>Xuất toàn bộ kết quả lọc</strong>
+                                        <strong data-i18n="export_all_results"><?= __('export_all_results') ?? 'Xuất toàn bộ kết quả lọc' ?></strong>
                                         <small>Tất cả <?= number_format($totalRecords) ?> Bobin</small>
                                     </div>
                                 </a>
                                 <button type="button" class="export-menu-item" id="btnExportSelectedItems">
                                     <span class="menu-item-icon">☑️</span>
                                     <div class="menu-item-text">
-                                        <strong>Xuất các Bobin đã chọn</strong>
+                                        <strong data-i18n="export_selected_bobins"><?= __('export_selected_bobins') ?? 'Xuất các Bobin đã chọn' ?></strong>
                                         <small id="selectedCountText">Đã chọn: 0 Bobin</small>
                                     </div>
                                 </button>
@@ -458,10 +458,12 @@ $typeOptions = [
                             </div>
                             <div class="qc-stat-badges">
                                 <span class="qc-badge-pill qc-pill-ok" title="Đạt toàn bộ tiêu chuẩn ngoại quan">
-                                    <span class="dot">●</span> <span data-i18n="qc_defect_ok">Đạt</span>: <strong><?= number_format($qcDefectStats['ok_all'] ?? 0) ?></strong>
+                                    <span class="dot">●</span> <span data-i18n="qc_defect_ok">OK</span>:
+                                    <strong><?= number_format($qcDefectStats['ok_all'] ?? 0) ?></strong>
                                 </span>
                                 <span class="qc-badge-pill qc-pill-ng" title="Có ít nhất một lỗi ngoại quan">
-                                    <span class="dot">●</span> <span data-i18n="qc_defect_ng">Có lỗi</span>: <strong><?= number_format($qcDefectStats['ng_any'] ?? 0) ?></strong>
+                                    <span class="dot">●</span> <span data-i18n="qc_defect_ng">NG</span>:
+                                    <strong><?= number_format($qcDefectStats['ng_any'] ?? 0) ?></strong>
                                 </span>
                             </div>
                         </div>
@@ -706,21 +708,31 @@ $typeOptions = [
                         type: 'bar',
                         height: 220,
                         fontFamily: 'var(--font-family-base, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif)',
-                        toolbar: { show: false },
-                        animations: { enabled: true, speed: 300 }
+                        toolbar: {
+                            show: false
+                        },
+                        animations: {
+                            enabled: true,
+                            speed: 300
+                        }
                     },
                     series: [{
-                        name: (typeof window.t === 'function' ? window.t('chart_defect_count', 'Số lỗi') : 'Số lỗi'),
+                        name: (typeof window.t === 'function' ? window.t('chart_defect_count',
+                            'Số lỗi') : 'Số lỗi'),
                         data: qcDefectData
                     }],
-                    colors: ['#a855f7', '#f43f5e', '#f97316', '#6366f1', '#8b5cf6', '#f59e0b', '#ec4899', '#14b8a6'],
+                    colors: ['#a855f7', '#f43f5e', '#f97316', '#6366f1', '#8b5cf6', '#f59e0b', '#ec4899',
+                        '#14b8a6'
+                    ],
                     plotOptions: {
                         bar: {
                             horizontal: true,
                             borderRadius: 4,
                             barHeight: '62%',
                             distributed: true,
-                            dataLabels: { position: 'top' }
+                            dataLabels: {
+                                position: 'top'
+                            }
                         }
                     },
                     dataLabels: {
@@ -741,23 +753,38 @@ $typeOptions = [
                     grid: {
                         borderColor: '#f1f5f9',
                         strokeDashArray: 3,
-                        padding: { top: -12, right: 35, bottom: -10, left: 15 }
+                        padding: {
+                            top: -12,
+                            right: 35,
+                            bottom: -10,
+                            left: 15
+                        }
                     },
                     xaxis: {
                         categories: qcTranslatedLabels,
                         min: 0,
                         max: qcMaxVal === 0 ? 5 : Math.ceil(qcMaxVal * 1.3),
                         labels: {
-                            style: { colors: '#64748b', fontSize: '11px', fontWeight: 600 },
+                            style: {
+                                colors: '#64748b',
+                                fontSize: '11px',
+                                fontWeight: 600
+                            },
                             formatter: (val) => Math.floor(val).toLocaleString('vi-VN')
                         }
                     },
                     yaxis: {
                         labels: {
-                            style: { colors: '#1e293b', fontSize: '12px', fontWeight: 700 }
+                            style: {
+                                colors: '#1e293b',
+                                fontSize: '12px',
+                                fontWeight: 700
+                            }
                         }
                     },
-                    legend: { show: false }
+                    legend: {
+                        show: false
+                    }
                 });
                 qcChart.render();
             })();

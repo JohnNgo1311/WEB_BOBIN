@@ -393,13 +393,14 @@
 
     // Button texts & links
     buttons: [
+      { key: "btn_scan_qr", vi: "Quét QR", en: "Scan QR", ja: "QRスキャン" },
+      { key: "btn_export_excel", vi: "Xuất Excel", en: "Export Excel", ja: "Excel出力" },
+      { key: "btn_export_excel", vi: "Xuất file Excel", en: "Export Excel", ja: "Excel出力" },
+      { key: "filter", vi: "Lọc", en: "Filter", ja: "絞り込み" },
+      { key: "reset_filter", vi: "Xóa lọc", en: "Clear Filter", ja: "リセット" },
       { vi: "Lưu Bobin", en: "Save Bobin", ja: "ボビン保存" },
-      { vi: "Lọc", en: "Filter", ja: "絞り込み" },
       { vi: "Bộ lọc", en: "Filter", ja: "絞り込み" },
-      { vi: "Xóa lọc", en: "Clear Filter", ja: "リセット" },
       { vi: "Đặt lại bộ lọc", en: "Reset Filter", ja: "フィルタをリセット" },
-      { vi: "Xuất file Excel", en: "Export Excel", ja: "Excel出力" },
-      { vi: "Xuất Excel", en: "Export Excel", ja: "Excel出力" },
       { vi: "Nhập file Excel", en: "Import Excel", ja: "Excel取込" },
       { vi: "Nhập Excel", en: "Import Excel", ja: "Excel取込" },
       { vi: "Tải file mẫu", en: "Download Template", ja: "ひな形DL" },
@@ -737,18 +738,37 @@
               const target = item.key
                 ? window.t(item.key, item[currentLang] || item.vi)
                 : item[currentLang] || item.vi;
-              // Giữ lại icon nếu có SVG
+              // Giữ lại icon nếu có SVG hoặc xử lý nếu có thẻ con span
               const svg = btn.querySelector("svg");
-              if (svg) {
-                // Chỉ cập nhật phần text, không xóa sạch innerHTML làm hỏng listeners
+              const span = btn.querySelector(
+                "span:not(.badge):not(.badge-pending-count)",
+              );
+
+              if (span && span !== btn) {
+                // Nếu nút có thẻ span con giữ text: cập nhật span và xóa sạch textNode thừa ngoài span để chống lặp
+                const hasArrow =
+                  span.textContent.includes("▾") ||
+                  span.textContent.includes("▼") ||
+                  raw.includes("▾") ||
+                  raw.includes("▼");
+                const newText = target + (hasArrow ? " ▾" : "");
+                if (span.textContent.trim() !== newText.trim()) {
+                  span.textContent = newText;
+                }
+                Array.from(btn.childNodes).forEach((node) => {
+                  if (node.nodeType === Node.TEXT_NODE) {
+                    node.textContent = "";
+                  }
+                });
+              } else if (svg) {
+                // Có SVG nhưng không có span con: chỉ giữ 1 textNode
                 const textNodes = Array.from(btn.childNodes).filter(
                   (node) => node.nodeType === Node.TEXT_NODE,
                 );
+                textNodes.slice(0, -1).forEach((n) => n.remove());
                 if (textNodes.length > 0) {
                   textNodes[textNodes.length - 1].textContent = " " + target;
                 } else {
-                  btn.innerHTML = "";
-                  btn.appendChild(svg);
                   btn.append(" " + target);
                 }
               } else {
@@ -792,7 +812,9 @@
           ) {
             return;
           }
-          const ph = input.getAttribute("placeholder").trim();
+          const phRaw = input.getAttribute("placeholder");
+          if (!phRaw) return;
+          const ph = phRaw.trim();
           let newPh = null;
           if (
             ph.includes("Nhập thông tin") ||
@@ -1285,11 +1307,16 @@
       // J.2 Dịch các phần tử hiển thị giá trị, KPI, Filter, Empty State, Strip Header
       document
         .querySelectorAll(
-          ".val-sub, .bobin-type-pill, .bobin-highlight-printlot, .pipeline-submeta, .kpi-card .label, .kpi-name, .filter-label, .btn-reset-filter, .export-dropdown-menu strong, .qc-title, .winding-title, .pipeline-title, .strip-label, .ext-title, .qc-switches-label, .empty-state, #modalChangeType h3, #modalChangeType p, .type-toggle-label",
+          ".bobin-type-badge, .bobin-type-pill, .bobin-highlight-printlot, .val-sub, .pipeline-submeta, .kpi-card .label, .kpi-name, .filter-label, .btn-reset-filter, .export-dropdown-menu strong, .qc-title, .winding-title, .pipeline-title, .strip-label, .ext-title, .qc-switches-label, .empty-state, #modalChangeType h3, #modalChangeType p, .type-toggle-label",
         )
         .forEach((el) => {
           if (el.hasAttribute("data-i18n") || el.querySelector("[data-i18n]"))
             return;
+          // BẢO VỆ HIGHLIGHT: Nếu el là container (như .val-sub) có chứa element con (như .bobin-type-badge hay .bobin-highlight-printlot),
+          // tuyệt đối KHÔNG can thiệp vào container cha, vì các thẻ con sẽ tự được dịch độc lập và bảo toàn class/style highlight!
+          if (el.children && el.children.length > 0) {
+            return;
+          }
           const raw = el.textContent.trim();
           for (const item of VALUE_TRANSLATIONS) {
             if (raw === item.vi || raw === item.en || raw === item.ja) {
@@ -1347,6 +1374,43 @@
           }
         }
       });
+
+      // Safeguard: Loại bỏ textNode thừa / trùng lặp trên các button hoặc link có chứa thẻ con span
+      document
+        .querySelectorAll(
+          "button, a.btn-modern, a.btn-export, a.btn-filter, a.btn-action-info, a.btn-reset-filter",
+        )
+        .forEach((btn) => {
+          const span = btn.querySelector(
+            "span:not(.badge):not(.badge-pending-count)",
+          );
+          if (span && span !== btn) {
+            const spanText = span.textContent
+              .trim()
+              .replace(/[▾▼]/g, "")
+              .trim();
+            if (spanText) {
+              Array.from(btn.childNodes).forEach((node) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                  const txt = node.textContent
+                    .trim()
+                    .replace(/[▾▼]/g, "")
+                    .trim();
+                  if (
+                    txt &&
+                    (txt === spanText ||
+                      spanText.includes(txt) ||
+                      txt.includes(spanText) ||
+                      txt.toLowerCase() === "filter" ||
+                      txt === "Lọc")
+                  ) {
+                    node.textContent = "";
+                  }
+                }
+              });
+            }
+          }
+        });
     } finally {
       // Giải phóng cờ sau microtask để MutationObserver không bị kích hoạt chéo
       setTimeout(() => {
@@ -1517,15 +1581,28 @@
             }
           } else {
             const svg = el.querySelector("svg");
-            if (svg) {
+            const span = el.querySelector(
+              "span:not(.badge):not(.badge-pending-count)",
+            );
+
+            if (span && span !== el) {
+              // Nếu el là cha chứa span con: cập nhật text cho span và xóa sạch textNode thừa ngoài span
+              if (span.textContent.trim() !== translation.trim()) {
+                span.textContent = translation;
+              }
+              Array.from(el.childNodes).forEach((node) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                  node.textContent = "";
+                }
+              });
+            } else if (svg) {
               const textNodes = Array.from(el.childNodes).filter(
                 (node) => node.nodeType === Node.TEXT_NODE,
               );
+              textNodes.slice(0, -1).forEach((n) => n.remove());
               if (textNodes.length > 0) {
                 textNodes[textNodes.length - 1].textContent = " " + translation;
               } else {
-                el.innerHTML = "";
-                el.appendChild(svg);
                 el.append(" " + translation);
               }
             } else {

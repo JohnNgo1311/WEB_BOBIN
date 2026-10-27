@@ -120,8 +120,8 @@ $capacities = $data['capacities'] ?? [];
     <div
         style="max-width: 600px; margin: 20px auto 0; display: flex; justify-content: space-between; align-items: center;">
         <a href="/WEB_BOBIN/public/index.php" style="text-decoration:none; color:#0284c7; font-weight:600;"
-            data-i18n="back">
-            ← <?= __('back') ?>
+            >
+            ← <span data-i18n="back"><?= __('back') ?></span>
         </a>
         <?php require ROOT_PATH . '/app/views/components/languageSwitcher.php'; ?>
     </div>

@@ -148,10 +148,15 @@ $totalFiltered = count($employees);
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <button type="submit" class="btn-filter" data-i18n="filter">🔍 <?= __('filter') ?></button>
+                <button type="submit" class="btn-filter" id="btnFilter">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span data-i18n="filter"><?= __('filter') ?></span>
+                </button>
                 <?php if ($filters['keyword'] !== '' || ($filters['cost_center'] ?? 'all') !== 'all' || ($filters['role'] ?? 'all') !== 'all'): ?>
-                    <a href="<?= $baseUrl ?>/index.php?url=employee/index" class="btn-reset-filter"
-                        data-i18n="reset_filter">✕ <?= __('reset_filter') ?></a>
+                    <a href="<?= $baseUrl ?>/index.php?url=employee/index" class="btn-reset-filter">✕ <span data-i18n="reset_filter"><?= __('reset_filter') ?></span></a>
                 <?php endif; ?>
                 <div class="emp-counter-badge" id="empCounter">
                     <span data-i18n="emp_showing"><?= __('emp_showing') ?></span>: <strong><?= $totalFiltered ?></strong> / <?= (int)$stats['total'] ?> <span data-i18n="emp_staff"><?= __('emp_staff') ?></span>

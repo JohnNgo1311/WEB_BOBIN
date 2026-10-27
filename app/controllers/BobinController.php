@@ -320,6 +320,7 @@ class BobinController extends Controller
 
             // Lấy số lượng Bobin đang chờ hủy
             $pendingCount = $this->bobinService->countPendingBobins();
+            $racks = $this->bobinService->getAllRacks();
         } catch (Throwable $e) {
             throw new Exception($e->getMessage(), $e->getCode(), $e);
         }
@@ -336,10 +337,12 @@ class BobinController extends Controller
             ],
             'machines'     => GlobalData::$listExtrusionMachineEntity ?? [],
             'products'     => GlobalData::$listProductEntity ?? [],
+            'racks'        => $racks ?? [],
             'filters'      => [
                 'keyword'      => $dto->keyword ?? '',
                 'machine'      => $dto->machine ?? '',
-                'product_code' => $dto->productCode ?? ''
+                'product_code' => $dto->productCode ?? '',
+                'rack'         => $dto->rack ?? ''
             ]
         ]);
     }

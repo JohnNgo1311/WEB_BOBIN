@@ -175,20 +175,37 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   position: relative;
   display: flex;
   align-items: center;
-}
-.filter-group-icon {
-  position: absolute;
-  left: 10px;
-  pointer-events: none;
-  font-size: 13px;
-  z-index: 2;
-  color: #64748b;
+  flex: 1 1 150px;
+  min-width: 140px;
 }
 
-.filter-select-modern,
+.filter-select-modern {
+  height: 40px;
+  width: 100%;
+  padding: 0 28px 0 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background-color: #f8fafc;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
 .filter-input-modern {
   height: 40px;
-  padding: 0 12px 0 30px;
+  width: 100%;
+  padding: 0 12px;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   font-size: 13px;
@@ -196,7 +213,6 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   background-color: #f8fafc;
   outline: none;
   box-sizing: border-box;
-  min-width: 155px;
   font-family: inherit;
   transition: all 0.2s ease;
 }
@@ -208,10 +224,43 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
 }
 
+/* Suggestion Box cho Filter Bar */
+.filter-group .suggestion-box {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+.filter-group .suggestion-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #1e293b;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.15s ease;
+}
+.filter-group .suggestion-item:last-child {
+  border-bottom: none;
+}
+.filter-group .suggestion-item:hover {
+  background-color: #fff7ed;
+  color: #c2410c;
+  font-weight: 600;
+}
+
 .filter-actions-group {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .btn-modern {
@@ -229,6 +278,7 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   outline: none;
   transition: all 0.2s ease;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 .btn-scan {
   background: linear-gradient(135deg, #0284c7, #2563eb) !important;
@@ -241,15 +291,17 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
 }
 .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; }
+.btn-modern.btn-filter,
 .btn-filter {
-  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
-  color: #fff !important;
-  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
+.btn-modern.btn-filter:hover,
 .btn-filter:hover {
-  background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%) !important;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(234, 88, 12, 0.28);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
 }
 
 .btn-reset-filter {
@@ -269,6 +321,7 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 .btn-reset-filter:hover {
   background: #ffe4e6;
@@ -755,10 +808,24 @@ h1 { color: #ea580c; font-size: 20px; font-weight: 800; text-transform: uppercas
   .search-box-modern input {
     height: 42px;
   }
-  .control-row .btn-modern {
+  .filter-group {
+    min-width: 0;
     width: 100%;
+  }
+  .filter-select-modern {
     height: 42px;
-    font-size: 13.5px;
+  }
+  .filter-actions-group {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .filter-actions-group .btn-modern,
+  .filter-actions-group .btn-reset-filter {
+    flex: 1;
+    height: 42px;
+    font-size: 13px;
   }
 
   /* Khung Camera QR */

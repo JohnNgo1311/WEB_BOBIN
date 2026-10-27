@@ -302,7 +302,7 @@ if (!function_exists('decodeJsonObject')) {
                                 <rect x="14" y="14" width="7" height="7"></rect>
                                 <path d="M3 14h7v7H3z"></path>
                             </svg>
-                            <span>Quét QR</span>
+                            <span data-i18n="btn_scan_qr"><?= __('btn_scan_qr') ?? 'Quét QR' ?></span>
                         </button>
 
                         <button class="btn-modern btn-filter" type="submit" id="btnFilter">
@@ -310,7 +310,7 @@ if (!function_exists('decodeJsonObject')) {
                                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                             </svg>
-                            Lọc
+                            <span data-i18n="filter"><?= __('filter') ?? 'Lọc' ?></span>
                         </button>
 
                         <?php

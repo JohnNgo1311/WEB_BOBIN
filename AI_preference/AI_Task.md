@@ -717,6 +717,17 @@ CREATE TABLE `employee_list` (
 3. Đề xuất thêm biểu đồ ở trang danh sách Bobin và trang lịch sử Bobin, tiêu đề là: Thống kê ngoại quan Bobin -> **DONE** (Xây dựng panel biểu đồ "Thống kê ngoại quan Bobin" với BaseChart/ApexCharts thể hiện 8 tiêu chí lỗi ngoại quan từ `qcDefectStats`, nhãn dữ liệu tỷ lệ %, cùng bộ badge thống kê Đạt/Có lỗi trên header, hỗ trợ đầy đủ 3 ngôn ngữ `vi`, `en`, `ja`).
 ## 🟡 RULES
 
+### TASK-053
+**Status:** TODO
+Thêm trường dữ liệu "Hình ảnh biểu đồ" cho Bobin, cần đồng bộ dữ liệu ở tất cả các trang, trường này có kiểu dữ liệu sẽ là hình ảnh. 
+Quy trình như sau:
++ Tính năng thêm/xóa/đổi ảnh được dùng cho cả 3 nhóm Đùn/QC/Cuộn
++ Nhóm Đùn: Nhập thông tin Bobin, có thể thêm hình ảnh biểu đồ dữ liệu đo hoặc không (Biểu đồ riêng của nhóm đùn). Tại trang điều chỉnh của nhóm đùn, nhóm đùn cũng có thể bổ sung/xóa/thay đổi ảnh tương ứng. 
++ Nhóm QC: Có thể bổ sung hình ảnh ngoại quan nếu cần thiết. Tại trang điều chỉnh của nhóm QC, nhóm QC cũng có thể bổ sung/xóa/ thay đổi ảnh tương ứng
++ Nhóm Cuộn: có thể thêm hình ảnh biểu đồ dữ liệu đo hoặc không (Biểu đồ riêng của nhóm Cuộn). Tại trang điều chỉnh của nhóm cuộn, nhóm cuộn cũng có thể bổ sung/xóa/thay đổi ảnh tương ứng. 
++ 3 loại hình ảnh trên của 3 nhóm là khác nhau, cần phân biệt rõ rệt theo Nhóm mà user thuộc về để phân quyền
++ Tại toàn bộ trang danh sách, khi render danh sách, không cần render hình ảnh ngay lặp tức. Tương ứng với dữ liệu từng nhóm sẽ có 1 nút "Xem hình ảnh", khi nhấn vào nút này thì hình ảnh sẽ hiển thị ra như dạng Dialog giữa màn hình.
++ Hình ảnh có thể được thêm vào bằng cách chụp/lấy từ thư viện (Đối với điện thoại), hoặc chọn mục hình ảnh (Đối với máy tính desktop)
 Toàn bộ dưới đây là DEVELOPMENT RULES phải tuân thủ:
 
 ## 0. Security

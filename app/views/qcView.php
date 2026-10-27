@@ -6,13 +6,27 @@ $pagination = $data['pagination'] ?? [];
 $pendingCount = $data['pendingCount'] ?? 0;
 $userRole = $_SESSION['user']['role'] ?? '';
 $machines = $data['machines'] ?? (GlobalData::$listExtrusionMachineEntity ?? []);
-$products = $data['products'] ?? (GlobalData::$listProductEntity ?? []);
+$productList = $data['products'] ?? (GlobalData::$listProductEntity ?? []);
+$racks    = $data['racks'] ?? [];
+
+// Chuẩn bị danh sách mã sản phẩm duy nhất
+$productCodes = [];
+foreach ($productList as $p) {
+    $pCode = is_object($p) ? ($p->product_code ?? '') : ($p['product_code'] ?? '');
+    $pCode = trim((string)$pCode);
+    if (!empty($pCode) && !in_array($pCode, $productCodes, true)) {
+        $productCodes[] = $pCode;
+    }
+}
+sort($productCodes, SORT_NATURAL | SORT_FLAG_CASE);
+
 $filters  = $data['filters'] ?? [
     'keyword'      => trim((string)($_GET['keyword'] ?? '')),
     'machine'      => trim((string)($_GET['machine'] ?? '')),
+    'rack'         => trim((string)($_GET['rack'] ?? '')),
     'product_code' => trim((string)($_GET['product_code'] ?? ''))
 ];
-$hasActiveFilter = ($filters['keyword'] !== '' || ($filters['machine'] !== '' && $filters['machine'] !== 'all') || ($filters['product_code'] !== '' && $filters['product_code'] !== 'all'));
+$hasActiveFilter = ($filters['keyword'] !== '' || ($filters['machine'] !== '' && $filters['machine'] !== 'all') || ($filters['rack'] !== '' && $filters['rack'] !== 'all') || ($filters['product_code'] !== '' && $filters['product_code'] !== 'all'));
 
 if (!function_exists('buildQcFilterUrl')) {
     function buildQcFilterUrl(array $newParams): string
@@ -177,11 +191,12 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <div class="container">
         <div id="qr-reader"></div>
 
-        <!-- CONTROL BAR (TASK-051 UI/UX UPGRADE) -->
+        <!-- THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC ĐỒNG BỘ HIỆN ĐẠI -->
         <div class="control-bar-modern">
             <form method="GET" action="<?= $baseUrl ?>/index.php" class="filter-form-modern" id="filterForm">
                 <input type="hidden" name="url" value="bobin/listBobinView_QC">
                 <div class="control-row">
+                    <!-- TÌM KIẾM TỪ KHÓA -->
                     <div class="search-box-modern">
                         <svg class="icon-search" viewBox="0 0 24 24" width="16" height="16" stroke="#94a3b8"
                             stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -192,10 +207,10 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             data-i18n-ph="ph_scan_bobin" value="<?= htmlspecialchars($filters['keyword']) ?>" autocomplete="off">
                     </div>
 
+                    <!-- LỌC THEO MÁY ĐÙN -->
                     <div class="filter-group">
-                        <span class="filter-group-icon">🏭</span>
                         <select name="machine" id="filterMachine" class="filter-select-modern" onchange="this.form.submit()">
-                            <option value="" data-i18n="opt_all_machines">-- <?= __('opt_all_machines') ?? 'Tất cả máy đùn' ?> --</option>
+                            <option value="" data-i18n="opt_all_machines"><?= __('opt_all_machines') ?? 'Tất cả máy đùn' ?></option>
                             <?php foreach ($machines as $m): 
                                 $mName = is_object($m) ? ($m->machine_name ?? '') : ($m['machine_name'] ?? '');
                                 if (empty($mName)) continue;
@@ -207,22 +222,31 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                         </select>
                     </div>
 
+                    <!-- LỌC THEO VỊ TRÍ RACK -->
                     <div class="filter-group">
-                        <span class="filter-group-icon">📦</span>
-                        <input type="text" name="product_code" id="filterProductCode" class="filter-input-modern"
-                            placeholder="<?= __('ph_product_code') ?? 'Mã sản phẩm...' ?>"
-                            data-i18n-ph="ph_product_code" list="qcProductDatalist"
-                            value="<?= htmlspecialchars($filters['product_code']) ?>" autocomplete="off">
-                        <datalist id="qcProductDatalist">
-                            <?php foreach ($products as $p): 
-                                $pCode = is_object($p) ? ($p->product_code ?? '') : ($p['product_code'] ?? '');
-                                if (empty($pCode)) continue;
+                        <select name="rack" id="filterRack" class="filter-select-modern" onchange="this.form.submit()">
+                            <option value="" data-i18n="opt_all_racks"><?= __('opt_all_racks') ?? 'Tất cả vị trí Rack' ?></option>
+                            <?php foreach ($racks as $r):
+                                $rCode = is_object($r) ? ($r->rack_code ?? $r->code ?? '') : ($r['rack_code'] ?? $r['code'] ?? '');
+                                if (empty($rCode)) continue;
                             ?>
-                                <option value="<?= htmlspecialchars($pCode) ?>"></option>
+                                <option value="<?= htmlspecialchars($rCode) ?>" <?= ($filters['rack'] === $rCode) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($rCode) ?>
+                                </option>
                             <?php endforeach; ?>
-                        </datalist>
+                        </select>
                     </div>
 
+                    <!-- LỌC THEO MÃ SẢN PHẨM (SUGGESTION TEXTFIELD) -->
+                    <div class="filter-group">
+                        <input type="text" name="product_code" id="filterProductCode" class="filter-input-modern filter-product-suggestion"
+                            placeholder="<?= __('ph_product_code') ?? 'Mã sản phẩm...' ?>"
+                            data-i18n-ph="ph_product_code"
+                            value="<?= htmlspecialchars($filters['product_code']) ?>" autocomplete="off">
+                        <div class="suggestion-box" id="qc_product_suggestions"></div>
+                    </div>
+
+                    <!-- NHÓM NÚT THAO TÁC -->
                     <div class="filter-actions-group">
                         <button type="button" id="btnScanQR" class="btn-modern btn-scan">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -234,39 +258,26 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             </svg>
                             <span data-i18n="btn_scan_qr"><?= __('btn_scan_qr') ?? 'Quét QR' ?></span>
                         </button>
-                        <button class="btn-modern btn-filter" type="submit" data-i18n="filter">
-                            <?= __('filter') ?? 'Lọc' ?>
+                        <button class="btn-modern btn-filter" type="submit" id="btnFilter">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            <span data-i18n="filter"><?= __('filter') ?? 'Lọc' ?></span>
                         </button>
                         <?php if ($hasActiveFilter): ?>
-                            <a href="<?= $baseUrl ?>/index.php?url=bobin/listBobinView_QC" class="btn-reset-filter"
-                                data-i18n="reset_filter" title="<?= __('reset_filter') ?? 'Xóa lọc' ?>">✕ <?= __('reset_filter') ?? 'Xóa lọc' ?></a>
+                            <a href="<?= $baseUrl ?>/index.php?url=bobin/listBobinView_QC" class="btn-modern btn-reset-filter"
+                                data-i18n="[title]reset_filter" title="<?= __('reset_filter') ?? 'Xóa lọc' ?>">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span data-i18n="reset_filter"><?= __('reset_filter') ?? 'Xóa lọc' ?></span>
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <?php if ($hasActiveFilter): ?>
-                    <div class="active-filters-bar">
-                        <span class="active-filters-label" data-i18n="active_filter_chips"><?= __('active_filter_chips') ?? 'Đang lọc:' ?></span>
-                        <?php if (!empty($filters['keyword'])): ?>
-                            <span class="active-filter-chip">
-                                🔍 <?= htmlspecialchars($filters['keyword']) ?>
-                                <a href="<?= buildQcFilterUrl(['keyword' => '']) ?>" class="chip-remove" title="Bỏ lọc từ khóa">✕</a>
-                            </span>
-                        <?php endif; ?>
-                        <?php if (!empty($filters['machine'])): ?>
-                            <span class="active-filter-chip">
-                                🏭 <?= htmlspecialchars($filters['machine']) ?>
-                                <a href="<?= buildQcFilterUrl(['machine' => '']) ?>" class="chip-remove" title="Bỏ lọc máy đùn">✕</a>
-                            </span>
-                        <?php endif; ?>
-                        <?php if (!empty($filters['product_code'])): ?>
-                            <span class="active-filter-chip">
-                                📦 <?= htmlspecialchars($filters['product_code']) ?>
-                                <a href="<?= buildQcFilterUrl(['product_code' => '']) ?>" class="chip-remove" title="Bỏ lọc mã sản phẩm">✕</a>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
             </form>
         </div>
 
@@ -283,8 +294,8 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                 <div class="bobin-list">
                     <?php foreach ($bobins as $item): ?>
                         <?php
-                        $products = json_decode($item['products'] ?? '{}', true) ?: [];
-                        $productCode = $products['product_code'] ?? 'Chưa cập nhật';
+                        $itemProducts = json_decode($item['products'] ?? '{}', true) ?: [];
+                        $productCode = $itemProducts['product_code'] ?? 'Chưa cập nhật';
 
                         $extrusionEmployee = json_decode($item['extrusion_employee'] ?? '{}', true) ?: [];
                         $extEmpCode = $extrusionEmployee['employee_code'] ?? 'Chưa cập nhật';
@@ -544,6 +555,7 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
     <script>
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+        window.__FILTER_PRODUCT_CODES__ = <?= json_encode(array_values($productCodes), JSON_UNESCAPED_UNICODE) ?>;
     </script>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/QC/suggestion.js?v=<?= time() ?>"></script>
@@ -551,6 +563,67 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
     <script src="/WEB_BOBIN/public/assets/js/QC/scanQR.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/autoSearchBobin.js?v=<?= time() ?>"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=1"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const pInput = document.getElementById('filterProductCode');
+            const pBox = document.getElementById('qc_product_suggestions');
+            const filterForm = document.getElementById('filterForm');
+            if (!pInput || !pBox || !filterForm) return;
+
+            const productCodes = window.__FILTER_PRODUCT_CODES__ || [];
+
+            function renderSuggestions(val) {
+                const query = (val || '').toLowerCase().trim();
+                pBox.innerHTML = '';
+                const matches = query === ''
+                    ? productCodes.slice(0, 30)
+                    : productCodes.filter(c => c.toLowerCase().includes(query)).slice(0, 30);
+
+                if (matches.length === 0) {
+                    pBox.style.display = 'none';
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+                matches.forEach(code => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.textContent = code;
+                    item.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        pInput.value = code;
+                        pBox.style.display = 'none';
+                        filterForm.submit();
+                    });
+                    fragment.appendChild(item);
+                });
+                pBox.appendChild(fragment);
+                pBox.style.display = 'block';
+            }
+
+            pInput.addEventListener('input', function () {
+                renderSuggestions(this.value);
+            });
+
+            pInput.addEventListener('focus', function () {
+                renderSuggestions(this.value);
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!pInput.contains(e.target) && !pBox.contains(e.target)) {
+                    pBox.style.display = 'none';
+                }
+            });
+
+            pInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    pBox.style.display = 'none';
+                } else if (e.key === 'Enter') {
+                    pBox.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

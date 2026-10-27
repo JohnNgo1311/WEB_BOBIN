@@ -8,9 +8,22 @@ $userRole = $_SESSION['user']['role'] ?? '';
 $currentEmpCode = $_SESSION['user']['employee_code'] ?? '';
 $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
+$baseUrl = defined('BASE_URL') ? BASE_URL : '/WEB_BOBIN/public';
+
 $machines = $data['machines'] ?? (class_exists('GlobalData') ? (GlobalData::$listExtrusionMachineEntity ?? []) : []);
 $windingMachines = $data['windingMachines'] ?? (class_exists('GlobalData') ? (GlobalData::$listWindingMachineEntity ?? []) : []);
-$products = $data['products'] ?? (class_exists('GlobalData') ? (GlobalData::$listProductEntity ?? []) : []);
+$productList = $data['products'] ?? (class_exists('GlobalData') ? (GlobalData::$listProductEntity ?? []) : []);
+
+// Chuẩn bị danh sách mã sản phẩm duy nhất
+$productCodes = [];
+foreach ($productList as $p) {
+    $pCode = is_object($p) ? ($p->product_code ?? '') : ($p['product_code'] ?? '');
+    $pCode = trim((string)$pCode);
+    if (!empty($pCode) && !in_array($pCode, $productCodes, true)) {
+        $productCodes[] = $pCode;
+    }
+}
+sort($productCodes, SORT_NATURAL | SORT_FLAG_CASE);
 
 $filters = $data['filters'] ?? [
     'keyword'         => trim((string)($_GET['keyword'] ?? '')),
@@ -188,83 +201,71 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
     <div class="container">
         <div id="qr-reader"></div>
 
-        <!-- CONTROL BAR HIỆN ĐẠI ĐỒNG BỘ (TASK-051) -->
+        <!-- THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC ĐỒNG BỘ HIỆN ĐẠI -->
         <div class="control-bar-modern">
-            <form method="GET" action="/WEB_BOBIN/public/index.php" class="filter-form-modern" id="filterForm">
+            <form method="GET" action="<?= $baseUrl ?>/index.php" class="filter-form-modern" id="filterForm">
                 <input type="hidden" name="url" value="bobin/windingView">
                 <div class="control-row">
+                    <!-- TÌM KIẾM TỪ KHÓA -->
                     <div class="search-box-modern">
                         <svg class="icon-search" viewBox="0 0 24 24" width="16" height="16" stroke="#94a3b8"
                             stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text" name="keyword" id="searchKeyword"
-                            placeholder="<?= __('ph_scan_bobin') ?>" data-i18n-ph="ph_scan_bobin"
-                            value="<?= htmlspecialchars($filters['keyword']) ?>" autocomplete="off">
+                        <input type="text" name="keyword" id="searchKeyword" placeholder="<?= __('ph_scan_bobin') ?>"
+                            data-i18n-ph="ph_scan_bobin" value="<?= htmlspecialchars($filters['keyword']) ?>"
+                            autocomplete="off">
                     </div>
 
                     <!-- LỌC THEO MÁY ĐÙN -->
                     <div class="filter-group">
-                        <span class="filter-group-icon">🏭</span>
-                        <select name="machine" id="filterMachine" class="filter-select-modern" onchange="this.form.submit()">
-                            <option value="" data-i18n="opt_all_machines">-- <?= __('opt_all_machines') ?? 'Tất cả máy đùn' ?> --</option>
-                            <?php foreach ($machines as $m): 
+                        <select name="machine" id="filterMachine" class="filter-select-modern"
+                            onchange="this.form.submit()">
+                            <option value="" data-i18n="opt_all_machines">
+                                <?= __('opt_all_machines') ?? 'Tất cả máy đùn' ?></option>
+                            <?php foreach ($machines as $m):
                                 $mName = is_object($m) ? ($m->machine_name ?? '') : ($m['machine_name'] ?? '');
                                 if (empty($mName)) continue;
                             ?>
-                                <option value="<?= htmlspecialchars($mName) ?>" <?= ($filters['machine'] === $mName) ? 'selected' : '' ?>>
+                                <option value="<?= htmlspecialchars($mName) ?>"
+                                    <?= ($filters['machine'] === $mName) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($mName) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-
-                    <!-- LỌC THEO MÁY CUỘN -->
-                    <div class="filter-group">
-                        <span class="filter-group-icon">🌀</span>
-                        <select name="winding_machine" id="filterWindingMachine" class="filter-select-modern" onchange="this.form.submit()">
-                            <option value="" data-i18n="opt_all_winding_machines">-- <?= __('opt_all_winding_machines') ?? 'Tất cả máy cuộn' ?> --</option>
-                            <?php foreach ($windingMachines as $wm): 
-                                $wmName = is_object($wm) ? ($wm->machine_name ?? '') : ($wm['machine_name'] ?? '');
-                                if (empty($wmName)) continue;
-                            ?>
-                                <option value="<?= htmlspecialchars($wmName) ?>" <?= ($filters['winding_machine'] === $wmName) ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($wmName) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- LỌC THEO MÃ SẢN PHẨM -->
-                    <div class="filter-group">
-                        <span class="filter-group-icon">📦</span>
-                        <input type="text" name="product_code" id="filterProductCode" class="filter-input-modern"
-                            placeholder="<?= __('ph_product_code') ?? 'Mã sản phẩm...' ?>"
-                            data-i18n-ph="ph_product_code" list="windingProductDatalist"
-                            value="<?= htmlspecialchars($filters['product_code']) ?>" autocomplete="off">
-                        <datalist id="windingProductDatalist">
-                            <?php foreach ($products as $p): 
-                                $pCode = is_object($p) ? ($p->product_code ?? '') : ($p['product_code'] ?? '');
-                                if (empty($pCode)) continue;
-                            ?>
-                                <option value="<?= htmlspecialchars($pCode) ?>"></option>
-                            <?php endforeach; ?>
-                        </datalist>
-                    </div>
-
                     <!-- LỌC THEO LOẠI BOBIN -->
                     <div class="filter-group">
-                        <span class="filter-group-icon">🏷️</span>
-                        <select name="bobin_type" id="filterBobinType" class="filter-select-modern" onchange="this.form.submit()">
-                            <?php foreach ($bobinTypeOptions as $tKey => $tLabel): ?>
-                                <option value="<?= htmlspecialchars($tKey) ?>" <?= ($filters['bobin_type'] === $tKey || (empty($filters['bobin_type']) && $tKey === 'all')) ? 'selected' : '' ?>>
+                        <select name="bobin_type" id="filterBobinType" class="filter-select-modern"
+                            onchange="this.form.submit()">
+                            <option value="" data-i18n="opt_all_bobin_types">
+                                <?= __('opt_all_bobin_types') ?? 'Tất cả loại Bobin' ?></option>
+                            <?php foreach ($bobinTypeOptions as $tKey => $tLabel):
+                                if ($tKey === 'all' || $tKey === '') continue;
+                            ?>
+                                <option value="<?= htmlspecialchars($tKey) ?>"
+                                    <?= ($filters['bobin_type'] === $tKey) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($tLabel) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
 
+
+                    <!-- LỌC THEO MÃ SẢN PHẨM (SUGGESTION TEXTFIELD) -->
+                    <div class="filter-group">
+                        <input type="text" name="product_code" id="filterProductCode"
+                            class="filter-input-modern filter-product-suggestion"
+                            placeholder="<?= __('ph_product_code') ?? 'Mã sản phẩm...' ?>"
+                            data-i18n-ph="ph_product_code" value="<?= htmlspecialchars($filters['product_code']) ?>"
+                            autocomplete="off">
+                        <div class="suggestion-box" id="winding_product_suggestions"></div>
+                    </div>
+
+
+
+                    <!-- NHÓM NÚT THAO TÁC -->
                     <div class="filter-actions-group">
                         <button type="button" id="btnScanQR" class="btn-modern btn-scan">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -276,58 +277,34 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                             </svg>
                             <span data-i18n="btn_scan_qr"><?= __('btn_scan_qr') ?? 'Quét QR' ?></span>
                         </button>
-                        <button class="btn-modern btn-filter" type="submit" data-i18n="filter">
-                            <?= __('filter') ?? 'Lọc' ?>
+                        <button class="btn-modern btn-filter" type="submit" id="btnFilter">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            <span data-i18n="filter"><?= __('filter') ?? 'Lọc' ?></span>
                         </button>
                         <?php if ($hasActiveFilter): ?>
-                            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView" class="btn-reset-filter"
-                                data-i18n="reset_filter" title="<?= __('reset_filter') ?? 'Xóa lọc' ?>">✕ <?= __('reset_filter') ?? 'Xóa lọc' ?></a>
+                            <a href="<?= $baseUrl ?>/index.php?url=bobin/windingView" class="btn-modern btn-reset-filter"
+                                data-i18n="[title]reset_filter" title="<?= __('reset_filter') ?? 'Xóa lọc' ?>">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                <span data-i18n="reset_filter"><?= __('reset_filter') ?? 'Xóa lọc' ?></span>
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
-
-                <?php if ($hasActiveFilter): ?>
-                    <div class="active-filters-bar">
-                        <span class="active-filters-label" data-i18n="active_filter_chips"><?= __('active_filter_chips') ?? 'Đang lọc:' ?></span>
-                        <?php if (!empty($filters['keyword'])): ?>
-                            <span class="active-filter-chip">
-                                🔍 <?= htmlspecialchars($filters['keyword']) ?>
-                                <a href="<?= buildWindingFilterUrl(['keyword' => '']) ?>" class="chip-remove" title="Bỏ lọc từ khóa">✕</a>
-                            </span>
-                        <?php endif; ?>
-                        <?php if (!empty($filters['machine'])): ?>
-                            <span class="active-filter-chip">
-                                🏭 <?= htmlspecialchars($filters['machine']) ?>
-                                <a href="<?= buildWindingFilterUrl(['machine' => '']) ?>" class="chip-remove" title="Bỏ lọc máy đùn">✕</a>
-                            </span>
-                        <?php endif; ?>
-                        <?php if (!empty($filters['winding_machine'])): ?>
-                            <span class="active-filter-chip">
-                                🌀 <?= htmlspecialchars($filters['winding_machine']) ?>
-                                <a href="<?= buildWindingFilterUrl(['winding_machine' => '']) ?>" class="chip-remove" title="Bỏ lọc máy cuộn">✕</a>
-                            </span>
-                        <?php endif; ?>
-                        <?php if (!empty($filters['product_code'])): ?>
-                            <span class="active-filter-chip">
-                                📦 <?= htmlspecialchars($filters['product_code']) ?>
-                                <a href="<?= buildWindingFilterUrl(['product_code' => '']) ?>" class="chip-remove" title="Bỏ lọc mã sản phẩm">✕</a>
-                            </span>
-                        <?php endif; ?>
-                        <?php if (!empty($filters['bobin_type']) && $filters['bobin_type'] !== 'all'): ?>
-                            <span class="active-filter-chip">
-                                🏷️ <?= htmlspecialchars($filters['bobin_type']) ?>
-                                <a href="<?= buildWindingFilterUrl(['bobin_type' => '']) ?>" class="chip-remove" title="Bỏ lọc loại bobin">✕</a>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
             </form>
         </div>
 
         <!-- DANH SÁCH BOBIN CHỜ CUỘN -->
         <div class="list-card">
             <div class="header-row">
-                <h2>Số lượng Bobin chờ cuộn: <span class="counter-badge"><?= (int)($pagination['totalRecords'] ?? count($bobins)) ?></span></h2>
+                <h2>Số lượng Bobin chờ cuộn: <span
+                        class="counter-badge"><?= (int)($pagination['totalRecords'] ?? count($bobins)) ?></span></h2>
             </div>
 
             <?php if (empty($bobins)): ?>
@@ -336,8 +313,8 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                 <div class="bobin-list">
                     <?php foreach ($bobins as $item): ?>
                         <?php
-                        $products = json_decode($item['products'] ?? '{}', true) ?: [];
-                        $productCode = $products['product_code'] ?? 'Chưa cập nhật';
+                        $itemProducts = json_decode($item['products'] ?? '{}', true) ?: [];
+                        $productCode = $itemProducts['product_code'] ?? 'Chưa cập nhật';
 
                         $extrusionEmployee = json_decode($item['extrusion_employee'] ?? '{}', true) ?: [];
                         $extEmpCode = $extrusionEmployee['employee_code'] ?? 'Chưa cập nhật';
@@ -373,10 +350,9 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                         $displayStatus = strtolower($rawStatus) === 'rolled' ? 'ĐÃ CUỘN' : 'ĐÃ KIỂM TRA QC';
                         ?>
 
-                        <div class="bobin-item <?= $statusClass ?>"
-                            data-key="<?= htmlspecialchars($item['bobin_key_code']) ?>"
+                        <div class="bobin-item <?= $statusClass ?>" data-key="<?= htmlspecialchars($item['bobin_key_code']) ?>"
                             data-ident="<?= htmlspecialchars($item['bobin_identification_code']) ?>">
-                            
+
                             <!-- CARD TOP -->
                             <div class="card-top">
                                 <div class="key-info">
@@ -396,7 +372,8 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                 <div class="field-item">
                                     <label>Mã sản phẩm</label>
                                     <div class="val-sub">
-                                        <span class="bobin-highlight-product <?= getProductBadgeClass($productCode) ?>"><?= htmlspecialchars($productCode) ?></span>
+                                        <span
+                                            class="bobin-highlight-product <?= getProductBadgeClass($productCode) ?>"><?= htmlspecialchars($productCode) ?></span>
                                     </div>
                                 </div>
                                 <div class="field-item">
@@ -420,7 +397,9 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                 </div>
                                 <div class="field-item">
                                     <label data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
-                                    <div class="val-sub"><?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?></div>
+                                    <div class="val-sub">
+                                        <?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?>
+                                    </div>
                                 </div>
                                 <div class="field-item">
                                     <label>Ca sản xuất</label>
@@ -452,7 +431,8 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                 <div class="field-item">
                                     <label>Lot in</label>
                                     <div class="val-sub">
-                                        <span class="bobin-highlight-printlot <?= empty($printLot) || $printLot === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
+                                        <span
+                                            class="bobin-highlight-printlot <?= empty($printLot) || $printLot === 'Chưa cập nhật' ? 'lot-empty' : '' ?>">
                                             <?= htmlspecialchars($printLot) ?>
                                         </span>
                                     </div>
@@ -492,7 +472,8 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                         foreach ($extChecks as $i18nKey => $ec):
                                         ?>
                                             <div class="vi-item <?= $ec['ok'] ? 'badge-ok' : 'badge-ng' ?>">
-                                                <span data-i18n="<?= $i18nKey ?>"><?= __($i18nKey) ?></span><strong><?= $ec['ok'] ? 'OK' : 'NG' ?></strong>
+                                                <span
+                                                    data-i18n="<?= $i18nKey ?>"><?= __($i18nKey) ?></span><strong><?= $ec['ok'] ? 'OK' : 'NG' ?></strong>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
@@ -502,32 +483,44 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                 <div class="inspection-strip qc-strip">
                                     <div class="strip-title-wrapper">
                                         <span class="strip-label">🛡️ QC đánh giá:</span>
-                                        <span class="inspector-badge">NV: <?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa rõ') ?></span>
+                                        <span class="inspector-badge">NV:
+                                            <?= htmlspecialchars($vi['inspector_name'] ?? 'Chưa rõ') ?></span>
                                     </div>
                                     <div class="qc-badges">
                                         <div class="vi-item <?= ($defects['gel'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
                                             <span>Gel</span><strong><?= ($defects['gel'] ?? false) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= ($defects['foreign_object'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
-                                            <span>Dị vật</span><strong><?= ($defects['foreign_object'] ?? false) ? 'NG' : 'OK' ?></strong>
+                                        <div
+                                            class="vi-item <?= ($defects['foreign_object'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Dị
+                                                vật</span><strong><?= ($defects['foreign_object'] ?? false) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= ($defects['color_issue'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
+                                        <div
+                                            class="vi-item <?= ($defects['color_issue'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
                                             <span>Màu</span><strong><?= ($defects['color_issue'] ?? false) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= ($defects['print_quality'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
-                                            <span>Chữ in</span><strong><?= ($defects['print_quality'] ?? false) ? 'NG' : 'OK' ?></strong>
+                                        <div
+                                            class="vi-item <?= ($defects['print_quality'] ?? false) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Chữ
+                                                in</span><strong><?= ($defects['print_quality'] ?? false) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= (($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
-                                            <span>Vón cục</span><strong><?= (($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ? 'NG' : 'OK' ?></strong>
+                                        <div
+                                            class="vi-item <?= (($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Vón
+                                                cục</span><strong><?= (($defects['clump'] ?? false) || ($defects['lump'] ?? false) || ($vi['defect_clump'] ?? false)) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= (($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                        <div
+                                            class="vi-item <?= (($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
                                             <span>Trầy</span><strong><?= (($defects['scratch'] ?? false) || ($vi['defect_scratch'] ?? false)) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= (($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                        <div
+                                            class="vi-item <?= (($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
                                             <span>Xước</span><strong><?= (($defects['streak'] ?? false) || ($defects['scuff'] ?? false) || ($vi['defect_streak'] ?? false)) ? 'NG' : 'OK' ?></strong>
                                         </div>
-                                        <div class="vi-item <?= (($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
-                                            <span>Biến dạng</span><strong><?= (($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ? 'NG' : 'OK' ?></strong>
+                                        <div
+                                            class="vi-item <?= (($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ? 'badge-ng' : 'badge-ok' ?>">
+                                            <span>Biến
+                                                dạng</span><strong><?= (($defects['deformation'] ?? false) || ($defects['deformed'] ?? false) || ($vi['defect_deformation'] ?? false)) ? 'NG' : 'OK' ?></strong>
                                         </div>
                                     </div>
                                     <?php if (!empty($defects['note']) && $defects['note'] !== 'Chưa cập nhật'): ?>
@@ -551,7 +544,8 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                         <label>Máy cuộn: <span class="required">*</span></label>
                                         <div class="suggestion-wrapper">
                                             <input type="text" class="winding-input winding-machine-name"
-                                                placeholder="<?= __('ph_winding_machine_input') ?>" data-i18n-ph="ph_winding_machine_input" autocomplete="off">
+                                                placeholder="<?= __('ph_winding_machine_input') ?>"
+                                                data-i18n-ph="ph_winding_machine_input" autocomplete="off">
                                             <div class="suggestion-box"></div>
                                         </div>
                                     </div>
@@ -572,16 +566,21 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                 <!-- HÀNG 2: HẠNG MỤC LỖI KHI HỦY & GHI CHÚ CUỘN -->
                                 <div class="winding-bottom-row">
                                     <div class="winding-cancel-quick-group">
-                                        <label data-i18n="winding_cancel_reason_card_lbl"><?= __('winding_cancel_reason_card_lbl') ?></label>
+                                        <label
+                                            data-i18n="winding_cancel_reason_card_lbl"><?= __('winding_cancel_reason_card_lbl') ?></label>
                                         <div class="winding-quick-reason-btns">
-                                            <button type="button" class="card-error-toggle-btn" data-error="Ngoại quan" onclick="toggleCardCancelReason(this)">
+                                            <button type="button" class="card-error-toggle-btn" data-error="Ngoại quan"
+                                                onclick="toggleCardCancelReason(this)">
                                                 <span class="reason-icon">🔍</span>
-                                                <span class="reason-text" data-i18n="winding_reason_appearance"><?= __('winding_reason_appearance') ?></span>
+                                                <span class="reason-text"
+                                                    data-i18n="winding_reason_appearance"><?= __('winding_reason_appearance') ?></span>
                                                 <span class="reason-check">NG</span>
                                             </button>
-                                            <button type="button" class="card-error-toggle-btn" data-error="Thông khí" onclick="toggleCardCancelReason(this)">
+                                            <button type="button" class="card-error-toggle-btn" data-error="Thông khí"
+                                                onclick="toggleCardCancelReason(this)">
                                                 <span class="reason-icon">💨</span>
-                                                <span class="reason-text" data-i18n="winding_reason_airflow"><?= __('winding_reason_airflow') ?></span>
+                                                <span class="reason-text"
+                                                    data-i18n="winding_reason_airflow"><?= __('winding_reason_airflow') ?></span>
                                                 <span class="reason-check">NG</span>
                                             </button>
                                         </div>
@@ -589,21 +588,22 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                     <div class="winding-note">
                                         <label data-i18n="winding_note_lbl"><?= __('winding_note_lbl') ?></label>
                                         <input type="text" class="note-field winding-note-field"
-                                            placeholder="<?= __('ph_winding_note_explain') ?>" data-i18n-ph="ph_winding_note_explain">
+                                            placeholder="<?= __('ph_winding_note_explain') ?>"
+                                            data-i18n-ph="ph_winding_note_explain">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- CARD FOOTER & NÚT BẤM HOÀN TẤT -->
                             <div class="card-footer-simple">
-                                <div class="update-time">🕒 Cập nhật lúc: <?= htmlspecialchars($item['updated_time'] ?? '') ?></div>
+                                <div class="update-time">🕒 Cập nhật lúc: <?= htmlspecialchars($item['updated_time'] ?? '') ?>
+                                </div>
                                 <div class="button-group">
                                     <button type="button" class="btn-cancel" data-i18n="btn_cancel_bobin"
                                         onclick="handleWindingCancel(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
                                         🗑️ <?= __('btn_cancel_bobin') ?>
                                     </button>
-                                    <button type="button" class="btn-confirm"
-                                        onclick="handleWindingConfirm(
+                                    <button type="button" class="btn-confirm" onclick="handleWindingConfirm(
                                             this,
                                             '<?= htmlspecialchars($item['bobin_identification_code']) ?>',
                                             '<?= htmlspecialchars($item['bobin_key_code']) ?>',
@@ -621,20 +621,20 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                 <?php if (isset($pagination['totalPages']) && $pagination['totalPages'] > 1): ?>
                     <div class="pagination-wrapper">
                         <?php if ($pagination['currentPage'] > 1): ?>
-                            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView&page=<?= $pagination['currentPage'] - 1 ?>"
-                                class="page-btn">‹ Trước</a>
+                            <a href="<?= buildWindingFilterUrl(['page' => $pagination['currentPage'] - 1]) ?>" class="page-btn">‹
+                                Trước</a>
                         <?php endif; ?>
 
                         <?php for ($p = 1; $p <= $pagination['totalPages']; $p++): ?>
-                            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView&page=<?= $p ?>"
+                            <a href="<?= buildWindingFilterUrl(['page' => $p]) ?>"
                                 class="page-btn <?= ($p === (int)$pagination['currentPage']) ? 'active' : '' ?>">
                                 <?= $p ?>
                             </a>
                         <?php endfor; ?>
 
                         <?php if ($pagination['currentPage'] < $pagination['totalPages']): ?>
-                            <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView&page=<?= $pagination['currentPage'] + 1 ?>"
-                                class="page-btn">Sau ›</a>
+                            <a href="<?= buildWindingFilterUrl(['page' => $pagination['currentPage'] + 1]) ?>" class="page-btn">Sau
+                                ›</a>
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
@@ -644,12 +644,74 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
 
     <script>
         const API_BASE_URL = "<?= '/WEB_BOBIN/public/index.php?url=' ?>";
+        window.__FILTER_PRODUCT_CODES__ = <?= json_encode(array_values($productCodes), JSON_UNESCAPED_UNICODE) ?>;
     </script>
     <script src="/WEB_BOBIN/public/assets/js/logout.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/suggestion.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/submit.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/Winding/scanQR.js?v=<?= time() ?>"></script>
     <script defer src="/WEB_BOBIN/public/assets/js/copyText.js?v=<?= time() ?>"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pInput = document.getElementById('filterProductCode');
+            const pBox = document.getElementById('winding_product_suggestions');
+            const filterForm = document.getElementById('filterForm');
+            if (!pInput || !pBox || !filterForm) return;
+
+            const productCodes = window.__FILTER_PRODUCT_CODES__ || [];
+
+            function renderSuggestions(val) {
+                const query = (val || '').toLowerCase().trim();
+                pBox.innerHTML = '';
+                const matches = query === '' ?
+                    productCodes.slice(0, 30) :
+                    productCodes.filter(c => c.toLowerCase().includes(query)).slice(0, 30);
+
+                if (matches.length === 0) {
+                    pBox.style.display = 'none';
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+                matches.forEach(code => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.textContent = code;
+                    item.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        pInput.value = code;
+                        pBox.style.display = 'none';
+                        filterForm.submit();
+                    });
+                    fragment.appendChild(item);
+                });
+                pBox.appendChild(fragment);
+                pBox.style.display = 'block';
+            }
+
+            pInput.addEventListener('input', function() {
+                renderSuggestions(this.value);
+            });
+
+            pInput.addEventListener('focus', function() {
+                renderSuggestions(this.value);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!pInput.contains(e.target) && !pBox.contains(e.target)) {
+                    pBox.style.display = 'none';
+                }
+            });
+
+            pInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    pBox.style.display = 'none';
+                } else if (e.key === 'Enter') {
+                    pBox.style.display = 'none';
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

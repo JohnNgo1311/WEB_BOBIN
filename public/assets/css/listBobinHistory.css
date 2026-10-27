@@ -250,19 +250,31 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  height: 38px;
+  gap: 6px;
+  height: 40px;
   padding: 0 14px;
   border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 700;
   cursor: pointer;
   border: none;
   white-space: nowrap;
+  transition: all 0.2s ease;
 }
 .btn-scan { background: linear-gradient(135deg, #0284c7, #2563eb) !important; color: #fff !important; }
 .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #fff !important; }
-.btn-filter { background: #2563eb; color: #fff; }
+.btn-modern.btn-filter,
+.btn-filter {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+.btn-modern.btn-filter:hover,
+.btn-filter:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
+}
 .btn-export { background: #10b981; color: #fff; }
 
 #qr-reader {
@@ -329,7 +341,7 @@ h1 {
 }
 
 .analytics-title-box.qc-chart-title-box {
-  background: linear-gradient(90deg, #f5f3ff 0%, #ede9fe 100%);
+  background: linear-gradient(90deg, #f5f3ff 0%, #c1b3ff 100%);
   justify-content: space-between;
 }
 
@@ -350,6 +362,10 @@ h1 {
 
 .qc-chart-title-box h3 {
   color: #4c1d95;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .qc-stat-badges {
@@ -1112,4 +1128,4 @@ h1 {
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
-
+

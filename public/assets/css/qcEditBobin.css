@@ -275,13 +275,16 @@ body {
 }
 
 .qc-btn-filter {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+  border: none;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
 .qc-btn-filter:hover {
-  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
 }
 
 /* ================= 4. BOBIN CARD CONTAINER ================= */

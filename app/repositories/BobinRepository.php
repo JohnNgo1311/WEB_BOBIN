@@ -1960,6 +1960,18 @@ class BobinRepository
                 $params[':pcode2'] = $pVal;
             }
 
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
+            }
+
             $sql .= " ORDER BY updated_time DESC";
             $offset = ($page - 1) * $limit;
             $sql .= " LIMIT :limit OFFSET :offset";
@@ -2026,6 +2038,18 @@ class BobinRepository
                 )";
                 $params[':pcode1'] = $pVal;
                 $params[':pcode2'] = $pVal;
+            }
+
+            if (!empty($filters['rack']) && $filters['rack'] !== 'all') {
+                $rackFilterVal = trim($filters['rack']);
+                if (str_starts_with($rackFilterVal, 'Rack_')) {
+                    $sql .= " AND JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack";
+                    $params[':rack'] = $rackFilterVal;
+                } else {
+                    $sql .= " AND (JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) LIKE :rack_prefix OR JSON_UNQUOTE(JSON_EXTRACT(rack, '$.code')) = :rack_exact)";
+                    $params[':rack_prefix'] = 'Rack_' . $rackFilterVal . '_%';
+                    $params[':rack_exact']  = $rackFilterVal;
+                }
             }
 
             $stmt = $pdo->prepare($sql);

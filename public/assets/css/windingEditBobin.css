@@ -287,6 +287,20 @@ body {
   box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
 }
 
+.wnd-btn-reset {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  text-decoration: none;
+}
+
+.wnd-btn-reset:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: translateY(-1px);
+}
+
 /* ================= 4. BOBIN CARD CONTAINER ================= */
 .wnd-list-wrapper {
   display: flex;
@@ -617,7 +631,7 @@ body {
 }
 
 .wnd-empty-icon { font-size: 40px; margin-bottom: 12px; }
-.wnd-empty-title { font-size: 16px; font-weight: 700; color: #475569; }
+.wnd-empty-title { font-size: 16px; font-weight: 700; color: #ff0000; }
 
 /* Pagination */
 .wnd-pagination {

@@ -107,8 +107,8 @@ $homeUrl = match ($userRole) {
 
                 <!-- 1. MẬT KHẨU HIỆN TẠI -->
                 <div class="form-group">
-                    <label for="current_password" data-i18n="cp_current_pwd">
-                        <?= __('cp_current_pwd') ?> <span class="required">*</span>
+                    <label for="current_password">
+                        <span data-i18n="cp_current_pwd"><?= __('cp_current_pwd') ?></span> <span class="required">*</span>
                     </label>
                     <div class="input-icon-wrapper">
                         <span class="field-icon">
@@ -130,8 +130,8 @@ $homeUrl = match ($userRole) {
 
                 <!-- 2. MẬT KHẨU MỚI -->
                 <div class="form-group">
-                    <label for="new_password" data-i18n="cp_new_pwd">
-                        <?= __('cp_new_pwd') ?> <span class="required">*</span>
+                    <label for="new_password">
+                        <span data-i18n="cp_new_pwd"><?= __('cp_new_pwd') ?></span> <span class="required">*</span>
                     </label>
                     <div class="input-icon-wrapper">
                         <span class="field-icon">
@@ -165,8 +165,8 @@ $homeUrl = match ($userRole) {
 
                 <!-- 3. XÁC NHẬN MẬT KHẨU MỚI -->
                 <div class="form-group">
-                    <label for="confirm_password" data-i18n="cp_confirm_pwd">
-                        <?= __('cp_confirm_pwd') ?> <span class="required">*</span>
+                    <label for="confirm_password">
+                        <span data-i18n="cp_confirm_pwd"><?= __('cp_confirm_pwd') ?></span> <span class="required">*</span>
                     </label>
                     <div class="input-icon-wrapper">
                         <span class="field-icon">

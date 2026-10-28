@@ -22,7 +22,7 @@ const ExtrusionConfirmDialog = (() => {
     const style = document.createElement("style");
     style.id = "confirm-dialog-style";
     style.textContent = `
-        .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+        .confirm-dialog-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; backdrop-filter: blur(2px); }
         .confirm-dialog-box { background: #fff; padding: 20px 24px; border-radius: 12px; width: 92%; max-width: 520px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); font-family: var(--font-family-base, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif); }
         .confirm-dialog-title { margin-top: 0; font-size: 17px; color: #0f172a; text-align: center; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 10px; font-weight: 800; }
         .confirm-dialog-content { margin: 12px 0; font-size: 13px; color: #334155; max-height: 65vh; overflow-y: auto; padding-right: 4px; }

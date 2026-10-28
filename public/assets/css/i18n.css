@@ -22,7 +22,80 @@ code, pre, kbd, samp, .id-code, .code-mono, .perm-item-key {
   font-family: var(--font-family-mono) !important;
 }
 
-/* ================= 1. NÚT CHUYỂN ĐỔI NGÔN NGỮ (LANGUAGE SWITCHER) ================= */
+/* ================= 1. NÚT CHUYỂN ĐỔI NGÔN NGỮ BẰNG QUỐC KỲ (NATIONAL FLAG SWITCHER) ================= */
+.lang-flag-svg {
+  display: block;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.16);
+  flex-shrink: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lang-flag-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 3px 4px;
+  border-radius: 9px;
+  border: 1px solid #cbd5e1;
+  user-select: none;
+  z-index: 1000;
+}
+
+.lang-flag-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 5px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.55;
+  filter: saturate(0.85);
+  transition: opacity 0.16s ease, transform 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  line-height: 0;
+}
+
+.lang-flag-btn:hover {
+  opacity: 0.95;
+  filter: none;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+.lang-flag-btn.active {
+  opacity: 1;
+  filter: none;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #2563eb, 0 2px 6px rgba(37, 99, 235, 0.28);
+}
+
+/* Tương thích nền tối trên thanh điều hướng trang Đổi mật khẩu (.cp-navbar) */
+.cp-navbar .lang-flag-switcher {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cp-navbar .lang-flag-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.cp-navbar .lang-flag-btn.active {
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0 0 2px #38bdf8, 0 2px 8px rgba(56, 189, 248, 0.35);
+}
+
+/* Định dạng khi ở trang Login */
+.login-lang-wrapper .lang-flag-switcher {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
+}
+
+/* Dự phòng tương thích ngược cho cấu trúc dropdown cũ (nếu có) */
 .lang-switcher-dropdown {
   position: relative;
   display: inline-block;

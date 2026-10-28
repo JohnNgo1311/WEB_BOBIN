@@ -27,6 +27,7 @@ $userName         = $data['userName'] ?? ($_SESSION['user']['employee_name'] ?? 
     <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
 
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
 
 <body>

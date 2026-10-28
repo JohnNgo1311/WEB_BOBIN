@@ -22,8 +22,9 @@
         <!-- ================= CỘT TRÁI: SHOWCASE & CỔNG THEO DÕI NHANH ================= -->
         <div class="showcase-section">
             <div class="showcase-content">
-                <div class="brand-badge" data-i18n="login_brand_badge">
-                    <span class="pulse-dot"></span> <?= __('login_brand_badge') ?>
+                <div class="brand-badge">
+                    <span class="pulse-dot"></span>
+                    <span data-i18n="login_brand_badge"><?= __('login_brand_badge') ?></span>
                 </div>
 
                 <h1 class="showcase-title" data-i18n="login_title"><?= __('login_title') ?></h1>
@@ -122,7 +123,7 @@
             <div class="login-box">
                 <div class="login-header">
                     <img src="/WEB_BOBIN/public/assets/images/smcLogo.png" alt="SMC Logo" class="login-logo">
-                    <h2 data-i18n="login_btn_submit"><?= __('login_title') ?></h2>
+                    <h2 data-i18n="login_title"><?= __('login_title') ?></h2>
                 </div>
 
                 <?php if (!empty($_GET['error'])): ?>
@@ -270,8 +271,8 @@
                 </div>
 
                 <div class="fp-hotline-box">
-                    <div class="fp-hotline-title" data-i18n="fp_contact_info">
-                        📞 <?= __('fp_contact_info') ?>
+                    <div class="fp-hotline-title">
+                        📞 <span data-i18n="fp_contact_info"><?= __('fp_contact_info') ?></span>
                     </div>
                     <div class="fp-hotline-numbers" data-i18n="fp_contact_room">
                         <?= __('fp_contact_room') ?>

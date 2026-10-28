@@ -305,7 +305,7 @@ class EmployeeController extends Controller
 
         $output = fopen('php://output', 'w');
         fputs($output, "\xEF\xBB\xBF");
-        fputcsv($output, ['STT', 'Mã nhân viên', 'Họ và tên', 'Mã bộ phận', 'Vai trò / Nhóm', 'Tên đăng nhập', 'Mật khẩu lần đầu', 'Thời gian cập nhật']);
+        fputcsv($output, ['STT', 'Mã nhân viên', 'Họ và tên', 'Mã bộ phận', 'Vai trò / Nhóm', 'Tên đăng nhập', 'Mật khẩu', 'Thời gian cập nhật']);
 
         $stt = 1;
         foreach ($employees as $emp) {
@@ -316,16 +316,14 @@ class EmployeeController extends Controller
                 'admin' => 'Quản trị viên (Admin)',
                 default => $emp['role']
             };
-            $firstLoginLabel = ($emp['is_first_login'] == 1) ? '123' : 'Đã đổi riêng';
-
             fputcsv($output, [
                 $stt++,
-                $emp['employee_code'],
+                0 + $emp['employee_code'],
                 $emp['employee_name'],
                 $emp['cost_center'] ?? '',
                 $roleLabel,
                 $emp['username'],
-                $firstLoginLabel,
+                $emp['password'],
                 $emp['updated_time']
             ]);
         }
@@ -342,9 +340,7 @@ class EmployeeController extends Controller
         $output = fopen('php://output', 'w');
         fputs($output, "\xEF\xBB\xBF");
         fputcsv($output, ['Mã nhân viên', 'Họ và tên', 'Mã bộ phận', 'Vai trò (extrusion/qc/winding/admin)', 'Tài khoản (Tùy chọn)']);
-        fputcsv($output, ['01910698', 'Nguyễn Thị Hiền', 'A00430', 'admin', '01910698']);
-        fputcsv($output, ['02420111', 'Trần Văn A', 'A00330', 'extrusion', '02420111']);
-        fputcsv($output, ['02619486', 'Lê Văn B', 'A00340', 'winding', '02619486']);
+        fputcsv($output, ['0XXXXXXX', 'Nguyễn Văn A', 'A00330', 'extrusion', '0XXXXXXX']);
         fclose($output);
         exit;
     }

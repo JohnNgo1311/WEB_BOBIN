@@ -137,7 +137,7 @@ $qcFilterSelectOptions = [
         <div class="adv-filter-col">
             <div class="adv-filter-label">
                 <span>👤 <span
-                        data-i18n="filter_label_employee_code"><?= __('filter_label_employee_code') ?></span>:</span>
+                        data-i18n="filter_label_employee_code"><?= __('filter_label_employee_code') ?></span></span>
                 <span class="adv-label-sub"
                     data-i18n="filter_emp_scope_badge"><?= __('filter_emp_scope_badge') ?></span>
             </div>
@@ -147,7 +147,7 @@ $qcFilterSelectOptions = [
                     data-i18n-ph="filter_ph_employee_code" value="<?= htmlspecialchars($currentEmployeeCode) ?>">
                 <?php if ($currentEmployeeCode !== ''): ?>
                 <a href="<?= buildFilterUrl(['employee_code' => null, 'page' => 1]) ?>" class="adv-clear-btn"
-                    title="<?= htmlspecialchars(__('filter_clear_employee')) ?>">✕</a>
+                    data-i18n="[title]filter_clear_employee" title="<?= htmlspecialchars(__('filter_clear_employee')) ?>">✕</a>
                 <?php endif; ?>
                 <button type="button" class="adv-apply-btn" id="btnApplyEmployeeFilter" data-i18n="btn_apply_filter">
                     <?= __('btn_apply_filter') ?>
@@ -160,7 +160,7 @@ $qcFilterSelectOptions = [
         <div class="adv-filter-col">
             <div class="adv-filter-label">
                 <span>📦 <span
-                        data-i18n="filter_label_product_code"><?= __('filter_label_product_code') ?></span>:</span>
+                        data-i18n="filter_label_product_code"><?= __('filter_label_product_code') ?></span></span>
                 <?php if ($currentProductCode !== '' && $currentProductCode !== 'all'): ?>
                 <span class="adv-label-sub">
                     <?= htmlspecialchars($currentProductCode) ?>:
@@ -181,7 +181,7 @@ $qcFilterSelectOptions = [
                     value="<?= htmlspecialchars($currentProductCode === 'all' ? '' : $currentProductCode) ?>">
                 <?php if ($currentProductCode !== '' && $currentProductCode !== 'all'): ?>
                 <a href="<?= buildFilterUrl(['product_code' => null, 'page' => 1]) ?>" class="adv-clear-btn"
-                    title="<?= htmlspecialchars(__('filter_clear_product')) ?>">✕</a>
+                    data-i18n="[title]filter_clear_product" title="<?= htmlspecialchars(__('filter_clear_product')) ?>">✕</a>
                 <?php endif; ?>
                 <button type="button" class="adv-apply-btn" id="btnApplyProductFilter" data-i18n="btn_apply_filter">
                     <?= __('btn_apply_filter') ?>
@@ -193,7 +193,7 @@ $qcFilterSelectOptions = [
         <!-- 3. FILTER THEO TÌNH TRẠNG NGOẠI QUAN NHÓM QC (8 TRƯỜNG NGOẠI QUAN) -->
         <div class="adv-filter-col">
             <div class="adv-filter-label">
-                <span>🛡️ <span data-i18n="filter_label_qc_defect"><?= __('filter_label_qc_defect') ?></span>:</span>
+                <span>🛡️ <span data-i18n="filter_label_qc_defect"><?= __('filter_label_qc_defect') ?></span></span>
                 <span class="adv-label-sub"
                     data-i18n="filter_qc_8_fields_badge"><?= __('filter_qc_8_fields_badge') ?></span>
             </div>

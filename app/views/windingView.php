@@ -614,9 +614,9 @@ if (!function_exists('getBobinTypeBadgeStyle')) {
                                 <div class="update-time">🕒 Cập nhật lúc: <?= htmlspecialchars($item['updated_time'] ?? '') ?>
                                 </div>
                                 <div class="button-group">
-                                    <button type="button" class="btn-cancel" data-i18n="btn_cancel_bobin"
+                                    <button type="button" class="btn-cancel"
                                         onclick="handleWindingCancel(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
-                                        🗑️ <?= __('btn_cancel_bobin') ?>
+                                        🗑️ <span data-i18n="btn_cancel_bobin"><?= __('btn_cancel_bobin') ?></span>
                                     </button>
                                     <button type="button" class="btn-confirm" onclick="handleWindingConfirm(
                                             this,

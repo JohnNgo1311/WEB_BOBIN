@@ -40,41 +40,40 @@ class BobinServices
         if ($targetCode === '') {
             throw new Exception("Vui lòng nhập Mã định danh Bobin.");
         }
+        // Chuẩn hóa mã định danh đồng nhất chữ in hoa theo danh sách cố định trong CSDL
+        $dto->bobin_identification_code = $targetCode;
 
-        // Quét trực tiếp để tìm Bobin và lấy trạng thái của nó
-        $isExists = false;
-        $currentStatus = '';
-        foreach (GlobalData::$listBobinEntity as $bobin) {
-            if (($bobin['bobin_identification_code'] ?? null) === $targetCode) {
-                $isExists = true;
-                $currentStatus = $bobin['bobin_current_status'] ?? '';
-                break; // Dừng vòng lặp ngay khi tìm thấy
-            }
-        }
-
-        // 1. Nếu không có trong DB thì báo lỗi không tồn tại
-        if (!$isExists) {
+        // Kiểm tra trực tiếp bản ghi cố định trong bảng bobin_list_detail (nguồn chuẩn quản lý số lượng Bobin cố định)
+        $existingDetail = $this->bobinRepo->getSpecificBobin($targetCode);
+        if ($existingDetail === null) {
             throw new Exception("Mã định danh Bobin [{$targetCode}] không tồn tại trong hệ thống.");
         }
 
+        // Quét bổ trợ trên bobin_list_general nếu cần đối chiếu
+        $generalStatus = '';
+        foreach (GlobalData::$listBobinEntity as $bobin) {
+            if (strcasecmp((string)($bobin['bobin_identification_code'] ?? ''), $targetCode) === 0) {
+                $generalStatus = (string)($bobin['bobin_current_status'] ?? '');
+                break;
+            }
+        }
+
+        $currentStatus = !empty($existingDetail['bobin_current_status'])
+            ? (string)$existingDetail['bobin_current_status']
+            : $generalStatus;
+
         // 2. [QUAN TRỌNG] CHẶN NHẬP TRÙNG LẶP DỰA TRÊN STATUS
         // Chỉ cho phép nhập liệu khi Bobin đang Trống (Rolled) hoặc Đã hủy thao tác (Cancelled)
-
-        if (
-            $currentStatus === 'Busy_Unchecked'
-        ) {
+        if ($currentStatus === 'Busy_Unchecked') {
             throw new Exception("Bobin {$targetCode} đã được đùn. Đang đợi QC check. Không thể nhập mới!");
         }
-        if (
-            $currentStatus === 'Busy_Checked'
-        ) {
+        if ($currentStatus === 'Busy_Checked') {
             throw new Exception("Bobin {$targetCode} đã được QC check. Đang đợi cuộn. Không thể nhập mới!");
         }
-        if (
-            $currentStatus === 'Pending_Cancellation'
-        ) {
+        if ($currentStatus === 'Pending_Cancellation') {
             throw new Exception("Bobin {$targetCode} đang trong quá trình hủy. Không thể nhập mới!");
         }
+
         $entity = $this->buildBaseEntity($dto, 'extCreate');
 
         // Visual Inspection (chỉ có ở create)
@@ -262,8 +261,13 @@ class BobinServices
     private function resolveSize(string $boinIdentificationCode)
     {
         $bobinSize = $this->bobinRepo->findBobinSize($boinIdentificationCode);
+        if ((empty($bobinSize) || $bobinSize === 'Chưa cập nhật') && GlobalData::$bobinEntity !== null) {
+            if (strcasecmp(GlobalData::$bobinEntity->identificationCode, $boinIdentificationCode) === 0) {
+                $bobinSize = GlobalData::$bobinEntity->size;
+            }
+        }
 
-        if ($bobinSize === null || empty($bobinSize) || $bobinSize == "") {
+        if ($bobinSize === null || empty($bobinSize) || $bobinSize === "" || $bobinSize === 'Chưa cập nhật') {
             throw new Exception('Kích thước Bobin không tồn tại trong hệ thống');
         }
 

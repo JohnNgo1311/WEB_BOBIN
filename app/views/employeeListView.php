@@ -27,6 +27,7 @@ $totalFiltered = count($employees);
     <link rel="shortcut icon" href="<?= $baseUrl ?>/favicon.ico?v=2">
     <link rel="apple-touch-icon" href="<?= $baseUrl ?>/assets/images/favicon.png?v=2">
     <script src="<?= $baseUrl ?>/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="<?= $baseUrl ?>/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -136,7 +137,7 @@ $totalFiltered = count($employees);
                         data-placeholder-i18n="emp_search_ph" autocomplete="off">
                 </div>
                 <div class="filter-group">
-                    <label data-i18n="emp_cost_center"><?= __('emp_cost_center') ?>:</label>
+                    <label><span data-i18n="emp_cost_center"><?= __('emp_cost_center') ?></span>:</label>
                     <select name="cost_center" id="filterCostCenter" onchange="this.form.submit()">
                         <option value="all" <?= (($filters['cost_center'] ?? 'all') === 'all') ? 'selected' : '' ?> data-i18n="emp_all_cost_centers">
                             <?= __('emp_all_cost_centers') ?>
@@ -164,8 +165,8 @@ $totalFiltered = count($employees);
             </form>
 
             <div class="btn-action-group">
-                <button type="button" class="btn-action-primary" onclick="openAddModal()" data-i18n="emp_btn_add">➕ <?= __('emp_btn_add') ?></button>
-                <button type="button" class="btn-action-success" onclick="openImportModal()" data-i18n="emp_btn_import">📥 <?= __('emp_btn_import') ?></button>
+                <button type="button" class="btn-action-primary" onclick="openAddModal()"><span data-i18n="emp_btn_add"><?= __('emp_btn_add') ?></span></button>
+                <button type="button" class="btn-action-success" onclick="openImportModal()"><span data-i18n="emp_btn_import"><?= __('emp_btn_import') ?></span></button>
                 <?php
                 $exportQuery = http_build_query([
                     'url'         => 'employee/exportExcel',
@@ -174,8 +175,8 @@ $totalFiltered = count($employees);
                     'role'        => $filters['role'] ?? 'all'
                 ]);
                 ?>
-                <a href="<?= $baseUrl ?>/index.php?<?= $exportQuery ?>" id="btnExportExcel" class="btn-action-info" data-i18n="emp_btn_export">📤 <?= __('emp_btn_export') ?></a>
-                <a href="<?= $baseUrl ?>/index.php?url=employee/downloadTemplate" class="btn-action-secondary" data-i18n="emp_btn_template">📋 <?= __('emp_btn_template') ?></a>
+                <a href="<?= $baseUrl ?>/index.php?<?= $exportQuery ?>" id="btnExportExcel" class="btn-action-info"><span data-i18n="emp_btn_export"><?= __('emp_btn_export') ?></span></a>
+                <a href="<?= $baseUrl ?>/index.php?url=employee/downloadTemplate" class="btn-action-secondary"><span data-i18n="emp_btn_template"><?= __('emp_btn_template') ?></span></a>
             </div>
         </div>
 
@@ -263,19 +264,18 @@ $totalFiltered = count($employees);
                                 </td>
                                 <td style="text-align: center;">
                                     <?php if ($isFirstLogin): ?>
-                                        <span class="pwd-badge pwd-default" data-i18n="emp_pwd_default">⚠️ <?= __('emp_pwd_default') ?></span>
+                                        <span class="pwd-badge pwd-default"><span>⚠️</span> <span data-i18n="emp_pwd_default"><?= __('emp_pwd_default') ?></span></span>
                                     <?php else: ?>
-                                        <span class="pwd-badge pwd-custom" data-i18n="emp_pwd_encrypted">🔒 <?= __('emp_pwd_encrypted') ?></span>
+                                        <span class="pwd-badge pwd-custom"><span>🔒</span> <span data-i18n="emp_pwd_encrypted"><?= __('emp_pwd_encrypted') ?></span></span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="text-align: center;">
                                     <div class="row-actions">
                                         <button type="button" class="btn-row-edit"
-                                            onclick='openEditModal(<?= json_encode($emp, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'
-                                            data-i18n="emp_btn_edit">✏️ <?= __('emp_btn_edit') ?></button>
+                                            onclick='openEditModal(<?= json_encode($emp, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'><span>✏️</span> <span data-i18n="emp_btn_edit"><?= __('emp_btn_edit') ?></span></button>
                                         <button type="button" class="btn-row-reset"
-                                            onclick="openResetModal(<?= $empId ?>, '<?= htmlspecialchars(addslashes($emp['employee_name'])) ?>', '<?= htmlspecialchars(addslashes($emp['employee_code'])) ?>')">🔑
-                                            <?= __('emp_btn_reset_pwd') ?></button>
+                                            onclick="openResetModal(<?= $empId ?>, '<?= htmlspecialchars(addslashes($emp['employee_name'])) ?>', '<?= htmlspecialchars(addslashes($emp['employee_code'])) ?>')"><span>🔑</span>
+                                            <span data-i18n="emp_btn_reset_pwd"><?= __('emp_btn_reset_pwd') ?></span></button>
                                         <?php if (!$isSelf): ?>
                                             <button type="button" class="btn-row-del"
                                                 onclick="confirmDelete(<?= $empId ?>, '<?= htmlspecialchars(addslashes($emp['employee_name'])) ?>', '<?= htmlspecialchars(addslashes($emp['employee_code'])) ?>')">🗑️</button>
@@ -297,7 +297,7 @@ $totalFiltered = count($employees);
     <div id="modalAddEmp" class="modal-backdrop">
         <div class="modal-box modal-md">
             <div class="modal-header">
-                <h3 data-i18n="emp_modal_add_title">➕ <?= __('emp_modal_add_title') ?></h3>
+                <h3><span>➕</span> <span data-i18n="emp_modal_add_title"><?= __('emp_modal_add_title') ?></span></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalAddEmp')">✕</button>
             </div>
             <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/create" id="formAddEmp">
@@ -305,7 +305,7 @@ $totalFiltered = count($employees);
                     <div class="auto-notice-box">
                         <div class="notice-icon">💡</div>
                         <div class="notice-content">
-                            <strong data-i18n="emp_notice_title"><?= __('emp_notice_title') ?>:</strong><br>
+                            <strong><span data-i18n="emp_notice_title"><?= __('emp_notice_title') ?></span>:</strong><br>
                             - <span data-i18n="emp_notice_username"><?= __('emp_notice_username') ?></span>.<br>
                             - <span data-i18n="emp_notice_password"><?= __('emp_notice_password') ?></span>.
                         </div>
@@ -344,7 +344,7 @@ $totalFiltered = count($employees);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal('modalAddEmp')" data-i18n="cancel"><?= __('cancel') ?></button>
-                    <button type="submit" class="btn-submit" data-i18n="save">💾 <?= __('save') ?? 'Lưu nhân viên' ?></button>
+                    <button type="submit" class="btn-submit"><span>💾</span> <span data-i18n="save"><?= __('save') ?? 'Lưu nhân viên' ?></span></button>
                 </div>
             </form>
         </div>
@@ -353,7 +353,7 @@ $totalFiltered = count($employees);
     <div id="modalEditEmp" class="modal-backdrop">
         <div class="modal-box modal-md">
             <div class="modal-header">
-                <h3 data-i18n="emp_modal_edit_title">✏️ <?= __('emp_modal_edit_title') ?></h3>
+                <h3><span>✏️</span> <span data-i18n="emp_modal_edit_title"><?= __('emp_modal_edit_title') ?></span></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalEditEmp')">✕</button>
             </div>
             <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/update" id="formEditEmp">
@@ -389,7 +389,7 @@ $totalFiltered = count($employees);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal('modalEditEmp')" data-i18n="cancel"><?= __('cancel') ?></button>
-                    <button type="submit" class="btn-submit" data-i18n="save">💾 <?= __('save') ?? 'Cập nhật' ?></button>
+                    <button type="submit" class="btn-submit"><span>💾</span> <span data-i18n="save"><?= __('save') ?? 'Cập nhật' ?></span></button>
                 </div>
             </form>
         </div>
@@ -398,7 +398,7 @@ $totalFiltered = count($employees);
     <div id="modalResetPwd" class="modal-backdrop">
         <div class="modal-box modal-sm">
             <div class="modal-header">
-                <h3 data-i18n="emp_modal_reset_title">🔑 <?= __('emp_modal_reset_title') ?></h3>
+                <h3><span>🔑</span> <span data-i18n="emp_modal_reset_title"><?= __('emp_modal_reset_title') ?></span></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalResetPwd')">✕</button>
             </div>
             <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/resetPassword" id="formResetPwd">
@@ -417,7 +417,7 @@ $totalFiltered = count($employees);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal('modalResetPwd')" data-i18n="cancel"><?= __('cancel') ?></button>
-                    <button type="submit" class="btn-submit btn-warning" data-i18n="emp_reset_btn">⚡ <?= __('emp_reset_btn') ?></button>
+                    <button type="submit" class="btn-submit btn-warning"><span data-i18n="emp_reset_btn"><?= __('emp_reset_btn') ?></span></button>
                 </div>
             </form>
         </div>
@@ -426,7 +426,7 @@ $totalFiltered = count($employees);
     <div id="modalImportExcel" class="modal-backdrop">
         <div class="modal-box modal-md">
             <div class="modal-header">
-                <h3 data-i18n="emp_modal_import_title">📥 <?= __('emp_modal_import_title') ?></h3>
+                <h3><span>📥</span> <span data-i18n="emp_modal_import_title"><?= __('emp_modal_import_title') ?></span></h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalImportExcel')">✕</button>
             </div>
             <form method="POST" action="<?= $baseUrl ?>/index.php?url=employee/importExcel"
@@ -449,7 +449,7 @@ $totalFiltered = count($employees);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" onclick="closeModal('modalImportExcel')" data-i18n="cancel"><?= __('cancel') ?></button>
-                    <button type="submit" class="btn-submit" data-i18n="emp_import_start">🚀 <?= __('emp_import_start') ?></button>
+                    <button type="submit" class="btn-submit"><span data-i18n="emp_import_start"><?= __('emp_import_start') ?></span></button>
                 </div>
             </form>
         </div>

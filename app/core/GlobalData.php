@@ -36,7 +36,7 @@ class GlobalData
     public static array $listMonthEntity = [];
     public static array $listDayEntity = [];
 
-    public static BobinEntity $bobinEntity;
+    public static ?BobinEntity $bobinEntity = null;
 
 
 

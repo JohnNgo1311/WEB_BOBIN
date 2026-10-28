@@ -1,0 +1,133 @@
+﻿id,employee_code,employee_name,cost_center,role,username,password,is_first_login,permissions,updated_time
+1,01510036,Nguyễn Thành Thân,A00536,admin,1510036,$2y$10$FFWJHpHwFOhPh4oK7WzNmObzyk2RhNZMdM14aQiquEioR6F6QOvjS,0,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/25/2026 18:21
+2,01910698,Nguyễn Thị Hiền,A00536,admin,1910698,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+3,01911022,Kiều Minh Thiện,A00791,admin,1911022,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+4,02114273,Thân Trọng Tuấn,A00564,admin,2114273,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+5,02114811,Nguyễn Chấn Huy,A00565,admin,2114811,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+6,01920507,Hồ Thị Mỹ,A00340,admin,1920507,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+7,02411884,Phan Đình Lâm,A00340,admin,2411884,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+8,02516134,Ngô Xuân Nghĩa,A00340,admin,2516134,$2y$10$41gN.xwK81J2p.gflZXhC.MQn7W00Qvn/148uKkcM5H28FbKx69XO,0,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+9,02519007,Ninh Quang Trường,A00340,admin,2519007,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+10,02619486,Nguyễn Đức Huy,A00340,admin,2619486,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+11,02317843,Đinh Hoàng Phúc,A00853,admin,2317843,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+12,01920598,Trịnh Minh Thiện,A00791,extrusion,1920598,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/25/2026 18:14
+13,01920871,Xa Minh Hiếu,A00791,extrusion,1920871,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+14,02216809,Nguyễn Bá Nhân Hậu,A00855,admin,2216809,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""qc_check"",""qc_edit"",""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit"",""employee_manage"",""permission_manage""]",10/11/2026 21:37
+15,01920172,Võ Thị Mỹ,A00792,qc,1920172,$2y$10$8wdtRBZ4W5k3l4XRWw.P1e6Q686QQ9DHjVovUVJ0dDPAOZWqLwBWi,0,"[""qc_check"",""qc_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/18/2026 23:49
+16,01920525,Lương Thị Vân,A00792,qc,1920525,$2y$10$vMhf4Vhssl1A7TMdHf55ru/Km4tkLG54SxXIfefBSZdYe/r9o7Fee,0,"[""qc_check"",""qc_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/13/2026 14:43
+17,02125543,Đinh Thị Huyền Trang,A00792,qc,2125543,$2y$10$B9/UVjUVgpHLTXID8Lo.9.w7.nlDilfbJu68hQF8fEFUUHk0/O3uq,0,"[""qc_check"",""qc_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/28/2026 1:04
+18,02649247,Trương Cẩm Mừng,A00792,qc,2649247,123,1,"[""qc_check"",""qc_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+19,02649256,Nguyễn Thị Thu,A00792,qc,2649256,123,1,"[""qc_check"",""qc_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+20,01920589,Nguyễn Ngọc Thiện,A00330,extrusion,1920589,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 21:37
+21,01920668,Hà Viết Thế Thiện,A00852,extrusion,1920668,$2y$10$QizwO.rkOaej2YN8ARz0WeZDZdmq080EljWvvRWNP0VPhxe6UeEV2,0,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/13/2026 11:17
+22,01920862,Nguyễn Khắc Kiên,A00330,extrusion,1920862,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 21:37
+23,01921551,Trương Quang Nghĩa,A00330,extrusion,1921551,$2y$10$wfwG5ZmttQtqUlay.97TaON62ezi9jH7nwwCLQbaVuCBlYr2AOeqC,0,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/28/2026 1:02
+24,01921560,Trần Quang Hiệu,A00330,extrusion,1921560,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 21:37
+25,02020390,Võ Thiên Tuế,A00330,extrusion,2020390,$2y$10$PYGlMYMrScra8JfuHfWVre6Ue3l1CBJec6GYhQMVailhl6AQuZTZC,0,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/28/2026 1:35
+26,02020488,Lê Thanh Trúc,A00330,extrusion,2020488,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+27,02020497,Vũ Nhân Tài,A00330,extrusion,2020497,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+28,02021645,Trịnh Xuân Tỉnh,A00330,extrusion,2021645,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+29,02020965,Hà Xuân Tiến,A00330,extrusion,2020965,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+30,02021131,Nguyễn Công Anh,A00330,extrusion,2021131,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+31,02021159,Trần Vương,A00330,extrusion,2021159,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+32,02021742,Nguyễn Ngọc Dũng,A00330,extrusion,2021742,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+33,02022149,Nguyễn Xuân Mạnh,A00330,extrusion,2022149,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 21:37
+34,02022158,Bùi Lê Đức Minh,A00330,extrusion,2022158,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+35,02220255,Nguyễn Đức Sơn,A00330,extrusion,2220255,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+36,02221908,Nguyễn Minh Hoàng,A00330,extrusion,2221908,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+37,02222785,Nguyễn Anh Duy,A00330,extrusion,2222785,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+38,02223535,Nguyễn Quốc,A00330,extrusion,2223535,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+39,02224288,Võ Văn Dương,A00330,extrusion,2224288,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+40,02224358,Hoàng Trung Hiếu,A00852,extrusion,2224358,$2y$10$xD20joKQjSLcvSDhNpySQOIMj4Gxw/pi0HV.66DFXFeCwZXy0SUIG,0,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/13/2026 22:05
+41,02224367,Ngô Minh Hiếu,A00330,extrusion,2224367,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+42,02226596,Đoàn Văn Dương,A00852,extrusion,2226596,$2y$10$sdZwUNzDBeKhIQTgKkoqJuqDqyLNU.nrCRuCpYhxbGDgoNXQGvxHG,0,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/13/2026 11:25
+43,02227708,Phạm Việt Khải,A00330,extrusion,2227708,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+44,02228947,Phạm Lê Minh Tân,A00852,extrusion,2228947,$2y$10$nnCfrzL2Rw/ydXrYnlEzJe5UKCqK8Ct9QirE2ZkAOmASavMEf3JIW,0,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/13/2026 14:53
+45,02229894,Nguyễn Hữu Tài,A00330,extrusion,2229894,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+46,02241656,Lương Trọng Ân,A00330,extrusion,2241656,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+47,02243991,Bùi Quang Chưởng,A00330,extrusion,2243991,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+48,02325295,Lưu Văn Đủ,A00330,extrusion,2325295,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+49,02325301,Cao Thế Mỹ,A00330,extrusion,2325301,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+50,02325310,Nguyễn Công Hậu,A00330,extrusion,2325310,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+51,02325365,Trần Minh Nhật,A00330,extrusion,2325365,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+52,02325374,Trương Văn Tình,A00330,extrusion,2325374,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+53,02645241,Nguyễn Đình Hoàng,A00330,extrusion,2645241,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+54,02645250,Trần Xuân Bắc,A00330,extrusion,2645250,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+55,02645269,Lê Thanh Toàn,A00330,extrusion,2645269,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+56,02645278,MOHA MAD NAZID,A00330,extrusion,2645278,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+57,02648105,Nguyễn Nhật Luân,A00330,extrusion,2648105,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+58,02648114,Vòng Nhục Dưởng,A00330,extrusion,2648114,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+59,02648123,Nguyễn Phạm Ngọc Hiền,A00330,extrusion,2648123,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+61,02020752,Nguyễn Chí Cường,A00442,extrusion,2020752,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+62,02020947,Nguyễn Hoàng Duy,A00442,extrusion,2020947,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+63,02121404,Lê Hoàng Minh Tâm,A00442,extrusion,2121404,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+64,02222350,Hoàng Văn Nguyên,A00442,extrusion,2222350,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+65,02223526,Nguyễn Thiên Phú,A00442,extrusion,2223526,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+66,02223605,Võ Minh Bắc,A00442,extrusion,2223605,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+67,02243654,Lưu Văn Giang,A00442,extrusion,2243654,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+68,02622116,Trịnh Nhựt Khánh,A00442,extrusion,2622116,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+69,02644057,Phạm Văn Công,A00442,extrusion,2644057,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+70,02644075,Huỳnh Đại Nhân,A00442,extrusion,2644075,123,1,"[""extrusion_create"",""extrusion_edit_cancel"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 22:07
+71,01920163,Lê Thị Phương Dung,A00430,winding,1920163,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+72,01920260,Nguyễn Thị Lý,A00430,winding,1920260,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 20:29
+73,01920552,Lê Thị Phượng Hằng,A00430,winding,1920552,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+75,01921603,Nguyễn Trần Anh Thư,A00430,winding,1921603,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 20:32
+76,01921700,Trần Thị Minh Phương,A00430,winding,1921700,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+77,01921694,Tạ Tuyền Phong,A00430,winding,1921694,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+78,01921764,Nguyễn Trung Nhân,A00430,winding,1921764,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+79,02021496,Nguyễn Việt Thắng,A00430,winding,2021496,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+80,02021502,Phan Thị Huệ,A00430,winding,2021502,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+81,02021511,Võ Thị Vân Anh,A00430,winding,2021511,$2y$10$z5jOgmM5n3NIqaxAFcML2e/kXmm1yFadTQb90vx/4v7KWqLrupkJe,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/14/2026 15:37
+82,02021788,Nguyễn Thị Cẩm Tú,A00430,winding,2021788,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/11/2026 20:33
+83,02021797,Hoàng Thị Yên,A00430,winding,2021797,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+84,02021803,Nguyễn Thị Yến Văn,A00854,winding,2021803,$2y$10$YBXjMkArqArqifLIu0iqgOOvdRNThDU9VZsybq8/FrF6cpCl/5f9i,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_edit""]",10/14/2026 16:42
+85,02121398,Lê Đại Dương,A00430,winding,2121398,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+86,02121714,Lê Hải,A00430,winding,2121714,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+87,02125552,Trần Thị Thanh Kiều,A00430,winding,2125552,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+88,02125996,Lê Thị Thanh Vân,A00430,winding,2125996,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+89,02126667,Đào Hoàng Vũ,A00430,winding,2126667,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+90,02220945,Vũ Thị Thu Hồng,A00430,winding,2220945,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+91,02223580,Ngô Ánh Ngọc,A00430,winding,2223580,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+92,02224428,Lê Thị Lụa,A00430,winding,2224428,$2y$10$PRTmUH15N7FdoAXF240wEeU5BvC8mtH1F4DvUh5Ywj5z3b.jsdMd.,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/13/2026 11:33
+93,02224455,Ân Thành Trí,A00430,winding,2224455,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+94,02225065,Trần Thị Thảo,A00430,winding,2225065,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+95,02225658,Nguyễn Nga Hoàng Dung,A00430,winding,2225658,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+96,02226602,Nguyễn Thị Tuyết,A00430,winding,2226602,$2y$10$/AhlvrEs43rJ3e1CoB9JU.3AgE783sYl4gdiug4Uzxd03q1Zeniwa,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/14/2026 10:32
+97,02228141,Nguyễn Thị Ngọc Quỳnh,A00430,winding,2228141,$2y$10$9uCqvOggJsJNav.6dNrii.qDxft39nFc2tPXEUhafCy6AzEdGY.S2,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/14/2026 15:48
+98,02229511,Phạm Thanh Lý,A00430,winding,2229511,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+99,02242761,Lê Đức Minh,A00430,winding,2242761,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+100,02324728,Bùi Thị Cẩm Nhi,A00430,winding,2324728,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+101,02324755,Lê Hải Vũ,A00430,winding,2324755,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+102,02243663,Vũ Văn Đông,A00430,winding,2243663,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+103,02325277,Võ Hoàng Nhật Vi,A00430,winding,2325277,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+104,02521747,Nguyễn Hoài Hậu,A00430,winding,2521747,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+105,02521756,Lê Thị Kim Hồng,A00430,winding,2521756,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+106,02525044,Kim Thị Thương,A00430,winding,2525044,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+107,02525628,Lý Thị Thanh Hằng,A00430,winding,2525628,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+108,02525637,Nguyễn Thị Huyền Trang,A00430,winding,2525637,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+109,02525646,Vũ Thị Thủy,A00430,winding,2525646,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+110,02525655,Hà Thị Mỹ Hoa,A00430,winding,2525655,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+111,02542485,Trần Hoàng Nam,A00430,winding,2542485,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+112,02542494,Võ Phát Lợi,A00430,winding,2542494,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+113,02644552,Hàn Thị Trang,A00430,winding,2644552,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+114,02646082,Phan Khánh Linh,A00430,winding,2646082,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+115,02644109,Đào Thiên Bình,A00442,winding,2644109,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+116,02644118,Trần Khánh Linh,A00430,winding,2644118,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+117,02644127,Vũ Thị Dung,A00430,winding,2644127,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+118,02644136,Dương Thị Thanh Trúc,A00854,winding,2644136,$2y$10$ngoARsQ6OwL0m93pu4iyHOCEJzmhAHbK2f9HQ04hnsrltb7myOXMS,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/15/2026 12:47
+119,02646365,Đinh Thị Đài Trang,A00430,winding,2646365,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+120,02646383,Trần Thị Mỹ Duyên,A00430,winding,2646383,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+121,02646392,Trần Thị Tuyết,A00430,winding,2646392,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+122,02646408,Lưu Thị Phượng,A00430,winding,2646408,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+123,02646417,Đỗ Thị Yến Nhi,A00430,winding,2646417,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+125,02648132,Trần Vũ Đỉnh,A00430,winding,2648132,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+126,02648141,Nguyễn Việt Dũng,A00430,winding,2648141,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+127,02648150,Phạm Ngọc Lợi,A00430,winding,2648150,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+128,02648169,Trần Thị Hoài Thu,A00430,winding,2648169,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+129,02648187,Thạch Thị Lệ,A00430,winding,2648187,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+130,02648196,Lê Kim Ngân,A00430,winding,2648196,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+131,02648202,Lê Sơn Phượng,A00430,winding,2648202,$2y$10$m4/Fd6uTGzC6lZbTAW/YBOFRf.d2QO44fzZvKpRjQw1hQaUYqTSw6,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/14/2026 16:46
+132,02648211,Phạm Thị Quỳnh Như,A00430,winding,2648211,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+133,02649210,Nguyễn Trung Hậu,A00430,winding,2649210,$2y$10$lhr1aqMVlR.wAHIS8jUwuegXCRSTgZsnqBeE.hd4W4tzw1YCDL/mC,0,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/28/2026 1:06
+134,02649229,Võ Thị Hương,A00430,winding,2649229,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37
+135,02649238,Huỳnh Thị Kim Hậu,A00430,winding,2649238,123,1,"[""winding_confirm"",""winding_edit"",""bobin_list"",""bobin_history"",""pending_cancel_view""]",10/11/2026 21:37

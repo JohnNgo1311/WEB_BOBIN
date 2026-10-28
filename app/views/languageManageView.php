@@ -28,6 +28,7 @@ $customKeysCount = count($customDict['vi'] ?? []);
     <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
 
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
+    <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>
 
 <body>
@@ -48,7 +49,7 @@ $customKeysCount = count($customDict['vi'] ?? []);
             </div>
             <div class="lang-hero-badge">
                 <span>⚙️</span>
-                <span data-i18n="lang_badge_custom">Dynamic I18n Engine</span>
+                <span data-i18n="lang_badge_custom"><?= __('lang_badge_custom') ?></span>
             </div>
         </header>
 
@@ -58,21 +59,25 @@ $customKeysCount = count($customDict['vi'] ?? []);
                 <div class="lang-stat-icon">📚</div>
                 <div class="lang-stat-content">
                     <span class="lang-stat-val" id="statTotalKeys"><?= $totalKeys ?></span>
-                    <span class="lang-stat-label" data-i18n="lang_stat_total">Tổng số mục dịch thuật</span>
+                    <span class="lang-stat-label" data-i18n="lang_stat_total"><?= __('lang_stat_total') ?></span>
                 </div>
             </div>
             <div class="lang-stat-card">
                 <div class="lang-stat-icon" style="background:#fef3c7; color:#b45309;">✏️</div>
                 <div class="lang-stat-content">
                     <span class="lang-stat-val" id="statCustomKeys"><?= $customKeysCount ?></span>
-                    <span class="lang-stat-label" data-i18n="lang_stat_custom">Đã tùy chỉnh riêng</span>
+                    <span class="lang-stat-label" data-i18n="lang_stat_custom"><?= __('lang_stat_custom') ?></span>
                 </div>
             </div>
             <div class="lang-stat-card">
-                <div class="lang-stat-icon" style="background:#ecfdf5; color:#059669;">🇻🇳 🇬🇧 🇯🇵</div>
+                <div class="lang-stat-icon" style="background:#ecfdf5; color:#059669; display:inline-flex; align-items:center; justify-content:center; gap:3px; padding:0 6px;">
+                    <?= Language::renderFlagSvg('vi', 15, 10) ?>
+                    <?= Language::renderFlagSvg('en', 15, 10) ?>
+                    <?= Language::renderFlagSvg('ja', 15, 10) ?>
+                </div>
                 <div class="lang-stat-content">
                     <span class="lang-stat-val">3</span>
-                    <span class="lang-stat-label" data-i18n="lang_stat_langs">Ngôn ngữ đồng bộ (VI/EN/JA)</span>
+                    <span class="lang-stat-label" data-i18n="lang_stat_langs"><?= __('lang_stat_langs') ?></span>
                 </div>
             </div>
         </section>
@@ -192,22 +197,22 @@ $customKeysCount = count($customDict['vi'] ?? []);
             </div>
             <div class="lang-modal-body">
                 <div class="lang-form-group">
-                    <label data-i18n="lang_modal_key_label"><?= __('lang_modal_key_label') ?> <span
+                    <label><span data-i18n="lang_modal_key_label"><?= __('lang_modal_key_label') ?></span> <span
                             style="color:#ef4444;">*</span></label>
                     <input type="text" id="newKeyName" placeholder="<?= __('lang_ph_key_name') ?>" data-i18n-ph="lang_ph_key_name" autocomplete="off">
                 </div>
                 <div class="lang-form-group">
-                    <label data-i18n="lang_modal_vi_label">🇻🇳 Bản dịch Tiếng Việt: <span
+                    <label><span data-i18n="lang_modal_vi_label"><?= __('lang_modal_vi_label') ?></span> <span
                             style="color:#ef4444;">*</span></label>
                     <input type="text" id="newKeyVi" placeholder="<?= __('lang_ph_vi_content') ?>" data-i18n-ph="lang_ph_vi_content">
                 </div>
                 <div class="lang-form-group">
-                    <label data-i18n="lang_modal_en_label">🇬🇧 Bản dịch English: <span
+                    <label><span data-i18n="lang_modal_en_label"><?= __('lang_modal_en_label') ?></span> <span
                             style="color:#ef4444;">*</span></label>
                     <input type="text" id="newKeyEn" placeholder="<?= __('lang_ph_en_content') ?>" data-i18n-ph="lang_ph_en_content">
                 </div>
                 <div class="lang-form-group">
-                    <label data-i18n="lang_modal_ja_label">🇯🇵 Bản dịch 日本語: <span
+                    <label><span data-i18n="lang_modal_ja_label"><?= __('lang_modal_ja_label') ?></span> <span
                             style="color:#ef4444;">*</span></label>
                     <input type="text" id="newKeyJa" placeholder="<?= __('lang_ph_ja_content') ?>" data-i18n-ph="lang_ph_ja_content">
                 </div>

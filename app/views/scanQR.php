@@ -272,12 +272,12 @@ if (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '
         <div class="scan-form-card">
             <form action="/WEB_BOBIN/public/index.php" method="GET" id="searchForm">
                 <div class="scan-target-select-wrap">
-                    <label class="scan-target-label" data-i18n="search">Mục tiêu tra cứu:</label>
+                    <label class="scan-target-label" data-i18n="qr_scan_target_label"><?= __('qr_scan_target_label', 'Mục tiêu tra cứu:') ?></label>
                     <select name="url" id="targetUrl" class="scan-target-select">
-                        <option value="bobin/listBobinView_QC">Kiểm tra QC (QC Check)</option>
-                        <option value="bobin/listBobinDetailView">Chi tiết danh sách Bobin</option>
-                        <option value="bobin/listBobinHistoryView">Lịch sử Bobin</option>
-                        <option value="bobin/windingView">Xác nhận Cuộn (Winding)</option>
+                        <option value="bobin/listBobinView_QC" data-i18n="nav_qc"><?= __('nav_qc') ?></option>
+                        <option value="bobin/listBobinDetailView" data-i18n="nav_bobin_list"><?= __('nav_bobin_list') ?></option>
+                        <option value="bobin/listBobinHistoryView" data-i18n="nav_bobin_history"><?= __('nav_bobin_history') ?></option>
+                        <option value="bobin/windingView" data-i18n="nav_winding"><?= __('nav_winding') ?></option>
                     </select>
                 </div>
 

@@ -100,27 +100,12 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                 <span class="sb-brand-sub">SMC Extrusion (VN)</span>
             </div>
         </a>
-        <button type="button" class="sb-toggle-btn" id="sbDesktopToggle" title="<?= __('sidebar_toggle') ?>" aria-label="<?= __('sidebar_toggle') ?>">
+        <button type="button" class="sb-toggle-btn" id="sbDesktopToggle" title="<?= __('sidebar_toggle') ?>"
+            aria-label="<?= __('sidebar_toggle') ?>">
             ◀
         </button>
     </div>
 
-    <!-- User Profile Card -->
-    <?php if (!empty($user)): ?>
-        <div class="sb-user-card">
-            <div class="sb-user-avatar role-<?= htmlspecialchars($userRole) ?>" title="<?= htmlspecialchars($userName) ?>">
-                <?= htmlspecialchars($firstLetter) ?>
-            </div>
-            <div class="sb-user-info">
-                <span class="sb-user-name" title="<?= htmlspecialchars($userName) ?>">
-                    <?= htmlspecialchars($userName) ?>
-                </span>
-                <span class="sb-user-role-badge">
-                    <?= htmlspecialchars($empCode) ?> • <?= strtoupper($userRole) ?>
-                </span>
-            </div>
-        </div>
-    <?php endif; ?>
 
     <!-- Navigation Tree (Scrollable Folder Tree View) -->
     <nav class="sb-nav-scroll sb-tree-root">
@@ -128,17 +113,18 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
         <!-- 1. FOLDER: NHÓM ĐÙN (EXTRUSION) -->
         <?php if ($canExtrusionCreate || $canExtrusionEdit): ?>
             <div class="sb-tree-folder <?= $isExtrusionActive ? 'has-active-child' : '' ?>" data-folder-id="extrusion">
-                <button type="button" class="sb-tree-folder-head" aria-expanded="<?= $isExtrusionActive ? 'true' : 'false' ?>">
+                <button type="button" class="sb-tree-folder-head"
+                    aria-expanded="<?= $isExtrusionActive ? 'true' : 'false' ?>">
                     <span class="sb-tree-chevron">▸</span>
                     <span class="sb-tree-folder-icon">📁</span>
-                    <span class="sb-tree-folder-title" data-i18n="sidebar_nav_title_extrusion_stage"><?= __('sidebar_nav_title_extrusion_stage') ?></span>
+                    <span class="sb-tree-folder-title"
+                        data-i18n="sidebar_nav_title_extrusion_stage"><?= __('sidebar_nav_title_extrusion_stage') ?></span>
                     <span class="sb-tree-badge"><?= $extCount ?></span>
                 </button>
                 <div class="sb-tree-children">
                     <?php if ($canExtrusionCreate): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/index"
                             class="sb-tree-leaf <?= in_array($currentUrl, ['bobin/index', 'bobin/extrusion', '']) ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">⚙️</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_extrusion"><?= __('nav_extrusion') ?></span>
                         </a>
                     <?php endif; ?>
@@ -146,8 +132,8 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                     <?php if ($canExtrusionEdit): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/extrusionEditBobinView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/extrusionEditBobinView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">✏️</span>
-                            <span class="sb-tree-leaf-text" data-i18n="nav_extrusion_edit"><?= __('nav_extrusion_edit') ?></span>
+                            <span class="sb-tree-leaf-text"
+                                data-i18n="nav_extrusion_edit"><?= __('nav_extrusion_edit') ?></span>
                         </a>
                     <?php endif; ?>
                 </div>
@@ -160,14 +146,14 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                 <button type="button" class="sb-tree-folder-head" aria-expanded="<?= $isQcActive ? 'true' : 'false' ?>">
                     <span class="sb-tree-chevron">▸</span>
                     <span class="sb-tree-folder-icon">📁</span>
-                    <span class="sb-tree-folder-title" data-i18n="sidebar_nav_title_qc_stage"><?= __('sidebar_nav_title_qc_stage') ?></span>
+                    <span class="sb-tree-folder-title"
+                        data-i18n="sidebar_nav_title_qc_stage"><?= __('sidebar_nav_title_qc_stage') ?></span>
                     <span class="sb-tree-badge"><?= $qcCount ?></span>
                 </button>
                 <div class="sb-tree-children">
                     <?php if ($canQcCheck): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinView_QC"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/listBobinView_QC') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">🛡️</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_qc"><?= __('nav_qc') ?></span>
                         </a>
                     <?php endif; ?>
@@ -175,7 +161,6 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                     <?php if ($canQcEdit): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/qcEditBobinView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">🔍</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_qc_edit"><?= __('nav_qc_edit') ?></span>
                         </a>
                     <?php endif; ?>
@@ -186,17 +171,18 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
         <!-- 3. FOLDER: NHÓM CUỘN (WINDING) -->
         <?php if ($canWindingConfirm || $canWindingEdit): ?>
             <div class="sb-tree-folder <?= $isWindingActive ? 'has-active-child' : '' ?>" data-folder-id="winding">
-                <button type="button" class="sb-tree-folder-head" aria-expanded="<?= $isWindingActive ? 'true' : 'false' ?>">
+                <button type="button" class="sb-tree-folder-head"
+                    aria-expanded="<?= $isWindingActive ? 'true' : 'false' ?>">
                     <span class="sb-tree-chevron">▸</span>
                     <span class="sb-tree-folder-icon">📁</span>
-                    <span class="sb-tree-folder-title" data-i18n="sidebar_nav_title_winding_stage"><?= __('sidebar_nav_title_winding_stage') ?></span>
+                    <span class="sb-tree-folder-title"
+                        data-i18n="sidebar_nav_title_winding_stage"><?= __('sidebar_nav_title_winding_stage') ?></span>
                     <span class="sb-tree-badge"><?= $wndCount ?></span>
                 </button>
                 <div class="sb-tree-children">
                     <?php if ($canWindingConfirm): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/windingView"
                             class="sb-tree-leaf <?= in_array($currentUrl, ['bobin/windingView', 'bobin/listBobinView_Winding']) ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">📍</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_winding"><?= __('nav_winding') ?></span>
                         </a>
                     <?php endif; ?>
@@ -204,7 +190,6 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                     <?php if ($canWindingEdit): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/windingEditBobinView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/windingEditBobinView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">⚡</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_winding_edit"><?= __('nav_winding_edit') ?></span>
                         </a>
                     <?php endif; ?>
@@ -215,17 +200,18 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
         <!-- 4. FOLDER: GIÁM SÁT & BÁO CÁO (MONITORING) -->
         <?php if ($canBobinList || $canBobinHistory || $canPendingCancel): ?>
             <div class="sb-tree-folder <?= $isMonitorActive ? 'has-active-child' : '' ?>" data-folder-id="monitor">
-                <button type="button" class="sb-tree-folder-head" aria-expanded="<?= $isMonitorActive ? 'true' : 'false' ?>">
+                <button type="button" class="sb-tree-folder-head"
+                    aria-expanded="<?= $isMonitorActive ? 'true' : 'false' ?>">
                     <span class="sb-tree-chevron">▸</span>
                     <span class="sb-tree-folder-icon">📁</span>
-                    <span class="sb-tree-folder-title" data-i18n="sidebar_nav_title_monitor"><?= __('sidebar_nav_title_monitor') ?></span>
+                    <span class="sb-tree-folder-title"
+                        data-i18n="sidebar_nav_title_monitor"><?= __('sidebar_nav_title_monitor') ?></span>
                     <span class="sb-tree-badge"><?= $monCount ?></span>
                 </button>
                 <div class="sb-tree-children">
                     <?php if ($canBobinList): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinDetailView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/listBobinDetailView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">📦</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_bobin_list"><?= __('nav_bobin_list') ?></span>
                         </a>
                     <?php endif; ?>
@@ -233,7 +219,6 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                     <?php if ($canBobinHistory): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/listBobinHistoryView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/listBobinHistoryView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">🕒</span>
                             <span class="sb-tree-leaf-text" data-i18n="nav_bobin_history"><?= __('nav_bobin_history') ?></span>
                         </a>
                     <?php endif; ?>
@@ -241,8 +226,8 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                     <?php if ($canPendingCancel): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/listPendingCancellationView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/listPendingCancellationView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">⏳</span>
-                            <span class="sb-tree-leaf-text" data-i18n="nav_pending_cancel"><?= __('nav_pending_cancel') ?></span>
+                            <span class="sb-tree-leaf-text"
+                                data-i18n="nav_pending_cancel"><?= __('nav_pending_cancel') ?></span>
                             <?php if ($pCount > 0): ?>
                                 <span class="sb-badge-pending"><?= $pCount ?></span>
                             <?php endif; ?>
@@ -252,8 +237,8 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                     <?php if ($canCancelledList): ?>
                         <a href="/WEB_BOBIN/public/index.php?url=bobin/listCancelledBobinView"
                             class="sb-tree-leaf <?= ($currentUrl === 'bobin/listCancelledBobinView') ? 'active-nav' : '' ?>">
-                            <span class="sb-tree-leaf-icon">🗑️</span>
-                            <span class="sb-tree-leaf-text" data-i18n="nav_cancelled_list"><?= __('nav_cancelled_list') ?></span>
+                            <span class="sb-tree-leaf-text"
+                                data-i18n="nav_cancelled_list"><?= __('nav_cancelled_list') ?></span>
                         </a>
                     <?php endif; ?>
                 </div>
@@ -266,7 +251,8 @@ $sysCount  = ($canEmployeeManage ? 1 : 0) + ($canPermissionManage ? 2 : 0);
                 <button type="button" class="sb-tree-folder-head" aria-expanded="<?= $isSystemActive ? 'true' : 'false' ?>">
                     <span class="sb-tree-chevron">▸</span>
                     <span class="sb-tree-folder-icon">📁</span>
-                    <span class="sb-tree-folder-title" data-i18n="sidebar_nav_title_system"><?= __('sidebar_nav_title_system') ?></span>
+                    <span class="sb-tree-folder-title"
+                        data-i18n="sidebar_nav_title_system"><?= __('sidebar_nav_title_system') ?></span>
                     <span class="sb-tree-badge"><?= $sysCount ?></span>
                 </button>
                 <div class="sb-tree-children">

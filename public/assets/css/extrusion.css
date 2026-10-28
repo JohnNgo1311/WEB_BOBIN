@@ -448,10 +448,10 @@ select {
   letter-spacing: 0.5px;
 }
 
-/* ================= 10. PHÂN KHU 4: 5 TIÊU CHÍ NGOẠI QUAN ĐÙN ================= */
+/* ================= 10. PHÂN KHU 4: 9 TIÊU CHÍ NGOẠI QUAN ĐÙN ================= */
 .ext-checks-group {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 

@@ -454,15 +454,15 @@ $typeOptions = [
                                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                                     </svg>
                                 </div>
-                                <h3 data-i18n="chart_qc_defect_stats">Thống kê ngoại quan Bobin</h3>
+                                <h3 data-i18n="chart_qc_defect_stats"><?= __('chart_qc_defect_stats') ?></h3>
                             </div>
                             <div class="qc-stat-badges">
                                 <span class="qc-badge-pill qc-pill-ok" title="Đạt toàn bộ tiêu chuẩn ngoại quan">
-                                    <span class="dot">●</span> <span data-i18n="qc_defect_ok">OK</span>:
+                                    <span class="dot">●</span> <span data-i18n="qc_defect_ok"><?= __('qc_defect_ok') ?></span>:
                                     <strong><?= number_format($qcDefectStats['ok_all'] ?? 0) ?></strong>
                                 </span>
                                 <span class="qc-badge-pill qc-pill-ng" title="Có ít nhất một lỗi ngoại quan">
-                                    <span class="dot">●</span> <span data-i18n="qc_defect_ng">NG</span>:
+                                    <span class="dot">●</span> <span data-i18n="qc_defect_ng"><?= __('qc_defect_ng') ?></span>:
                                     <strong><?= number_format($qcDefectStats['ng_any'] ?? 0) ?></strong>
                                 </span>
                             </div>
@@ -587,6 +587,7 @@ $typeOptions = [
                     if (lbl === 'Chưa QC' || lbl === 'Chưa KT QC') return window.t('status_unchecked',
                         'Chưa QC');
                     if (lbl === 'Đã QC' || lbl === 'Đã KT QC') return window.t('status_checked', 'Đã QC');
+                    if (lbl === 'Tồn line') return window.t('status_line', 'Tồn line');
                     if (lbl === 'Đã cuộn') return window.t('status_ready', 'Đã cuộn');
                     if (lbl === 'Chờ hủy') return window.t('status_pending_cancel', 'Chờ hủy');
                     if (lbl === 'Đã hủy') return window.t('status_cancelled', 'Đã hủy');

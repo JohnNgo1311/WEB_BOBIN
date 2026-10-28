@@ -184,13 +184,26 @@ foreach ($bobins as $b) {
                     </svg>
                     <span data-i18n="filter"><?= __('filter') ?? 'Lọc' ?></span>
                 </button>
+
+                <?php if (trim((string)($_GET['keyword'] ?? '')) !== ''): ?>
+                    <a href="/WEB_BOBIN/public/index.php?url=bobin/qcEditBobinView"
+                        class="qc-btn-action qc-btn-reset btn-reset-filter" data-i18n="[title]reset_filter"
+                        title="<?= htmlspecialchars(__('reset_filter')) ?>">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span data-i18n="reset_filter"><?= __('reset_filter') ?></span>
+                    </a>
+                <?php endif; ?>
             </form>
         </section>
 
         <!-- 4. BOBIN LIST CARDS -->
         <?php if (empty($bobins)): ?>
             <div class="qc-empty-box">
-                <div class="qc-empty-icon">📦</div>
+                <div class="qc-empty-icon">🛡️</div>
                 <div class="qc-empty-title" data-i18n="qc_empty_list"><?= __('qc_empty_list') ?></div>
             </div>
         <?php else: ?>
@@ -320,8 +333,11 @@ foreach ($bobins as $b) {
                                 </div>
 
                                 <div class="qc-field field-item">
-                                    <label class="qc-label" data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
-                                    <div class="qc-val val-sub"><?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?></div>
+                                    <label class="qc-label"
+                                        data-i18n="field_machine"><?= __('field_machine') ?? 'Máy đùn' ?></label>
+                                    <div class="qc-val val-sub">
+                                        <?= htmlspecialchars(!empty($item['extrusion_machine']) ? $item['extrusion_machine'] : 'Chưa cập nhật') ?>
+                                    </div>
                                 </div>
 
                                 <div class="qc-field field-item">

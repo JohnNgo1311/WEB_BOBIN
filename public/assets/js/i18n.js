@@ -593,12 +593,24 @@
     localStorage.setItem("app_lang", lang);
 
     if (reload) {
+      const navigateCleanReload = () => {
+        try {
+          const urlObj = new URL(window.location.href);
+          if (urlObj.searchParams.has("lang")) {
+            urlObj.searchParams.delete("lang");
+            window.location.replace(urlObj.toString());
+            return;
+          }
+        } catch (e) { }
+        window.location.reload();
+      };
+
       // Đồng bộ sang backend Session qua sendBeacon hoặc fetch trước khi reload
       try {
         const syncUrl = `/WEB_BOBIN/public/index.php?url=auth/setLanguage&lang=${lang}`;
         if (navigator.sendBeacon) {
           navigator.sendBeacon(syncUrl);
-          window.location.reload();
+          navigateCleanReload();
           return;
         }
       } catch (e) { }
@@ -608,7 +620,7 @@
       const doReload = () => {
         if (!reloaded) {
           reloaded = true;
-          window.location.reload();
+          navigateCleanReload();
         }
       };
       const timer = setTimeout(doReload, 300);
@@ -741,7 +753,7 @@
               // Giữ lại icon nếu có SVG hoặc xử lý nếu có thẻ con span
               const svg = btn.querySelector("svg");
               const span = btn.querySelector(
-                "span:not(.badge):not(.badge-pending-count)",
+                "span:not(.badge):not(.badge-pending-count):not(.required):not(.pulse-dot):not(.bip-has-img-dot):not(.lang-flag):not(.lang-arrow)",
               );
 
               if (span && span !== btn) {
@@ -1382,7 +1394,7 @@
         )
         .forEach((btn) => {
           const span = btn.querySelector(
-            "span:not(.badge):not(.badge-pending-count)",
+            "span:not(.badge):not(.badge-pending-count):not(.required):not(.pulse-dot):not(.bip-has-img-dot):not(.lang-flag):not(.lang-arrow)",
           );
           if (span && span !== btn) {
             const spanText = span.textContent
@@ -1582,7 +1594,7 @@
           } else {
             const svg = el.querySelector("svg");
             const span = el.querySelector(
-              "span:not(.badge):not(.badge-pending-count)",
+              "span:not(.badge):not(.badge-pending-count):not(.required):not(.pulse-dot):not(.bip-has-img-dot):not(.lang-flag):not(.lang-arrow)",
             );
 
             if (span && span !== el) {
@@ -1655,37 +1667,60 @@
     });
   }
 
-  // Cập nhật nút Dropdown
+  // Bản đồ Quốc kỳ SVG Vector Local (100% Offline, hiển thị sắc nét trên Windows/macOS/Mobile)
+  const FLAG_SVGS = {
+    vi: (w = 24, h = 16) =>
+      `<svg class="lang-flag-svg" width="${w}" height="${h}" viewBox="0 0 36 24" aria-hidden="true" focusable="false"><rect width="36" height="24" fill="#DA251D"/><polygon points="18,5.80 19.48,10.36 24.28,10.36 20.40,13.18 21.88,17.74 18,14.92 14.12,17.74 15.60,13.18 11.72,10.36 16.52,10.36" fill="#FFFF00"/></svg>`,
+    en: (w = 24, h = 16) =>
+      `<svg class="lang-flag-svg" width="${w}" height="${h}" viewBox="0 0 36 24" aria-hidden="true" focusable="false"><rect width="36" height="24" fill="#012169"/><path d="M0,0 L36,24 M36,0 L0,24" stroke="#FFFFFF" stroke-width="4.8"/><path d="M0,0 L36,24 M36,0 L0,24" stroke="#C8102E" stroke-width="2.4"/><path d="M18,0 V24 M0,12 H36" stroke="#FFFFFF" stroke-width="8"/><path d="M18,0 V24 M0,12 H36" stroke="#C8102E" stroke-width="4.8"/></svg>`,
+    ja: (w = 24, h = 16) =>
+      `<svg class="lang-flag-svg" width="${w}" height="${h}" viewBox="0 0 36 24" aria-hidden="true" focusable="false"><rect width="36" height="24" fill="#FFFFFF"/><circle cx="18" cy="12" r="7.2" fill="#BC002D"/></svg>`,
+  };
+
+  window.getLanguageFlagSvg = function (lang, width = 24, height = 16) {
+    const fn = FLAG_SVGS[lang] || FLAG_SVGS.vi;
+    return fn(width, height);
+  };
+
+  // Cập nhật trạng thái các bộ chuyển đổi ngôn ngữ bằng Quốc kỳ (và dự phòng dropdown cũ)
   function updateLanguageDropdownUI() {
-    const langConfig = DICT[currentLang] || DICT["vi"];
-    document.querySelectorAll(".lang-btn-current").forEach((el) => {
-      const codeSpan = el.querySelector(".lang-code");
-      const flagSpan = el.querySelector(".lang-flag");
-      if (codeSpan) {
-        codeSpan.textContent = langConfig.short;
-      }
-      if (flagSpan) {
-        flagSpan.textContent = langConfig.flag;
-      }
-      if (!codeSpan && !flagSpan) {
-        el.innerHTML = `<span class="lang-flag">${langConfig.flag}</span> <span class="lang-code">${langConfig.short}</span> <span class="lang-arrow">▾</span>`;
-      }
+    document.querySelectorAll(".lang-flag-btn[data-lang]").forEach((btn) => {
+      const btnLang = btn.getAttribute("data-lang");
+      btn.classList.toggle("active", btnLang === currentLang);
     });
+
+    document.querySelectorAll(".header-lang-btn[data-lang]").forEach((btn) => {
+      const btnLang = btn.getAttribute("data-lang");
+      btn.classList.toggle("active-lang", btnLang === currentLang);
+    });
+
+    document.querySelectorAll(".lang-btn-current").forEach((el) => {
+      el.innerHTML = `${window.getLanguageFlagSvg(currentLang, 22, 15)} <span class="lang-arrow">▾</span>`;
+    });
+
     document.querySelectorAll(".lang-menu-item").forEach((item) => {
       const itemLang = item.getAttribute("data-lang");
-      if (itemLang === currentLang) {
-        item.classList.add("active");
-      } else {
-        item.classList.remove("active");
-      }
+      item.classList.toggle("active", itemLang === currentLang);
     });
   }
 
-  // Khởi tạo Language Switcher
+  // Khởi tạo Language Switcher (Quốc kỳ trực tiếp trên Header, Login, Đổi mật khẩu, Cấu hình dung lượng)
   function initLanguageSwitcher() {
     updateLanguageDropdownUI();
 
     document.addEventListener("click", function (e) {
+      const flagBtn = e.target.closest(
+        ".lang-flag-btn[data-lang], .header-lang-btn[data-lang]",
+      );
+      if (flagBtn) {
+        e.preventDefault();
+        const lang = flagBtn.getAttribute("data-lang");
+        if (lang) {
+          window.setAppLanguage(lang, true);
+        }
+        return;
+      }
+
       const toggle = e.target.closest(".lang-btn-current");
       const dropdown = e.target.closest(".lang-switcher-dropdown");
 

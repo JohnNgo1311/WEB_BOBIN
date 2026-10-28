@@ -247,22 +247,19 @@ if (!$matchedRoute) {
 
     <!-- GÓC PHẢI: Ngôn Ngữ, Profile Nhân Viên, Đổi Mật Khẩu, Đăng Xuất -->
     <div class="header-right">
-        <!-- 1. Bộ chuyển đổi Ngôn ngữ (Language Switcher) -->
+        <!-- 1. Bộ chuyển đổi Ngôn ngữ bằng Quốc kỳ (Language Switcher) -->
         <div class="header-lang-switch" role="group" aria-label="Language Selector">
-            <a href="<?= $baseLangQuery . $langPrefix ?>vi"
-                class="header-lang-btn <?= $currentLang === 'vi' ? 'active-lang' : '' ?>" title="Tiếng Việt">
-                <span class="flag-icon">🇻🇳</span>
-                <span class="lang-text">VI</span>
+            <a href="<?= $baseLangQuery . $langPrefix ?>vi" data-lang="vi"
+                class="header-lang-btn <?= $currentLang === 'vi' ? 'active-lang' : '' ?>" title="Tiếng Việt" aria-label="Tiếng Việt">
+                <?= Language::renderFlagSvg('vi', 24, 16) ?>
             </a>
-            <a href="<?= $baseLangQuery . $langPrefix ?>en"
-                class="header-lang-btn <?= $currentLang === 'en' ? 'active-lang' : '' ?>" title="English">
-                <span class="flag-icon">🇬🇧</span>
-                <span class="lang-text">EN</span>
+            <a href="<?= $baseLangQuery . $langPrefix ?>en" data-lang="en"
+                class="header-lang-btn <?= $currentLang === 'en' ? 'active-lang' : '' ?>" title="English" aria-label="English">
+                <?= Language::renderFlagSvg('en', 24, 16) ?>
             </a>
-            <a href="<?= $baseLangQuery . $langPrefix ?>ja"
-                class="header-lang-btn <?= $currentLang === 'ja' ? 'active-lang' : '' ?>" title="日本語">
-                <span class="flag-icon">🇯🇵</span>
-                <span class="lang-text">JA</span>
+            <a href="<?= $baseLangQuery . $langPrefix ?>ja" data-lang="ja"
+                class="header-lang-btn <?= $currentLang === 'ja' ? 'active-lang' : '' ?>" title="日本語" aria-label="日本語">
+                <?= Language::renderFlagSvg('ja', 24, 16) ?>
             </a>
         </div>
 

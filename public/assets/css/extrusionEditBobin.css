@@ -316,6 +316,20 @@ body {
   box-shadow: 0 4px 8px rgba(37, 99, 235, 0.28);
 }
 
+.ext-btn-reset {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  text-decoration: none;
+}
+
+.ext-btn-reset:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: translateY(-1px);
+}
+
 .btn-danger {
   background: linear-gradient(135deg, #ef4444, #dc2626) !important;
   color: #ffffff !important;
@@ -340,7 +354,7 @@ body {
 .ext-empty-title {
   font-size: 16px;
   font-weight: 700;
-  color: #64748b;
+  color: #ff0000;
 }
 
 /* ================= 5. BOBIN LIST & CARDS ================= */
@@ -555,7 +569,7 @@ body {
 .font-bold-cyan { font-weight: 800; color: #0284c7; }
 .highlight-printlot { font-weight: 700; color: #b45309; }
 
-/* 5 Tiêu chuẩn Đùn Check (Strip / Panel) */
+/* 9 Tiêu chuẩn Đùn Check (Strip / Panel) */
 .ext-check-strip {
   padding: 14px 20px;
   background: #f8fafc;
@@ -578,7 +592,7 @@ body {
 
 .ext-checks-group {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
 }
 
@@ -820,7 +834,8 @@ body {
     width: 100%;
   }
   .ext-checks-group {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
   .ext-btn-group {
     width: 100%;

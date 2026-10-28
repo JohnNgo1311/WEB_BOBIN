@@ -320,11 +320,15 @@ async function handleWindingEditCancel(btnElement, bobinCode, bobinKeyCode) {
     overlay.className = 'wnd-modal-overlay';
     overlay.id = 'winding-cancel-modal-overlay';
 
-    const t = (key, fallback) => (window.t ? window.t(key) : fallback);
+    const t = (key, fallback) => (window.t ? window.t(key, fallback) : fallback);
 
     const titleText = t('winding_edit_cancel_title', 'Xác nhận Hủy Bobin');
     const descText = t('winding_edit_cancel_desc', 'Chuyển Bobin sang danh sách chờ hủy');
     const alertMsg = t('winding_cancel_alert_msg', 'Chuyển Bobin sang danh sách chờ hủy. Cần phê duyệt từ Quản trị viên để hoàn tất hủy.');
+    const lblBobinCode = t('col_bobin_code', 'Mã Bobin');
+    const lblProduct = t('field_product', 'Sản phẩm');
+    const lblWindingMachine = t('field_winding_machine', 'Máy cuộn');
+    const lblWindingEmp = t('col_winding_emp', 'Nhân viên cuộn');
     const reasonLbl = t('winding_cancel_reason_lbl', 'Lý do hủy Bobin');
     const reasonPh = t('ph_winding_cancel_reason', 'Nhập lý do hủy Bobin (bắt buộc)...');
     const finishedQtyLbl = t('winding_cancel_finished_qty_lbl', 'Số lượng thành phẩm đã chạy trước khi hủy');
@@ -372,19 +376,19 @@ async function handleWindingEditCancel(btnElement, bobinCode, bobinKeyCode) {
                 <!-- Tóm tắt thông tin Bobin -->
                 <div class="wnd-cancel-summary">
                     <div class="wnd-summary-item">
-                        <span class="wnd-summary-label">Mã Bobin</span>
+                        <span class="wnd-summary-label">${lblBobinCode}</span>
                         <span class="wnd-summary-val mono">#${bobinCode}</span>
                     </div>
                     <div class="wnd-summary-item">
-                        <span class="wnd-summary-label">Sản phẩm</span>
+                        <span class="wnd-summary-label">${lblProduct}</span>
                         <span class="wnd-summary-val product">${productCode}</span>
                     </div>
                     <div class="wnd-summary-item">
-                        <span class="wnd-summary-label">Máy cuộn</span>
+                        <span class="wnd-summary-label">${lblWindingMachine}</span>
                         <span class="wnd-summary-val">${machine || '---'}</span>
                     </div>
                     <div class="wnd-summary-item">
-                        <span class="wnd-summary-label">Nhân viên cuộn</span>
+                        <span class="wnd-summary-label">${lblWindingEmp}</span>
                         <span class="wnd-summary-val">${employeeCode ? employeeCode + ' - ' + employeeName : '---'}</span>
                     </div>
                 </div>

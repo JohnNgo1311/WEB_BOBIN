@@ -2,6 +2,63 @@
 
 Toàn bộ các cập nhật lớn, sửa lỗi logic, tái cấu trúc mã nguồn và cải tiến UX/UI được ghi nhận tuần tự theo thời gian tại đây.
 
+## [TASK-057] - 2026-10-29 - Khắc Phục Triệt Để Lỗi Tạo Trùng Bản Ghi Bobin Trên `bobin_list_detail` Khi Bộ Phận Đùn Nhập Chu Kỳ Mới
+
+### 1. Bối cảnh & Nguyên nhân gốc rễ (Root Cause):
+- Bảng `bobin_list_detail` trong CSDL thực tế quản lý cố định danh sách `3.000` Bobin theo `bobin_identification_code`, nhưng trên MySQL/MariaDB bảng này hiện **chưa được khai báo `PRIMARY KEY` hay `UNIQUE KEY` trên `bobin_identification_code`** (trong khi `STRICT_TRANS_TABLES` đang tắt).
+- Trước đây, hàm `BobinRepository::insertBobinDetailRecord()` dùng câu lệnh `INSERT INTO bobin_list_detail (...) VALUES (...) ON DUPLICATE KEY UPDATE ...`. Do bảng không có `UNIQUE KEY`, mệnh đề `ON DUPLICATE KEY` không bao giờ kích hoạt — dẫn tới mỗi lần bộ phận Đùn nhập chu kỳ mới cho `A0001`, hệ thống lại `INSERT` thêm một dòng `A0001` mới (`id = 0`) song song với dòng `A0001` gốc (`id = 1`).
+- Ngoài ra, `GlobalData::$bobinEntity` khai báo kiểu không cho phép `null` (`public static BobinEntity $bobinEntity`) gây lỗi `TypeError` khi tra cứu mã Bobin không tồn tại qua `getSpecificBobin()`.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Chuyển sang cơ chế Khóa dòng (`FOR UPDATE`) + Chỉ `UPDATE` có so sánh thay đổi (`app/repositories/BobinRepository.php`):**
+   - Trong `createNewBobin()`: khóa trực tiếp bản ghi gốc trong `bobin_list_detail` bằng `SELECT * FROM bobin_list_detail WHERE bobin_identification_code = :ident ORDER BY id ASC LIMIT 1 FOR UPDATE`. Nếu mã không tồn tại trong danh sách cố định thì báo lỗi ngay và rollback; kiểm tra lại trạng thái ngay dưới khóa dòng để chống race condition khi 2 máy nhập cùng lúc.
+   - Thay thế hoàn toàn `insertBobinDetailRecord()` bằng `updateBobinDetailRecord()` và `insertBobinGeneralRecord()` bằng `updateBobinGeneralRecord()`: **xóa bỏ 100% lệnh `INSERT` trên cả `bobin_list_detail` và `bobin_list_general`**, bảo toàn nguyên vẹn `id` và `bobin_identification_code` gốc, đối chiếu từng cột với dữ liệu hiện có và chỉ đưa vào mệnh đề `SET` các cột thực sự có thay đổi (`LIMIT 1`).
+   - Giữ nguyên việc ghi snapshot vòng đời mới vào bảng nhật ký `bobin_history` (`insertBobinHistoryRecord()`).
+2. **Chuẩn hóa kiểm tra tồn tại & kiểu dữ liệu (`app/services/BobinServices.php`, `app/core/GlobalData.php`):**
+   - Trong `BobinServices::createBobin()`: chuẩn hóa in hoa `$dto->bobin_identification_code`, đối chiếu trực tiếp sự tồn tại và trạng thái hiện hành từ `bobin_list_detail` (nguồn chuẩn), đồng thời hỗ trợ tra cứu không phân biệt hoa/thường tại `findBobinKeyCode()` và `findBobinSize()`.
+   - Khai báo `public static ?BobinEntity $bobinEntity = null;` trong `GlobalData.php` và kiểm tra `is_array($response)` trong `getSpecificBobin()` để xử lý an toàn mã Bobin không tồn tại.
+
+---
+
+## [TASK-056] - 2026-10-29 - Đồng Bộ Nút Chuyển Đổi Ngôn Ngữ Bằng Quốc Kỳ SVG Vector Toàn Hệ Thống
+
+### 1. Bối cảnh & Yêu cầu:
+- Tại toàn bộ các vị trí đổi ngôn ngữ trong dự án, thay thế nhãn chữ (`"Tiếng Việt"`, `"English"`, `"日本語"` và `"VI"`, `"EN"`, `"JA"`) bằng hình ảnh lá cờ quốc kỳ trực quan.
+- Đảm bảo hiển thị sắc nét trên Windows (nơi font hệ thống không hiển thị Emoji cờ `🇻🇳` `🇬🇧` `🇯🇵` mà chỉ hiện ký tự chữ `VN` `GB` `JP`) và hoạt động 100% Local/Offline không phụ thuộc mạng ngoài.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Hàm dựng Quốc kỳ SVG Vector Local (`app/core/Language.php`):**
+   - Bổ sung `Language::renderFlagSvg(string $code, int $width = 24, int $height = 16)` xuất trực tiếp quốc kỳ Việt Nam (`vi`), Vương quốc Anh (`en`) và Nhật Bản (`ja`) chuẩn tỷ lệ `3:2` bằng inline SVG sắc nét.
+2. **Đồng bộ Bộ chuyển đổi Ngôn ngữ trên toàn bộ các trang (`app/views/components/header.php`, `app/views/components/languageSwitcher.php`, `app/views/languageManageView.php`):**
+   - Tại thanh Header chính (`header.php` — dùng chung cho 13 trang nghiệp vụ & quản trị): loại bỏ chữ `VI`/`EN`/`JA` và Emoji cũ, hiển thị trực tiếp 3 nút lá cờ quốc kỳ SVG kèm tooltip `title` và `aria-label`.
+   - Tại component độc lập (`languageSwitcher.php` — dùng trên trang Đăng nhập `loginView.php`, Đổi mật khẩu `changePasswordView.php` và Cấu hình dung lượng `manageCapacityView.php`): chuyển từ dropdown chữ (`"Tiếng Việt"`, `"English"`, `"日本語"`) sang thanh 3 nút lá cờ quốc kỳ đồng nhất 1-click.
+   - Cập nhật biểu tượng thẻ thống kê ngôn ngữ trên `languageManageView.php` sang 3 lá cờ SVG.
+3. **Styling & Đồng bộ JS (`public/assets/css/i18n.css`, `public/assets/css/sidebar.css`, `public/assets/js/i18n.js`):**
+   - Thiết kế viền sáng nổi bật (`box-shadow: 0 0 0 2px #2563eb` trên nền sáng và `#38bdf8` trên nền tối `.cp-navbar`) cho quốc kỳ đang chọn, làm dịu nhẹ các cờ không chọn (`opacity: 0.55`) để tương phản rõ với cả 3 màu cờ Đỏ / Xanh / Trắng.
+   - Đồng bộ sự kiện click `.lang-flag-btn[data-lang]` và `.header-lang-btn[data-lang]` qua `window.setAppLanguage(lang, true)` đồng thời tự động dọn tham số `?lang=` dư thừa trên URL khi tải lại trang.
+
+---
+
+## [TASK-055] - 2026-10-29 - Rà Soát Toàn Diện Giao Diện (UI/UX), Chuyển Đổi Đa Ngôn Ngữ (DOM i18n), Thanh Lọc & Phân Tầng Modal Toàn Hệ Thống
+
+### 1. Bối cảnh & Yêu cầu:
+- Duyệt qua toàn bộ các trang, component, CSS, JS và từ điển đa ngôn ngữ (`vi`, `en`, `ja`) của hệ thống `WEB_BOBIN` để phát hiện và xử lý triệt để các lỗi hiển thị giao diện, lỗi lặp icon/dấu hai chấm, mất dấu sao bắt buộc (`*`), nuốt thông báo Toast, bố cục lưới chưa cân đối và xung đột `z-index` giữa Sidebar và các hộp thoại xác nhận.
+
+### 2. Các thay đổi kỹ thuật:
+1. **Gia cố Engine `i18n.js` & Chuẩn hóa DOM `data-i18n` (`public/assets/js/i18n.js` và 12 Views):**
+   - Loại trừ các thẻ trang trí con (`:not(.required):not(.pulse-dot):not(.bip-has-img-dot):not(.lang-flag):not(.lang-arrow)`) khỏi bộ chọn `span` của `applyDataI18n()` và `DOM_MAPPINGS.buttons`, ngăn chặn tình trạng ghi đè dấu `*` bắt buộc trên `changePasswordView.php` / `languageManageView.php` hoặc nhồi chữ vào chấm `.pulse-dot` trên `loginView.php`.
+   - Khắc phục triệt để lỗi lặp đôi dấu hai chấm (`::`) tại `advancedBobinFilterAndStats.php`, lặp đôi emoji trên `extrusionView.php` và `employeeListView.php`, mất icon/dấu `:` khi chuyển ngôn ngữ trên `qcView.php`, `windingView.php`, `windingEditBobinView.php`, `loginView.php`, và nháy nhãn lệch khóa dịch trên `loginView.php`, `scanQR.php`, `languageManageView.php`, `listBobinDetailView.php`, `listBobinHistoryView.php`.
+2. **Khắc phục lỗi mất thông báo Toast & Bootstrap Offline (`languageManageView.php`, `employeeListView.php`, `employeePermissionsView.php`, `createBobinView.php`, `manageCapacityView.php`):**
+   - Nạp đầy đủ `toast.js` vào `<head>` cho 3 trang quản trị Admin để hiển thị Toast trực quan thay vì rơi vào stub `console.log` của `i18n.js`.
+   - Bổ sung `Language::renderJsBootstrap()` trên `createBobinView.php` và `manageCapacityView.php` đảm bảo nạp từ điển offline tức thời không phụ thuộc AJAX.
+3. **Đồng bộ Bố cục Lưới, Thanh Lọc & Z-Index Modal (`extrusion.css`, `extrusionEditBobin.css`, `qcEditBobin.css`, `windingEditBobin.css`, `bobinImage.css`, `Extrusion/submit.js`, `QC/submit.js`, `Winding/edit_submit.js`):**
+   - Cân đối lưới 9 tiêu chí kiểm tra Đùn `.ext-checks-group` thành `repeat(3, 1fr)` (3×3 trên Desktop, 2 cột trên Mobile) và cập nhật nhãn từ `5/5` sang `9/9`.
+   - Bổ sung nút `.btn-reset-filter` (`✕ Xóa lọc`) đồng bộ trên cả 3 trang Điều chỉnh (`extrusionEditBobinView.php`, `qcEditBobinView.php`, `windingEditBobinView.php`).
+   - Chuẩn hóa phân tầng `z-index`: nâng `.confirm-dialog-overlay` từ `9999` (trùng `.app-sidebar`) lên `99999` và `.bobin-image-modal-backdrop` lên `100050`.
+   - Sửa hàm `t(key, fallback)` trong `Winding/edit_submit.js` và bổ sung đầy đủ 9 khóa dịch thuật còn thiếu cho cả 3 ngôn ngữ `vi`, `en`, `ja` (`740` khóa mỗi ngôn ngữ).
+
+---
+
 ## [TASK-054] - 2026-10-28 - Cải Tiến Bổ Sung / Thay Đổi / Xóa Hình Ảnh Biểu Đồ Nhóm Đùn Cho Bobin Đã Qua QC & Cuộn (Cô Lập Tuyệt Đối Dữ Liệu Nghiệp Vụ)
 
 ### 1. Bối cảnh & Yêu cầu:

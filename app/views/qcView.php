@@ -503,9 +503,9 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
                             <div class="card-footer-simple">
                                 <div class="update-time">🕒 Tạo lúc: <?= htmlspecialchars($item['updated_time'] ?? '') ?></div>
                                 <div class="button-group">
-                                    <button type="button" class="btn-cancel" data-i18n="btn_cancel_bobin"
+                                    <button type="button" class="btn-cancel"
                                         onclick="handleCancel(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">
-                                        🗑️ <?= __('btn_cancel_bobin') ?>
+                                        🗑️ <span data-i18n="btn_cancel_bobin"><?= __('btn_cancel_bobin') ?></span>
                                     </button>
                                     <button type="button" class="btn-change-type"
                                         onclick="handleChangeType(this, '<?= htmlspecialchars($item['bobin_identification_code']) ?>', '<?= htmlspecialchars($item['bobin_key_code']) ?>')">

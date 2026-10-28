@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
     <link rel="shortcut icon" href="/WEB_BOBIN/public/favicon.ico?v=2">
     <link rel="apple-touch-icon" href="/WEB_BOBIN/public/assets/images/favicon.png?v=2">
+    <?= Language::renderJsBootstrap() ?>
     <script src="/WEB_BOBIN/public/assets/js/i18n.js?v=<?= time() ?>"></script>
     <script src="/WEB_BOBIN/public/assets/js/toast.js?v=<?= time() ?>"></script>
 </head>

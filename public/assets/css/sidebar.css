@@ -609,44 +609,48 @@ body.sidebar-collapsed .sb-footer-minimal {
   flex-shrink: 0;
 }
 
-/* 1. Bộ chuyển đổi Ngôn ngữ (Language Switcher) */
+/* 1. Bộ chuyển đổi Ngôn ngữ bằng Quốc kỳ (Language Switcher) */
 .header-lang-switch {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   background: #f1f5f9;
-  padding: 3px;
-  border-radius: 8px;
+  padding: 3px 4px;
+  border-radius: 9px;
   border: 1px solid #e2e8f0;
-  gap: 2px;
+  gap: 4px;
 }
 
 .header-lang-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #64748b;
+  justify-content: center;
+  padding: 4px 5px;
   text-decoration: none;
   border-radius: 6px;
-  transition: all 0.15s ease;
+  opacity: 0.55;
+  filter: saturate(0.85);
+  line-height: 0;
+  transition: opacity 0.16s ease, transform 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
 
 .header-lang-btn:hover {
-  color: #0f172a;
-  background: rgba(0, 0, 0, 0.04);
+  opacity: 0.95;
+  filter: none;
+  background: rgba(255, 255, 255, 0.75);
+  transform: translateY(-1px);
 }
 
 .header-lang-btn.active-lang {
-  background: #2563eb;
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
+  opacity: 1;
+  filter: none;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #2563eb, 0 2px 6px rgba(37, 99, 235, 0.28);
 }
 
-.flag-icon {
-  font-size: 13px;
-  line-height: 1;
+.header-lang-btn .lang-flag-svg {
+  display: block;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.16);
 }
 
 /* Đường phân cách dọc */
@@ -985,24 +989,20 @@ body.sidebar-collapsed .sb-footer-minimal {
     font-size: 13px;
   }
 
-  /* Bộ chuyển ngôn ngữ thu gọn dạng nút icon cờ */
+  /* Bộ chuyển ngôn ngữ thu gọn dạng nút quốc kỳ trên Mobile */
   .header-lang-switch {
-    padding: 2px;
-    gap: 1px;
-    border-radius: 6px;
+    padding: 2px 3px;
+    gap: 2px;
+    border-radius: 7px;
   }
 
   .header-lang-btn {
-    padding: 4px 5px;
-    font-size: 10.5px;
+    padding: 3px 4px;
   }
 
-  .header-lang-btn .lang-text {
-    display: none; /* Ẩn chữ VI/EN/JA, chỉ hiển thị cờ 🇻🇳 🇬🇧 🇯🇵 */
-  }
-
-  .flag-icon {
-    font-size: 14px;
+  .header-lang-btn .lang-flag-svg {
+    width: 21px;
+    height: 14px;
   }
 
   .header-divider {

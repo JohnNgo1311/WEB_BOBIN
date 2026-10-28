@@ -740,6 +740,18 @@ Nhóm Đùn không được phép chỉnh sửa, ghi đè, xóa hoặc làm thay
 Việc bổ sung hình ảnh không được làm thay đổi trạng thái Bobin, thông tin QC, thông tin Cuộn
 Hãy đưua ra phương pháp cải tiến để tôi xác nhận trước khi thực hiện
 
+### TASK-055
+**Status:** DONE
+- Duyệt qua toàn bộ project, kiểm tra lại giao diện (UI/UX, thanh công cụ lọc, hiển thị nút bấm/nhãn/icon khi chuyển đổi ngôn ngữ VI/EN/JA, lưới tiêu chí, thông báo Toast và phân tầng Z-Index modal).
+
+### TASK-056
+**Status:** DONE
+- Tại các vị trí đổi ngôn ngữ, thay thế văn bản ("Tiếng Việt", "English", "日本語" / "VI", "EN", "JA") bằng lá cờ quốc kỳ dạng SVG vector sắc nét hoạt động 100% Local/Offline.
+
+### TASK-057
+**Status:** DONE
+- Kiểm tra và xử lý triệt để quy trình tạo Bobin từ bộ phận Đùn nhựa: Bảng `bobin_list_detail` (và `bobin_list_general`) quản lý cố định danh sách Bobin theo `bobin_identification_code`. Giữ nguyên bản ghi sẵn có (như `A0001`), chỉ thực hiện `UPDATE` các trường có thay đổi, tuyệt đối không `INSERT` trùng mã định danh.
+
 
 ## 0. Security
 

@@ -302,10 +302,10 @@ $currentEmpName = $_SESSION['user']['employee_name'] ?? '';
 
             <!-- ================= NÚT BẤM HÀNH ĐỘNG ================= -->
             <div class="btn-group">
-                <button type="reset" class="btn btn-secondary" data-i18n="btn_refresh">🔄
-                    <?= __('btn_refresh', 'Làm mới') ?></button>
-                <button type="submit" class="btn btn-primary" data-i18n="btn_save_bobin">💾
-                    <?= __('btn_save_bobin', 'Lưu Bobin') ?></button>
+                <button type="reset" class="btn btn-secondary"><span>🔄</span>
+                    <span data-i18n="btn_refresh"><?= __('btn_refresh', 'Làm mới') ?></span></button>
+                <button type="submit" class="btn btn-primary"><span
+                        data-i18n="btn_save_bobin"><?= __('btn_save_bobin', '💾 Lưu Bobin') ?></span></button>
             </div>
         </form>
     </div>

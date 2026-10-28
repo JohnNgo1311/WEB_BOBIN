@@ -327,6 +327,34 @@ class Language
     }
 
     /**
+     * Render quốc kỳ dạng SVG vector sắc nét, hoạt động 100% Local/Offline trên mọi hệ điều hành (kể cả Windows không hỗ trợ Emoji cờ)
+     */
+    public static function renderFlagSvg(string $code, int $width = 24, int $height = 16): string
+    {
+        $code = strtolower(trim($code));
+        $w = max(12, $width);
+        $h = max(8, $height);
+
+        return match ($code) {
+            'en' => '<svg class="lang-flag-svg" width="' . $w . '" height="' . $h . '" viewBox="0 0 36 24" aria-hidden="true" focusable="false">'
+                . '<rect width="36" height="24" fill="#012169"/>'
+                . '<path d="M0,0 L36,24 M36,0 L0,24" stroke="#FFFFFF" stroke-width="4.8"/>'
+                . '<path d="M0,0 L36,24 M36,0 L0,24" stroke="#C8102E" stroke-width="2.4"/>'
+                . '<path d="M18,0 V24 M0,12 H36" stroke="#FFFFFF" stroke-width="8"/>'
+                . '<path d="M18,0 V24 M0,12 H36" stroke="#C8102E" stroke-width="4.8"/>'
+                . '</svg>',
+            'ja' => '<svg class="lang-flag-svg" width="' . $w . '" height="' . $h . '" viewBox="0 0 36 24" aria-hidden="true" focusable="false">'
+                . '<rect width="36" height="24" fill="#FFFFFF"/>'
+                . '<circle cx="18" cy="12" r="7.2" fill="#BC002D"/>'
+                . '</svg>',
+            default => '<svg class="lang-flag-svg" width="' . $w . '" height="' . $h . '" viewBox="0 0 36 24" aria-hidden="true" focusable="false">'
+                . '<rect width="36" height="24" fill="#DA251D"/>'
+                . '<polygon points="18,5.80 19.48,10.36 24.28,10.36 20.40,13.18 21.88,17.74 18,14.92 14.12,17.74 15.60,13.18 11.72,10.36 16.52,10.36" fill="#FFFF00"/>'
+                . '</svg>',
+        };
+    }
+
+    /**
      * Nạp và hợp nhất từ điển mặc định (config/default_translations.json) + tùy biến (config/custom_translations.json)
      */
     private static function loadDictionary(): void
